@@ -1,10 +1,18 @@
+Ext.require([
+    'Ext.layout.container.Border',
+    'Ext.layout.container.Fit',
+    'Ext.panel.Panel'
+]);
+
 Ext.define('Flux.Application', {
     name: 'Flux',
 
     extend: 'Ext.app.Application',
 
     views: [
-        // TODO: add views here
+        'FormPanel',
+        'SidePanel',
+        'SourcesPanel'
     ],
 
     controllers: [

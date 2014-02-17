@@ -1,15 +1,29 @@
 Ext.define('Flux.view.Viewport', {
     extend: 'Ext.container.Viewport',
-    requires:[
-        'Ext.layout.container.Fit',
-        'Flux.view.Main'
+    requires: [
+        'Ext.layout.container.Border'
     ],
 
     layout: {
-        type: 'fit'
+        type: 'border'
     },
 
     items: [{
-        xtype: 'app-main'
+        region: 'west',
+        xtype: 'sidepanel',
+        title: 'Data Sources',
+        width: 200,
+        items: {
+            xtype: 'sourcespanel'
+        }
+    }, {
+        region: 'center',
+        xtype: 'panel',
+        html: 'view.MapPanel.js'
+    }, {
+        region: 'east',
+        xtype: 'sidepanel',
+        title: 'Map Settings',
+        width: 200
     }]
 });

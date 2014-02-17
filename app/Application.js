@@ -1,4 +1,5 @@
 Ext.require([
+    'Ext.Array',
     'Ext.layout.container.Border',
     'Ext.layout.container.Fit',
     'Ext.panel.Panel'

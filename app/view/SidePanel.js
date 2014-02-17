@@ -6,9 +6,12 @@ Ext.define('Flux.view.SidePanel', {
     ],
 
     collapsible: true,
+    resizable: true,
     titleCollapse: true,
 
     layout: {
         type: 'fit'
-    }
+    },
+
+    maxWidth: 250
 });

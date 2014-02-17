@@ -1,15 +1,11 @@
 Ext.define('Flux.view.SourcesPanel', {
     extend: 'Flux.view.FormPanel',
     alias: 'widget.sourcespanel',
-    defaults: {
-        labelAlign: 'top',
-        labelStyle: 'font-weight: bold;'
-    },
-
     items: [{
         xtype: 'combo',
         fieldLabel: 'Select dataset (e.g. model run) and date/time',
-        emptyText: 'Select...'
+        emptyText: 'Select...',
+        style: {maxWidth: '200px'}
 
     }, {
         xtype: 'datefield',

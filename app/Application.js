@@ -2,7 +2,8 @@ Ext.require([
     'Ext.Array',
     'Ext.layout.container.Border',
     'Ext.layout.container.Fit',
-    'Ext.panel.Panel'
+    'Ext.panel.Panel',
+    'Flux.field.EnumeratedSlider'
 ]);
 
 Ext.define('Flux.Application', {
@@ -11,9 +12,12 @@ Ext.define('Flux.Application', {
     extend: 'Ext.app.Application',
 
     views: [
+        'ConfigurationPanel',
         'FormPanel',
         'SidePanel',
-        'SourcesPanel'
+        'SourcesPanel',
+        'Symbology',
+        'TabbedPanel'
     ],
 
     controllers: [

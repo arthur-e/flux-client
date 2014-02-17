@@ -12,7 +12,7 @@ Ext.define('Flux.view.Viewport', {
         region: 'west',
         xtype: 'sidepanel',
         title: 'Data Sources',
-        width: 200,
+        width: '20%',
         items: {
             xtype: 'sourcespanel'
         }
@@ -24,6 +24,13 @@ Ext.define('Flux.view.Viewport', {
         region: 'east',
         xtype: 'sidepanel',
         title: 'Map Settings',
-        width: 200
+        width: '20%',
+        items: {
+            xtype: 'configpanel',
+            items: [{
+                xtype: 'symbology',
+                title: 'Symbology'
+            }]
+        }
     }]
 });

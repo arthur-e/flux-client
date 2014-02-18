@@ -1,4 +1,19 @@
-.icon-control-play-gray { background-image: url(control_play.png) !important; }
-.icon-control-play-blue { background-image: url(control_play_blue.png) !important; }
+.icon-control-play-gray { background-image: url(bullet_arrow_right.png) !important; }
 
+/* Toolbar ********************************************************************/
+.x-btn-default-toolbar-small,
+.x-btn-default-toolbar-medium,
+.x-btn-default-toolbar-large {
+    border-color: #d0d0d0 !important;
+}
+.x-btn-default-toolbar-medium .x-btn-inner {
+    font-size: 16px !important; /* Larger toolbar button font size */
+}
 
+/* Header *********************************************************************/
+.x-tool .x-box-item .x-tool-default .x-tool-after-title {
+    left: 214px !important;
+}
+.x-panel-header-text-container-default {
+    font-size: 14px !important;
+}

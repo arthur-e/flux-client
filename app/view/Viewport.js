@@ -21,22 +21,22 @@ Ext.define('Flux.view.Viewport', {
         tbar: {
             xtype: 'toolbar',
             dock: 'top',
+            border: false,
+            defaults: {
+                scale: 'medium'
+            },
             items: [{
                 xtype: 'button',
-                disabled: true,
                 text: 'Select Visualization'
             }, {
                 xtype: 'button',
-                disabled: true,
                 text: 'Settings'
             }, {
                 xtype: 'button',
-                disabled: true,
                 iconCls: 'icon-control-play-gray',
                 text: 'Animate'
             }, {
                 xtype: 'slider',
-                disabled: true,
                 width: '10%',
                 maxWidth: 200,
                 value: 1,
@@ -52,6 +52,7 @@ Ext.define('Flux.view.Viewport', {
             region: 'west',
             xtype: 'sidepanel',
             title: 'Data Sources',
+            border: true,
             width: '20%',
             items: {
                 xtype: 'sourcespanel'
@@ -59,11 +60,13 @@ Ext.define('Flux.view.Viewport', {
         }, {
             region: 'center',
             xtype: 'panel',
-            html: 'view.MapPanel.js'
+            title: 'view.MapPanel.js',
+            border: true
         }, {
             region: 'east',
             xtype: 'sidepanel',
             title: 'Map Settings',
+            border: true,
             width: '20%',
             items: {
                 xtype: 'configpanel',

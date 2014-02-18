@@ -19,6 +19,8 @@ Ext.define('Flux.view.FormPanel', {
         type: 'form'
     },
 
+    border: false,
+
     bodyPadding: '0 7px 0 7px',
 
     defaults: {

@@ -85,9 +85,11 @@ Ext.define('Flux.view.SourcesPanel', {
         },
         items: [{
             xtype: 'combo',
+            name: 'interval',
             fieldLabel: 'Grouping interval'
         }, {
             xtype: 'combo',
+            name: 'aggregate',
             fieldLabel: 'Statistic'
         }]
 
@@ -99,6 +101,7 @@ Ext.define('Flux.view.SourcesPanel', {
         },
         items: [{
             xtype: 'checkbox',
+            name: 'showDifference',
             boxLabel: 'Show difference',
             listeners: {
                 change: function (cb, checked) {
@@ -114,15 +117,18 @@ Ext.define('Flux.view.SourcesPanel', {
             }
         }, {
             xtype: 'combo',
+            name: 'source2',
             fieldLabel: 'Another dataset',
             disabled: true
         }, {
             xtype: 'datefield',
+            name: 'date2',
             emptyText: 'Select date...',
             dateFormat: 'Y-m-d',
             disabled: true
         }, {
             xtype: 'timefield',
+            name: 'time2',
             emptyText: 'Select time...',
             format: 'H:i',
             increment: 30,// 30-minute increments

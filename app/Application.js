@@ -1,8 +1,4 @@
 Ext.require([
-    'Ext.Array',
-    'Ext.layout.container.Border',
-    'Ext.layout.container.Fit',
-    'Ext.panel.Panel',
     'Flux.field.EnumeratedSlider'
 ]);
 
@@ -17,7 +13,8 @@ Ext.define('Flux.Application', {
         'SidePanel',
         'SourcesPanel',
         'Symbology',
-        'TabbedPanel'
+        'TabbedPanel',
+        'Viewport'
     ],
 
     controllers: [

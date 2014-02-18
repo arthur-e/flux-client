@@ -24,6 +24,7 @@ Ext.define('Flux.view.Symbology', {
 
     }, {
         xtype: 'numberfield',
+        name: 'segments',
         fieldLabel: 'Color bins',
         labelAlign: 'left',
         value: 11,
@@ -32,6 +33,7 @@ Ext.define('Flux.view.Symbology', {
 
     }, {
         xtype: 'combo',
+        name: 'palette',
         fieldLabel: 'Select palette'
 
     }, {
@@ -42,27 +44,29 @@ Ext.define('Flux.view.Symbology', {
         },
         items: [{
             xtype: 'checkbox',
+            name: 'autoscale',
             boxLabel: 'Autoscale',
             checked: true,
             listeners: {
                 change: function (cb, checked) {
-                    var stddev, range;
+                    var stddev, domain;
 
                     // Selectively enable fields based on checked condition
-                    stddev = this.up('fieldset').queryById('std-deviations');
-                    range = this.up('fieldset').queryById('output-range');
+                    stddev = this.up('fieldset').query('numberfield')[0];
+                    domain = this.up('fieldset').query('enumslider')[0];
 
                     if (checked) {
                         stddev.enable();
-                        range.disable();
+                        domain.disable();
                     } else {
                         stddev.disable();
-                        range.enable();
+                        domain.enable();
                     }
                 }
             }
         }, {
             xtype: 'numberfield',
+            name: 'sigmas',
             itemId: 'std-deviations',
             width: 150,
             fieldLabel: 'Std. deviations',
@@ -73,10 +77,11 @@ Ext.define('Flux.view.Symbology', {
 
         }, {
             xtype: 'enumslider',
+            name: 'domain',
             disabled: true,
             width: '90%',
-            itemId: 'output-range',
-            fieldLabel: 'Output range',
+            itemId: 'input-domain',
+            fieldLabel: 'Input domain',
             values: [-1, 1]
         }]
 
@@ -88,6 +93,7 @@ Ext.define('Flux.view.Symbology', {
         },
         items: [{
             xtype: 'checkbox',
+            name: 'threshold',
             itemId: 'threshold-toggle',
             boxLabel: 'Binary mask',
             listeners: {
@@ -104,9 +110,10 @@ Ext.define('Flux.view.Symbology', {
             }
         }, {
             xtype: 'checkbox',
+            name: 'thresholdRange',
             disabled: true,
             itemId: 'range',
-            boxLabel: 'Range',
+            boxLabel: 'Show values within range',
             listeners: {
                 change: function (cb, checked) {
                     var slider = this.up('fieldset').down('#threshold');
@@ -121,6 +128,7 @@ Ext.define('Flux.view.Symbology', {
 
         }, {
             xtype: 'enumslider',
+            name: 'thresholdValues',
             disabled: true,
             itemId: 'threshold',
             width: '90%',

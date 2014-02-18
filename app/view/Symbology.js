@@ -109,9 +109,12 @@ Ext.define('Flux.view.Symbology', {
             boxLabel: 'Range',
             listeners: {
                 change: function (cb, checked) {
+                    var slider = this.up('fieldset').down('#threshold');
+
                     if (checked) {
-                        this.up('fieldset').down('#threshold').toggleMulti(true, {
-                        });
+                        slider.toggleMulti(true, [-1, 1]);
+                    } else {
+                        slider.toggleMulti(false, 0);
                     }
                 }
             }

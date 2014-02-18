@@ -52,32 +52,58 @@ Ext.define('Flux.field.EnumeratedSlider', {
     /**
         Toggles between a MultiSlider and a (single-thumb) Slider.
      */
-    toggleMulti: function (multiState, newConfig) {
+    toggleMulti: function (multiState, values) {
         var config;
-
-        foo = this;//FIXME
 
         // Do nothing if the Slider is already configured this way
         if (multiState && this.isMulti) {
             return; // e.g. toggle a MultiSlider to a MultiSlider
         }
 
+        // Remove the old slider
         this.remove('slider');
+
+        // Set up a new slider configuration
         config = Ext.clone(this.sliderDefaults);
 
-        if (newConfig) {
-            Ext.Object.merge(config, newConfig);
-        }
-
+        // Determine the appropriate type of slider
         if (multiState) {
             config.xtype = 'multislider';
-            this.isMulti = true;
+            Ext.Object.merge(config, {
+                values: values
+            });
         } else {
             config.xtype = 'slider';
-            this.isMulti = false;
+            Ext.Object.merge(config, {
+                value: values
+            });
         }
 
+        // Toggle the isMulti attribute and insert the new slider
+        this.isMulti = multiState;
         this.insert(1, config);
+
+        // Add or remove the right-bounding NumberField
+        if (multiState) {
+            this.add({
+                xtype: 'numberfield',
+                itemId: 'upper-bound',
+                hideTrigger: true,
+                width: 50,
+                value: values,
+                minValue: this.minValue,
+                maxValue: this.maxValue,
+                listeners: {
+                    blur: function () {
+                        this.up('fieldcontainer').fireEvent('boundschange');
+                    }
+                }
+            });
+        } else {
+            this.remove('upper-bound');
+        }
+
+        this.down('#slider').fireEvent('changecomplete');
     },
 
     initComponent: function () {
@@ -148,6 +174,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
 
             this.insert(1, config);
         },
+
         boundschange: function () {
             // Update the slider's thumb position(s) when the NumberFields change
             this.queryById('slider').setValue(this.getValues());

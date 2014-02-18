@@ -106,7 +106,15 @@ Ext.define('Flux.view.Symbology', {
             xtype: 'checkbox',
             disabled: true,
             itemId: 'range',
-            boxLabel: 'Range'
+            boxLabel: 'Range',
+            listeners: {
+                change: function (cb, checked) {
+                    if (checked) {
+                        this.up('fieldset').down('#threshold').toggleMulti(true, {
+                        });
+                    }
+                }
+            }
 
         }, {
             xtype: 'enumslider',

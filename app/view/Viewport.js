@@ -65,7 +65,7 @@ Ext.define('Flux.view.Viewport', {
         }, {
             region: 'east',
             xtype: 'sidepanel',
-            title: 'Map Settings',
+            title: 'Plot Configuration',
             border: true,
             width: '20%',
             items: {
@@ -73,6 +73,9 @@ Ext.define('Flux.view.Viewport', {
                 items: [{
                     xtype: 'symbology',
                     title: 'Symbology'
+                }, {
+                    xtype: 'mapsettings',
+                    title: 'Map Settings'
                 }]
             }
         }]

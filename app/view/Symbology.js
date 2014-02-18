@@ -40,7 +40,8 @@ Ext.define('Flux.view.Symbology', {
         xtype: 'fieldset',
         title: 'Scaling',
         defaults: {
-            labelAlign: 'top'
+            labelAlign: 'top',
+            anchor: '100%'
         },
         items: [{
             xtype: 'checkbox',
@@ -89,7 +90,8 @@ Ext.define('Flux.view.Symbology', {
         xtype: 'fieldset',
         title: 'Threshold',
         defaults: {
-            labelAlign: 'top'
+            labelAlign: 'top',
+            anchor: '100%'
         },
         items: [{
             xtype: 'checkbox',

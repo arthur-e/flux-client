@@ -10,6 +10,7 @@ Ext.define('Flux.Application', {
     views: [
         'ConfigurationPanel',
         'FormPanel',
+        'MapSettings',
         'SidePanel',
         'SourcesPanel',
         'Symbology',

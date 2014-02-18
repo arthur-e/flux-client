@@ -1,19 +1,23 @@
-.icon-control-play-gray { background-image: url(bullet_arrow_right.png) !important; }
-
-/* Toolbar ********************************************************************/
+/* Buttons ********************************************************************/
 .x-btn-default-toolbar-small,
 .x-btn-default-toolbar-medium,
-.x-btn-default-toolbar-large {
-    border-color: #d0d0d0 !important;
-}
+.x-btn-default-toolbar-large { border-color: #d0d0d0 !important; }
 .x-btn-default-toolbar-medium .x-btn-inner {
     font-size: 16px !important; /* Larger toolbar button font size */
 }
 
+/* Forms **********************************************************************/
+.x-form-trigger-input-cell { background-color: #ffffff !important; }
+.x-fieldset-header-text,
+.x-form-item-label,
+.x-form-cb-label { font-size: 14px !important; }
+.x-fieldset-header-text { font-weight: bold !important; }
+
 /* Header *********************************************************************/
-.x-tool .x-box-item .x-tool-default .x-tool-after-title {
-    left: 214px !important;
-}
-.x-panel-header-text-container-default {
-    font-size: 14px !important;
-}
+.x-panel-header-text-container-default { font-size: 14px !important; }
+
+/* Icons **********************************************************************/
+.icon-control-play-gray { background-image: url(bullet_arrow_right.png) !important; }
+
+/* TabPanel *******************************************************************/
+.x-tab-default .x-tab-inner { font-size: 14px !important; }

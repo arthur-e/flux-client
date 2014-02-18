@@ -81,12 +81,13 @@ Ext.define('Flux.view.SourcesPanel', {
         xtype: 'fieldset',
         title: 'Aggregation',
         defaults: {
-            labelAlign: 'top'
+            labelAlign: 'top',
+            anchor: '100%'
         },
         items: [{
             xtype: 'combo',
             name: 'interval',
-            fieldLabel: 'Grouping interval'
+            fieldLabel: 'Grouping interval',
         }, {
             xtype: 'combo',
             name: 'aggregate',
@@ -97,7 +98,8 @@ Ext.define('Flux.view.SourcesPanel', {
         xtype: 'fieldset',
         title: 'Difference',
         defaults: {
-            labelAlign: 'top'
+            labelAlign: 'top',
+            anchor: '100%'
         },
         items: [{
             xtype: 'checkbox',

@@ -47,6 +47,8 @@ Ext.define('Flux.view.Symbology', {
             listeners: {
                 change: function (cb, checked) {
                     var stddev, range;
+
+                    // Selectively enable fields based on checked condition
                     stddev = this.up('fieldset').queryById('std-deviations');
                     range = this.up('fieldset').queryById('output-range');
 
@@ -74,7 +76,46 @@ Ext.define('Flux.view.Symbology', {
             disabled: true,
             width: '90%',
             itemId: 'output-range',
-            fieldLabel: 'Output range'
+            fieldLabel: 'Output range',
+            values: [-1, 1]
+        }]
+
+    }, {
+        xtype: 'fieldset',
+        title: 'Threshold',
+        defaults: {
+            labelAlign: 'top'
+        },
+        items: [{
+            xtype: 'checkbox',
+            itemId: 'threshold-toggle',
+            boxLabel: 'Binary mask',
+            listeners: {
+                change: function (cb, checked) {
+                    // Enable all the fields in this fieldset when checked
+                    Ext.Array.each(this.up('fieldset').query('field:not(#threshold-toggle), enumslider'), function (cmp) {
+                        if (checked) {
+                            cmp.enable();
+                        } else {
+                            cmp.disable();
+                        }
+                    });
+                }
+            }
+        }, {
+            xtype: 'checkbox',
+            disabled: true,
+            itemId: 'range',
+            boxLabel: 'Range'
+
+        }, {
+            xtype: 'enumslider',
+            disabled: true,
+            itemId: 'threshold',
+            width: '90%',
+            values: 0,
+            minValue: -1,
+            maxValue: 1
         }]
 
     }]

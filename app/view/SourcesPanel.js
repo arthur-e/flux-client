@@ -3,23 +3,36 @@ Ext.define('Flux.view.SourcesPanel', {
     alias: 'widget.sourcespanel',
     items: [{
         xtype: 'combo',
+        name: 'source',
         fieldLabel: 'Select dataset (e.g. model run) and date/time',
         emptyText: 'Select...',
-        style: {maxWidth: '200px'}
+        style: {maxWidth: '200px'},
+        listeners: {
+            dirtychange: function () {
+                Ext.Array.each(this.up('form').query('field[name=date], field[name=time]'), function (cmp) {
+                    cmp.enable();
+                });
+            }
+        }
 
     }, {
         xtype: 'datefield',
+        name: 'date',
+        disabled: true,
         emptyText: 'Select date...',
         dateFormat: 'Y-m-d'
 
     }, {
         xtype: 'timefield',
+        name: 'time',
+        disabled: true,
         emptyText: 'Select time...',
         format: 'H:i',
         increment: 30 // 30-minute increments
 
     }, {
         xtype: 'checkbox',
+        name: 'showUncertainty',
         boxLabel: 'Show uncertainty',
 
     }, {
@@ -89,16 +102,14 @@ Ext.define('Flux.view.SourcesPanel', {
             boxLabel: 'Show difference',
             listeners: {
                 change: function (cb, checked) {
-                    if (checked) {
-                        Ext.Array.each(this.up('fieldset').query(), function (cmp) {
+                    // Enable all the fields in this fieldset when checked
+                    Ext.Array.each(this.up('fieldset').query('field:not(checkbox)'), function (cmp) {
+                        if (checked) {
                             cmp.enable();
-                        });
-                    } else {
-                        // Disable all but this checkbox
-                        Ext.Array.each(this.up('fieldset').query('field:not(checkbox)'), function (cmp) {
+                        } else {
                             cmp.disable();
-                        });
-                    }
+                        }
+                    });
                 }
             }
         }, {

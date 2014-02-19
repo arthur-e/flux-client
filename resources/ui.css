@@ -1,14 +1,16 @@
 .ui-label {
     padding-left: 4px;
     position: relative;
-    top: -3px;
+    top: -12px;
 }
 .ui-label,
 .ui-palette-cell { display: inline-block; }
-.ui-palette-cell { width: 16px; }
-.ui-palette-cell,
-.ui-palette-ramp { height: 16px; }
-.ui-palette-ramp { margin: 5px 0;}
+.ui-palette-cell {
+    height: 16px;
+    width: 16px;
+    margin: 8px 0;
+}
+.ui-palette-ramp { height: 32px; }
 
 /* Buttons ********************************************************************/
 .x-btn-default-toolbar-small,

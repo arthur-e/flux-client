@@ -150,23 +150,17 @@ Ext.define('Flux.view.Symbology', {
         queryMode: 'local',
         displayField: 'name',
         valueField: 'id',
-        listConfig: {
-            loadingText: 'Loading...',
-            emptyText: 'No matching palettes.',
-
-            // Custom rendering template for each item
-            getInnerTpl: function() {
-                return [
-                '<div class="ui-palette-ramp">',
+        tpl: Ext.create('Ext.XTemplate', [
+            '<tpl for=".">',
+                '<div class="ui-palette-ramp x-boundlist-item">',
                     '<tpl for="colors">',
                         '<div class="ui-palette-cell" style="background-color:{.}">',
                         '</div>',
                     '</tpl>',
                     '<div class="ui-label">{name}</div>',
-                '</div>'
-                ].join('');
-            }
-        }
+                '</div>',
+            '</tpl>'
+        ].join(''))
 
     }, {
         xtype: 'fieldset',

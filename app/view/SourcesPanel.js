@@ -36,12 +36,8 @@ Ext.define('Flux.view.SourcesPanel', {
         boxLabel: 'Show uncertainty',
 
     }, {
-        xtype: 'fieldcontainer',
+        xtype: 'radiogroup',
         fieldLabel: 'Statistics from',
-        defaultType: 'radiofield',
-        defaults: {
-            flex: 1
-        },
         layout: 'vbox',
         items: [{
             boxLabel: 'Population',
@@ -57,12 +53,8 @@ Ext.define('Flux.view.SourcesPanel', {
         }]
 
     }, {
-        xtype: 'fieldcontainer',
+        xtype: 'radiogroup',
         fieldLabel: 'Display',
-        defaultType: 'radiofield',
-        defaults: {
-            flex: 1
-        },
         layout: 'vbox',
         items: [{
             boxLabel: 'Values',

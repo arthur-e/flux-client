@@ -2,7 +2,6 @@ Ext.define('Flux.view.FormPanel', {
     extend: 'Ext.form.Panel',
     alias: 'widget.formpanel',
     requires: [
-        'Ext.form.FieldContainer',
         'Ext.form.FieldSet',
         'Ext.form.field.Checkbox',
         'Ext.form.field.ComboBox',
@@ -10,6 +9,7 @@ Ext.define('Flux.view.FormPanel', {
         'Ext.form.field.Radio',
         'Ext.form.field.Number',
         'Ext.form.field.Time',
+        'Ext.form.RadioGroup',
         'Ext.layout.container.Form',
         'Ext.slider.Multi',
         'Flux.field.EnumeratedSlider'

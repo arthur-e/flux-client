@@ -1,0 +1,6 @@
+{
+    "name": "flux-client",
+    "dependencies": {
+        "chroma-js": "0.5.6"
+    }
+}

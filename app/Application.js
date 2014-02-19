@@ -23,6 +23,6 @@ Ext.define('Flux.Application', {
     ],
 
     stores: [
-        // TODO: add stores here
+        'Palettes'
     ]
 });

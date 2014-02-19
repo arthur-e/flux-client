@@ -2,6 +2,11 @@ Ext.define('Flux.view.Symbology', {
     extend: 'Flux.view.FormPanel',
     alias: 'widget.symbology',
 
+    require: [
+        'Flux.model.Palette',
+        'Flux.store.Palettes'
+    ],
+
     initComponent: function () {
         Ext.create('Flux.store.Palettes');
         this.addEvents('palettechange');

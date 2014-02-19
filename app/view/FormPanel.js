@@ -12,6 +12,7 @@ Ext.define('Flux.view.FormPanel', {
         'Ext.form.RadioGroup',
         'Ext.layout.container.Form',
         'Ext.slider.Multi',
+        'Ext.XTemplate',
         'Flux.field.EnumeratedSlider'
     ],
 

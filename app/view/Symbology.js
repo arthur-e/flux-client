@@ -3,42 +3,6 @@ Ext.define('Flux.view.Symbology', {
     alias: 'widget.symbology',
 
     initComponent: function () {
-//        var range = function (start, end, step) {
-//            var range = [];
-//            var typeofStart = typeof start;
-//            var typeofEnd = typeof end;
-
-//            if (step === 0) {
-//                throw TypeError('Step cannot be zero.');
-//            }
-
-//            if (typeofStart == 'undefined' || typeofEnd == 'undefined') {
-//                throw TypeError('Must pass start and end arguments.');
-//            } else if (typeofStart != typeofEnd) {
-//                throw TypeError('Start and end arguments must be of same type.');
-//            }
-
-//            typeof step == 'undefined' && (step = 1);
-
-//            if (end < start) {
-//                step = -step;
-//            }
-
-//            if (typeofStart == 'number') {
-
-//                while (step > 0 ? end >= start : end <= start) {
-//                    range.push(start);
-//                    start += step;
-//                }
-
-//            } else {
-//                throw TypeError('Only Number types are supported');
-//            }
-
-//            return range;
-
-//        };
-
         Ext.create('Flux.store.Palettes');
         this.addEvents('palettechange');
         this.callParent(arguments);
@@ -72,7 +36,7 @@ Ext.define('Flux.view.Symbology', {
                 ], function (name) {
                     var scale = chroma.scale(name).domain([
                         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-                    ], (segments - 1), 'quantiles').out('hex');
+                    ], (segments), 'quantiles').out('hex');
 
                     palettes.add(Ext.create('Flux.model.Palette', {
                         name: name,
@@ -84,7 +48,7 @@ Ext.define('Flux.view.Symbology', {
                             colors = [];
                             domain = scale.domain();
                             i = 0;
-                            while (i < domain.length) {
+                            while (i < (domain.length - 1)) {
                                 colors.push(scale(domain[i]))
                                 i += 1;
                             }
@@ -102,7 +66,7 @@ Ext.define('Flux.view.Symbology', {
                 ], function (name) {
                     var scale = chroma.scale(name).domain([
                         -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-                    ], (segments - 1), 'quantiles').out('hex');
+                    ], (segments), 'quantiles').out('hex');
 
                     palettes.add(Ext.create('Flux.model.Palette', {
                         name: name,
@@ -114,7 +78,7 @@ Ext.define('Flux.view.Symbology', {
                             colors = [];
                             domain = scale.domain();
                             i = 0;
-                            while (i < domain.length) {
+                            while (i < (domain.length - 1)) {
                                 colors.push(scale(domain[i]))
                                 i += 1;
                             }
@@ -185,7 +149,24 @@ Ext.define('Flux.view.Symbology', {
         fieldLabel: 'Select palette',
         queryMode: 'local',
         displayField: 'name',
-        valueField: 'id'
+        valueField: 'id',
+        listConfig: {
+            loadingText: 'Loading...',
+            emptyText: 'No matching palettes.',
+
+            // Custom rendering template for each item
+            getInnerTpl: function() {
+                return [
+                '<div class="ui-palette-ramp">',
+                    '<tpl for="colors">',
+                        '<div class="ui-palette-cell" style="background-color:{.}">',
+                        '</div>',
+                    '</tpl>',
+                    '<div class="ui-label">{name}</div>',
+                '</div>'
+                ].join('');
+            }
+        }
 
     }, {
         xtype: 'fieldset',

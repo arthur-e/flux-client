@@ -4,6 +4,10 @@
     Sencha Cmd when upgrading.
 */
 
+//@require node_modules/chroma-js/chroma.min.js
+//@require node_modules/d3/d3.min.js
+//@require node_modules/topojson/topojson.min.js
+
 Ext.application({
     name: 'Flux',
 

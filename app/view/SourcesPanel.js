@@ -33,7 +33,7 @@ Ext.define('Flux.view.SourcesPanel', {
     }, {
         xtype: 'checkbox',
         name: 'showUncertainty',
-        boxLabel: 'Show uncertainty',
+        boxLabel: 'Show uncertainty'
 
     }, {
         xtype: 'radiogroup',
@@ -79,7 +79,7 @@ Ext.define('Flux.view.SourcesPanel', {
         items: [{
             xtype: 'combo',
             name: 'interval',
-            fieldLabel: 'Grouping interval',
+            fieldLabel: 'Grouping interval'
         }, {
             xtype: 'combo',
             name: 'aggregate',

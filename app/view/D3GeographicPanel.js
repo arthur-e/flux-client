@@ -27,7 +27,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
             .projection(this.projection);
 
         this.panes = { // Organizes visualization features into "panes"
-            basemap: this.svg.append('g').attr('class', 'pane'),
+            basemap: this.svg.append('g').attr('class', 'pane')
         };
 
         this.updateBasemap('/flux-client/political-usa.topo.json');

@@ -13,7 +13,7 @@ Ext.application({
 
     require: [
         'Ext.Array',
-        'Ext.view.View',
+        'Ext.view.View'
     ],
 
     launch: function () {

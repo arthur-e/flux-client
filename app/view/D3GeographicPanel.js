@@ -27,10 +27,10 @@ Ext.define('Flux.view.D3GeographicPanel', {
             .projection(this.projection);
 
         this.panes = { // Organizes visualization features into "panes"
-            basemap: this.svg.append('g').attr('class', 'pane basemap'),
+            basemap: this.svg.append('g').attr('class', 'pane'),
         };
 
-        this.updateBasemap('/flux-client/us-states.json');
+        this.updateBasemap('/flux-client/political-usa.topo.json');
 
     },
 
@@ -45,19 +45,22 @@ Ext.define('Flux.view.D3GeographicPanel', {
         panes.basemap.select('#basemap').remove()
 
         // TODO Currently testing an implementation of http://bl.ocks.org/mbostock/2206590
-        d3.json(basemapUrl, function (error, us) {
+        d3.json(basemapUrl, function (error, json) {
             var sel = panes.basemap.append('g')
                 .attr('id', 'basemap')
+
+            sel.append('g')
+                .attr('class', 'political region')
                 .selectAll('path')
-                .data(topojson.feature(us, us.objects.states).features)
+                .data(topojson.feature(json, json.objects.basemap).features)
                 .enter().append('path')
                 .attr('d', path);
 
             sel.append('path')
-                .datum(topojson.mesh(us, us.objects.states, function (a, b) {
+                .datum(topojson.mesh(json, json.objects.basemap, function (a, b) {
                     return a !== b; // Inner boundaries
                 }))
-                .attr('id', 'state-borders')
+                .attr('class', 'political boundary')
                 .attr('d', path);
         });
     }

@@ -157,12 +157,11 @@ Ext.define('Flux.view.Symbology', {
         valueField: 'id',
         tpl: Ext.create('Ext.XTemplate', [
             '<tpl for=".">',
-                '<div class="ui-palette-ramp x-boundlist-item">',
+                '<div class="ui-palette-ramp x-boundlist-item" title="{name}">',
                     '<tpl for="colors">',
                         '<div class="ui-palette-cell" style="background-color:{.}">',
                         '</div>',
                     '</tpl>',
-                    '<div class="ui-label">{name}</div>',
                 '</div>',
             '</tpl>'
         ].join(''))

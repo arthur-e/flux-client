@@ -9,6 +9,8 @@ Ext.define('Flux.Application', {
 
     views: [
         'ConfigurationPanel',
+        'D3Panel',
+        'D3GeographicPanel',
         'FormPanel',
         'MapSettings',
         'SidePanel',

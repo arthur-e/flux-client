@@ -60,7 +60,7 @@ Ext.define('Flux.view.Viewport', {
         }, {
             region: 'center',
             xtype: 'd3geopanel',
-            title: 'view.MapPanel.js',
+            title: 'Single Map',
             border: true
         }, {
             region: 'east',

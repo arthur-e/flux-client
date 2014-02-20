@@ -2,6 +2,7 @@ Ext.define('Flux.view.FormPanel', {
     extend: 'Ext.form.Panel',
     alias: 'widget.formpanel',
     requires: [
+        'Ext.data.ArrayStore',
         'Ext.form.FieldSet',
         'Ext.form.field.Checkbox',
         'Ext.form.field.ComboBox',

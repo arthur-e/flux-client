@@ -1,4 +1,5 @@
 Ext.require([
+    'Ext.data.ArrayStore',
     'Flux.field.EnumeratedSlider'
 ]);
 
@@ -21,7 +22,7 @@ Ext.define('Flux.Application', {
     ],
 
     controllers: [
-        // TODO: add controllers here
+        'MapController'
     ],
 
     stores: [

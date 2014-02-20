@@ -1,5 +1,5 @@
 Ext.define('Flux.view.D3Panel', {
-    extend: 'Ext.form.Panel',
+    extend: 'Ext.panel.Panel',
     alias: 'widget.d3panel',
     requires: [
         'Ext.Component',
@@ -16,15 +16,17 @@ Ext.define('Flux.view.D3Panel', {
         autoEl: {
             tag: 'div'
         },
-        listeners: {
-            boxready: function () {
-                this.up('panel').render(this);
-            }
-        }
+//        listeners: {
+//            boxready: function () {
+//                this.up('panel').on('boxready', function () {
+//                    this.fireEvent('ready');
+//                });
+//            }
+//        }
     },
 
     initComponent: function () {
-        this.addEvents('innerboxready');
+//        this.addEvents('ready');
         this.callParent(arguments);
     }
 

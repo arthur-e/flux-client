@@ -11,20 +11,19 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
     /**
         Main drawing function; defines and appends the SVG element.
-        @param  targetEl    {Ext.Component} The Component in whose body the visualization is to be rendered
      */
-    render: function (targetEl) {
+    render: function (projection, width, height) {
         foo = this;//FIXME
 
-        this.projection.scale(targetEl.getWidth())
-            .translate([targetEl.getWidth() * 0.5, targetEl.getHeight() * 0.5]);
+        projection.scale(width)
+            .translate([width * 0.5, height * 0.5]);
 
-        this.svg = d3.select('#d3content').append('svg')
-            .attr('width', targetEl.getWidth())
-            .attr('height', targetEl.getHeight());
+        this.svg = d3.select('#' + this.items.getAt(0).id).append('svg')
+            .attr('width', width)
+            .attr('height', height);
 
         this.path = d3.geo.path()
-            .projection(this.projection);
+            .projection(projection);
 
         this.panes = { // Organizes visualization features into "panes"
             basemap: this.svg.append('g').attr('class', 'pane')

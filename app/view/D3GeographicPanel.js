@@ -2,23 +2,38 @@ Ext.define('Flux.view.D3GeographicPanel', {
     extend: 'Flux.view.D3Panel',
     alias: 'widget.d3geopanel',
     requires: [
+        'Ext.Function'
     ],
 
     initComponent: function () {
-        this.projection = d3.geo.albersUsa();
         this.callParent(arguments);
+    },
+
+    /**
+        Configuration and state for the basemap(s).
+     */
+    basemap: {
+        isLoaded: false
     },
 
     /**
         Main drawing function; defines and appends the SVG element.
      */
     render: function (projection, width, height) {
+        var elementId = '#' + this.items.getAt(0).id;
+
         foo = this;//FIXME
 
+        // Remove any previously-rendered SVG elements
+        if (this.svg !== undefined) {
+            this.svg.remove()
+        }
+
+        // Set the map projection
         projection.scale(width)
             .translate([width * 0.5, height * 0.5]);
 
-        this.svg = d3.select('#' + this.items.getAt(0).id).append('svg')
+        this.svg = d3.select(elementId).append('svg')
             .attr('width', width)
             .attr('height', height);
 
@@ -38,14 +53,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
         @param  basemapUrl  {String}
      */
     updateBasemap: function (basemapUrl) {
-        var panes = this.panes;
-        var path = this.path;
-
-        panes.basemap.select('#basemap').remove()
-
-        // TODO Currently testing an implementation of http://bl.ocks.org/mbostock/2206590
-        d3.json(basemapUrl, function (error, json) {
-            var sel = panes.basemap.append('g')
+        var drawBasemap = Ext.Function.bind(function (json) {
+            var sel = this.panes.basemap.append('g')
                 .attr('id', 'basemap')
 
             sel.append('g')
@@ -53,15 +62,32 @@ Ext.define('Flux.view.D3GeographicPanel', {
                 .selectAll('path')
                 .data(topojson.feature(json, json.objects.basemap).features)
                 .enter().append('path')
-                .attr('d', path);
+                .attr('d', this.path);
 
             sel.append('path')
                 .datum(topojson.mesh(json, json.objects.basemap, function (a, b) {
                     return a !== b; // Inner boundaries
                 }))
                 .attr('class', 'political boundary')
-                .attr('d', path);
-        });
+                .attr('d', this.path);
+        }, this);
+
+        // Remove the old basemap, if one exists
+        this.panes.basemap.select('#basemap').remove()
+
+        // TODO Need to cache whether or not the basemap was loaded BEFORE
+        if (this.basemap.isLoaded && this.basemap.url === basemapUrl) {
+            drawBasemap(this.basemap.jsonData);
+        } else {
+            // Execute XMLHttpRequest for new basemap data
+            d3.json(basemapUrl, Ext.Function.bind(function (error, json) {
+                drawBasemap(json);
+                this.basemap.jsonData = json;
+            }, this));
+        }
+
+        this.basemap.isLoaded = true;
+        this.basemap.url = basemapUrl;
     }
 
 });

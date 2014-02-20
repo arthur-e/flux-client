@@ -15,19 +15,7 @@ Ext.define('Flux.view.D3Panel', {
         id: 'd3content',
         autoEl: {
             tag: 'div'
-        },
-//        listeners: {
-//            boxready: function () {
-//                this.up('panel').on('boxready', function () {
-//                    this.fireEvent('ready');
-//                });
-//            }
-//        }
-    },
-
-    initComponent: function () {
-//        this.addEvents('ready');
-        this.callParent(arguments);
+        }
     }
 
 });

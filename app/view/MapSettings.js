@@ -25,7 +25,7 @@ Ext.define('Flux.view.MapSettings', {
             afterrender: function () {
                 this.store.each(function (rec) {
                     var proj = rec.get('id');
-                    rec.set('projection', d3.geo[proj]);//.rotate([0, 0]).center([0, 0]));
+                    rec.set('projection', d3.geo[proj]);
                 });
             }
         }
@@ -33,7 +33,19 @@ Ext.define('Flux.view.MapSettings', {
     }, {
         xtype: 'combo',
         name: 'basemap',
-        fieldLabel: 'Basemap'
+        fieldLabel: 'Basemap',
+        queryMode: 'local',
+        valueField: 'id',
+        value: 'usa',
+        store: Ext.create('Ext.data.ArrayStore', {
+            storeId: 'basemaps',
+            fields: ['id', 'text', 'url'],
+            data: [
+                ['usa', 'U.S.A.', '/flux-client/political-usa.topo.json'],
+                ['northAmerica', 'North America', '/flux-client/political-north-america.topo.json'],
+                ['global', 'Global', '/flux-client/political.topo.json'],
+            ]
+        })
 
     }, {
         xtype: 'checkbox',

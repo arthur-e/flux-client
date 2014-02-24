@@ -12,14 +12,17 @@ Ext.define('Flux.view.D3GeographicPanel', {
     /**
         Configuration and state for the basemap(s).
      */
-    basemap: {
-        isLoaded: false
-    },
+    basemaps: {},
+
+    /**
+        The URL of the current (currently loaded) basemap.
+     */
+    basemapUrl: undefined,
 
     /**
         Main drawing function; defines and appends the SVG element.
      */
-    render: function (projection, width, height) {
+    render: function (proj, width, height) {
         var elementId = '#' + this.items.getAt(0).id;
 
         foo = this;//FIXME
@@ -29,30 +32,26 @@ Ext.define('Flux.view.D3GeographicPanel', {
             this.svg.remove()
         }
 
-        // Set the map projection
-        projection.scale(width)
-            .translate([width * 0.5, height * 0.5]);
-
         this.svg = d3.select(elementId).append('svg')
             .attr('width', width)
             .attr('height', height);
-
-        this.path = d3.geo.path()
-            .projection(projection);
 
         this.panes = { // Organizes visualization features into "panes"
             basemap: this.svg.append('g').attr('class', 'pane')
         };
 
-        this.updateBasemap('/flux-client/political-usa.topo.json');
+        this.setProjection(proj, width, height);
+
+        this.setBasemap('global', '/flux-client/political.topo.json');
 
     },
 
     /**
         Draws or redraws the basemap given the URL of a new TopoJSON file.
+        @param  basemap     {String}    Unique identifier (name) for the basemap
         @param  basemapUrl  {String}
      */
-    updateBasemap: function (basemapUrl) {
+    setBasemap: function (basemap, basemapUrl) {
         var drawBasemap = Ext.Function.bind(function (json) {
             var sel = this.panes.basemap.append('g')
                 .attr('id', 'basemap')
@@ -72,22 +71,37 @@ Ext.define('Flux.view.D3GeographicPanel', {
                 .attr('d', this.path);
         }, this);
 
+        console.log('setBasemap()');//FIXME
+
         // Remove the old basemap, if one exists
         this.panes.basemap.select('#basemap').remove()
 
-        // TODO Need to cache whether or not the basemap was loaded BEFORE
-        if (this.basemap.isLoaded && this.basemap.url === basemapUrl) {
-            drawBasemap(this.basemap.jsonData);
+        if (this.basemapUrl === basemapUrl) {
+            // If the requested basemap is already displayed, do nothing
+            return;
+
+        } else if (this.basemaps[basemap]) {
+            // If the requested basemap was loaded before, just re-draw it
+            drawBasemap(this.basemaps[basemap]);
+
         } else {
             // Execute XMLHttpRequest for new basemap data
             d3.json(basemapUrl, Ext.Function.bind(function (error, json) {
                 drawBasemap(json);
-                this.basemap.jsonData = json;
+                this.basemaps[basemap] = json;
             }, this));
         }
+    },
 
-        this.basemap.isLoaded = true;
-        this.basemap.url = basemapUrl;
+    /**
+        Given a new projection, the drawing path is updated.
+     */
+    setProjection: function (proj, width, height) {
+        proj.translate([width * 0.5, height * 0.5]);
+
+        this.path = d3.geo.path()
+            .projection(proj);
+
     }
 
 });

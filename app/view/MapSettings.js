@@ -8,27 +8,10 @@ Ext.define('Flux.view.MapSettings', {
         fieldLabel: 'Map projection',
         queryMode: 'local',
         valueField: 'id',
-        value: 'equirectangular',
         store: Ext.create('Ext.data.ArrayStore', {
             storeId: 'projections',
-            fields: ['id', 'text'],
-            data: [
-                ['equirectangular', 'Equirectangular (Plate Carrée)'],
-                ['hammer', 'Hammer (Equal-Area)'],
-                ['mercator', 'Mercator'],
-                ['miller', 'Miller'],
-                ['naturalEarth', 'Natural Earth'],
-                ['robinson', 'Robinson']
-            ]
-        }),
-        listeners: {
-            afterrender: function () {
-                this.store.each(function (rec) {
-                    var proj = rec.get('id');
-                    rec.set('projection', d3.geo[proj]);
-                });
-            }
-        }
+            fields: ['id', 'text', 'proj']
+        })
 
     }, {
         xtype: 'combo',
@@ -36,7 +19,7 @@ Ext.define('Flux.view.MapSettings', {
         fieldLabel: 'Basemap',
         queryMode: 'local',
         valueField: 'id',
-        value: 'usa',
+        value: 'global',
         store: Ext.create('Ext.data.ArrayStore', {
             storeId: 'basemaps',
             fields: ['id', 'text', 'url'],

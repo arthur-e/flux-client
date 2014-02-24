@@ -45,7 +45,7 @@ Ext.define('Flux.controller.MapController', {
             //['robinson', 'Robinson']
         ]);
 
-        projPicker.setValue('equirectangular');
+        projPicker.setValue('equirectangular'); // Initialize ComboBox displayed value
 
         // Set the map projection
         this.projection = d3.geo.equirectangular().scale(width * 0.15);
@@ -62,6 +62,7 @@ Ext.define('Flux.controller.MapController', {
         var query = Ext.ComponentQuery.query('d3geopanel');
         var rec = recs.pop();
 
+        // For every d3geopanel instance, update the basemap
         Ext.Array.each(query, function (cmp) {
             cmp.setBasemap(rec.get('id'), rec.get('url'));
         });
@@ -77,11 +78,10 @@ Ext.define('Flux.controller.MapController', {
         var query = Ext.ComponentQuery.query('d3geopanel');
         var rec = recs.pop();
 
+        // For every d3geopanel instance, update the projection
         Ext.Array.each(query, function (cmp) {
             cmp.setProjection(rec.get('proj'));
         });
-
-        this.handleBasemapChange(field, [rec]);
     }
     
 });

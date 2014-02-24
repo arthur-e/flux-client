@@ -25,8 +25,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
     render: function (proj, width, height) {
         var elementId = '#' + this.items.getAt(0).id;
 
-        foo = this;//FIXME
-
         // Remove any previously-rendered SVG elements
         if (this.svg !== undefined) {
             this.svg.remove()
@@ -40,7 +38,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
             basemap: this.svg.append('g').attr('class', 'pane')
         };
 
-        this.setProjection(proj, width, height);
+        this.setProjection(proj);
 
         this.setBasemap('global', '/flux-client/political.topo.json');
 
@@ -71,8 +69,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
                 .attr('d', this.path);
         }, this);
 
-        console.log('setBasemap()');//FIXME
-
         // Remove the old basemap, if one exists
         this.panes.basemap.select('#basemap').remove()
 
@@ -96,12 +92,15 @@ Ext.define('Flux.view.D3GeographicPanel', {
     /**
         Given a new projection, the drawing path is updated.
      */
-    setProjection: function (proj, width, height) {
-        proj.translate([width * 0.5, height * 0.5]);
+    setProjection: function (proj) {
+        proj.translate([this.svg.attr('width') * 0.5, this.svg.attr('height') * 0.5])
 
         this.path = d3.geo.path()
             .projection(proj);
 
+        // Update the data in every currently drawn path
+        this.svg.selectAll('path')
+            .attr('d', this.path);
     }
 
 });

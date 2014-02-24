@@ -16,6 +16,10 @@ Ext.define('Flux.view.D3Panel', {
         autoEl: {
             tag: 'div'
         }
+    },
+
+    bodyStyle: {
+        backgroundColor: '#ffffff'
     }
 
 });

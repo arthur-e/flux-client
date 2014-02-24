@@ -21,6 +21,9 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
     /**
         Main drawing function; defines and appends the SVG element.
+        @param  proj    {d3.geo.*}
+        @param  width   {Number}
+        @param  height  {Number}
      */
     render: function (proj, width, height) {
         var elementId = '#' + this.items.getAt(0).id;
@@ -34,12 +37,36 @@ Ext.define('Flux.view.D3GeographicPanel', {
             .attr('width', width)
             .attr('height', height);
 
-        this.panes = { // Organizes visualization features into "panes"
-            basemap: this.svg.append('g').attr('class', 'pane')
-        };
+        this.panes = {}; // Organizes visualization features into "panes"
+
+        // This container will apply zoom and pan transformations to the entire
+        //  content area
+        this.panes.wrapper = this.svg.append('g').attr('class', 'pane wrapper')
+            .call(d3.behavior.zoom()
+            .scaleExtent([1, 10])
+            .on('zoom', Ext.Function.bind(function () {
+                this.panes.wrapper.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+            }, this)));
+
+        // Add a background element to receive pointer events in otherwise
+        //  "empty" space
+        this.panes.wrapper.append('rect')
+            .attr({
+                'class': 'filler',
+                'width': width,
+                'height': height,
+                'fill': this.bodyStyle.backgroundColor,
+                'x': 0,
+                'y': 0
+            })
+            .style('pointer-events', 'all');
+
+        // Create panes in which to organize content at difference z-index
+        //  levels using painter's algorithm (first drawn on bottom; last drawn
+        //  is on top)
+        this.panes.basemap = this.panes.wrapper.append('g').attr('class', 'pane');
 
         this.setProjection(proj);
-
         this.setBasemap('global', '/flux-client/political.topo.json');
 
     },
@@ -91,9 +118,13 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
     /**
         Given a new projection, the drawing path is updated.
+        @param  proj    {d3.geo.*}
      */
     setProjection: function (proj) {
-        proj.translate([this.svg.attr('width') * 0.5, this.svg.attr('height') * 0.5])
+        proj.translate([
+            this.svg.attr('width') * 0.5,
+            this.svg.attr('height') * 0.5
+        ]);
 
         this.path = d3.geo.path()
             .projection(proj);

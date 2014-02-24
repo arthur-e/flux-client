@@ -68,7 +68,6 @@ Ext.define('Flux.controller.MapController', {
         });
     },
 
-
     /**
         Handles a change in the map projection.
         @param  field   {Ext.form.field.Combo}

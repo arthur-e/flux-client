@@ -19,11 +19,30 @@ Ext.define('Flux.view.D3GeographicPanel', {
      */
     basemapUrl: undefined,
 
+    lbar: [{
+        xtype: 'button',
+        scale: 'medium',
+        iconCls: 'icon-zoom-in',
+        tooltip: 'Zoom In',
+        handler: function () {
+            this.up('panel').setZoom(1);
+        }
+    }, {
+        xtype: 'button',
+        scale: 'medium',
+        iconCls: 'icon-zoom-out',
+        tooltip: 'Zoom Out',
+        handler: function () {
+            this.up('panel').setZoom(-1);
+        }
+    }],
+
     /**
         Main drawing function; defines and appends the SVG element.
         @param  proj    {d3.geo.*}
         @param  width   {Number}
         @param  height  {Number}
+        @return {Flux.view.D3GeographicPanel}
      */
     render: function (proj, width, height) {
         var elementId = '#' + this.items.getAt(0).id;
@@ -37,16 +56,18 @@ Ext.define('Flux.view.D3GeographicPanel', {
             .attr('width', width)
             .attr('height', height);
 
+        this.zoom = d3.behavior.zoom()
+            .scaleExtent([1, 10])
+            .on('zoom', Ext.Function.bind(function () {
+                this.panes.wrapper.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
+            }, this));
+
         this.panes = {}; // Organizes visualization features into "panes"
 
         // This container will apply zoom and pan transformations to the entire
         //  content area
         this.panes.wrapper = this.svg.append('g').attr('class', 'pane wrapper')
-            .call(d3.behavior.zoom()
-            .scaleExtent([1, 10])
-            .on('zoom', Ext.Function.bind(function () {
-                this.panes.wrapper.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
-            }, this)));
+            .call(this.zoom);
 
         // Add a background element to receive pointer events in otherwise
         //  "empty" space
@@ -75,6 +96,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         Draws or redraws the basemap given the URL of a new TopoJSON file.
         @param  basemap     {String}    Unique identifier (name) for the basemap
         @param  basemapUrl  {String}
+        @return {Flux.view.D3GeographicPanel}
      */
     setBasemap: function (basemap, basemapUrl) {
         var drawBasemap = Ext.Function.bind(function (json) {
@@ -121,6 +143,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
     /**
         Given a new projection, the drawing path is updated.
         @param  proj    {d3.geo.*}
+        @return {Flux.view.D3GeographicPanel}
      */
     setProjection: function (proj) {
         proj.translate([
@@ -134,6 +157,39 @@ Ext.define('Flux.view.D3GeographicPanel', {
         // Update the data in every currently drawn path
         this.svg.selectAll('path')
             .attr('d', this.path);
+
+        return this;
+    },
+
+    /**
+        Sets the zoom level using a custom transformation.
+        @param  incr    {Number}    The change in scale by which to zoom in (positive) or out (negative)
+        @return {Flux.view.D3GeographicPanel}
+     */
+    setZoom: function (incr) {
+        var xOffset, yOffset;
+
+        if (this._zoom === undefined) {
+            this._zoom = 1;
+        }
+
+        if (this._zoom + incr <= 0) {
+            return;
+        }
+
+        if (incr > 0) {
+            xOffset = (this.svg.attr('width') * this._zoom) * -0.5;
+            yOffset = (this.svg.attr('height') * this._zoom) * -0.5;
+            this._zoom += incr;
+        } else {
+            xOffset = 0;
+            yOffset = 0;
+            this._zoom = 1;
+        }
+
+        this.panes.wrapper.transition()
+        .duration(500)
+        .attr('transform', 'translate(' + String(xOffset) + ',' + String(yOffset) + ')scale(' + this._zoom + ')');
 
         return this;
     }

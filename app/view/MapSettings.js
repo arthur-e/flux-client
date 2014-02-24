@@ -2,6 +2,10 @@ Ext.define('Flux.view.MapSettings', {
     extend: 'Flux.view.FormPanel',
     alias: 'widget.mapsettings',
 
+    requires: [
+        'Ext.tip.ToolTip'
+    ],
+
     items: [{
         xtype: 'combo',
         name: 'projection',
@@ -19,16 +23,22 @@ Ext.define('Flux.view.MapSettings', {
         fieldLabel: 'Basemap',
         queryMode: 'local',
         valueField: 'id',
-        value: 'global',
         store: Ext.create('Ext.data.ArrayStore', {
             storeId: 'basemaps',
-            fields: ['id', 'text', 'url'],
-            data: [
-                ['usa', 'U.S.A.', '/flux-client/political-usa.topo.json'],
-                ['northAmerica', 'North America', '/flux-client/political-north-america.topo.json'],
-                ['global', 'Global', '/flux-client/political.topo.json'],
-            ]
-        })
+            fields: ['id', 'text', 'url']
+        }),
+        getRecord: function () {
+            return this.getStore().findRecord('id', this.getValue());
+        },
+        listeners: {
+            afterrender: function () {
+                Ext.create('Ext.tip.ToolTip', {
+                    target: this.getEl(),
+                    html: '<b>Note:</b> Changing basemaps will consume more memory and affects performance',
+                    showDelay: 0
+                });
+            }
+        }
 
     }, {
         xtype: 'checkbox',

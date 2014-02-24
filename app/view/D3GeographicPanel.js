@@ -45,7 +45,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
             .call(d3.behavior.zoom()
             .scaleExtent([1, 10])
             .on('zoom', Ext.Function.bind(function () {
-                this.panes.wrapper.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+                this.panes.wrapper.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
             }, this)));
 
         // Add a background element to receive pointer events in otherwise
@@ -67,8 +67,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
         this.panes.basemap = this.panes.wrapper.append('g').attr('class', 'pane');
 
         this.setProjection(proj);
-        this.setBasemap('global', '/flux-client/political.topo.json');
 
+        return this;
     },
 
     /**
@@ -114,6 +114,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
                 this.basemaps[basemap] = json;
             }, this));
         }
+
+        return this;
     },
 
     /**
@@ -132,6 +134,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
         // Update the data in every currently drawn path
         this.svg.selectAll('path')
             .attr('d', this.path);
+
+        return this;
     }
 
 });

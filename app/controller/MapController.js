@@ -6,7 +6,8 @@ Ext.define('Flux.controller.MapController', {
 
             // Draws the D3 element(s) when their container(s) are ready    
             'd3panel > component[autoEl]': {
-                boxready: this.initialize
+                boxready: this.initialize,
+                resize: this.handleResize
             },
 
             // Handles change in the basemap
@@ -35,6 +36,16 @@ Ext.define('Flux.controller.MapController', {
      */
     initialize: function (cmp, width, height) {
         var projPicker = Ext.ComponentQuery.query('mapsettings > combo[name=projection]').pop();
+        var basemapPicker = Ext.ComponentQuery.query('mapsettings > combo[name=basemap]').pop();
+
+        basemapPicker.getStore().add([
+            ['usa', 'U.S.A.', '/flux-client/political-usa.topo.json'],
+            ['northAmerica', 'North America', '/flux-client/political-north-america.topo.json'],
+            ['global', 'Global', '/flux-client/political.topo.json'],
+            ['globalSmall', 'Global (Small Scale)', '/flux-client/political-small.topo.json']
+        ]);
+
+        basemapPicker.setValue('globalSmall');
 
         projPicker.getStore().add([
             ['equirectangular', 'Equirectangular (Plate Carrée)', d3.geo.equirectangular().scale(width * 0.15)],
@@ -50,7 +61,9 @@ Ext.define('Flux.controller.MapController', {
         // Set the map projection
         this.projection = d3.geo.equirectangular().scale(width * 0.15);
 
-        cmp.up('panel').render(this.projection, width, height)
+        cmp.up('panel')
+            .render(this.projection, width, height)
+            .setBasemap('globalSmall', '/flux-client/political-small.topo.json');
     },
 
     /**
@@ -81,6 +94,30 @@ Ext.define('Flux.controller.MapController', {
         Ext.Array.each(query, function (cmp) {
             cmp.setProjection(rec.get('proj'));
         });
+
+        this.projection = rec.get('proj');
+    },
+
+    /**
+        Handles changes in the size of the D3 drawing area by replacing the
+        SVG element with a new instance.
+        @param  cmp         {Ext.Component}
+        @param  width       {Number}        The resized width
+        @param  height      {Number}        The resized height
+        @param  oldWidth    {Number}        The original width
+        @param  oldHeight   {Number}        The original height
+     */
+    handleResize: function (cmp, width, height, oldWidth, oldHeight) {
+        var basemap;
+        // oldWidth and oldHeight undefined when 'resize' event fires as part
+        //  of the initial layout; we want to avoid acting on this firing
+        if (oldWidth && oldHeight && width !== oldWidth && height !== oldHeight) {
+            basemap = Ext.ComponentQuery.query('mapsettings > combo[name=basemap]').pop().getRecord();
+
+            cmp.up('panel')
+                .render(this.projection, width, height)
+                .setBasemap(basemap.get('id'), basemap.get('url'));
+        }
     }
     
 });

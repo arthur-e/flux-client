@@ -28,7 +28,7 @@ Ext.define('Flux.view.FormPanel', {
     bodyPadding: '0 7px 0 7px',
 
     bodyStyle: {
-        backgroundColor: '#e5f1f9'
+        backgroundColor: '#eeeeee'
     },
 
     defaults: {

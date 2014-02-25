@@ -42,7 +42,7 @@ Ext.define('Flux.view.MapSettings', {
     }, {
         xtype: 'checkbox',
         cls: 'basemap-options',
-        inputValue: 'showBasemapOutlines',
+        name: 'showBasemapOutlines',
         boxLabel: 'Basemap outlines only',
         handler: function () {
             if (this.getValue()) {
@@ -54,19 +54,20 @@ Ext.define('Flux.view.MapSettings', {
 
     }, {
         xtype: 'checkbox',
-        itemId: 'show-political-boundaries',
         cls: 'basemap-options',
-        inputValue: 'showPoliticalBoundaries',
+        name: 'showPoliticalBoundaries',
         boxLabel: 'Show political boundaries',
         checked: true
 
     }, {
         xtype: 'checkbox',
-        boxLabel: 'Show legends'
+        boxLabel: 'Show legends',
+        name: 'showLegends'
 
     }, {
         xtype: 'checkbox',
-        boxLabel: 'Show line plot'
+        boxLabel: 'Show line plot',
+        name: 'showLinePlot'
 
     }]
 });

@@ -134,17 +134,19 @@ Ext.define('Flux.controller.MapController', {
         var basemap = Ext.ComponentQuery.query('mapsettings > combo[name=basemap]').pop().getRecord();
         var keyword;
 
-        switch (cb.getSubmitValue()) {
-            case 'showPoliticalBoundaries':
-            keyword = 'both';
-            break;
+        if (checked) {
+            switch (cb.getName()) {
+                case 'showPoliticalBoundaries':
+                keyword = 'both';
+                break;
 
-            case 'showBasemapOutlines':
-            keyword = 'outer';
-            break;
+                case 'showBasemapOutlines':
+                keyword = 'outer';
+                break;
+            }
 
-            default:
-            if (cb.up('mapsettings').down('#show-political-boundaries').getValue()) {
+        } else {
+            if (cb.up('mapsettings').down('checkbox[name=showPoliticalBoundaries]').getValue()) {
                 keyword = 'both';
             } else {
                 keyword = 'none';

@@ -18,6 +18,10 @@ Ext.define('Flux.controller.MapController', {
             // Handles change in the projection
             'mapsettings > combo[name=projection]': {
                 select: this.handleProjectionChange
+            },
+
+            'mapsettings > checkbox[cls=basemap-options]': {
+                change: this.toggleBasemapStyle
             }
 
         });
@@ -118,6 +122,39 @@ Ext.define('Flux.controller.MapController', {
                 .render(this.projection, width, height)
                 .setBasemap(basemap.get('id'), basemap.get('url'));
         }
+    },
+
+    /**
+        Changes the style of the basemap, toggling between two different choices
+        rendered as checkboxes in the MapSettings panel.
+        @param  cb      {Ext.form.field.Checkbox}
+        @param  checked {Boolean}
+     */
+    toggleBasemapStyle: function (cb, checked) {
+        var basemap = Ext.ComponentQuery.query('mapsettings > combo[name=basemap]').pop().getRecord();
+        var keyword;
+
+        switch (cb.getSubmitValue()) {
+            case 'showPoliticalBoundaries':
+            keyword = 'both';
+            break;
+
+            case 'showBasemapOutlines':
+            keyword = 'outer';
+            break;
+
+            default:
+            if (cb.up('mapsettings').down('#show-political-boundaries').getValue()) {
+                keyword = 'both';
+            } else {
+                keyword = 'none';
+            }
+        }
+
+        // For every d3geopanel instance, update the basemap
+        Ext.Array.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
+            cmp.setBasemap(basemap.get('id'), basemap.get('url'), keyword);
+        });
     }
     
 });

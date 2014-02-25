@@ -12,7 +12,9 @@ Ext.define('Flux.view.D3GeographicPanel', {
     /**
         Configuration and state for the basemap(s).
      */
-    basemaps: {},
+    basemaps: {
+        boundaries: 'both'
+    },
 
     /**
         The URL of the current (currently loaded) basemap.
@@ -94,34 +96,56 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
     /**
         Draws or redraws the basemap given the URL of a new TopoJSON file.
-        @param  basemap     {String}    Unique identifier (name) for the basemap
-        @param  basemapUrl  {String}
+        @param  basemap         {String}    Unique identifier (name) for the basemap
+        @param  basemapUrl      {String}
+        @param  drawBoundaries  {Boolean}
         @return {Flux.view.D3GeographicPanel}
      */
-    setBasemap: function (basemap, basemapUrl) {
+    setBasemap: function (basemap, basemapUrl, boundaries) {
         var drawBasemap = Ext.Function.bind(function (json) {
             var sel = this.panes.basemap.append('g')
                 .attr('id', 'basemap')
 
             sel.append('g')
-                .attr('class', 'political region')
+                .attr('class', (boundaries === 'outer') ? 'political empty' : 'political region')
                 .selectAll('path')
                 .data(topojson.feature(json, json.objects.basemap).features)
                 .enter().append('path')
                 .attr('d', this.path);
 
-            sel.append('path')
-                .datum(topojson.mesh(json, json.objects.basemap, function (a, b) {
-                    return a !== b; // Inner boundaries
-                }))
-                .attr('class', 'political boundary')
-                .attr('d', this.path);
+            if (boundaries === 'inner' || boundaries === 'both') {
+                sel.append('path')
+                    .datum(topojson.mesh(json, json.objects.basemap, function (a, b) {
+                        return a !== b; // Inner boundaries
+                    }))
+                    .attr('class', 'political boundary inside')
+                    .attr('d', this.path);
+            }
+
+            if (boundaries === 'outer' || boundaries === 'both') {
+                sel.append('path')
+                    .datum(topojson.mesh(json, json.objects.basemap, function (a, b) {
+                        return a === b; // Outer boundaries
+                    }))
+                    .attr('class', (function () {
+                        var c = 'political boundary ';
+                        if (boundaries === 'both') {
+                            return c + 'inside';
+                        }
+
+                        return c + 'outside';
+                    }()))
+                    .attr('d', this.path);
+            }
+
         }, this);
+
+        boundaries = boundaries || this.basemaps.boundaries;
 
         // Remove the old basemap, if one exists
         this.panes.basemap.select('#basemap').remove()
 
-        if (this.basemapUrl === basemapUrl) {
+        if (this.basemapUrl === basemapUrl && boundaries === this.basemaps.boundaries) {
             // If the requested basemap is already displayed, do nothing
             return;
 
@@ -135,6 +159,11 @@ Ext.define('Flux.view.D3GeographicPanel', {
                 drawBasemap(json);
                 this.basemaps[basemap] = json;
             }, this));
+        }
+
+        // Remember boundaries settings
+        if (boundaries !== undefined) {
+            this.basemaps.boundaries = boundaries;
         }
 
         return this;

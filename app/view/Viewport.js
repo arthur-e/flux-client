@@ -34,7 +34,8 @@ Ext.define('Flux.view.Viewport', {
             }, {
                 xtype: 'button',
                 iconCls: 'icon-control-play-gray',
-                text: 'Animate'
+                text: 'Animate',
+                enableToggle: true
             }, {
                 xtype: 'slider',
                 width: '10%',

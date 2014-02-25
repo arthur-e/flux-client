@@ -39,6 +39,26 @@ Ext.define('Flux.view.MapSettings', {
                 });
             }
         }
+    }, {
+        xtype: 'checkbox',
+        cls: 'basemap-options',
+        inputValue: 'showBasemapOutlines',
+        boxLabel: 'Basemap outlines only',
+        handler: function () {
+            if (this.getValue()) {
+                this.nextSibling().disable();
+            } else {
+                this.nextSibling().enable();
+            }
+        }
+
+    }, {
+        xtype: 'checkbox',
+        itemId: 'show-political-boundaries',
+        cls: 'basemap-options',
+        inputValue: 'showPoliticalBoundaries',
+        boxLabel: 'Show political boundaries',
+        checked: true
 
     }, {
         xtype: 'checkbox',

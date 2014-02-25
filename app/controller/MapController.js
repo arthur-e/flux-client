@@ -2,29 +2,32 @@ Ext.define('Flux.controller.MapController', {
     extend: 'Ext.app.Controller',
 
     init: function() {
+        // Create a new state Provider if one doesn't already exist
+        if (Ext.state.Manager.getProvider().path === undefined) {
+            Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
+        }
+
         this.control({
 
             // Draws the D3 element(s) when their container(s) are ready    
             'd3panel > component[autoEl]': {
                 boxready: this.initialize,
                 resize: this.handleResize
-            },
-
-            // Handles change in the basemap
-            'mapsettings > combo[name=basemap]': {
-                select: this.handleBasemapChange
-            },
-
-            // Handles change in the projection
-            'mapsettings > combo[name=projection]': {
-                select: this.handleProjectionChange
-            },
-
-            'mapsettings > checkbox[cls=basemap-options]': {
-                change: this.toggleBasemapStyle
             }
 
         });
+    },
+
+    /**
+        The default settings for map-related controls.
+     */
+    defaultState: {
+        basemap: 'globalSmall',
+        projection: 'equirectangular',
+        showBasemapOutlines: 'off',
+        showLegends: 'off',
+        showLinePlot: 'off',
+        showPoliticalBoundaries: 'on'
     },
 
     /**
@@ -39,8 +42,16 @@ Ext.define('Flux.controller.MapController', {
         @param  height  {Number}
      */
     initialize: function (cmp, width, height) {
-        var projPicker = Ext.ComponentQuery.query('mapsettings > combo[name=projection]').pop();
         var basemapPicker = Ext.ComponentQuery.query('mapsettings > combo[name=basemap]').pop();
+        var projPicker = Ext.ComponentQuery.query('mapsettings > combo[name=projection]').pop();
+        var state = {};
+
+        // Retrieve previous state, if any, or use default values
+        Ext.Object.each(this.defaultState, function (key, value) {
+            var result = Ext.state.Manager.get(key, value); // Second argument is default value
+            result = (typeof result === 'object') ? result.value : result;
+            state[key] = (result === undefined) ? value : result;
+        });
 
         basemapPicker.getStore().add([
             ['usa', 'U.S.A.', '/flux-client/political-usa.topo.json'],
@@ -48,8 +59,6 @@ Ext.define('Flux.controller.MapController', {
             ['global', 'Global', '/flux-client/political.topo.json'],
             ['globalSmall', 'Global (Small Scale)', '/flux-client/political-small.topo.json']
         ]);
-
-        basemapPicker.setValue('globalSmall');
 
         projPicker.getStore().add([
             ['equirectangular', 'Equirectangular (Plate Carrée)', d3.geo.equirectangular().scale(width * 0.15)],
@@ -60,14 +69,38 @@ Ext.define('Flux.controller.MapController', {
             //['robinson', 'Robinson']
         ]);
 
-        projPicker.setValue('equirectangular'); // Initialize ComboBox displayed value
+        // Initialize the the user interface
+        Ext.Object.each(state, function (key, value) {
+            var target = Ext.ComponentQuery.query('field[name=' + key + ']')[0];
+            if (target) {
+                console.log([key, value]);//FIXME
+                target.setValue(value);
+            }
+        });
+
+        // Add additional listeners to fields AFTER their values have been set
+        this.control({
+            // Handles change in the basemap
+            'mapsettings > combo[name=basemap]': {
+                select: this.handleBasemapChange
+            },
+
+            // Handles change in the projection
+            'mapsettings > combo[name=projection]': {
+                select: this.handleProjectionChange
+            },
+
+            'mapsettings > checkbox[cls=basemap-options]': {
+                change: this.toggleBasemapStyle
+            }
+        });
 
         // Set the map projection
-        this.projection = d3.geo.equirectangular().scale(width * 0.15);
+        this.projection = projPicker.getRecord().get('proj');
 
         cmp.up('panel')
             .render(this.projection, width, height)
-            .setBasemap('globalSmall', '/flux-client/political-small.topo.json');
+            .setBasemap(state.basemap, basemapPicker.getRecord().get('url'));
     },
 
     /**

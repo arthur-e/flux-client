@@ -5,10 +5,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
         'Ext.Function'
     ],
 
-    initComponent: function () {
-        this.callParent(arguments);
-    },
-
     /**
         Configuration and state for the basemap(s).
      */

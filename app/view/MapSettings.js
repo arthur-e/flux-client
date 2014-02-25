@@ -9,17 +9,24 @@ Ext.define('Flux.view.MapSettings', {
     items: [{
         xtype: 'combo',
         name: 'projection',
+        stateful: true,
+        stateId: 'projection',
         fieldLabel: 'Map projection',
         queryMode: 'local',
         valueField: 'id',
         store: Ext.create('Ext.data.ArrayStore', {
             storeId: 'projections',
             fields: ['id', 'text', 'proj']
-        })
+        }),
+        getRecord: function (id) {
+            return this.getStore().findRecord('id', id || this.getValue());
+        }
 
     }, {
         xtype: 'combo',
         name: 'basemap',
+        stateful: true,
+        stateId: 'basemap',
         fieldLabel: 'Basemap',
         queryMode: 'local',
         valueField: 'id',
@@ -27,8 +34,8 @@ Ext.define('Flux.view.MapSettings', {
             storeId: 'basemaps',
             fields: ['id', 'text', 'url']
         }),
-        getRecord: function () {
-            return this.getStore().findRecord('id', this.getValue());
+        getRecord: function (id) {
+            return this.getStore().findRecord('id', id || this.getValue());
         },
         listeners: {
             afterrender: function () {
@@ -43,6 +50,8 @@ Ext.define('Flux.view.MapSettings', {
         xtype: 'checkbox',
         cls: 'basemap-options',
         name: 'showBasemapOutlines',
+        stateful: true,
+        stateId: 'showBasemapOutlines',
         boxLabel: 'Basemap outlines only',
         handler: function () {
             if (this.getValue()) {
@@ -56,18 +65,23 @@ Ext.define('Flux.view.MapSettings', {
         xtype: 'checkbox',
         cls: 'basemap-options',
         name: 'showPoliticalBoundaries',
-        boxLabel: 'Show political boundaries',
-        checked: true
+        stateful: true,
+        stateId: 'showPoliticalBoundaries',
+        boxLabel: 'Show political boundaries'
 
     }, {
         xtype: 'checkbox',
         boxLabel: 'Show legends',
-        name: 'showLegends'
+        name: 'showLegends',
+        stateful: true,
+        stateId: 'showLegends'
 
     }, {
         xtype: 'checkbox',
         boxLabel: 'Show line plot',
-        name: 'showLinePlot'
+        name: 'showLinePlot',
+        stateful: true,
+        stateId: 'showLinePlot'
 
     }]
 });

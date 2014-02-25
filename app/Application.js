@@ -1,6 +1,9 @@
 Ext.require([
+    'Ext.Array',
     'Ext.data.ArrayStore',
-    'Flux.field.EnumeratedSlider'
+    'Ext.view.View',
+    'Ext.state.*',
+    'Flux.field.EnumeratedSlider',
 ]);
 
 Ext.define('Flux.Application', {

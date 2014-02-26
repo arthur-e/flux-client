@@ -2,9 +2,29 @@ Ext.define('Flux.controller.MapController', {
     extend: 'Ext.app.Controller',
 
     init: function () {
+        var params = window.location.href.split('?'); // Get the HTTP GET query parameters, if any
+
         // Create a new state Provider if one doesn't already exist
         if (Ext.state.Manager.getProvider().path === undefined) {
             Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
+        }
+
+        // If HTTP GET query parameters were specified, use them to set the
+        //  application state
+        if (params.length > 1) {
+            params = Ext.Object.fromQueryString(params.pop());
+
+            Ext.Object.each(params, function (key, value) {
+                // Replace "true" or "false" (String) with Boolean
+                if (value === 'true' || value === 'false') {
+                    params[key] = value = (value === 'true');
+                }
+
+                // IMPORTANT: Makes sure that applyState() recalls the correct state
+                Ext.state.Manager.set(key, {value: value})
+            });
+
+            Ext.Object.merge(this.defaultState, params);
         }
 
         this.control({

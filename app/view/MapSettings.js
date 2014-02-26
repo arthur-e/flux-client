@@ -47,22 +47,28 @@ Ext.define('Flux.view.MapSettings', {
             }
         }
     }, {
-        xtype: 'checkbox',
+        xtype: 'statefulcheckbox',
         cls: 'basemap-options',
         name: 'showBasemapOutlines',
         stateful: true,
         stateId: 'showBasemapOutlines',
         boxLabel: 'Basemap outlines only',
-        handler: function () {
-            if (this.getValue()) {
-                this.nextSibling().disable();
-            } else {
-                this.nextSibling().enable();
-            }
+        applyState: function (state) {
+            this.setValue(state && state.value);
+            // Need to enable/disable AFTER rendering, as when applyState()
+            //  is called this component is laid out with its siblings!
+            this.on('afterrender', function () {
+                var target = this.up('panel').down('checkbox[name=showPoliticalBoundaries]');
+                if (state && state.value) {
+                    target.disable();
+                } else {
+                    target.enable();
+                }
+            });
         }
 
     }, {
-        xtype: 'checkbox',
+        xtype: 'statefulcheckbox',
         cls: 'basemap-options',
         name: 'showPoliticalBoundaries',
         stateful: true,
@@ -70,14 +76,14 @@ Ext.define('Flux.view.MapSettings', {
         boxLabel: 'Show political boundaries'
 
     }, {
-        xtype: 'checkbox',
+        xtype: 'statefulcheckbox',
         boxLabel: 'Show legends',
         name: 'showLegends',
         stateful: true,
         stateId: 'showLegends'
 
     }, {
-        xtype: 'checkbox',
+        xtype: 'statefulcheckbox',
         boxLabel: 'Show line plot',
         name: 'showLinePlot',
         stateful: true,

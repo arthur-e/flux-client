@@ -17,10 +17,6 @@ Ext.application({
 
     launch: function () {
         // Overrides ///////////////////////////////////////////////////////////
-        Ext.override(Ext.form.field.Checkbox, {
-            stateEvents: ['change']
-        });
-
         Ext.override(Ext.form.field.ComboBox, {
             stateEvents: ['select']
         });

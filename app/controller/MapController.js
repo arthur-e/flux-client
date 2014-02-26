@@ -24,10 +24,10 @@ Ext.define('Flux.controller.MapController', {
     defaultState: {
         basemap: 'globalSmall',
         projection: 'equirectangular',
-        showBasemapOutlines: 'off',
-        showLegends: 'off',
-        showLinePlot: 'off',
-        showPoliticalBoundaries: 'on'
+        showBasemapOutlines: false,
+        showLegends: false,
+        showLinePlot: false,
+        showPoliticalBoundaries: true
     },
 
     /**
@@ -49,7 +49,6 @@ Ext.define('Flux.controller.MapController', {
         // Retrieve previous state, if any, or use default values
         Ext.Object.each(this.defaultState, function (key, value) {
             var result = Ext.state.Manager.get(key, value); // Second argument is default value
-            result = (typeof result === 'object') ? result.value : result;
             state[key] = (result === undefined) ? value : result;
         });
 
@@ -73,8 +72,7 @@ Ext.define('Flux.controller.MapController', {
         Ext.Object.each(state, function (key, value) {
             var target = Ext.ComponentQuery.query('field[name=' + key + ']')[0];
             if (target) {
-                console.log([key, value]);//FIXME
-                target.setValue(value);
+                target.applyState(value);
             }
         });
 
@@ -100,7 +98,16 @@ Ext.define('Flux.controller.MapController', {
 
         cmp.up('panel')
             .render(this.projection, width, height)
-            .setBasemap(state.basemap, basemapPicker.getRecord().get('url'));
+            .setBasemap(state.basemap, basemapPicker.getRecord().get('url'), (function () {
+                var kw = 'none';
+                if (state['showBasemapOutlines'].value) {
+                    kw = 'outer'
+                } else if (state['showPoliticalBoundaries'].value) {
+                    kw = 'both';
+                }
+
+                return kw;
+            }()));
     },
 
     /**
@@ -175,6 +182,8 @@ Ext.define('Flux.controller.MapController', {
 
                 case 'showBasemapOutlines':
                 keyword = 'outer';
+                // Disable the next field if showBasemapOutlines is checked
+                cb.up('panel').down('checkbox[name=showPoliticalBoundaries]').disable();
                 break;
             }
 
@@ -183,6 +192,11 @@ Ext.define('Flux.controller.MapController', {
                 keyword = 'both';
             } else {
                 keyword = 'none';
+            }
+
+            // Enable the next field if showBasemapOutlines is unchecked
+            if (cb.getName() === 'showBasemapOutlines') {
+                cb.up('panel').down('checkbox[name=showPoliticalBoundaries]').enable();
             }
         }
 

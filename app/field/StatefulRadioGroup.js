@@ -1,6 +1,6 @@
 Ext.define('Flux.field.StatefulRadioGroup', {
     extend: 'Ext.form.RadioGroup',
-    alias: 'widget.statefulradios',
+    alias: 'widget.reradiogroup',
     stateful: true,
     stateEvents: ['change'],
 

@@ -47,7 +47,7 @@ Ext.define('Flux.view.MapSettings', {
             }
         }
     }, {
-        xtype: 'statefulcb',
+        xtype: 'recheckbox',
         cls: 'basemap-options',
         name: 'showBasemapOutlines',
         stateId: 'showBasemapOutlines',
@@ -75,7 +75,7 @@ Ext.define('Flux.view.MapSettings', {
         }
 
     }, {
-        xtype: 'statefulcb',
+        xtype: 'recheckbox',
         cls: 'basemap-options',
         name: 'showPoliticalBoundaries',
         stateId: 'showPoliticalBoundaries',
@@ -83,13 +83,13 @@ Ext.define('Flux.view.MapSettings', {
         checked: true
 
     }, {
-        xtype: 'statefulcb',
+        xtype: 'recheckbox',
         name: 'showLegends',
         stateId: 'showLegends',
         boxLabel: 'Show legends'
 
     }, {
-        xtype: 'statefulcb',
+        xtype: 'recheckbox',
         name: 'showLinePlot',
         stateId: 'showLinePlot',
         boxLabel: 'Show line plot'

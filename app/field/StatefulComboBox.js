@@ -1,11 +1,11 @@
-Ext.define('Flux.field.StatefulCheckbox', {
-    extend: 'Ext.form.field.Checkbox',
-    alias: 'widget.recheckbox',
+Ext.define('Flux.field.StatefulComboBox', {
+    extend: 'Ext.form.field.ComboBox',
+    alias: 'widget.recombo',
     stateful: true,
-    stateEvents: ['change'],
-    inputValue: true,
+    stateEvents: ['select'],
 
     getState: function () {
+        console.log(this.getValue());//FIXME
         return {
             value: this.getValue()
         };
@@ -20,6 +20,19 @@ Ext.define('Flux.field.StatefulCheckbox', {
         //  downstream logic while handling these exceptions
         if (typeof this.propagateChange === 'function') {
             this.propagateChange(state.value);
+        }
+    },
+
+    listeners: {
+        afterrender: function () {
+            if (typeof this.propagateChange === 'function') {
+                this.propagateChange(this.getValue());
+            }
+        },
+        change: function (rg, sel) {
+            if (typeof this.propagateChange === 'function') {
+                this.propagateChange(sel);
+            }
         }
     }
 });

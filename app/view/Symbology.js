@@ -99,7 +99,7 @@ Ext.define('Flux.view.Symbology', {
     },
 
     items: [{
-        xtype: 'statefulradios',
+        xtype: 'reradiogroup',
         itemId: 'paletteType',
         stateId: 'paletteType',
         fieldLabel: 'Color palette type',
@@ -140,6 +140,8 @@ Ext.define('Flux.view.Symbology', {
         xtype: 'numberfield',
         name: 'segments',
         itemId: 'segments',
+        stateful: true,
+        stateId: 'segments',
         fieldLabel: 'Color bins',
         labelAlign: 'left',
         value: 9,
@@ -147,19 +149,25 @@ Ext.define('Flux.view.Symbology', {
         maxValue: 9,
         listeners: {
             change: function (rg, selection) {
+                if (this.up('form') === undefined) {
+                    return;
+                }
+
                 // Redraw palettes; re-populate the Palettes store
                 this.up('form').fireEvent('palettechange');
             }
         }
 
     }, {
-        xtype: 'combo',
+        xtype: 'recombo',
         name: 'palette',
         itemId: 'palette',
+        stateful: true,
+        stateId: 'palette',
         fieldLabel: 'Select palette',
         queryMode: 'local',
         displayField: 'name',
-        valueField: 'id',
+        valueField: 'name',
         tpl: Ext.create('Ext.XTemplate', [
             '<tpl for=".">',
                 '<div class="ui-palette-ramp x-boundlist-item" title="{name}">',
@@ -179,7 +187,7 @@ Ext.define('Flux.view.Symbology', {
             anchor: '100%'
         },
         items: [{
-            xtype: 'statefulcb',
+            xtype: 'recheckbox',
             name: 'autoscale',
             stateId: 'autoscale',
             boxLabel: 'Autoscale',

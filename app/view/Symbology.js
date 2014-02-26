@@ -174,25 +174,35 @@ Ext.define('Flux.view.Symbology', {
             anchor: '100%'
         },
         items: [{
-            xtype: 'checkbox',
+            xtype: 'statefulcb',
             name: 'autoscale',
+            stateId: 'autoscale',
             boxLabel: 'Autoscale',
-            checked: true,
+            propagateChange: function (nowChecked) {
+                var stddev, domain;
+
+                if (this.up('fieldset') === undefined) {
+                    return;
+                }
+
+                // Selectively enable fields based on checked condition
+                stddev = this.up('fieldset').query('numberfield')[0];
+                domain = this.up('fieldset').query('enumslider')[0];
+
+                if (nowChecked) {
+                    stddev.enable();
+                    domain.disable();
+                } else {
+                    stddev.disable();
+                    domain.enable();
+                }
+            },
             listeners: {
+                afterrender: function () {
+                    this.propagateChange(this.getValue());
+                },
                 change: function (cb, checked) {
-                    var stddev, domain;
-
-                    // Selectively enable fields based on checked condition
-                    stddev = this.up('fieldset').query('numberfield')[0];
-                    domain = this.up('fieldset').query('enumslider')[0];
-
-                    if (checked) {
-                        stddev.enable();
-                        domain.disable();
-                    } else {
-                        stddev.disable();
-                        domain.enable();
-                    }
+                    this.propagateChange(checked);
                 }
             }
         }, {

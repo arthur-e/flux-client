@@ -47,47 +47,52 @@ Ext.define('Flux.view.MapSettings', {
             }
         }
     }, {
-        xtype: 'statefulcheckbox',
+        xtype: 'statefulcb',
         cls: 'basemap-options',
         name: 'showBasemapOutlines',
-        stateful: true,
         stateId: 'showBasemapOutlines',
         boxLabel: 'Basemap outlines only',
-        applyState: function (state) {
-            this.setValue(state && state.value);
-            // Need to enable/disable AFTER rendering, as when applyState()
-            //  is called this component is laid out with its siblings!
-            this.on('afterrender', function () {
-                var target = this.up('panel').down('checkbox[name=showPoliticalBoundaries]');
-                if (state && state.value) {
-                    target.disable();
-                } else {
-                    target.enable();
-                }
-            });
+        propagateChange: function (nowChecked) {
+            var target;
+
+            if (this.up('panel') === undefined) {
+                return;
+            }
+
+            target = this.up('panel').down('checkbox[name=showPoliticalBoundaries]');
+            if (nowChecked) {
+                target.disable();
+            } else {
+                target.enable();
+            }
+        },
+        listeners: {
+            afterrender: function () {
+                // Need to enable/disable AFTER rendering, as when applyState()
+                //  is called this component is laid out with its siblings!
+                this.propagateChange(this.getValue());
+            }
         }
 
     }, {
-        xtype: 'statefulcheckbox',
+        xtype: 'statefulcb',
         cls: 'basemap-options',
         name: 'showPoliticalBoundaries',
-        stateful: true,
         stateId: 'showPoliticalBoundaries',
-        boxLabel: 'Show political boundaries'
+        boxLabel: 'Show political boundaries',
+        checked: true
 
     }, {
-        xtype: 'statefulcheckbox',
-        boxLabel: 'Show legends',
+        xtype: 'statefulcb',
         name: 'showLegends',
-        stateful: true,
-        stateId: 'showLegends'
+        stateId: 'showLegends',
+        boxLabel: 'Show legends'
 
     }, {
-        xtype: 'statefulcheckbox',
-        boxLabel: 'Show line plot',
+        xtype: 'statefulcb',
         name: 'showLinePlot',
-        stateful: true,
-        stateId: 'showLinePlot'
+        stateId: 'showLinePlot',
+        boxLabel: 'Show line plot'
 
     }]
 });

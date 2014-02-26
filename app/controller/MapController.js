@@ -1,7 +1,7 @@
 Ext.define('Flux.controller.MapController', {
     extend: 'Ext.app.Controller',
 
-    init: function() {
+    init: function () {
         // Create a new state Provider if one doesn't already exist
         if (Ext.state.Manager.getProvider().path === undefined) {
             Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
@@ -19,9 +19,13 @@ Ext.define('Flux.controller.MapController', {
     },
 
     /**
-        The default settings for map-related controls.
+        The default settings for map-related controls. These should match the
+        settings on the components (with these keys as their `name` or 
+        `stateId` attributes, which should be the same) i.e. the value of the
+        `value` or `checked` attributes.
      */
     defaultState: {
+        autoscale: true,
         basemap: 'globalSmall',
         projection: 'equirectangular',
         showBasemapOutlines: false,
@@ -68,9 +72,9 @@ Ext.define('Flux.controller.MapController', {
             //['robinson', 'Robinson']
         ]);
 
-        // Initialize the the user interface
+        // Initialize the the user interface for ComboBoxes
         Ext.Object.each(state, function (key, value) {
-            var target = Ext.ComponentQuery.query('field[name=' + key + ']')[0];
+            var target = Ext.ComponentQuery.query('combo[name=' + key + ']')[0];
             if (target) {
                 target.applyState(value);
             }

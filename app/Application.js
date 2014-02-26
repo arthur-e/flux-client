@@ -26,7 +26,8 @@ Ext.define('Flux.Application', {
     ],
 
     controllers: [
-        'MapController'
+        'MapController',
+        'UserExperience'
     ],
 
     stores: [

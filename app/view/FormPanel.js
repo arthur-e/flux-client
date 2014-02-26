@@ -15,7 +15,8 @@ Ext.define('Flux.view.FormPanel', {
         'Ext.slider.Multi',
         'Ext.XTemplate',
         'Flux.field.EnumeratedSlider',
-        'Flux.field.StatefulCheckbox'
+        'Flux.field.StatefulCheckbox',
+        'Flux.field.StatefulRadioGroup'
     ],
 
     layout: {

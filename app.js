@@ -21,6 +21,14 @@ Ext.application({
             stateEvents: ['select']
         });
 
+        Ext.override(Ext.form.RadioGroup, {
+            getState: function () {
+                return {
+                    value: this.getValue()
+                }
+            }
+        });
+
         // Initialization and Managers /////////////////////////////////////////
         if (Ext.state.Manager.getProvider().path === undefined) {
             Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));

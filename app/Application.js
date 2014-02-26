@@ -4,7 +4,8 @@ Ext.require([
     'Ext.view.View',
     'Ext.state.*',
     'Flux.field.EnumeratedSlider',
-    'Flux.field.StatefulCheckbox'
+    'Flux.field.StatefulCheckbox',
+    'Flux.field.StatefulRadioGroup'
 ]);
 
 Ext.define('Flux.Application', {

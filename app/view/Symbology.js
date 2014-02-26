@@ -99,8 +99,9 @@ Ext.define('Flux.view.Symbology', {
     },
 
     items: [{
-        xtype: 'radiogroup',
+        xtype: 'statefulradios',
         itemId: 'paletteType',
+        stateId: 'paletteType',
         fieldLabel: 'Color palette type',
         layout: 'vbox',
         items: [{
@@ -115,20 +116,24 @@ Ext.define('Flux.view.Symbology', {
             inputValue: 'diverging',
             id: 'diverging'
         }],
-        listeners: {
-            change: function (rg, selection) {
-                var segments = this.up('form').down('#segments');
+        propagateChange: function (sel) {
+            var segments;
 
-                // Update the maxValue limit of the segments NumberField
-                if (selection['paletteType'] === 'sequential') {
-                    segments.setMaxValue(9);
-                } else {
-                    segments.setMaxValue(11);
-                }
-
-                segments.reset();
-                this.up('form').fireEvent('palettechange');
+            if (this.up('form') === undefined) {
+                return;
             }
+
+            segments = this.up('form').down('#segments');
+
+            // Update the maxValue limit of the segments NumberField
+            if (sel['paletteType'] === 'sequential') {
+                segments.setMaxValue(9);
+            } else {
+                segments.setMaxValue(11);
+            }
+
+            segments.reset();
+            this.up('form').fireEvent('palettechange');
         }
 
     }, {

@@ -47,6 +47,8 @@ Ext.define('Flux.view.Viewport', {
             }, {
                 xtype: 'slider',
                 name: 'animationDelay',
+                stateful: true,
+                stateId: 'animationDelay',
                 width: '10%',
                 maxWidth: 200,
                 value: 1,
@@ -54,6 +56,15 @@ Ext.define('Flux.view.Viewport', {
                 maxValue: 5,
                 tipText: function (thumb) {
                     return '<b>Animation Speed: </b>' + String(thumb.slider.getValue()) + ' seconds';
+                },
+                stateEvents: ['dragend'],
+                applyState: function (state) {
+                    this.setValue(state.value);
+                },
+                getState: function () {
+                    return {
+                        value: this.getValue()
+                    }
                 }
             }]
         },

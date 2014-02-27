@@ -77,13 +77,51 @@ Ext.define('Flux.view.SourcesPanel', {
             anchor: '100%'
         },
         items: [{
-            xtype: 'combo',
-            name: 'interval',
-            fieldLabel: 'Grouping interval'
+            xtype: 'fieldcontainer',
+            layout: 'hbox',
+            fieldLabel: 'Grouping interval',
+            items: [{
+                xtype: 'numberfield',
+                name: 'intervals',
+                minValue: 1,
+                width: 50
+            }, {
+                xtype: 'splitter'
+            }, {
+                xtype: 'combo',
+                name: 'intervalGrouping',
+                valueField: 'id',
+                queryMode: 'local',
+                flex: 1,
+                store: Ext.create('Ext.data.ArrayStore', {
+                    storeId: 'groupingIntervals',
+                    fields: ['id', 'text'],
+                    data: [
+                        ['months', 'Months'],
+                        ['weeks', 'Weeks'],
+                        ['days', 'Days'],
+                        ['hours', 'Hours']
+                    ]
+                })
+            }]
         }, {
             xtype: 'combo',
             name: 'aggregate',
-            fieldLabel: 'Statistic'
+            fieldLabel: 'Statistic',
+            valueField: 'id',
+            queryMode: 'local',
+            store: Ext.create('Ext.data.ArrayStore', {
+                storeId: 'statistics',
+                fields: ['id', 'text'],
+                data: [
+                    ['positive', 'Total positive'],
+                    ['negative', 'Total negative'],
+                    ['net', 'Total net'],
+                    ['mean', 'Mean'],
+                    ['min', 'Minimum'],
+                    ['max', 'Maximum']
+                ]
+            }),
         }]
 
     }, {

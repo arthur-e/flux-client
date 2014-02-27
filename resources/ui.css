@@ -39,5 +39,8 @@
 .icon-zoom-out { background-image: url(magnifier_zoom_out.png) !important; }
 .icon-app-form-del { background-image: url(application_form_delete.png) !important; }
 
+/* Panels/Borders *************************************************************/
+.x-panel-default-outer-border-bl { border-bottom: 0 !important; }
+
 /* TabPanel *******************************************************************/
 .x-tab-default .x-tab-inner { font-size: 14px !important; }

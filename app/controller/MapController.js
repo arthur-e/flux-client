@@ -42,16 +42,12 @@ Ext.define('Flux.controller.MapController', {
         The default settings for map-related controls. These should match the
         settings on the components (with these keys as their `name` or 
         `stateId` attributes, which should be the same) i.e. the value of the
-        `value` or `checked` attributes.
+        `value` or `checked` attributes; currently this is ONLY needed for the
+        ComboBox instances in the MapSettings panel.
      */
     defaultState: {
-        autoscale: true,
-        basemap: 'globalSmall',
-        projection: 'equirectangular',
-        showBasemapOutlines: false,
-        showLegends: false,
-        showLinePlot: false,
-        showPoliticalBoundaries: true
+        basemap: { value: 'globalSmall' },
+        projection: { value: 'equirectangular' }
     },
 
     /**
@@ -124,10 +120,13 @@ Ext.define('Flux.controller.MapController', {
             .render(this.projection, width, height)
             .setBasemap(state.basemap, basemapPicker.getRecord().get('url'), (function () {
                 var kw = 'none';
-                if (state['showBasemapOutlines'].value) {
-                    kw = 'outer'
-                } else if (state['showPoliticalBoundaries'].value) {
-                    kw = 'both';
+                var basemapOutlines = Ext.ComponentQuery.query('mapsettings > checkbox[name=showBasemapOutlines]')[0].getValue();
+                var politicalBoundaries = Ext.ComponentQuery.query('mapsettings > checkbox[name=showPoliticalBoundaries]')[0].getValue();
+
+                if (basemapOutlines) {
+                    kw = 'outer';
+                } else {
+                    kw = (politicalBoundaries) ? 'both' : 'none';
                 }
 
                 return kw;

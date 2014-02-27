@@ -30,7 +30,14 @@ Ext.define('Flux.view.Viewport', {
                 text: 'Select Visualization'
             }, {
                 xtype: 'button',
-                text: 'Settings'
+                text: 'Settings',
+                menu: {
+                    showSeparator: false,
+                    items: [{
+                        text: 'Clear Local Settings',
+                        itemId: 'clear-local-state'
+                    }]
+                }
             }, {
                 xtype: 'button',
                 iconCls: 'icon-control-play-gray',

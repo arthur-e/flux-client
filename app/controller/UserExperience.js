@@ -2,6 +2,7 @@ Ext.define('Flux.controller.UserExperience', {
     extend: 'Ext.app.Controller',
 
     requires: [
+        'Ext.Array',
         'Ext.Object'
     ],
 
@@ -13,12 +14,37 @@ Ext.define('Flux.controller.UserExperience', {
 
         foo = this;//FIXME
         this.control({
+            '#clear-local-state': {
+                click: this.clearLocalState
+            }
         });
     },
 
     /**TODO
      */
     initialize: function () {
+    },
+
+    /**
+        Wipes out all state information stored on the client's web browser.
+     */
+    clearLocalState: function () {
+        Ext.Array.each(Ext.Object.getKeys(this.getUserSelections()), function (key) {
+            Ext.state.Manager.clear(key);
+        });
+    },
+
+    getFieldNames: function () {
+        var query = Ext.ComponentQuery.query('form');
+        var names = [];
+
+        Ext.Array.each(query, function (form) {
+            names.concat(Ext.Array.map(form.getFields(), function (field) {
+                return field.getName();
+            }));
+        });
+
+        return names;
     },
 
     /**

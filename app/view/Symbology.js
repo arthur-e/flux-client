@@ -191,6 +191,7 @@ Ext.define('Flux.view.Symbology', {
             name: 'autoscale',
             stateId: 'autoscale',
             boxLabel: 'Autoscale',
+            checked: true,
             propagateChange: function (nowChecked) {
                 var stddev, domain;
 

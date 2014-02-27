@@ -5,7 +5,6 @@ Ext.define('Flux.field.StatefulComboBox', {
     stateEvents: ['select'],
 
     getState: function () {
-        console.log(this.getValue());//FIXME
         return {
             value: this.getValue()
         };

@@ -17,85 +17,27 @@ Ext.define('Flux.view.D3GeographicPanel', {
      */
     basemapUrl: undefined,
 
-    lbar: [{
-        xtype: 'button',
-        cls: 'btn-zoom',
-        id: 'btn-zoom-in',
-        scale: 'medium',
-        iconCls: 'icon-zoom-in',
-        tooltip: 'Zoom In'
-    }, {
-        xtype: 'button',
-        cls: 'btn-zoom',
-        id: 'btn-zoom-out',
-        scale: 'medium',
-        iconCls: 'icon-zoom-out',
-        tooltip: 'Zoom Out'
-    }],
-
-    /**
-        Initializes the Zoom In/Zoom Out buttons.
-     */
-    initZoom: function () {
-        var svg = this.svg;
-        var zoom = this.zoom;
-        var target = this.panes.wrapper;
-
-        function zoomed () {
-            target.attr('transform',
-                'translate(' + zoom.translate() + ')' +
-                'scale(' + zoom.scale() + ')'
-            );
-        }
-
-        function interpolateZoom (translate, scale) {
-            var self = this;
-            return d3.transition().duration(350).tween('zoom', function () {
-                var iTranslate = d3.interpolate(zoom.translate(), translate),
-                    iScale = d3.interpolate(zoom.scale(), scale);
-                return function (t) {
-                    zoom.scale(iScale(t))
-                        .translate(iTranslate(t));
-                    zoomed();
-                };
-            });
-        }
-
-        function setZoom () {
-            var clicked = d3.event.target,
-                direction = 1,
-                factor = 0.5,
-                target_zoom = 1,
-                center = [
-                    svg.attr('width') * 0.5,
-                    svg.attr('height') * 0.5
-                ],
-                extent = zoom.scaleExtent(),
-                translate = zoom.translate(),
-                translate0 = [],
-                l = [],
-                view = {x: translate[0], y: translate[1], k: zoom.scale()};
-
-            d3.event.preventDefault();
-            direction = (this.id === 'btn-zoom-in') ? 1 : -1;
-            target_zoom = zoom.scale() * (1 + factor * direction);
-
-            if (target_zoom < extent[0] || target_zoom > extent[1]) { return false; }
-
-            translate0 = [
-                (center[0] - view.x) / view.k,
-                (center[1] - view.y) / view.k
-            ];
-            view.k = target_zoom;
-            l = [translate0[0] * view.k + view.x, translate0[1] * view.k + view.y];
-
-            view.x += center[0] - l[0];
-            view.y += center[1] - l[1];
-
-            interpolateZoom([view.x, view.y], view.k);
-        }
-
-        d3.selectAll('.btn-zoom').on('click', setZoom);
+    lbar: {
+        defaultType: 'button',
+        defaults: {
+            cls: 'btn-zoom',
+            scale: 'large',
+            height: 34,
+            width: 34
+        },
+        items: [{
+            id: 'btn-zoom-in',
+            iconCls: 'icon-zoom-in',
+            tooltip: 'Zoom In'
+        }, {
+            id: 'btn-zoom-out',
+            iconCls: 'icon-zoom-out',
+            tooltip: 'Zoom Out'
+        }, {
+            id: 'btn-zoom-way-out',
+            iconCls: 'icon-zoom-extend',
+            tooltip: 'Zoom to Layer'
+        }]
     },
 
     /**
@@ -150,7 +92,13 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
         this.setProjection(proj);
 
-        this.initZoom();//FIXME
+        // Initialize the Zoom In/Zoom Out buttons
+        d3.select('#btn-zoom-in').on('click',
+            Ext.Function.bind(this.setZoom, this, [1.3]));
+        d3.select('#btn-zoom-out').on('click',
+            Ext.Function.bind(this.setZoom, this, [0.7]));
+        d3.select('#btn-zoom-way-out').on('click',
+            Ext.Function.bind(this.setZoom, this, [0.1]));
 
         return this;
     },
@@ -254,6 +202,42 @@ Ext.define('Flux.view.D3GeographicPanel', {
             .attr('d', this.path);
 
         return this;
+    },
+
+    /**
+        Sets the zoom level by a specified factor; also accepts a specified
+        duration of time for the transition to the new zoom level.
+        @param  factor      {Number}
+        @param  duration    {Number}
+     */
+    setZoom: function (factor, duration) {
+        var scale = this.zoom.scale();
+        var extent = this.zoom.scaleExtent();
+        var newScale = scale * factor;
+        var t = this.zoom.translate();
+        var c = [
+            this.svg.attr('width') * 0.5,
+            this.svg.attr('height') * 0.5
+        ];
+
+        duration = duration || 500;
+        if (extent[0] <= newScale && newScale <= extent[1]) {
+            this.zoom.scale(newScale)
+                .translate([
+                    c[0] + (t[0] - c[0]) / scale * newScale, 
+                    c[1] + (t[1] - c[1]) / scale * newScale
+                ])
+                .event(this.panes.wrapper.transition().duration(duration));
+
+        } else {
+            this.zoom.scale(1)
+                .translate([
+                    c[0] + (t[0] - c[0]) / scale, 
+                    c[1] + (t[1] - c[1]) / scale
+                ])
+                .event(this.panes.wrapper.transition().duration(duration));
+
+        }
     }
 
 });

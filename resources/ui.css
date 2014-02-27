@@ -27,6 +27,9 @@
 .x-form-cb-label { font-size: 14px !important; }
 .x-fieldset-header-text { font-weight: bold !important; }
 
+/* Menus **********************************************************************/
+.x-menu-item-text { font-size: 14px !important; }
+
 /* Header *********************************************************************/
 .x-panel-header-text-container-default { font-size: 14px !important; }
 
@@ -34,6 +37,7 @@
 .icon-control-play-gray { background-image: url(bullet_arrow_right.png) !important; }
 .icon-zoom-in { background-image: url(magnifier_zoom_in.png) !important; }
 .icon-zoom-out { background-image: url(magnifier_zoom_out.png) !important; }
+.icon-app-form-del { background-image: url(application_form_delete.png) !important; }
 
 /* TabPanel *******************************************************************/
 .x-tab-default .x-tab-inner { font-size: 14px !important; }

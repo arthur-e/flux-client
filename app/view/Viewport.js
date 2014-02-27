@@ -35,7 +35,8 @@ Ext.define('Flux.view.Viewport', {
                     showSeparator: false,
                     items: [{
                         text: 'Clear Local Settings',
-                        itemId: 'clear-local-state'
+                        itemId: 'clear-local-state',
+                        iconCls: 'icon-app-form-del icon-medium'
                     }]
                 }
             }, {

@@ -118,7 +118,7 @@ Ext.define('Flux.controller.MapController', {
 
         cmp.up('panel')
             .render(this.projection, width, height)
-            .setBasemap(state.basemap, basemapPicker.getRecord().get('url'), (function () {
+            .setBasemap(state.basemap.value, basemapPicker.getRecord().get('url'), (function () {
                 var kw = 'none';
                 var basemapOutlines = Ext.ComponentQuery.query('mapsettings > checkbox[name=showBasemapOutlines]')[0].getValue();
                 var politicalBoundaries = Ext.ComponentQuery.query('mapsettings > checkbox[name=showPoliticalBoundaries]')[0].getValue();

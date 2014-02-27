@@ -138,6 +138,11 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
         boundaries = boundaries || this.basemaps.boundaries;
 
+        // Unwrap state objects
+        if (typeof basemap === 'object') {
+            basemap = basemap.value;
+        }
+
         // Remove the old basemap, if one exists
         this.panes.basemap.select('#basemap').remove()
 

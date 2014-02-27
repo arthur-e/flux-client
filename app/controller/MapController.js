@@ -131,6 +131,7 @@ Ext.define('Flux.controller.MapController', {
 
                 return kw;
             }()));
+
     },
 
     /**

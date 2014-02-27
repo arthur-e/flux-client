@@ -19,21 +19,84 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
     lbar: [{
         xtype: 'button',
+        cls: 'btn-zoom',
+        id: 'btn-zoom-in',
         scale: 'medium',
         iconCls: 'icon-zoom-in',
-        tooltip: 'Zoom In',
-        handler: function () {
-            this.up('panel').setZoom(1);
-        }
+        tooltip: 'Zoom In'
     }, {
         xtype: 'button',
+        cls: 'btn-zoom',
+        id: 'btn-zoom-out',
         scale: 'medium',
         iconCls: 'icon-zoom-out',
-        tooltip: 'Zoom Out',
-        handler: function () {
-            this.up('panel').setZoom(-1);
-        }
+        tooltip: 'Zoom Out'
     }],
+
+    /**
+        Initializes the Zoom In/Zoom Out buttons.
+     */
+    initZoom: function () {
+        var svg = this.svg;
+        var zoom = this.zoom;
+        var target = this.panes.wrapper;
+
+        function zoomed () {
+            target.attr('transform',
+                'translate(' + zoom.translate() + ')' +
+                'scale(' + zoom.scale() + ')'
+            );
+        }
+
+        function interpolateZoom (translate, scale) {
+            var self = this;
+            return d3.transition().duration(350).tween('zoom', function () {
+                var iTranslate = d3.interpolate(zoom.translate(), translate),
+                    iScale = d3.interpolate(zoom.scale(), scale);
+                return function (t) {
+                    zoom.scale(iScale(t))
+                        .translate(iTranslate(t));
+                    zoomed();
+                };
+            });
+        }
+
+        function setZoom () {
+            var clicked = d3.event.target,
+                direction = 1,
+                factor = 0.5,
+                target_zoom = 1,
+                center = [
+                    svg.attr('width') * 0.5,
+                    svg.attr('height') * 0.5
+                ],
+                extent = zoom.scaleExtent(),
+                translate = zoom.translate(),
+                translate0 = [],
+                l = [],
+                view = {x: translate[0], y: translate[1], k: zoom.scale()};
+
+            d3.event.preventDefault();
+            direction = (this.id === 'btn-zoom-in') ? 1 : -1;
+            target_zoom = zoom.scale() * (1 + factor * direction);
+
+            if (target_zoom < extent[0] || target_zoom > extent[1]) { return false; }
+
+            translate0 = [
+                (center[0] - view.x) / view.k,
+                (center[1] - view.y) / view.k
+            ];
+            view.k = target_zoom;
+            l = [translate0[0] * view.k + view.x, translate0[1] * view.k + view.y];
+
+            view.x += center[0] - l[0];
+            view.y += center[1] - l[1];
+
+            interpolateZoom([view.x, view.y], view.k);
+        }
+
+        d3.selectAll('.btn-zoom').on('click', setZoom);
+    },
 
     /**
         Main drawing function; defines and appends the SVG element.
@@ -86,6 +149,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
         this.panes.basemap = this.panes.wrapper.append('g').attr('class', 'pane');
 
         this.setProjection(proj);
+
+        this.initZoom();//FIXME
 
         return this;
     },
@@ -187,39 +252,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
         // Update the data in every currently drawn path
         this.svg.selectAll('path')
             .attr('d', this.path);
-
-        return this;
-    },
-
-    /**
-        Sets the zoom level using a custom transformation.
-        @param  incr    {Number}    The change in scale by which to zoom in (positive) or out (negative)
-        @return {Flux.view.D3GeographicPanel}
-     */
-    setZoom: function (incr) {
-        var xOffset, yOffset;
-
-        if (this._zoom === undefined) {
-            this._zoom = 1;
-        }
-
-        if (this._zoom + incr <= 0) {
-            return;
-        }
-
-        if (incr > 0) {
-            xOffset = (this.svg.attr('width') * this._zoom) * -0.5;
-            yOffset = (this.svg.attr('height') * this._zoom) * -0.5;
-            this._zoom += incr;
-        } else {
-            xOffset = 0;
-            yOffset = 0;
-            this._zoom = 1;
-        }
-
-        this.panes.wrapper.transition()
-        .duration(500)
-        .attr('transform', 'translate(' + String(xOffset) + ',' + String(yOffset) + ')scale(' + this._zoom + ')');
 
         return this;
     }

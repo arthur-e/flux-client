@@ -223,6 +223,8 @@ Ext.define('Flux.view.Symbology', {
             xtype: 'numberfield',
             name: 'sigmas',
             itemId: 'std-deviations',
+            stateful: true,
+            stateId: 'sigmas',
             width: 150,
             fieldLabel: 'Std. deviations',
             labelAlign: 'left',

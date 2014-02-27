@@ -46,6 +46,7 @@ Ext.define('Flux.view.Viewport', {
                 enableToggle: true
             }, {
                 xtype: 'slider',
+                name: 'animationDelay',
                 width: '10%',
                 maxWidth: 200,
                 value: 1,
@@ -60,6 +61,7 @@ Ext.define('Flux.view.Viewport', {
         items: [{
             region: 'west',
             xtype: 'sidepanel',
+            stateId: 'westSidePanel',
             title: 'Data Sources',
             border: true,
             width: '20%',
@@ -74,6 +76,7 @@ Ext.define('Flux.view.Viewport', {
         }, {
             region: 'east',
             xtype: 'sidepanel',
+            stateId: 'eastSidePanel',
             title: 'Plot Configuration',
             border: true,
             width: '20%',

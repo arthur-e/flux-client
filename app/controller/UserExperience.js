@@ -12,17 +12,11 @@ Ext.define('Flux.controller.UserExperience', {
             Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
         }
 
-        foo = this;//FIXME
         this.control({
             '#clear-local-state': {
                 click: this.clearLocalState
             }
         });
-    },
-
-    /**TODO
-     */
-    initialize: function () {
     },
 
     /**

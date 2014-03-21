@@ -7,7 +7,8 @@ Ext.require([
     'Ext.state.*',
     'Flux.field.EnumeratedSlider',
     'Flux.field.StatefulCheckbox',
-    'Flux.field.StatefulRadioGroup'
+    'Flux.field.StatefulRadioGroup',
+    'Flux.store.Scenarios'
 ]);
 
 Ext.define('Flux.Application', {
@@ -29,11 +30,14 @@ Ext.define('Flux.Application', {
     ],
 
     controllers: [
+        'FormInteraction',
         'MapController',
         'UserExperience'
     ],
 
     stores: [
-        'Palettes'
+        'Metadata',
+        'Palettes',
+        'Scenarios'
     ]
 });

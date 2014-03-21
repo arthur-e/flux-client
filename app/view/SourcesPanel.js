@@ -1,12 +1,33 @@
 Ext.define('Flux.view.SourcesPanel', {
     extend: 'Flux.view.FormPanel',
     alias: 'widget.sourcespanel',
+
+    /**
+        Replaces a TimeField with a new instance. Used to change the "increment"
+        property despite the lack of a "setIncrement()" method.
+        @param  cmp     {Ext.form.field.Time}
+        @param  index   {Number}    The position index in this container
+        @param  config  {Object}    New configuration options
+     */
+    updateTimeField: function (cmp, index, config) {
+        var newConfig = cmp.getInitialConfig();
+        Ext.Object.merge(newConfig, config);
+        this.remove(cmp);
+        this.insert(index, Ext.create('Ext.form.field.Time', config));
+    },
+
     items: [{
         xtype: 'combo',
         name: 'source',
         fieldLabel: 'Select dataset (e.g. model run) and date/time',
         emptyText: 'Select...',
         style: {maxWidth: '200px'},
+        queryMode: 'local',
+        displayField: 'name',
+        valueField: 'name',
+        store: Ext.create('Flux.store.Scenarios', {
+            storeId: 'scenarios'
+        }),
         listeners: {
             dirtychange: function () {
                 Ext.Array.each(this.up('form').query('field[name=date], field[name=time]'), function (cmp) {
@@ -20,7 +41,7 @@ Ext.define('Flux.view.SourcesPanel', {
         name: 'date',
         disabled: true,
         emptyText: 'Select date...',
-        dateFormat: 'Y-m-d'
+        format: 'Y-m-d'
 
     }, {
         xtype: 'timefield',

@@ -19,7 +19,9 @@ Ext.define('Flux.controller.FormInteraction', {
                 select: this.getMetadataForSource
             },
 
-            //'sourcespanel > field[name=date], field[name=time]'
+            'sourcespanel > field[name=date], field[name=time]': {
+                change: this.getSourceData
+            }
 
         });
     },
@@ -52,15 +54,15 @@ Ext.define('Flux.controller.FormInteraction', {
                     if (Ext.Array.every(meta.get('ranges'), function (rng) {
                         return (/^\d*[Dd]$/.test(rng)); // Some number of days...
                     })) {
-                        // Need to support multi-day ranges...
+                        // TODO Need to support multi-day ranges...
 
                     } else if (Ext.Array.every(meta.get('ranges'), function (rng) {
                         return (/^\d*[Mm]$/.test(rng)); // Some number of months...
                     })) {
-                        // Need to support multi-month ranges...
+                        // TODO Need to support multi-month ranges...
 
                     } else {
-                        // Provide some kind of generic date/time accessor...
+                        // TODO Provide some kind of generic date/time accessor...
                     }
 
                 } else { // Assume intervals are specified instead
@@ -68,9 +70,20 @@ Ext.define('Flux.controller.FormInteraction', {
                     this.initializeTimeFields(meta, panel);
 
                 }
+
+                // If any error/uncertainty data are available...
+                if (meta.get('uncertainty')) {
+                    // TODO Something about that...
+
+                } else {
+                    panel.down('checkbox[name=showUncertainty]').disable();
+                }
                 
             }, this)
         });
+    },
+
+    getSourceData: function (field, value) {
     },
 
     /**
@@ -113,7 +126,7 @@ Ext.define('Flux.controller.FormInteraction', {
                         emptyText: 'Select time...',
                         format: 'H:i',
                         increment: (Ext.Array.min(metadata.get('intervals')) / 60)
-                    };
+                    }; // Increment values are in minutes
                     var parent = cmp.ownerCt;
 
                     if (cmp.isXType('timefield')) {

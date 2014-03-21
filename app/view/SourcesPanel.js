@@ -49,8 +49,7 @@ Ext.define('Flux.view.SourcesPanel', {
         index: 2, // Index position within the container's items
         disabled: true,
         emptyText: 'Select time...',
-        format: 'H:i',
-        increment: 30 // 30-minute increments
+        format: 'H:i'
 
     }, {
         xtype: 'checkbox',

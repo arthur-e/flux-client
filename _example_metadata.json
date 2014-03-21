@@ -26,6 +26,10 @@
 		"units": "degrees",
 		"x": 0.5,
 		"y": 0.5
-	}
+	},
+    "uncertainty": {
+        "embedded": false,
+        "uri": "http://localhost/flux/api/casa_gfed_2004/uncertainty.json"
+    }
 }
 

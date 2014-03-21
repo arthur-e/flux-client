@@ -57,41 +57,77 @@ Ext.define('Flux.controller.FormInteraction', {
                     })) {
                         // Need to support multi-month ranges...
 
+                    } else {
+                        // Provide some kind of generic date/time accessor...
                     }
-                }
 
-                this.initializeDateFields(meta, panel);
-                this.initializeTimeFields(meta, panel);
+                } else { // Assume intervals are specified instead
+                    this.initializeDateFields(meta, panel);
+                    this.initializeTimeFields(meta, panel);
+
+                }
                 
             }, this)
         });
     },
 
     /**
+        Initializes the Ext.form.field.DateField instances contained by the
+        topNode provided (those that can be reached with topNode.down()).
+        @param  metadata    {Flux.model.Metadata}
+        @param  topNode     {Ext.Component}
      */
     initializeDateFields: function (metadata, topNode) {
-        // TODO Generalize this to disable the dates of the "Difference" date picker, too
         var dates = metadata.get('dates');
         var lastDate = Ext.Date.format(dates[dates.length - 1], 'Y-m-d');
-        var target = topNode.down('field[name=date]');
-        target.setDisabledDates(metadata.getInvalidDates());
-        target.setMaxValue(lastDate);
-        target.on('expand', function (f) {
-            f.setValue(lastDate);
-        });
-        target.on('focus', function (f) {
-            f.setValue(undefined);
+        var targets = topNode.down('datefield');
+
+        Ext.each(targets, function (target) {
+            target.setDisabledDates(metadata.getInvalidDates());
+            target.setMaxValue(lastDate);
+            target.on('expand', function (f) {
+                f.setValue(lastDate);
+            });
+            target.on('focus', function (f) {
+                f.setValue(undefined);
+            });
         });
     },
 
+    /**
+        Initializes the Ext.form.field.Time instances contained by the
+        topNode provided (those that can be reached with topNode.down()).
+        @param  metadata    {Flux.model.Metadata}
+        @param  topNode     {Ext.Component}
+     */
     initializeTimeFields: function (metadata, topNode) {
-        var target = topNode.down('field[name=time]');
-        if (target) {
-            topNode.updateTimeField(target, 2, {
-                name: 'time',
-                emptyText: 'Select time...',
-                format: 'H:i',
-                increment: (Ext.Array.min(metadata.get('intervals')) / 60)
+        var targets = topNode.down('timefield');
+        if (targets) {
+
+            // For every Ext.form.field.Time found...
+            Ext.each(targets, function (target) {
+                topNode.cascade(function (cmp) {
+                    var parent = cmp.ownerCt;
+
+                    if (cmp.isXType('timefield')) {
+                        if (parent === undefined) {
+                            parent = cmp.findParentBy(function (container) {
+                                return (container.isXType('sourcespanel') || container.isXType('fieldcontainer'));
+                            });
+                        }
+
+                        // Replace the old instance with a new one
+                        parent.remove(cmp);
+                        parent.insert(cmp.index, Ext.create('Ext.form.field.Time', {
+                            name: 'time',
+                            index: cmp.index,
+                            disabled: cmp.isDisabled(),
+                            emptyText: 'Select time...',
+                            format: 'H:i',
+                            increment: (Ext.Array.min(metadata.get('intervals')) / 60)
+                        }));
+                    }
+                });
             });
         }
     }

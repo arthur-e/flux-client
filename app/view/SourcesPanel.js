@@ -46,6 +46,7 @@ Ext.define('Flux.view.SourcesPanel', {
     }, {
         xtype: 'timefield',
         name: 'time',
+        index: 2, // Index position within the container's items
         disabled: true,
         emptyText: 'Select time...',
         format: 'H:i',
@@ -182,6 +183,7 @@ Ext.define('Flux.view.SourcesPanel', {
         }, {
             xtype: 'timefield',
             name: 'time2',
+            index: 3, // Index position within the container's items
             emptyText: 'Select time...',
             format: 'H:i',
             increment: 30,// 30-minute increments

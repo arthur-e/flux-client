@@ -17,7 +17,9 @@ Ext.define('Flux.controller.FormInteraction', {
 
             'sourcespanel combo[name=source]': {
                 select: this.getMetadataForSource
-            }
+            },
+
+            //'sourcespanel > field[name=date], field[name=time]'
 
         });
     },
@@ -107,25 +109,34 @@ Ext.define('Flux.controller.FormInteraction', {
             // For every Ext.form.field.Time found...
             Ext.each(targets, function (target) {
                 topNode.cascade(function (cmp) {
+                    var config = {
+                        emptyText: 'Select time...',
+                        format: 'H:i',
+                        increment: (Ext.Array.min(metadata.get('intervals')) / 60)
+                    };
                     var parent = cmp.ownerCt;
 
                     if (cmp.isXType('timefield')) {
                         if (parent === undefined) {
-                            parent = cmp.findParentBy(function (container) {
-                                return (container.isXType('sourcespanel') || container.isXType('fieldcontainer'));
+                            parent = cmp.findParentBy(function (container, cmp) {
+                                if (cmp.name === 'time') {
+                                    return container.isXType('sourcespanel');
+                                } else {
+                                    return container.isXType('fieldcontainer');
+                                }
                             });
                         }
 
-                        // Replace the old instance with a new one
-                        parent.remove(cmp);
-                        parent.insert(cmp.index, Ext.create('Ext.form.field.Time', {
-                            name: 'time',
-                            index: cmp.index,
+                        Ext.Object.merge(config, {
+                            name: cmp.name,
+                            index: Number(cmp.index),
                             disabled: cmp.isDisabled(),
-                            emptyText: 'Select time...',
-                            format: 'H:i',
-                            increment: (Ext.Array.min(metadata.get('intervals')) / 60)
-                        }));
+                        });
+
+                        // Replace the old instance with a new one
+                        parent.remove(config.index, true); // And destroy it!
+                        parent.insert(config.index,
+                            Ext.create('Ext.form.field.Time', config));
                     }
                 });
             });

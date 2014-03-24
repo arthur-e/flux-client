@@ -6,9 +6,12 @@ Ext.define('Flux.model.Metadata', {
     ],
 
     fields: [
-        'bboxmd5',
-        '_id', {
+        '_id',
+        'bboxmd5', {
 
+        name: 'bbox',
+        type: 'auto'
+    }, {
         name: 'dates',
         type: 'auto',
         convert: function (val) {
@@ -19,24 +22,22 @@ Ext.define('Flux.model.Metadata', {
             return dates;
         }
     }, {
-
-        name: 'stats',
-        type: 'auto'
-    }, {
-
         name: 'gridded',
         type: 'boolean'
     }, {
-
-        name: 'bbox',
-        type: 'auto'
-    }, {
-
-        name: 'intervals',
-        type: 'auto'
-    }, {
-
         name: 'gridres',
+        type: 'auto'
+    }, {
+        name: 'spans',
+        type: 'auto'
+    }, {
+        name: 'stats',
+        type: 'auto'
+    }, {
+        name: 'steps',
+        type: 'auto',
+    }, {
+        name: 'uncertainty',
         type: 'auto'
     }],
 
@@ -50,12 +51,12 @@ Ext.define('Flux.model.Metadata', {
             Ext.Date.format(dates[0], 'Y-m-d')
         ]; // Start with 1st date
 
-        Ext.each(this.get('intervals'), function (interval, i) {
+        Ext.each(this.get('steps'), function (step, i) {
             var d = dates[i];
 
             // Keep adding dates until the next breakpoint is reached
             while (d < dates[i + 1]) {
-                d = Ext.Date.add(d, Ext.Date.SECOND, interval);
+                d = Ext.Date.add(d, Ext.Date.SECOND, step);
                 datesArray.push(Ext.Date.format(d, 'Y-m-d'));
             }                
         });

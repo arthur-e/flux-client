@@ -2,7 +2,8 @@ Ext.define('Flux.controller.FormInteraction', {
     extend: 'Ext.app.Controller',
 
     requires: [
-        'Ext.Array'
+        'Ext.Array',
+        'Flux.store.Metadata'
     ],
 
     init: function () {
@@ -34,7 +35,7 @@ Ext.define('Flux.controller.FormInteraction', {
         propagates effects of the selection throughout the user interface
         including initializing the date selection fields (with disabled dates).
      */
-    getMetadataForSource: function (field, source) {
+    getMetadataForSource: function (field, sources) {
         var panel = field.up('panel');
         var store = Ext.StoreManager.get('metadata') || Ext.create('Flux.store.Metadata', {
             storeId: 'metadata'
@@ -43,29 +44,38 @@ Ext.define('Flux.controller.FormInteraction', {
         panel.getEl().mask('Loading...');
 
         store.load({
-            callback: Ext.Function.bind(function (recs) {
+            params: {
+                scenario: sources[0].get('_id')
+            },
+            callback: Ext.Function.bind(function (recs, op, success) {
                 var meta = recs.pop();
 
                 panel.getEl().unmask();
 
-                // If the data represent ranges of times, evaluate what kind of
+                // Guard against a fatal browser hang-up in Google Chrome that
+                //  occurs when the Model created doesn't have the right fields
+                if (!success || (!meta.raw.hasOwnProperty('spans') && !meta.raw.hasOwnProperty('steps'))) {
+                    return;
+                }
+
+                // If the data represent spans of times, evaluate what kind of
                 //  DateField is needed
-                if (meta.get('ranges') != undefined) {
-                    if (Ext.Array.every(meta.get('ranges'), function (rng) {
+                if (meta.get('spans')) {
+                    if (Ext.Array.every(meta.get('spans'), function (rng) {
                         return (/^\d*[Dd]$/.test(rng)); // Some number of days...
                     })) {
-                        // TODO Need to support multi-day ranges...
+                        // TODO Need to support multi-day spans...
 
-                    } else if (Ext.Array.every(meta.get('ranges'), function (rng) {
+                    } else if (Ext.Array.every(meta.get('spans'), function (rng) {
                         return (/^\d*[Mm]$/.test(rng)); // Some number of months...
                     })) {
-                        // TODO Need to support multi-month ranges...
+                        // TODO Need to support multi-month spans...
 
                     } else {
                         // TODO Provide some kind of generic date/time accessor...
                     }
 
-                } else { // Assume intervals are specified instead
+                } else { // Assume steps are specified instead
                     this.initializeDateFields(meta, panel);
                     this.initializeTimeFields(meta, panel);
 
@@ -125,7 +135,7 @@ Ext.define('Flux.controller.FormInteraction', {
                     var config = {
                         emptyText: 'Select time...',
                         format: 'H:i',
-                        increment: (Ext.Array.min(metadata.get('intervals')) / 60)
+                        increment: (Ext.Array.min(metadata.get('steps')) / 60)
                     }; // Increment values are in minutes
                     var parent = cmp.ownerCt;
 

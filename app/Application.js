@@ -1,9 +1,6 @@
 Ext.require([
-    'Ext.Array',
     'Ext.data.ArrayStore',
-    'Ext.menu.Menu',
-    'Ext.menu.Item',
-    'Ext.view.View',
+    'Ext.data.Request',
     'Ext.state.*',
     'Flux.field.EnumeratedSlider',
     'Flux.field.StatefulCheckbox',

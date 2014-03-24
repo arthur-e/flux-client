@@ -2,6 +2,17 @@ Ext.define('Flux.view.SourcesPanel', {
     extend: 'Flux.view.FormPanel',
     alias: 'widget.sourcespanel',
 
+    requires: [
+        'Ext.form.FieldContainer',
+        'Ext.form.FieldSet',
+        'Ext.form.field.Checkbox',
+        'Ext.form.field.ComboBox',
+        'Ext.form.field.Date',
+        'Ext.form.field.Time',
+        'Ext.form.RadioGroup',
+        'Flux.store.Scenarios'
+    ],
+
     /**
         Replaces a TimeField with a new instance. Used to change the "increment"
         property despite the lack of a "setIncrement()" method.
@@ -23,9 +34,10 @@ Ext.define('Flux.view.SourcesPanel', {
         emptyText: 'Select...',
         style: {maxWidth: '200px'},
         queryMode: 'local',
-        displayField: 'name',
-        valueField: 'name',
+        displayField: '_id',
+        valueField: '_id',
         store: Ext.create('Flux.store.Scenarios', {
+            autoLoad: true,
             storeId: 'scenarios'
         }),
         listeners: {

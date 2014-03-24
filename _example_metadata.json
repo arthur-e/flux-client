@@ -13,7 +13,7 @@
 	},
 	"gridded": true,
 	"bboxmd5": "6f3e33c145010bc74c5ccd3ba772f504",
-	"intervals": [
+	"steps": [
 		10800
 	],
 	"bbox": [

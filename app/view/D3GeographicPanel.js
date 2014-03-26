@@ -40,6 +40,44 @@ Ext.define('Flux.view.D3GeographicPanel', {
         }]
     },
 
+    /**TODO
+     */
+    draw: function (data, metadata) {
+        var gridres = metadata.get('gridres'); // Assumes grid spacing given in degrees
+        var proj = this.getProjection();
+        var cellWidth = Math.abs(proj([gridres.x, 0])[0] - proj([0, 0])[0]);
+        var cellHeight = Math.abs(proj([0, gridres.y])[1] - proj([0, 0])[1]);
+
+        console.log(cellWidth, cellHeight);//FIXME
+
+        // Append a <rect> for every grid cell
+        this.panes.wrapper.selectAll('.point')
+            .data(data)
+            .enter()
+            .append('rect')
+            .attr({
+                'x': function (d) {
+                    // We want to start drawing at the upper left (half the cell width, or half a degree)
+                    return proj(d.coordinates.map(function (i) {
+                        return (i - (gridres.x * 0.5)); // Subtract half the grid spacing from longitude (farther west)
+                    }))[0];
+                },
+
+                'y': function (d) {
+                    return proj(d.coordinates.map(function (i) {
+                        return (i + (gridres.y * 0.5)); // Add half the grid spacing from latitude (farther north)
+                    }))[1];
+                },
+
+                'width': cellWidth,
+
+                'height': cellHeight,
+
+                'class': 'point'
+
+            });
+    },
+
     /**
         Main drawing function; defines and appends the SVG element.
         @param  proj    {d3.geo.*}
@@ -184,6 +222,12 @@ Ext.define('Flux.view.D3GeographicPanel', {
     },
 
     /**
+     */
+    getProjection: function () {
+        return this._projection;
+    },
+
+    /**
         Given a new projection, the drawing path is updated.
         @param  proj    {d3.geo.*}
         @return {Flux.view.D3GeographicPanel}
@@ -200,6 +244,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
         // Update the data in every currently drawn path
         this.svg.selectAll('path')
             .attr('d', this.path);
+
+        this._projection = proj;
 
         return this;
     },

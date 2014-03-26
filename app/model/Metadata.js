@@ -5,6 +5,8 @@ Ext.define('Flux.model.Metadata', {
         'Ext.Date'
     ],
 
+    idProperty: '_id',
+
     fields: [
         '_id',
         'bboxmd5', {

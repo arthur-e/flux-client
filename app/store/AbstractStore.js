@@ -20,12 +20,19 @@ Ext.define('Flux.store.AbstractStore', {
         @param  ns      {String}
         @param  noCache {Boolean}
      */
-    setProxyNamespace: function (ns, noCache) {
+    setProxyNamespace: function (ns, noCache, config) {
         noCache = !(noCache === false);
-        this.setProxy(Ext.create('Ext.data.proxy.Rest', {
+        config = config || this.getProxy().getInitialConfig();
+
+        Ext.Object.merge(config, {
             url: Ext.String.format('/flux/api/scenarios/{0}/{1}', ns,
                 this.resource),
-            noCache: noCache
-        }));
+            noCache: noCache,
+            pageParam: undefined,
+            startParam: undefined,
+            limitParam: undefined
+        });
+
+        this.setProxy(Ext.create('Ext.data.proxy.Rest', config));
     }
 });

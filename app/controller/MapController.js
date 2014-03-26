@@ -27,6 +27,9 @@ Ext.define('Flux.controller.MapController', {
             Ext.Object.merge(this.defaultState, params);
         }
 
+        ////////////////////////////////////////////////////////////////////////
+        // Event Listeners /////////////////////////////////////////////////////
+
         this.control({
 
             // Draws the D3 element(s) when their container(s) are ready    
@@ -54,6 +57,9 @@ Ext.define('Flux.controller.MapController', {
         The spatial projection used (and shared) throughout the map visualizations.
      */
     projection: undefined,
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Event Handlers //////////////////////////////////////////////////////////
 
     /**
         Set the spatial projection and begin D3 rendering.

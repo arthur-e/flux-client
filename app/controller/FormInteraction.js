@@ -14,6 +14,7 @@ Ext.define('Flux.controller.FormInteraction', {
 
         ////////////////////////////////////////////////////////////////////////
         // Event Listeners /////////////////////////////////////////////////////
+
         this.control({
 
             'sourcespanel combo[name=source]': {
@@ -21,7 +22,7 @@ Ext.define('Flux.controller.FormInteraction', {
             },
 
             'sourcespanel > field[name=date], field[name=time]': {
-                change: this.getSourceData
+                change: this.loadSourceData
             }
 
         });
@@ -40,12 +41,13 @@ Ext.define('Flux.controller.FormInteraction', {
         var store = Ext.StoreManager.get('metadata') || Ext.create('Flux.store.Metadata', {
             storeId: 'metadata'
         });
+        var src = sources[0].get('_id');
 
         panel.getEl().mask('Loading...');
 
         store.load({
             params: {
-                scenario: sources[0].get('_id')
+                scenario: src
             },
             callback: Ext.Function.bind(function (recs, op, success) {
                 var meta = recs.pop();
@@ -90,10 +92,12 @@ Ext.define('Flux.controller.FormInteraction', {
                 }
                 
             }, this)
-        });
-    },
 
-    getSourceData: function (field, value) {
+        });
+
+        // Tell the dispatch to use this scenario name in all requests
+        this.getController('Dispatch').setRequestNamespace(src);
+
     },
 
     /**
@@ -164,7 +168,26 @@ Ext.define('Flux.controller.FormInteraction', {
                 });
             });
         }
-    }
+    },
+
+    /**TODO
+     */
+    loadSourceData: function (field, value, last) {
+        var values;
+
+        if (!value || value === last) {
+            return; // Ignore undefined, null, or unchanged values
+        }
+
+        values = field.up('panel').getForm().getValues();
+
+        if (values.date && values.time && values.date !== '' && values.time !== '') {
+            console.log(values);//FIXME
+            this.getController('Dispatch').loadMap({
+                time: Ext.String.format('{0}T{1}:00', values.date, values.time)
+            });
+        }
+    },
 
 });
 

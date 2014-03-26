@@ -27,12 +27,14 @@ Ext.define('Flux.Application', {
     ],
 
     controllers: [
+        'Dispatch',
         'FormInteraction',
         'MapController',
         'UserExperience'
     ],
 
     stores: [
+        'Grids',
         'Metadata',
         'Palettes',
         'Scenarios'

@@ -9,7 +9,10 @@ Ext.define('Flux.store.Metadata', {
     proxy: {
         type: 'rest',
         url: '/flux/api/scenarios.json',
-        noCache: false
+        noCache: false,
+        pageParam: undefined,
+        startParam: undefined,
+        limitParam: undefined
     },
     reader: {
         type: 'json',

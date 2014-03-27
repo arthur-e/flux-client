@@ -182,7 +182,6 @@ Ext.define('Flux.controller.FormInteraction', {
         values = field.up('panel').getForm().getValues();
 
         if (values.date && values.time && values.date !== '' && values.time !== '') {
-            console.log(values);//FIXME
             this.getController('Dispatch').loadMap({
                 time: Ext.String.format('{0}T{1}:00', values.date, values.time)
             });

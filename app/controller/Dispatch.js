@@ -22,8 +22,6 @@ Ext.define('Flux.controller.Dispatch', {
     /**
      */
     loadMap: function (params) {
-        console.log(params);//FIXME
-
         var meta = Ext.StoreManager.get('metadata').getById(this._namespaceId);
         var view = Ext.ComponentQuery.query('d3geopanel')[0];
 

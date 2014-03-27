@@ -166,7 +166,7 @@ Ext.define('Flux.controller.MapController', {
 
         // For every d3geopanel instance, update the projection
         Ext.Array.each(query, function (cmp) {
-            cmp.setProjection(rec.get('proj'));
+            cmp.setProjection(rec.get('proj')).update();
         });
 
         this.projection = rec.get('proj');
@@ -190,7 +190,8 @@ Ext.define('Flux.controller.MapController', {
 
             cmp.up('panel')
                 .render(this.projection, width, height)
-                .setBasemap(basemap.get('id'), basemap.get('url'));
+                .setBasemap(basemap.get('id'), basemap.get('url'))
+                .draw();
         }
     },
 

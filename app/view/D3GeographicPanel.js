@@ -40,42 +40,75 @@ Ext.define('Flux.view.D3GeographicPanel', {
         }]
     },
 
-    /**TODO
+    /**
+        Draws the visualization features on the map given input data and the
+        corresponding metadata.
+        @param  data        {Object}
+        @param  metadata    {Flux.model.Metadata}
+        @return {Flux.view.D3GeographicPanel}
      */
     draw: function (data, metadata) {
-        var gridres = metadata.get('gridres'); // Assumes grid spacing given in degrees
-        var proj = this.getProjection();
-        var cellWidth = Math.abs(proj([gridres.x, 0])[0] - proj([0, 0])[0]);
-        var cellHeight = Math.abs(proj([0, gridres.y])[1] - proj([0, 0])[1]);
+        // Retain references to last drawing data and metadata; for instance,
+        //  resize events require drawing again with the same (meta)data
+        if (data && metadata) {
+            this._data = data;
+            this._metadata = metadata;
+        }
 
-        console.log(cellWidth, cellHeight);//FIXME
+        this.panes.overlay = this.wrapper.append('g').attr('class', 'pane overlay')
 
         // Append a <rect> for every grid cell
-        this.panes.wrapper.selectAll('.point')
-            .data(data)
+        this.panes.overlay.selectAll('.point')
+            .data(this._data)
             .enter()
             .append('rect')
-            .attr({
-                'x': function (d) {
-                    // We want to start drawing at the upper left (half the cell width, or half a degree)
-                    return proj(d.coordinates.map(function (i) {
-                        return (i - (gridres.x * 0.5)); // Subtract half the grid spacing from longitude (farther west)
-                    }))[0];
-                },
+            .attr(this.getOverlayAttrs());
 
-                'y': function (d) {
-                    return proj(d.coordinates.map(function (i) {
-                        return (i + (gridres.y * 0.5)); // Add half the grid spacing from latitude (farther north)
-                    }))[1];
-                },
+        return this;
+    },
 
-                'width': cellWidth,
+    /**
+        Draws the visualization features on the map given input data and the
+        corresponding metadata.
+        @return {Object}
+     */
+    getOverlayAttrs: function () {
+        var gridres = this._metadata.get('gridres'); // Assumes grid spacing given in degrees
+        var proj = this.getProjection();
 
-                'height': cellHeight,
+        return {
+            'x': function (d) {
+                // We want to start drawing at the upper left (half the cell
+                //  width, or half a degree)
+                return proj(d.coordinates.map(function (i) {
+                    // Subtract half the grid spacing from longitude (farther west)
+                    return (i - (gridres.x * 0.5));
+                }))[0];
+            },
 
-                'class': 'point'
+            'y': function (d) {
+                return proj(d.coordinates.map(function (i) {
+                    // Add half the grid spacing from latitude (farther north)
+                    return (i + (gridres.y * 0.5));
+                }))[1];
+            },
 
-            });
+            'width': Math.abs(proj([gridres.x, 0])[0] - proj([0, 0])[0]),
+
+            'height': Math.abs(proj([0, gridres.y])[1] - proj([0, 0])[1]),
+
+            'class': 'point'
+
+        };
+
+    },
+
+    /**
+        Returns the current map projection.
+        @return {d3.geo.*}
+     */
+    getProjection: function () {
+        return this._projection;
     },
 
     /**
@@ -100,19 +133,19 @@ Ext.define('Flux.view.D3GeographicPanel', {
         this.zoom = d3.behavior.zoom()
             .scaleExtent([1, 10])
             .on('zoom', Ext.Function.bind(function () {
-                this.panes.wrapper.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
+                this.wrapper.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
             }, this));
 
         this.panes = {}; // Organizes visualization features into "panes"
 
         // This container will apply zoom and pan transformations to the entire
         //  content area
-        this.panes.wrapper = this.svg.append('g').attr('class', 'pane wrapper')
+        this.wrapper = this.svg.append('g').attr('class', 'wrapper')
             .call(this.zoom);
 
         // Add a background element to receive pointer events in otherwise
         //  "empty" space
-        this.panes.wrapper.append('rect')
+        this.wrapper.append('rect')
             .attr({
                 'class': 'filler',
                 'width': width,
@@ -126,7 +159,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         // Create panes in which to organize content at difference z-index
         //  levels using painter's algorithm (first drawn on bottom; last drawn
         //  is on top)
-        this.panes.basemap = this.panes.wrapper.append('g').attr('class', 'pane');
+        this.panes.basemap = this.wrapper.append('g').attr('class', 'pane');
 
         this.setProjection(proj);
 
@@ -222,12 +255,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
     },
 
     /**
-     */
-    getProjection: function () {
-        return this._projection;
-    },
-
-    /**
         Given a new projection, the drawing path is updated.
         @param  proj    {d3.geo.*}
         @return {Flux.view.D3GeographicPanel}
@@ -255,6 +282,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         duration of time for the transition to the new zoom level.
         @param  factor      {Number}
         @param  duration    {Number}
+        @return {Flux.view.D3GeographicPanel}
      */
     setZoom: function (factor, duration) {
         var scale = this.zoom.scale();
@@ -266,14 +294,14 @@ Ext.define('Flux.view.D3GeographicPanel', {
             this.svg.attr('height') * 0.5
         ];
 
-        duration = duration || 500;
+        duration = duration || 500; // Duration in milliseconds
         if (extent[0] <= newScale && newScale <= extent[1]) {
             this.zoom.scale(newScale)
                 .translate([
                     c[0] + (t[0] - c[0]) / scale * newScale, 
                     c[1] + (t[1] - c[1]) / scale * newScale
                 ])
-                .event(this.panes.wrapper.transition().duration(duration));
+                .event(this.wrapper.transition().duration(duration));
 
         } else {
             this.zoom.scale(1)
@@ -281,9 +309,25 @@ Ext.define('Flux.view.D3GeographicPanel', {
                     c[0] + (t[0] - c[0]) / scale, 
                     c[1] + (t[1] - c[1]) / scale
                 ])
-                .event(this.panes.wrapper.transition().duration(duration));
+                .event(this.wrapper.transition().duration(duration));
 
         }
+
+        return this;
+    },
+
+    /**
+        Draws again the visualization features of the map by updating their
+        SVG attributes.
+        @return {Flux.view.D3GeographicPanel}
+     */
+    update: function () {
+        if (this._metadata) {
+            this.panes.overlay.selectAll('.point').attr(this.getOverlayAttrs());
+        }
+        return this;
     }
 
 });
+
+

@@ -48,6 +48,9 @@ Ext.define('Flux.view.D3GeographicPanel', {
         @return {Flux.view.D3GeographicPanel}
      */
     draw: function (data, metadata) {
+        var bbox, c1, c2;
+        var proj = this.getProjection();
+
         // Retain references to last drawing data and metadata; for instance,
         //  resize events require drawing again with the same (meta)data
         if (data && metadata) {
@@ -63,6 +66,26 @@ Ext.define('Flux.view.D3GeographicPanel', {
             .enter()
             .append('rect')
             .attr(this.getOverlayAttrs());
+
+        if (this.zoom.scale() !== 1) {
+            return this; // Exit early if map is already zoomed
+        }
+
+        bbox = this._metadata.get('bbox');
+
+        // Calculate the center of the view
+        c1 = [
+            Number(this.svg.attr('width')) * 0.5,
+            Number(this.svg.attr('height')) * 0.5
+        ];
+
+        // Average the respective coordinate pairs in the bounds (xmin, ymin, xmax, ymax)
+        c2 = proj([(bbox[0] + bbox[2]) * 0.5, (bbox[1] + bbox[3]) * 0.5]);
+
+        this.zoom.translate([(c1[0] - c2[0]), (c1[1] - c2[1])])
+            .event(this.wrapper.transition().duration(500));
+
+        this.setZoom(2 * (this.svg.attr('width')) / proj([(bbox[2] - bbox[0]), 0])[0]);
 
         return this;
     },

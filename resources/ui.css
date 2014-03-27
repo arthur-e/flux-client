@@ -11,6 +11,10 @@
     margin: 8px 0;
 }
 .ui-palette-ramp { height: 32px; }
+.ui-menu-group-text {
+    position: relative !important;
+    left: -21px !important;
+}
 
 /* Buttons ********************************************************************/
 .x-btn-default-toolbar-small,
@@ -29,6 +33,19 @@
 
 /* Menus **********************************************************************/
 .x-menu-item-text { font-size: 14px !important; }
+.x-menu-item-icon { left: 5px !important; }
+.x-menu-item-checked .x-menu-group-icon,
+.x-menu-item-unchecked .x-menu-group-icon {
+    background-image: url(images/form/radio.png) !important;
+    width: 15px !important;
+    height: 15px !important;
+}
+.x-menu-item-unchecked .x-menu-group-icon {
+    background-position: 0 0;
+}
+.x-menu-item-checked .x-menu-group-icon {
+    background-position: 0 15px;
+}
 
 /* Header *********************************************************************/
 .x-panel-header-text-container-default { font-size: 14px !important; }

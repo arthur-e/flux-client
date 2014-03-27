@@ -3,6 +3,9 @@ Ext.define('Flux.view.Viewport', {
     requires: [
         'Ext.layout.container.Border',
         'Ext.layout.container.Fit',
+        'Ext.menu.Menu',
+        'Ext.menu.Item',
+        'Ext.menu.Separator',
         'Ext.panel.Panel',
         'Ext.slider.Single'
     ],
@@ -20,6 +23,7 @@ Ext.define('Flux.view.Viewport', {
 
         tbar: {
             xtype: 'toolbar',
+            itemId: 'top-toolbar',
             dock: 'top',
             border: false,
             defaults: {
@@ -32,11 +36,31 @@ Ext.define('Flux.view.Viewport', {
                 xtype: 'button',
                 text: 'Settings',
                 menu: {
+                    itemId: 'settings-menu',
                     showSeparator: false,
                     items: [{
                         text: 'Clear Local Settings',
                         itemId: 'clear-local-state',
                         iconCls: 'icon-app-form-del icon-medium'
+                    }, {
+                        xtype: 'menuseparator'
+                    }, {
+                        text: 'Measure of Central Tendency:',
+                        cls: 'ui-menu-group-text'
+                    }, {
+                        xtype: 'menucheckitem',
+                        name: 'tendency',
+                        stateful: true,
+                        stateId: 'tendencyMean',
+                        text: 'Mean',
+                        group: 'm'
+                    }, {
+                        xtype: 'menucheckitem',
+                        name: 'tendency',
+                        stateful: true,
+                        stateId: 'tendencyMedian',
+                        text: 'Median',
+                        group: 'm'
                     }]
                 }
             }, {

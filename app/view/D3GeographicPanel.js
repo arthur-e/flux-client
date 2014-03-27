@@ -48,7 +48,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         @return {Flux.view.D3GeographicPanel}
      */
     draw: function (data, metadata) {
-        var bbox, c1, c2;
+        var bbox, c1, c2, sel;
         var proj = this.getProjection();
 
         // Retain references to last drawing data and metadata; for instance,
@@ -61,11 +61,13 @@ Ext.define('Flux.view.D3GeographicPanel', {
         this.panes.overlay = this.wrapper.append('g').attr('class', 'pane overlay')
 
         // Append a <rect> for every grid cell
-        this.panes.overlay.selectAll('.point')
+        sel = this.panes.overlay.selectAll('.point')
             .data(this._data)
             .enter()
             .append('rect')
             .attr(this.getOverlayAttrs());
+
+        this.update(sel);
 
         if (this.zoom.scale() !== 1) {
             return this; // Exit early if map is already zoomed
@@ -341,13 +343,24 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
     /**
         Draws again the visualization features of the map by updating their
-        SVG attributes.
-        @return {Flux.view.D3GeographicPanel}
+        SVG attributes. Accepts optional D3 selection which it will style.
+        @param  selection   {d3.selection}
+        @return             {Flux.view.D3GeographicPanel}
      */
-    update: function () {
-        if (this._metadata) {
-            this.panes.overlay.selectAll('.point').attr(this.getOverlayAttrs());
+    update: function (selection) {
+        if (selection) {
+            selection.attr('fill', function (d) {
+                return '#0000ff';
+            });
+
+            return this;
         }
+
+        if (this._metadata) {
+            this.panes.overlay.selectAll('.point')
+            .attr(this.getOverlayAttrs());
+        }
+
         return this;
     }
 

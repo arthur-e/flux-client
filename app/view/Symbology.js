@@ -168,6 +168,7 @@ Ext.define('Flux.view.Symbology', {
         queryMode: 'local',
         displayField: 'name',
         valueField: 'name',
+        value: 'GnBu',
         tpl: Ext.create('Ext.XTemplate', [
             '<tpl for=".">',
                 '<div class="ui-palette-ramp x-boundlist-item" title="{name}">',

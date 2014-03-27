@@ -64,6 +64,21 @@ Ext.define('Flux.model.Metadata', {
         });
 
         return ["^(?!" + datesArray.join("|") + ").*$"];
+    },
+
+    getColorScale: function (colors) {
+        var breakpoints = [
+            (this._stats[this._state.tendency] - 
+                (this._state.sigmas * this._stats['std'])), // Lower bound
+            0, // Mid-value
+            (this._stats[this._state.tendency] + 
+                (this._state.sigmas * this._stats['std'])) // Upper bound
+        ];
+        var scale = d3.scale.quantile();
     }
 
 });
+
+
+
+

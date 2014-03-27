@@ -4,11 +4,11 @@ Ext.define('Flux.model.Geometry', {
     requires: [],
 
     fields: [{
-        'name': 'type',
-        'type': 'string'
+        name: 'type',
+        type: 'string'
     }, {
-        'coordinates',
-        'type': 'auto'
+        name: 'coordinates',
+        type: 'auto'
     }]
 
 });

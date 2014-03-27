@@ -21,8 +21,8 @@ Ext.define('Flux.controller.UserExperience', {
                 click: this.clearLocalState
             },
 
-            '#settings-menu menucheckitem[name=tendency]': {
-                checkchange: this.saveFieldState
+            '#settings-menu menucheckitem[name=mean], menucheckitem[name=median]': {
+                checkchange: this.handleTendencyChange
             },
 
             '#top-toolbar': {
@@ -96,21 +96,41 @@ Ext.define('Flux.controller.UserExperience', {
     },
 
     /**
+        If checked, update all hidden "tendency" fields with the measure of
+        central tendency chosen.
+        @param  cb      {Ext.menu.MenuCheckItem}
+        @param  checked {Boolean}
+     */
+    handleTendencyChange: function (cb, checked) {
+        if (checked) {
+            Ext.Array.each(Ext.ComponentQuery.query('form > hiddenfield[name=tendency]'), function (field) {
+                field.setValue(cb.name);
+            });
+        }
+
+        this.saveFieldState(cb, checked);
+    },
+
+    /**
         Applies saved state to global components and fields that cannot be
         applied, for various reasons (usually because they lack setters/getters,
         through their individual applyState() methods.
      */
     initGlobalState: function () {
-        Ext.each(Ext.ComponentQuery.query('#settings-menu menucheckitem[name=tendency]'),
+        Ext.each(Ext.ComponentQuery.query('#settings-menu menucheckitem'),
             Ext.Function.bind(function (it) {
-                it.setChecked(Ext.state.Manager.get(it.stateId,
-                    this.defaultState[it.stateId]));
+                if (it.stateId) {
+                    it.setChecked(Ext.state.Manager.get(it.stateId,
+                        this.defaultState[it.stateId]));
+                }
         }, this));
     },
 
     /**
         Saves state for a given field that cannot otherwise save its own state
         (usually because it lacks a setter/getter method).
+        @param  field   {Ext.form.Field}
+        @param  value   {Object|Number|String}
      */
     saveFieldState: function (field, value) {
         Ext.state.Manager.set(field.stateId, value);

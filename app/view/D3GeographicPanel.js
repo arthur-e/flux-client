@@ -62,11 +62,14 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
         // Append a <rect> for every grid cell
         sel = this.panes.overlay.selectAll('.point')
-            .data(this._data)
+            .data(this._data, function (d, i) {
+                return i; // Use the cell index as the key
+            })
             .enter()
             .append('rect')
             .attr(this.getOverlayAttrs());
 
+        // Applies the color scale to the current selection
         this.update(sel);
 
         if (this.zoom.scale() !== 1) {
@@ -92,29 +95,36 @@ Ext.define('Flux.view.D3GeographicPanel', {
         return this;
     },
 
+    /**TODO
+     */
+    getGridGeometry: function () {
+        return this._grid;
+    },
+
     /**
         Draws the visualization features on the map given input data and the
         corresponding metadata.
         @return {Object}
      */
     getOverlayAttrs: function () {
+        var grid = this.getGridGeometry();
         var gridres = this._metadata.get('gridres'); // Assumes grid spacing given in degrees
         var proj = this.getProjection();
 
         return {
-            'x': function (d) {
+            'x': function (d, i) {
                 // We want to start drawing at the upper left (half the cell
                 //  width, or half a degree)
-                return proj(d.coordinates.map(function (i) {
+                return proj(grid[i].map(function (j) {
                     // Subtract half the grid spacing from longitude (farther west)
-                    return (i - (gridres.x * 0.5));
+                    return (j - (gridres.x * 0.5));
                 }))[0];
             },
 
-            'y': function (d) {
-                return proj(d.coordinates.map(function (i) {
+            'y': function (d, i) {
+                return proj(grid[i].map(function (j) {
                     // Add half the grid spacing from latitude (farther north)
-                    return (i + (gridres.y * 0.5));
+                    return (j + (gridres.y * 0.5));
                 }))[1];
             },
 
@@ -134,6 +144,14 @@ Ext.define('Flux.view.D3GeographicPanel', {
      */
     getProjection: function () {
         return this._projection;
+    },
+
+    /**
+        Returns the current map scale.
+        @return {d3.scale.*}
+     */
+    getScale: function () {
+        return this._scale;
     },
 
     /**
@@ -279,6 +297,13 @@ Ext.define('Flux.view.D3GeographicPanel', {
         return this;
     },
 
+    /**TODO
+     */
+    setGridGeometry: function (geom) {
+        this._grid = geom.get('coordinates');
+        return this;
+    },
+
     /**
         Given a new projection, the drawing path is updated.
         @param  proj    {d3.geo.*}
@@ -299,6 +324,19 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
         this._projection = proj;
 
+        return this;
+    },
+
+    /**
+        Sets the color scale used by the map.
+        @param  scale   {d3.scale.*}
+        @return {Flux.view.D3GeographicPanel}
+     */
+    setScale: function (scale) {
+        this._scale = scale;
+        if (this.panes.overlay) {
+            this.update(this.panes.overlay.selectAll('.point'), scale);
+        }
         return this;
     },
 
@@ -345,13 +383,15 @@ Ext.define('Flux.view.D3GeographicPanel', {
         Draws again the visualization features of the map by updating their
         SVG attributes. Accepts optional D3 selection which it will style.
         @param  selection   {d3.selection}
+        @param  scale       {d3.scale.*}
         @return             {Flux.view.D3GeographicPanel}
      */
-    update: function (selection) {
+    update: function (selection, scale) {
         if (selection) {
-            selection.attr('fill', function (d) {
-                return '#0000ff';
-            });
+            selection.attr('fill', Ext.Function.bind(function (d) {
+                //FIXME The scale returns an Array of colors
+                return this.getScale()((!d) ? undefined : d.v);
+            }, this));
 
             return this;
         }

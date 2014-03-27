@@ -49,14 +49,14 @@ Ext.define('Flux.view.Viewport', {
                         cls: 'ui-menu-group-text'
                     }, {
                         xtype: 'menucheckitem',
-                        name: 'tendency',
+                        name: 'mean',
                         stateful: true,
                         stateId: 'tendencyMean',
                         text: 'Mean',
                         group: 'm'
                     }, {
                         xtype: 'menucheckitem',
-                        name: 'tendency',
+                        name: 'median',
                         stateful: true,
                         stateId: 'tendencyMedian',
                         text: 'Median',

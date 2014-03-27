@@ -7,6 +7,7 @@ Ext.define('Flux.view.FormPanel', {
         'Ext.form.field.Checkbox',
         'Ext.form.field.ComboBox',
         'Ext.form.field.Date',
+        'Ext.form.field.Hidden',
         'Ext.form.field.Radio',
         'Ext.form.field.Number',
         'Ext.form.field.Time',

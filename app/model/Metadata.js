@@ -66,15 +66,17 @@ Ext.define('Flux.model.Metadata', {
         return ["^(?!" + datesArray.join("|") + ").*$"];
     },
 
-    getColorScale: function (colors) {
-        var breakpoints = [
-            (this._stats[this._state.tendency] - 
-                (this._state.sigmas * this._stats['std'])), // Lower bound
-            0, // Mid-value
-            (this._stats[this._state.tendency] + 
-                (this._state.sigmas * this._stats['std'])) // Upper bound
-        ];
-        var scale = d3.scale.quantile();
+    /**
+     */
+    getColorScale: function (colors, sigmas, tendency) {
+        sigmas = sigmas || 2;
+        tendency = tendency || 'mean';
+
+        return d3.scale.quantile().domain([
+            (this.get(tendency) - (sigmas * this.get('std'))), // Lower bound
+            0,                                                 // Mid-value
+            (this.get(tendency) + (sigmas * this.get('std'))), // Upper bound
+        ]).range(colors);
     }
 
 });

@@ -27,7 +27,8 @@ Ext.define('Flux.view.Symbology', {
         // Whenever the form changes with respect to the palette choice; either
         //  the number of segments or palette type; (re-)populate the Palettes
         palettechange: function () {
-            var palettes = this.down('combo[name=palette]').getStore();
+            var combo = this.down('combo[name=palette]');
+            var palettes = combo.getStore();
             var type = this.down('#paletteType').getValue()['paletteType'];
             var segments = this.down('#segments').getValue();
 
@@ -64,6 +65,8 @@ Ext.define('Flux.view.Symbology', {
 
                 });
 
+                combo.setValue('GnBu');
+
             } else {
                 // Create all possible diverging palettes
                 Ext.Array.each([
@@ -94,11 +97,16 @@ Ext.define('Flux.view.Symbology', {
 
                 });
 
+                combo.setValue('BrBG');
+
             }
         }
     },
 
     items: [{
+        xtype: 'hiddenfield',
+        name: 'tendency'
+    }, {
         xtype: 'reradiogroup',
         itemId: 'paletteType',
         stateId: 'paletteType',
@@ -168,7 +176,6 @@ Ext.define('Flux.view.Symbology', {
         queryMode: 'local',
         displayField: 'name',
         valueField: 'name',
-        value: 'GnBu',
         tpl: Ext.create('Ext.XTemplate', [
             '<tpl for=".">',
                 '<div class="ui-palette-ramp x-boundlist-item" title="{name}">',

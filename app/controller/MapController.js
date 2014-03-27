@@ -102,6 +102,9 @@ Ext.define('Flux.controller.MapController', {
             }
         });
 
+        ////////////////////////////////////////////////////////////////////////
+        // Event Listeners /////////////////////////////////////////////////////
+
         // Add additional listeners to fields AFTER their values have been set
         this.control({
             // Handles change in the basemap
@@ -116,6 +119,10 @@ Ext.define('Flux.controller.MapController', {
 
             'mapsettings > checkbox[cls=basemap-options]': {
                 change: this.toggleBasemapStyle
+            },
+
+            'symbology > combo[name=palette]': {
+                change: this.handlePaletteChange
             }
         });
 
@@ -146,13 +153,34 @@ Ext.define('Flux.controller.MapController', {
         @param  recs    {Array}
      */
     handleBasemapChange: function (field, recs) {
-        var query = Ext.ComponentQuery.query('d3geopanel');
-        var rec = recs.pop();
+        var rec = recs[0];
 
         // For every d3geopanel instance, update the basemap
-        Ext.Array.each(query, function (cmp) {
+        Ext.Array.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
             cmp.setBasemap(rec.get('id'), rec.get('url'));
         });
+    },
+
+    /**TODO
+     */
+    handlePaletteChange: function (field, recs) {
+        var config = field.ownerCt.getForm().getValues();
+        var metadata;
+        var palettes = Ext.StoreManager.get('palettes');
+
+        if (recs) {
+            metadata = recs[0];
+        } else {
+            metadata = Ext.StoreManager.get('metadata').data.items[0];
+        }
+
+        if (config.autoscale) {
+            Ext.Array.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
+                cmp.setScale(metadata.getColorScale(palettes.collect('colors'),
+                    config.sigmas, config.tendency));
+            });
+        }
+
     },
 
     /**
@@ -161,11 +189,10 @@ Ext.define('Flux.controller.MapController', {
         @param  recs    {Array}
      */
     handleProjectionChange: function (field, recs) {
-        var query = Ext.ComponentQuery.query('d3geopanel');
-        var rec = recs.pop();
+        var rec = recs[0];
 
         // For every d3geopanel instance, update the projection
-        Ext.Array.each(query, function (cmp) {
+        Ext.Array.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
             cmp.setProjection(rec.get('proj')).update();
         });
 

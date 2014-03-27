@@ -1,10 +1,16 @@
-Ext.define('Flux.controller.FormInteraction', {
+Ext.define('Flux.controller.UserInteraction', {
     extend: 'Ext.app.Controller',
 
     requires: [
         'Ext.Array',
+        'Flux.model.Geometry',
         'Flux.store.Metadata'
     ],
+
+    refs: [{
+        ref: 'paletteField',
+        selector: 'symbology > combo[name=palette]'
+    }],
 
     init: function () {
         // Create a new state Provider if one doesn't already exist
@@ -18,7 +24,7 @@ Ext.define('Flux.controller.FormInteraction', {
         this.control({
 
             'sourcespanel combo[name=source]': {
-                select: this.getMetadataForSource
+                select: this.handleSourceChange
             },
 
             'sourcespanel > field[name=date], field[name=time]': {
@@ -36,7 +42,7 @@ Ext.define('Flux.controller.FormInteraction', {
         propagates effects of the selection throughout the user interface
         including initializing the date selection fields (with disabled dates).
      */
-    getMetadataForSource: function (field, sources) {
+    handleSourceChange: function (field, sources) {
         var panel = field.up('panel');
         var store = Ext.StoreManager.get('metadata') || Ext.create('Flux.store.Metadata', {
             storeId: 'metadata'
@@ -52,7 +58,19 @@ Ext.define('Flux.controller.FormInteraction', {
             callback: Ext.Function.bind(function (recs, op, success) {
                 var meta = recs.pop();
 
-                panel.getEl().unmask();
+                Ext.Ajax.request({
+                    url: Ext.String.format('/flux/api/scenarios/{0}/geometry.json', src),
+                    callback: function () {
+                        panel.getEl().unmask();
+                    },
+                    success: function (response) {
+                        var geom = Ext.create('Flux.model.Geometry',
+                            Ext.JSON.decode(response.responseText));
+                        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (p) {
+                            p.setGridGeometry(geom);
+                        });
+                    }
+                });
 
                 // Guard against a fatal browser hang-up in Google Chrome that
                 //  occurs when the Model created doesn't have the right fields
@@ -90,6 +108,11 @@ Ext.define('Flux.controller.FormInteraction', {
                 } else {
                     panel.down('checkbox[name=showUncertainty]').disable();
                 }
+
+                // Pretend the color palette just changed so as to acquire a scale
+                this.getPaletteField().fireEventArgs('change', [
+                    this.getPaletteField()
+                ]);
                 
             }, this)
 

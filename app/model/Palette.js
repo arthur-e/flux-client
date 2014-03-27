@@ -1,6 +1,8 @@
 Ext.define('Flux.model.Palette', {
     extend: 'Ext.data.Model',
 
+    idProperty: 'name',
+
     fields: [
         'name',
         'type',

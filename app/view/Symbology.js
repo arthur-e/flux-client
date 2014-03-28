@@ -29,17 +29,24 @@ Ext.define('Flux.view.Symbology', {
         palettechange: function () {
             var combo = this.down('combo[name=palette]');
             var palettes = combo.getStore();
+            var paletteNames;
             var type = this.down('#paletteType').getValue()['paletteType'];
             var segments = this.down('#segments').getValue();
+            var selection = combo.getValue();
 
             palettes.removeAll();
+
+            this._lastPaletteType = type;
+            this._lastSegments = segments;
             
             if (type === 'sequential') {
-                // Create all possible sequential palettes
-                Ext.Array.each([
+                paletteNames = [
                     'BuGn', 'BuPu', 'GnBu', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'RdPu',
                     'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd'
-                ], function (name) {
+                ];
+
+                // Create all possible sequential palettes
+                Ext.Array.each(paletteNames, function (name) {
                     var scale = chroma.scale(name).domain([
                         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
                     ], (segments), 'quantiles').out('hex');
@@ -65,13 +72,13 @@ Ext.define('Flux.view.Symbology', {
 
                 });
 
-                combo.setValue('GnBu');
-
             } else {
-                // Create all possible diverging palettes
-                Ext.Array.each([
+                paletteNames = [
                     'BrBG', 'PiYG', 'PRGn', 'PuOr', 'RdBu', 'RdGy', 'RdYlBu'
-                ], function (name) {
+                ];
+
+                // Create all possible diverging palettes
+                Ext.Array.each(paletteNames, function (name) {
                     var scale = chroma.scale(name).domain([
                         -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
                     ], (segments), 'quantiles').out('hex');
@@ -96,9 +103,12 @@ Ext.define('Flux.view.Symbology', {
                     }));
 
                 });
+            }
 
-                combo.setValue('BrBG');
-
+            if (selection && Ext.Array.contains(paletteNames, selection)) {
+                combo.setValue(selection);
+            } else {
+                combo.setValue(combo.getStore().getAt(0).get('name'));
             }
         }
     },

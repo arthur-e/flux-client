@@ -17,6 +17,12 @@ Ext.define('Flux.view.D3GeographicPanel', {
      */
     basemapUrl: undefined,
 
+    /**
+        The scale used for coloring map elements.
+        @private
+     */
+    _scale: d3.scale.quantile(),
+
     lbar: {
         defaultType: 'button',
         defaults: {

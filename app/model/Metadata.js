@@ -68,16 +68,22 @@ Ext.define('Flux.model.Metadata', {
 
     /**
      */
-    getQuantileScale: function (sigmas, tendency) {
+    getQuantileScale: function (config) {
         var stats = this.get('stats');
-        sigmas = sigmas || 2;
-        tendency = tendency || 'mean';
-
-        return d3.scale.quantile().domain([
+        var sigmas = config.sigmas || 2;
+        var tendency = config.tendency || 'mean';
+        var domain = [
             (stats[tendency] - (sigmas * stats.std)), // Lower bound
-            0,                                        // Mid-value
             (stats[tendency] + (sigmas * stats.std)), // Upper bound
-        ]);
+        ]
+
+        if (config.paletteType === 'diverging') {
+            // Diverging scales are symmetric about the measure of central tendency
+            domain.splice(1, 0, stats[tendency]);
+        }
+
+        return d3.scale.quantile().domain(domain);
+
     }
 
 });

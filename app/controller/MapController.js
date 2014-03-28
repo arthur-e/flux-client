@@ -179,7 +179,9 @@ Ext.define('Flux.controller.MapController', {
     onPaletteChange: function (c, recs) {
         Ext.Array.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
             // For every d3geopanel instance, update the scale's output range
-            cmp.setScale(cmp.getScale().range(recs[0].get('colors')));
+            if (cmp.getScale()) {
+                cmp.setScale(cmp.getScale().range(recs[0].get('colors')));
+            }
         });
     },
 
@@ -271,7 +273,7 @@ Ext.define('Flux.controller.MapController', {
         opts = Ext.Object.merge(opts, config);
 
         if (opts.autoscale) {
-            scale = metadata.getQuantileScale(opts.sigmas, opts.tendency);
+            scale = metadata.getQuantileScale(opts);
         }
 
         // Get the color palette

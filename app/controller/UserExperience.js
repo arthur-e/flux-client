@@ -122,7 +122,7 @@ Ext.define('Flux.controller.UserExperience', {
                     it.setChecked(Ext.state.Manager.get(it.stateId,
                         this.defaultState[it.stateId]));
 
-                    it.on('checkchange', this.onTendencyChange);//TODO Verify this works
+                    it.on('checkchange', this.onTendencyChange, this);
                 }
         }, this));
     },

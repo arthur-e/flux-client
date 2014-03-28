@@ -33,20 +33,24 @@ Ext.define('Flux.controller.Dispatch', {
 
     /**TODO ???
      */
-    loadMap: function (params) {
+    loadMap: function (params, maskTarget) {
         var meta = this.getStore('metadata').getById(this._namespaceId);
 
-        this.getViewport().getEl().mask('Loading...');
+        if (maskTarget) {
+            maskTarget.getEl().mask('Loading...');
+        }
 
         Ext.StoreManager.get('grids').load({
             params: params,
-            callback: Ext.Function.bind(function (recs) {
-                this.getViewport().getEl().unmask();
+            callback: function (recs) {
+                if (maskTarget) {
+                    maskTarget.getEl().unmask();
+                }
 
                 Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
                     view.draw(recs[0].get('features'), meta);
                 });
-            }, this)
+            }
         });
 
     },

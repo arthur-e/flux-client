@@ -5,24 +5,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
         'Ext.Function'
     ],
 
-    /**
-        Configuration and state for the basemap(s).
-     */
-    basemaps: {
-        boundaries: 'both'
-    },
-
-    /**
-        The URL of the current (currently loaded) basemap.
-     */
-    basemapUrl: undefined,
-
-    /**
-        The scale used for coloring map elements.
-        @private
-     */
-    _scale: d3.scale.quantile(),
-
     lbar: {
         defaultType: 'button',
         defaults: {
@@ -44,6 +26,32 @@ Ext.define('Flux.view.D3GeographicPanel', {
             iconCls: 'icon-zoom-extend',
             tooltip: 'Zoom to Layer'
         }]
+    },
+
+    /**
+        Configuration and state for the basemap(s).
+     */
+    basemaps: {
+        boundaries: 'both'
+    },
+
+    /**
+        The URL of the current (currently loaded) basemap.
+     */
+    basemapUrl: undefined,
+
+    /**
+        The scale used for coloring map elements.
+        @private
+     */
+    _scale: d3.scale.quantile(),
+
+    /**
+        Initializes the component.
+     */
+    initComponent: function () {
+        this.addEvents(['scalechange']);//TODO
+        this.callParent(arguments);
     },
 
     /**
@@ -345,9 +353,13 @@ Ext.define('Flux.view.D3GeographicPanel', {
      */
     setScale: function (scale) {
         this._scale = scale;
+
         if (this.panes.overlay) {
             this.update(this.panes.overlay.selectAll('.point'));
         }
+
+        this.fireEvent('scalechange');
+
         return this;
     },
 

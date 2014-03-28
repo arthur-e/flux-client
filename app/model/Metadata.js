@@ -77,10 +77,14 @@ Ext.define('Flux.model.Metadata', {
         var stats = this.get('stats');
         var sigmas = config.sigmas || 2;
         var tendency = config.tendency || 'mean';
-        var domain = [
-            (stats[tendency] - (sigmas * stats.std)), // Lower bound
-            (stats[tendency] + (sigmas * stats.std)), // Upper bound
-        ]
+        var domain = config.domain; // Default to defined bounds
+
+        if (config.autoscale) { // If no defined bounds...
+            domain = [
+                (stats[tendency] - (sigmas * stats.std)), // Lower bound
+                (stats[tendency] + (sigmas * stats.std)), // Upper bound
+            ]
+        }
 
         if (config.paletteType === 'diverging') {
             // Diverging scales are symmetric about the measure of central tendency

@@ -248,7 +248,7 @@ Ext.define('Flux.view.Symbology', {
             labelAlign: 'left',
             value: 3,
             minValue: 1,
-            maxValue: 9
+            maxValue: 5
 
         }, {
             xtype: 'enumslider',

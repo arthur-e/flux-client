@@ -16,18 +16,116 @@ Ext.define('Flux.field.EnumeratedSlider', {
      */
     isMulti: false,
 
-    /**
-        Returns an Array of the lower and upper bounds.
-     */
-    getValues: function () {
-        var arr = [];
-        Ext.Array.each(this.query('numberfield'), function (cmp) {
-            arr.push(cmp.getValue());
-        });
+    items: [],
 
-        return arr;
+    layout: {
+        type: 'hbox',
+        align: 'middle'
     },
 
+    /**
+        Configures the component instance with values and isMulti properties.
+     */
+    initComponent: function () {
+        var values = this.values; // Get either "value" or "values" property
+        if (values === undefined) {
+            values = this.value;
+        }
+
+        if (Ext.isArray(values)) {
+            this.isMulti = true;
+        }
+
+        this.addEvents('boundschange');
+        this.callParent(arguments);
+    },
+
+    listeners: {
+        beforerender: function () {
+            var numberCfg, sliderCfg, values;
+
+            // Add initial Number field ////////////////////////////////////////
+            numberCfg = Ext.clone(this.numberDefaults);
+            Ext.Object.merge(numberCfg, {
+                itemId: 'lower-bound',
+                name: Ext.String.format('{0}{1}', this.name, 'LowerBound'),
+                padding: '0 7px 0 0',
+                value: -1,
+                minValue: -1,
+                maxValue: 1
+            });
+
+            this.add(numberCfg);
+
+            values = this.values; // Get either "value" or "values" property
+            if (values === undefined) {
+                values = this.value;
+            }
+
+            // Configure slider field //////////////////////////////////////////
+            sliderCfg = Ext.clone(this.sliderDefaults);
+            Ext.Object.merge(sliderCfg, {
+                value: values,
+                minValue: this.minValue,
+                maxValue: this.maxValue,
+                name: this.name
+            });
+
+            if (this.isMulti) {
+                Ext.Object.merge(sliderCfg, {
+                    xtype: 'multislider',
+                    values: values,
+                    minValue: values[0],
+                    maxValue: values[values.length - 1]
+                });
+
+                // Set the initial value of the left (lower) bound
+                this.items.getAt(0).setValue(values[0]);
+
+                // Add second Number field /////////////////////////////////////
+                numberCfg = Ext.clone(this.numberDefaults);
+                Ext.Object.merge(numberCfg, {
+                    xtype: 'numberfield',
+                    itemId: 'upper-bound',
+                    name: Ext.String.format('{0}{1}', this.name, 'UpperBound'),
+                    value: values[1],
+                    minValue: this.minValue,
+                    maxValue: this.maxValue
+                });
+
+                this.add(numberCfg);
+            } else {
+                // Set the initial value of the right (upper) bound
+                this.items.getAt(0).setValue(values);
+            }
+
+            // Insert slider field /////////////////////////////////////////////
+            this.insert(1, sliderCfg);
+        },
+
+        boundschange: function () {
+            // Update the slider's thumb position(s) when the NumberFields change
+            this.queryById('slider').setValue(this.getValues());
+        }
+    },
+
+    /**
+        Default configuration for each Ext.form.field.Number that is generated.
+     */
+    numberDefaults: {
+        xtype: 'numberfield',
+        hideTrigger: true,
+        width: 50,
+        listeners: {
+            blur: function () {
+                this.up('fieldcontainer').fireEvent('boundschange');
+            }
+        }
+    },
+
+    /**
+        Default configuration for each Ext.slider.* that is generated.
+     */
     sliderDefaults: {
         xtype: 'slider',
         itemId: 'slider',
@@ -44,9 +142,32 @@ Ext.define('Flux.field.EnumeratedSlider', {
 
                 if (this.up('fieldcontainer').isMulti) {
                     this.up('fieldcontainer').queryById('upper-bound').setValue(v[1]);
-                }
+
+                } 
+
+                this.ownerCt.fireEventArgs('boundschange', v);
+
             }
         }
+    },
+
+    /**
+        Returns an Array of the lower and upper bounds.
+     */
+    getValue: function () {
+        return this.getValues()
+    },
+
+    /**
+        Returns an Array of the lower and upper bounds.
+     */
+    getValues: function () {
+        var arr = [];
+        Ext.Array.each(this.query('numberfield'), function (cmp) {
+            arr.push(cmp.getValue());
+        });
+
+        return arr;
     },
 
     /**
@@ -65,6 +186,8 @@ Ext.define('Flux.field.EnumeratedSlider', {
 
         // Set up a new slider configuration
         config = Ext.clone(this.sliderDefaults);
+
+        config.name = this.name;
 
         // Determine the appropriate type of slider
         if (multiState) {
@@ -88,6 +211,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
             this.add({
                 xtype: 'numberfield',
                 itemId: 'upper-bound',
+                name: Ext.String.format('{0}{1}', this.name, 'UpperBound'),
                 hideTrigger: true,
                 width: 50,
                 value: values,
@@ -104,96 +228,5 @@ Ext.define('Flux.field.EnumeratedSlider', {
         }
 
         this.down('#slider').fireEvent('changecomplete');
-    },
-
-    initComponent: function () {
-        var values = this.values; // Get either "value" or "values" property
-        if (values === undefined) {
-            values = this.value;
-        }
-
-        if (Ext.isArray(values)) {
-            this.isMulti = true;
-        }
-
-        this.addEvents('boundschange');
-        this.callParent(arguments);
-    },
-
-    layout: {
-        type: 'hbox',
-        align: 'middle'
-    },
-
-    listeners: {
-        beforerender: function () {
-            var config, values;
-
-            values = this.values; // Get either "value" or "values" property
-            if (values === undefined) {
-                values = this.value;
-            }
-
-            config = Ext.clone(this.sliderDefaults);
-
-            Ext.Object.merge(config, {
-                value: values,
-                minValue: this.minValue,
-                maxValue: this.maxValue
-            });
-
-            if (this.isMulti) {
-                Ext.Object.merge(config, {
-                    xtype: 'multislider',
-                    values: values,
-                    minValue: values[0],
-                    maxValue: values[values.length - 1]
-                });
-
-                // Set the initial value of the left (lower) bound
-                this.items.getAt(0).setValue(values[0]);
-
-                this.add({
-                    xtype: 'numberfield',
-                    itemId: 'upper-bound',
-                    hideTrigger: true,
-                    width: 50,
-                    value: values[1],
-                    minValue: this.minValue,
-                    maxValue: this.maxValue,
-                    listeners: {
-                        blur: function () {
-                            this.up('fieldcontainer').fireEvent('boundschange');
-                        }
-                    }
-                });
-            } else {
-                // Set the initial value of the right (upper) bound
-                this.items.getAt(0).setValue(values);
-            }
-
-            this.insert(1, config);
-        },
-
-        boundschange: function () {
-            // Update the slider's thumb position(s) when the NumberFields change
-            this.queryById('slider').setValue(this.getValues());
-        }
-    },
-
-    items: [{
-        xtype: 'numberfield',
-        itemId: 'lower-bound',
-        hideTrigger: true,
-        padding: '0 7px 0 0',
-        width: 50,
-        value: -1,
-        minValue: -1,
-        maxValue: 1,
-        listeners: {
-            blur: function () {
-                this.up('fieldcontainer').fireEvent('boundschange');
-            }
-        }
-    }]
+    }
 });

@@ -66,7 +66,8 @@ Ext.define('Flux.view.SourcesPanel', {
     }, {
         xtype: 'checkbox',
         name: 'showUncertainty',
-        boxLabel: 'Show uncertainty'
+        boxLabel: 'Show uncertainty',
+        disabled: true //TODO
 
     }, {
         xtype: 'radiogroup',

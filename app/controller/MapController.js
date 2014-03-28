@@ -44,6 +44,24 @@ Ext.define('Flux.controller.MapController', {
             'd3panel > component[autoEl]': {
                 boxready: this.initialize,
                 resize: this.onResize
+            },
+
+            'symbology fieldcontainer[name=domain]': {
+                change: function (field, values) {
+                    console.log('change!', values);//FIXME
+                }
+            },
+
+            'symbology field[name=palette]': {
+                select: this.onPaletteChange
+            },
+
+            'symbology field[name=segments]': {
+                change: this.onScaleParameterChange
+            },
+
+            'symbology field[name=sigmas]': {
+                change: this.onScaleParameterChange
             }
 
         });
@@ -127,11 +145,8 @@ Ext.define('Flux.controller.MapController', {
 
             'mapsettings > checkbox[cls=basemap-options]': {
                 change: this.toggleBasemapStyle
-            },
-
-            'symbology > combo[name=palette]': {
-                select: this.onPaletteChange
             }
+
         });
 
         // Set the map projection
@@ -223,6 +238,19 @@ Ext.define('Flux.controller.MapController', {
     },
 
     /**
+        Handles a change in the configuration of a color scale; either the
+        number of standard deviations (sigmas) or the number of segments in the
+        color scale.
+        @param  c       {Ext.form.field.*}
+        @param  value   {Number}
+     */
+    onScaleParameterChange: function (c, value)  {
+        var cfg = {}
+        cfg[c.getName()] = value;
+        this.updateColorScale(cfg);
+    },
+
+    /**
         Changes the style of the basemap, toggling between two different choices
         rendered as checkboxes in the MapSettings panel.
         @param  cb      {Ext.form.field.Checkbox}
@@ -277,15 +305,18 @@ Ext.define('Flux.controller.MapController', {
 
         opts = Ext.Object.merge(opts, config);
 
-        if (opts.autoscale) {
-            scale = metadata.getQuantileScale(opts);
-        }
-
         // Get the color palette
         palette = this.getStore('palettes').getById(opts.palette);
-        if (!palette) {
+
+        if (!metadata) {
+            metadata = this.getStore('metadata').getAt(0);
+        }
+
+        if (!palette || !metadata) {
             return;
         }
+
+        scale = metadata.getQuantileScale(opts);
 
         // Set the output range
         scale.range(palette.get('colors'));

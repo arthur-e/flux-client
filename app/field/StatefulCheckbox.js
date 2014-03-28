@@ -4,6 +4,7 @@ Ext.define('Flux.field.StatefulCheckbox', {
     stateful: true,
     stateEvents: ['change'],
     inputValue: true,
+    uncheckedValue: false,
 
     getState: function () {
         return {

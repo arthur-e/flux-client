@@ -5,8 +5,8 @@
     stroke-linecap: round;
     pointer-events: none;
 }
-.boundary.inside { stroke: #fff; }
-.boundary.outside { stroke: #aaa; }
+.boundary.inside { stroke: #aaa; }
+.boundary.outside { stroke: #fff; }
 .empty { fill: transparent !important; }
 text.info {
     font-family: Helvetica,Arial,sans-serif;
@@ -17,5 +17,5 @@ text.info {
 }
 text.info.date,
 text.info.time { font-family: "Courier New","Lucida Console",monospace; }
-.region { fill: #aaa; }
+.region { fill: #fff; }
 

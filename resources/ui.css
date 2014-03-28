@@ -20,12 +20,15 @@
 .x-btn-default-toolbar-small,
 .x-btn-default-toolbar-medium,
 .x-btn-default-toolbar-large { border-color: #d0d0d0 !important; }
+.map-tbar .x-btn-default-toolbar-small,
+.map-tbar .x-btn-default-toolbar-medium,
+.map-tbar .x-btn-default-toolbar-large { border-color: #888 !important; }
 .x-btn-default-toolbar-medium .x-btn-inner {
     font-size: 16px !important; /* Larger toolbar button font size */
 }
 
 /* Forms **********************************************************************/
-.x-form-trigger-input-cell { background-color: #ffffff !important; }
+.x-form-trigger-input-cell { background-color: #fff !important; }
 .x-fieldset-header-text,
 .x-form-item-label,
 .x-form-cb-label { font-size: 14px !important; }
@@ -62,3 +65,6 @@
 
 /* TabPanel *******************************************************************/
 .x-tab-default .x-tab-inner { font-size: 14px !important; }
+
+/* Toolbars *******************************************************************/
+.x-toolbar-default.map-tbar { background-color: #aaa; }

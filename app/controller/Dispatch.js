@@ -62,7 +62,7 @@ Ext.define('Flux.controller.Dispatch', {
                 }
 
                 Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
-                    view.draw(recs[0].get('features'));
+                    view.draw(recs[0]);
                 });
             }
         });
@@ -104,7 +104,7 @@ Ext.define('Flux.controller.Dispatch', {
      */
     setRequestNamespace: function (ns) {
         this._namespaceId = ns;
-        this.getStore('grids').setProxyNamespace(ns, false);
+        this.getStore('grids').setProxyNamespace(ns, true); // No caching
     }
 
 });

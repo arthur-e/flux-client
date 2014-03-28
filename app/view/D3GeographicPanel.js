@@ -5,8 +5,21 @@ Ext.define('Flux.view.D3GeographicPanel', {
         'Ext.Function'
     ],
 
+    bbar: {
+        border: true,
+        cls: 'map-tbar',
+        style: { borderColor: '#157fcc' },
+        items: ['->', {
+            xtype: 'tbitem',
+            width: 150,
+            height: 45,
+            html: '<a href="http://mtu.edu"><img src="/flux-client/resources/MTRI_logo_dark_bg.png" /></a>'
+        }]
+    },
+
     lbar: {
         defaultType: 'button',
+        cls: 'map-tbar',
         defaults: {
             cls: 'btn-zoom',
             scale: 'large',
@@ -40,6 +53,10 @@ Ext.define('Flux.view.D3GeographicPanel', {
      */
     basemapUrl: undefined,
 
+    bodyStyle: {
+        backgroundColor: '#aaaaaa'
+    },
+
     /**
         Initializes the component.
      */
@@ -62,27 +79,31 @@ Ext.define('Flux.view.D3GeographicPanel', {
         this.callParent(arguments);
     },
 
-    /**TODO
+    /**
+        Initially configure this view with the relevant Metadata.
         @param  metadata    {Flux.model.Metadata}
+        @return             {Flux.view.D3GeographicPanel}
      */
     configure: function (metadata) {
         this._metadata = metadata;
+        return this;
     },
 
     /**
         Draws the visualization features on the map given input data and the
         corresponding metadata.
-        @param  data        {Object}
-        @return {Flux.view.D3GeographicPanel}
+        @param  grid    {Flux.model.Grid}
+        @return         {Flux.view.D3GeographicPanel}
      */
-    draw: function (data) {
+    draw: function (grid) {
         var bbox, c1, c2, sel;
         var proj = this.getProjection();
+        var ts = grid.get('timestamp');
 
         // Retain references to last drawing data and metadata; for instance,
         //  resize events require drawing again with the same (meta)data
-        if (data) {
-            this._data = data;
+        if (grid) {
+            this._data = grid.get('features');
         }
 
         // Sets the enter or update selection's data
@@ -121,6 +142,20 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
             this.setZoom(2 * (this.svg.attr('width')) / proj([(bbox[2] - bbox[0]), 0])[0]);
         }
+
+        this.updateDisplay([{
+            id: 'date',
+            text: Ext.String.format('{0} {1}-{2}', ts.getUTCFullYear(), ts.getUTCMonth(), ts.getUTCDate()) //FIXME Ext.Date.format(ts, 'Y m-d') Prints locale time strings
+        }, {
+            id: 'time',
+            text: (function () { //FIXME Ext.Date.format(ts, 'H:i') Prints locale time strings
+                var H = ts.getUTCHours().toString();
+                var i = ts.getUTCMinutes().toString();
+                H = (H.length === 1) ? '0' + H : H;
+                i = (i.length === 1) ? '0' + i : i;
+                return Ext.String.format('{0}:{1}', H, i);
+            }())
+        }]);
 
         this._isDrawn = true;
 
@@ -480,11 +515,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
             return this;
         }
 
-        if (this._metadata) {
-            console.log('update() with selection argument');//FIXME
-            this.panes.overlay.selectAll('.point')
-            .attr(this.getOverlayAttrs());
-        }
+        this.panes.overlay.selectAll('.point')
+        .attr(this.getOverlayAttrs());
 
         return this;
     },

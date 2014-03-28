@@ -79,8 +79,7 @@ Ext.define('Flux.view.MapSettings', {
         cls: 'basemap-options',
         name: 'showPoliticalBoundaries',
         stateId: 'showPoliticalBoundaries',
-        boxLabel: 'Show political boundaries',
-        checked: true
+        boxLabel: 'Show political boundaries'
 
     }, {
         xtype: 'recheckbox',

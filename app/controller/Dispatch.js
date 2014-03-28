@@ -1,11 +1,23 @@
 Ext.define('Flux.controller.Dispatch', {
     extend: 'Ext.app.Controller',
 
+    refs: [{
+        ref: 'viewport',
+        selector: 'viewport'
+    }],
+
     init: function () {
 
         Ext.create('Flux.store.Grids', {
             storeId: 'grids'
-        });        
+        });
+
+        Ext.create('Flux.store.Metadata', {
+            storeId: 'metadata',
+            listeners: {
+                load: Ext.Function.bind(this.onMetadataLoad, this)
+            }
+        })
 
         ////////////////////////////////////////////////////////////////////////
         // Event Listeners /////////////////////////////////////////////////////
@@ -19,19 +31,38 @@ Ext.define('Flux.controller.Dispatch', {
     ////////////////////////////////////////////////////////////////////////////
     // Event Handlers //////////////////////////////////////////////////////////
 
-    /**
+    /**TODO ???
      */
     loadMap: function (params) {
-        var meta = Ext.StoreManager.get('metadata').getById(this._namespaceId);
-        var view = Ext.ComponentQuery.query('d3geopanel')[0];
+        var meta = this.getStore('metadata').getById(this._namespaceId);
+
+        this.getViewport().getEl().mask('Loading...');
 
         Ext.StoreManager.get('grids').load({
             params: params,
-            callback: function (recs) {
-                view.draw(recs[0].get('features'), meta);
-            }
+            callback: Ext.Function.bind(function (recs) {
+                this.getViewport().getEl().unmask();
+
+                Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
+                    view.draw(recs[0].get('features'), meta);
+                });
+            }, this)
         });
 
+    },
+
+    /**TODO
+     */
+    onGlobalTendencyChange: function (cb) {
+        this.getController('MapController').updateColorScale({
+            tendency: cb.name
+        }, this.getStore('metadata').getById(this._namespaceId));
+    },
+
+    /**
+     */
+    onMetadataLoad: function (store, recs) {
+        this.getController('MapController').updateColorScale({}, recs[0]);
     },
 
     /**

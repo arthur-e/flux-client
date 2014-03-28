@@ -21,15 +21,12 @@ Ext.define('Flux.controller.UserExperience', {
                 click: this.clearLocalState
             },
 
-            '#settings-menu menucheckitem[name=mean], menucheckitem[name=median]': {
-                checkchange: this.handleTendencyChange
-            },
-
             '#top-toolbar': {
                 afterrender: this.initGlobalState
             }
 
         });
+
     },
 
     /**
@@ -101,11 +98,13 @@ Ext.define('Flux.controller.UserExperience', {
         @param  cb      {Ext.menu.MenuCheckItem}
         @param  checked {Boolean}
      */
-    handleTendencyChange: function (cb, checked) {
+    onTendencyChange: function (cb, checked, eOpts) {
         if (checked) {
             Ext.Array.each(Ext.ComponentQuery.query('form > hiddenfield[name=tendency]'), function (field) {
                 field.setValue(cb.name);
             });
+
+            this.getController('Dispatch').onGlobalTendencyChange(cb);
         }
 
         this.saveFieldState(cb, checked);
@@ -122,6 +121,8 @@ Ext.define('Flux.controller.UserExperience', {
                 if (it.stateId) {
                     it.setChecked(Ext.state.Manager.get(it.stateId,
                         this.defaultState[it.stateId]));
+
+                    it.on('checkchange', this.onTendencyChange);//TODO Verify this works
                 }
         }, this));
     },

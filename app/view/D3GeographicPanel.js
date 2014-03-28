@@ -95,7 +95,9 @@ Ext.define('Flux.view.D3GeographicPanel', {
         return this;
     },
 
-    /**TODO
+    /**
+        Returns the retained reference to the underlying grid geometry.
+        @return {Flux.model.Geometry}
      */
     getGridGeometry: function () {
         return this._grid;
@@ -297,7 +299,10 @@ Ext.define('Flux.view.D3GeographicPanel', {
         return this;
     },
 
-    /**TODO
+    /**
+        Sets the grid geometry; retains a reference to the grid geometry.
+        @param  geom    {Flux.model.Geometry}
+        @return {Flux.view.D3GeographicPanel}
      */
     setGridGeometry: function (geom) {
         this._grid = geom.get('coordinates');
@@ -335,7 +340,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
     setScale: function (scale) {
         this._scale = scale;
         if (this.panes.overlay) {
-            this.update(this.panes.overlay.selectAll('.point'), scale);
+            this.update(this.panes.overlay.selectAll('.point'));
         }
         return this;
     },
@@ -383,14 +388,12 @@ Ext.define('Flux.view.D3GeographicPanel', {
         Draws again the visualization features of the map by updating their
         SVG attributes. Accepts optional D3 selection which it will style.
         @param  selection   {d3.selection}
-        @param  scale       {d3.scale.*}
         @return             {Flux.view.D3GeographicPanel}
      */
-    update: function (selection, scale) {
+    update: function (selection) {
         if (selection) {
-            selection.attr('fill', Ext.Function.bind(function (d) {
-                //FIXME The scale returns an Array of colors
-                return this.getScale()((!d) ? undefined : d.v);
+            selection.attr('fill', Ext.Function.bind(function (d, i) {
+                return this.getScale()((!d) ? undefined : d);
             }, this));
 
             return this;

@@ -68,15 +68,16 @@ Ext.define('Flux.model.Metadata', {
 
     /**
      */
-    getColorScale: function (colors, sigmas, tendency) {
+    getQuantileScale: function (sigmas, tendency) {
+        var stats = this.get('stats');
         sigmas = sigmas || 2;
         tendency = tendency || 'mean';
 
         return d3.scale.quantile().domain([
-            (this.get(tendency) - (sigmas * this.get('std'))), // Lower bound
-            0,                                                 // Mid-value
-            (this.get(tendency) + (sigmas * this.get('std'))), // Upper bound
-        ]).range(colors);
+            (stats[tendency] - (sigmas * stats.std)), // Lower bound
+            0,                                        // Mid-value
+            (stats[tendency] + (sigmas * stats.std)), // Upper bound
+        ]);
     }
 
 });

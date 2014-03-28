@@ -24,7 +24,7 @@ Ext.define('Flux.controller.UserInteraction', {
         this.control({
 
             'sourcespanel combo[name=source]': {
-                select: this.handleSourceChange
+                select: this.onSourceChange
             },
 
             'sourcespanel > field[name=date], field[name=time]': {
@@ -42,11 +42,9 @@ Ext.define('Flux.controller.UserInteraction', {
         propagates effects of the selection throughout the user interface
         including initializing the date selection fields (with disabled dates).
      */
-    handleSourceChange: function (field, sources) {
+    onSourceChange: function (field, sources) {
         var panel = field.up('panel');
-        var store = Ext.StoreManager.get('metadata') || Ext.create('Flux.store.Metadata', {
-            storeId: 'metadata'
-        });
+        var store = Ext.StoreManager.get('metadata');
         var src = sources[0].get('_id');
 
         panel.getEl().mask('Loading...');
@@ -109,11 +107,6 @@ Ext.define('Flux.controller.UserInteraction', {
                     panel.down('checkbox[name=showUncertainty]').disable();
                 }
 
-                // Pretend the color palette just changed so as to acquire a scale
-                this.getPaletteField().fireEventArgs('change', [
-                    this.getPaletteField()
-                ]);
-                
             }, this)
 
         });

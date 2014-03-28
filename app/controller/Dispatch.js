@@ -35,11 +35,20 @@ Ext.define('Flux.controller.Dispatch', {
     /**
         Fires a request for new map data using the passed params. Optionally
         masks a target component's element until response is received.
-        @param  params      {Object}
-        @param  maskTarget  {Ext.Component}
+        @param  params          {Object}
+        @param  firstTimeConfig {Boolean}   Flag to indicate map is being loaded for the first time; should configure
+        @param  maskTarget      {Ext.Component}
      */
-    loadMap: function (params, maskTarget) {
-        var meta = this.getStore('metadata').getById(this._namespaceId);
+    loadMap: function (params, firstTimeConfig, maskTarget) {
+        var metadata = this.getStore('metadata').getById(this._namespaceId);
+
+        // IMPORTANT: Pass the Metadata to the view if loading a map for the
+        //  first time (first-time configuration)
+        if (firstTimeConfig) {
+            Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
+                view.configure(metadata);
+            });
+        }
 
         if (maskTarget) {
             maskTarget.getEl().mask('Loading...');
@@ -53,7 +62,7 @@ Ext.define('Flux.controller.Dispatch', {
                 }
 
                 Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
-                    view.draw(recs[0].get('features'), meta);
+                    view.draw(recs[0].get('features'));
                 });
             }
         });

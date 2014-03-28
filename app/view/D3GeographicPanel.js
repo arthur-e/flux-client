@@ -62,22 +62,27 @@ Ext.define('Flux.view.D3GeographicPanel', {
         this.callParent(arguments);
     },
 
+    /**TODO
+        @param  metadata    {Flux.model.Metadata}
+     */
+    configure: function (metadata) {
+        this._metadata = metadata;
+    },
+
     /**
         Draws the visualization features on the map given input data and the
         corresponding metadata.
         @param  data        {Object}
-        @param  metadata    {Flux.model.Metadata}
         @return {Flux.view.D3GeographicPanel}
      */
-    draw: function (data, metadata) {
+    draw: function (data) {
         var bbox, c1, c2, sel;
         var proj = this.getProjection();
 
         // Retain references to last drawing data and metadata; for instance,
         //  resize events require drawing again with the same (meta)data
-        if (data && metadata) {
+        if (data) {
             this._data = data;
-            this._metadata = metadata;
         }
 
         // Sets the enter or update selection's data
@@ -90,7 +95,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
         //  been drawn before
         if (!this._isDrawn) {
             sel.enter().append('rect');
-            this._isDrawn = true;
         }
 
         // Calculate the position and dimensions attributes of the elements
@@ -99,25 +103,26 @@ Ext.define('Flux.view.D3GeographicPanel', {
         // Applies the color scale to the current selection
         this.update(sel);
 
-        if (this.zoom.scale() !== 1) {
-            return this; // Exit early if map is already zoomed
+        // Skip zooming to the data if they've been drawn or if map is already zoomed
+        if (!this._isDrawn && this.zoom.scale() === 1) {
+            bbox = this._metadata.get('bbox');
+
+            // Calculate the center of the view
+            c1 = [
+                Number(this.svg.attr('width')) * 0.5,
+                Number(this.svg.attr('height')) * 0.5
+            ];
+
+            // Average the respective coordinate pairs in the bounds (xmin, ymin, xmax, ymax)
+            c2 = proj([(bbox[0] + bbox[2]) * 0.5, (bbox[1] + bbox[3]) * 0.5]);
+
+            this.zoom.translate([(c1[0] - c2[0]), (c1[1] - c2[1])])
+                .event(this.wrapper.transition().duration(500));
+
+            this.setZoom(2 * (this.svg.attr('width')) / proj([(bbox[2] - bbox[0]), 0])[0]);
         }
 
-        bbox = this._metadata.get('bbox');
-
-        // Calculate the center of the view
-        c1 = [
-            Number(this.svg.attr('width')) * 0.5,
-            Number(this.svg.attr('height')) * 0.5
-        ];
-
-        // Average the respective coordinate pairs in the bounds (xmin, ymin, xmax, ymax)
-        c2 = proj([(bbox[0] + bbox[2]) * 0.5, (bbox[1] + bbox[3]) * 0.5]);
-
-        this.zoom.translate([(c1[0] - c2[0]), (c1[1] - c2[1])])
-            .event(this.wrapper.transition().duration(500));
-
-        this.setZoom(2 * (this.svg.attr('width')) / proj([(bbox[2] - bbox[0]), 0])[0]);
+        this._isDrawn = true;
 
         return this;
     },

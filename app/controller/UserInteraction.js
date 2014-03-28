@@ -206,7 +206,7 @@ Ext.define('Flux.controller.UserInteraction', {
         if (values.date && values.time && values.date !== '' && values.time !== '') {
             this.getController('Dispatch').loadMap({
                 time: Ext.String.format('{0}T{1}:00', values.date, values.time)
-            });
+            }, (last === undefined)); // NOTE: Flag to configure map for first-time load
         }
     }
 

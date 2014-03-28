@@ -47,6 +47,13 @@ Ext.define('Flux.view.D3GeographicPanel', {
         this.addEvents(['scalechange']);
 
         /**
+            Flag to indicate whether or not the <rect> elements have already
+            been added to the map.
+            @private
+         */
+        this._isDrawn = false;
+
+        /**
             The scale used for coloring map elements.
             @private
          */
@@ -73,16 +80,21 @@ Ext.define('Flux.view.D3GeographicPanel', {
             this._metadata = metadata;
         }
 
-        this.panes.overlay = this.wrapper.append('g').attr('class', 'pane overlay')
-
-        // Append a <rect> for every grid cell
+        // Sets the enter or update selection's data
         sel = this.panes.overlay.selectAll('.point')
             .data(this._data, function (d, i) {
                 return i; // Use the cell index as the key
-            })
-            .enter()
-            .append('rect')
-            .attr(this.getOverlayAttrs());
+            });
+
+        // Append a <rect> for every grid cell so long as the features haven't
+        //  been drawn before
+        if (!this._isDrawn) {
+            sel.enter().append('rect');
+            this._isDrawn = true;
+        }
+
+        // Calculate the position and dimensions attributes of the elements
+        sel.attr(this.getOverlayAttrs());
 
         // Applies the color scale to the current selection
         this.update(sel);
@@ -208,7 +220,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
             }, this));
 
         // This container will apply zoom and pan transformations to the entire
-        //  content area
+        //  content area; NOTE: layers that need to be zoomed and panned around
+        //  must be appended to the wrapper
         this.wrapper = this.svg.append('g').attr('class', 'wrapper')
             .call(this.zoom);
 
@@ -227,10 +240,38 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
         // Create panes in which to organize content at difference z-index
         //  levels using painter's algorithm (first drawn on bottom; last drawn
-        //  is on top)
+        //  is on top); NOTE: layers that need to be zoomed and panned around
+        //  must be appended to the wrapper layer; layers that should NOT zoom
+        //  and pan should be appended to something else (e.g this.svg)
         this.panes = {
-            basemap: this.wrapper.append('g').attr('class', 'pane')
+            basemap: this.wrapper.append('g').attr('class', 'pane'),
+            hud: this.svg.append('g').attr('class', 'pane hud'),
+            overlay: this.wrapper.append('g').attr('class', 'pane overlay')
         };
+
+        // Create the elements for the heads-up-display (HUD)
+        this.panes.hud.selectAll('.info')
+            .data([
+                { text: '', id: 'date' },
+                { text: '', id: 'time' }
+            ], function (d) {
+                return d.id;
+            })
+            .enter()
+            .append('text')
+            .text(function (d) {
+                return d.text;
+            })
+            .attr({
+                'x': 0,
+                'y': function (d, i) {
+                    return (i + 1) * 40;
+                },
+                'class': function (d) {
+                    return 'info ' + d.id;
+                },
+                'font-size': '40px'
+            });
 
         this.setProjection(proj);
 
@@ -435,11 +476,20 @@ Ext.define('Flux.view.D3GeographicPanel', {
         }
 
         if (this._metadata) {
+            console.log('update() with selection argument');//FIXME
             this.panes.overlay.selectAll('.point')
             .attr(this.getOverlayAttrs());
         }
 
         return this;
+    },
+
+    /**TODO
+     */
+    updateDisplay: function (data) {
+        this.panes.hud.selectAll('.info')
+            .data(data)
+            .text(function (d) { return d.text; });
     }
 
 });

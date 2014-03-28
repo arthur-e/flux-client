@@ -8,4 +8,14 @@
 .boundary.inside { stroke: #fff; }
 .boundary.outside { stroke: #aaa; }
 .empty { fill: transparent !important; }
+text.info {
+    font-family: Helvetica,Arial,sans-serif;
+    font-weight: bold;
+    fill: #000;
+    stroke-width: 0.25;
+    stroke-linejoin: round;
+}
+text.info.date,
+text.info.time { font-family: "Courier New","Lucida Console",monospace; }
 .region { fill: #aaa; }
+

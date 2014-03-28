@@ -263,6 +263,7 @@ Ext.define('Flux.view.Symbology', {
     }, {
         xtype: 'fieldset',
         title: 'Threshold',
+        disabled: true,//TODO
         defaults: {
             labelAlign: 'top',
             anchor: '100%'

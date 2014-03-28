@@ -80,6 +80,7 @@ Ext.define('Flux.view.SourcesPanel', {
             checked: true // Checked by default
         }, {
             boxLabel: 'Current Data Frame',
+            disabled: true,//TODO
             name: 'statsFrom',
             inputValue: 'current-data-frame',
             id: 'current-data-frame'
@@ -97,6 +98,7 @@ Ext.define('Flux.view.SourcesPanel', {
             checked: true // Checked by default
         }, {
             boxLabel: 'Anomalies',
+            disabled: true,//TODO
             name: 'display',
             inputValue: 'anomalies',
             id: 'anomalies'
@@ -105,6 +107,7 @@ Ext.define('Flux.view.SourcesPanel', {
     }, {
         xtype: 'fieldset',
         title: 'Aggregation',
+        disabled: true,//TODO
         defaults: {
             labelAlign: 'top',
             anchor: '100%'
@@ -160,6 +163,7 @@ Ext.define('Flux.view.SourcesPanel', {
     }, {
         xtype: 'fieldset',
         title: 'Difference',
+        disabled: true,//TODO
         defaults: {
             labelAlign: 'top',
             anchor: '100%'

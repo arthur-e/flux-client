@@ -264,7 +264,12 @@ Ext.define('Flux.controller.MapController', {
         });
     },
 
-    /**TODO Refactor this and onPaletteChange so as to be DRY as possible
+    /**
+        Creates a new color scale based on changes in the scale configuration
+        (measure of central tendency, number of standard deviations, or a switch
+        between sequential and diverging palette types).
+        @param  config      {Object}    Properties are palette configs e.g. sigmas, tendency, paletteType
+        @param  metadata    {Flux.model.Metadata}
      */
     updateColorScale: function (config, metadata) {
         var palette, scale;

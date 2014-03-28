@@ -84,12 +84,14 @@ Ext.define('Flux.view.MapSettings', {
     }, {
         xtype: 'recheckbox',
         name: 'showLegends',
+        disabled: true,//TODO
         stateId: 'showLegends',
         boxLabel: 'Show legends'
 
     }, {
         xtype: 'recheckbox',
         name: 'showLinePlot',
+        disabled: true,//TODO
         stateId: 'showLinePlot',
         boxLabel: 'Show line plot'
 

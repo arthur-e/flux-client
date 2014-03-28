@@ -186,7 +186,13 @@ Ext.define('Flux.controller.UserInteraction', {
         }
     },
 
-    /**TODO
+    /**
+        Loads source data corresponding to the date and time selected so long
+        as the change in value that triggered the load results in a different
+        value from the last.
+        @param  field   {Ext.form.field.*}
+        @param  value   {String}
+        @param  last    {String}
      */
     loadSourceData: function (field, value, last) {
         var values;
@@ -202,7 +208,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 time: Ext.String.format('{0}T{1}:00', values.date, values.time)
             });
         }
-    },
+    }
 
 });
 

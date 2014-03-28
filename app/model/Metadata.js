@@ -67,6 +67,11 @@ Ext.define('Flux.model.Metadata', {
     },
 
     /**
+        Returns a new quantile scale (d3.scale.quantile instance) that fits the
+        data according to the summary statistics and any specified configuration
+        options.
+        @param  config  {Object}
+        @return {d3.scale.quantile}
      */
     getQuantileScale: function (config) {
         var stats = this.get('stats');

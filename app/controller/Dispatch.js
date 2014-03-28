@@ -22,16 +22,18 @@ Ext.define('Flux.controller.Dispatch', {
         ////////////////////////////////////////////////////////////////////////
         // Event Listeners /////////////////////////////////////////////////////
 
-        this.control({
-
-        });
+        this.control({});
 
     },
 
     ////////////////////////////////////////////////////////////////////////////
     // Event Handlers //////////////////////////////////////////////////////////
 
-    /**TODO ???
+    /**
+        Fires a request for new map data using the passed params. Optionally
+        masks a target component's element until response is received.
+        @param  params      {Object}
+        @param  maskTarget  {Ext.Component}
      */
     loadMap: function (params, maskTarget) {
         var meta = this.getStore('metadata').getById(this._namespaceId);
@@ -55,7 +57,10 @@ Ext.define('Flux.controller.Dispatch', {
 
     },
 
-    /**TODO
+    /**
+        Handles a change to the measure of central tendency through one of the
+        global checkboxes.
+        @param  cb  {Ext.form.field.Checkbox}
      */
     onGlobalTendencyChange: function (cb) {
         this.getController('MapController').updateColorScale({
@@ -64,12 +69,19 @@ Ext.define('Flux.controller.Dispatch', {
     },
 
     /**
+        Handles the callback from the Metadata store when loaded.
+        @param  store   {Ext.data.Store}
+        @param  recs    {Array}
      */
     onMetadataLoad: function (store, recs) {
         this.getController('MapController').updateColorScale({}, recs[0]);
     },
 
     /**
+        Retains a reference to the namespace ID (data source or scenario name
+        used in future API requests) and calls on stores to update their proxies
+        accordingly.
+        @param  ns  {String}
      */
     setRequestNamespace: function (ns) {
         this._namespaceId = ns;
@@ -78,4 +90,5 @@ Ext.define('Flux.controller.Dispatch', {
 
 
 });
+
 

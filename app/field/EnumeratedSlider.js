@@ -145,10 +145,14 @@ Ext.define('Flux.field.EnumeratedSlider', {
 
                 } 
 
-                this.ownerCt.fireEventArgs('boundschange', v);
+                this.ownerCt.fireEventArgs('boundschange', [this, v]);
 
             }
         }
+    },
+
+    getName: function () {
+        return this.name;
     },
 
     /**
@@ -163,11 +167,31 @@ Ext.define('Flux.field.EnumeratedSlider', {
      */
     getValues: function () {
         var arr = [];
-        Ext.Array.each(this.query('numberfield'), function (cmp) {
+        Ext.each(this.query('numberfield'), function (cmp) {
             arr.push(cmp.getValue());
         });
 
         return arr;
+    },
+
+    /**
+        Sets the values of the Number fields and Slider and also adjusts the
+        minValue and maxValue properties accordingly.
+        @param  values  {Array}
+     */
+    setValues: function (values) {
+        var slider = this.down('multislider');
+        slider.setMinValue(values[0]);
+        slider.setMaxValue(values[1]);
+        slider.setValue(values, false); // Don't animate the slider
+
+        Ext.each(this.query('numberfield'), function (field, i) {
+            field.setMinValue(values[0]);
+            field.setMaxValue(values[1]);
+            field.setValue(values[i]);
+        });
+
+        this.fireEvent('boundschange', this, values);
     },
 
     /**

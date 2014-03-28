@@ -50,7 +50,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         Initializes the component.
      */
     initComponent: function () {
-        this.addEvents(['scalechange']);//TODO
+        this.addEvents(['scalechange']);
         this.callParent(arguments);
     },
 
@@ -126,8 +126,9 @@ Ext.define('Flux.view.D3GeographicPanel', {
         var grid = this.getGridGeometry();
         var gridres = this._metadata.get('gridres'); // Assumes grid spacing given in degrees
         var proj = this.getProjection();
+        var projName = this._projectionId;
 
-        return {
+        var attrs = {
             'x': function (d, i) {
                 // We want to start drawing at the upper left (half the cell
                 //  width, or half a degree)
@@ -149,8 +150,18 @@ Ext.define('Flux.view.D3GeographicPanel', {
             'height': Math.abs(proj([0, gridres.y])[1] - proj([0, 0])[1]),
 
             'class': 'point'
-
         };
+
+        // Use a scaling factor for non-equirectangular projections
+        // http://en.wikipedia.org/wiki/Mercator_projection#Scale_factor
+        if (projName === 'mercator') {
+            attrs.height = function (d, i) {
+                var sf = 1/Math.cos((Math.PI * grid[i][1]) / 180);
+                return sf * Math.abs(proj([0, gridres.y])[1] - proj([0, 0])[1]);
+            }
+        }
+
+        return attrs;
 
     },
 
@@ -326,9 +337,10 @@ Ext.define('Flux.view.D3GeographicPanel', {
     /**
         Given a new projection, the drawing path is updated.
         @param  proj    {d3.geo.*}
+        @param  id      {String}
         @return {Flux.view.D3GeographicPanel}
      */
-    setProjection: function (proj) {
+    setProjection: function (proj, id) {
         proj.translate([
             this.svg.attr('width') * 0.5,
             this.svg.attr('height') * 0.5
@@ -342,6 +354,10 @@ Ext.define('Flux.view.D3GeographicPanel', {
             .attr('d', this.path);
 
         this._projection = proj;
+
+        if (id) {
+            this._projectionId = id;
+        }
 
         return this;
     },

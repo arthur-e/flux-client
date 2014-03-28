@@ -46,7 +46,7 @@ Ext.define('Flux.view.Symbology', {
                 ];
 
                 // Create all possible sequential palettes
-                Ext.Array.each(paletteNames, function (name) {
+                Ext.each(paletteNames, function (name) {
                     var scale = chroma.scale(name).domain([
                         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
                     ], (segments), 'quantiles').out('hex');
@@ -78,7 +78,7 @@ Ext.define('Flux.view.Symbology', {
                 ];
 
                 // Create all possible diverging palettes
-                Ext.Array.each(paletteNames, function (name) {
+                Ext.each(paletteNames, function (name) {
                     var scale = chroma.scale(name).domain([
                         -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
                     ], (segments), 'quantiles').out('hex');
@@ -276,7 +276,7 @@ Ext.define('Flux.view.Symbology', {
             listeners: {
                 change: function (cb, checked) {
                     // Enable all the fields in this fieldset when checked
-                    Ext.Array.each(this.up('fieldset').query('field:not(#threshold-toggle), enumslider'), function (cmp) {
+                    Ext.each(this.up('fieldset').query('field:not(#threshold-toggle), enumslider'), function (cmp) {
                         if (checked) {
                             cmp.enable();
                         } else {

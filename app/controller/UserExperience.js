@@ -48,7 +48,7 @@ Ext.define('Flux.controller.UserExperience', {
         Wipes out all state information stored on the client's web browser.
      */
     clearLocalState: function () {
-        Ext.Array.each(this.getFieldNames(), function (key) {
+        Ext.each(this.getFieldNames(), function (key) {
             Ext.state.Manager.clear(key);
         });
     },
@@ -61,7 +61,7 @@ Ext.define('Flux.controller.UserExperience', {
         var query = Ext.ComponentQuery.query('form');
         var names = [];
 
-        Ext.Array.each(query, function (form) {
+        Ext.each(query, function (form) {
             names = names.concat(form.getForm().getFields().collect('name'));
         });
 
@@ -85,7 +85,7 @@ Ext.define('Flux.controller.UserExperience', {
         var query = Ext.ComponentQuery.query('form');
         var params = {};
 
-        Ext.Array.each(query, function (form) {
+        Ext.each(query, function (form) {
             Ext.Object.merge(params, form.getValues());
         });
 
@@ -100,7 +100,7 @@ Ext.define('Flux.controller.UserExperience', {
      */
     onTendencyChange: function (cb, checked, eOpts) {
         if (checked) {
-            Ext.Array.each(Ext.ComponentQuery.query('form > hiddenfield[name=tendency]'), function (field) {
+            Ext.each(Ext.ComponentQuery.query('form > hiddenfield[name=tendency]'), function (field) {
                 field.setValue(cb.name);
             });
 

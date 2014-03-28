@@ -4,6 +4,9 @@ Ext.define('Flux.controller.Dispatch', {
     refs: [{
         ref: 'viewport',
         selector: 'viewport'
+    }, {
+        ref: 'symbology',
+        selector: 'symbology'
     }],
 
     init: function () {
@@ -74,7 +77,14 @@ Ext.define('Flux.controller.Dispatch', {
         @param  recs    {Array}
      */
     onMetadataLoad: function (store, recs) {
-        this.getController('MapController').updateColorScale({}, recs[0]);
+        // This is not needed as long as the "domain" field is set next
+        // this.getController('MapController').updateColorScale({}, recs[0]);
+
+        // Initialize the values of the domain bounds slider
+        this.getSymbology().down('fieldcontainer[name=domain]').setValues([
+            recs[0].get('stats').min,
+            recs[0].get('stats').max
+        ]);
     },
 
     /**

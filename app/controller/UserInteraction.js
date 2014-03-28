@@ -8,8 +8,8 @@ Ext.define('Flux.controller.UserInteraction', {
     ],
 
     refs: [{
-        ref: 'paletteField',
-        selector: 'symbology > combo[name=palette]'
+        ref: 'symbology',
+        selector: 'symbology'
     }],
 
     init: function () {

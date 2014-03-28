@@ -46,10 +46,8 @@ Ext.define('Flux.controller.MapController', {
                 resize: this.onResize
             },
 
-            'symbology fieldcontainer[name=domain]': {
-                change: function (field, values) {
-                    console.log('change!', values);//FIXME
-                }
+            'symbology field[name=autoscale]': {
+                change: this.onScaleParameterChange
             },
 
             'symbology field[name=palette]': {
@@ -62,6 +60,10 @@ Ext.define('Flux.controller.MapController', {
 
             'symbology field[name=sigmas]': {
                 change: this.onScaleParameterChange
+            },
+
+            'symbology fieldcontainer[name=domain]': {
+                boundschange: this.onScaleParameterChange
             }
 
         });
@@ -152,6 +154,8 @@ Ext.define('Flux.controller.MapController', {
         // Set the map projection
         this.projection = projPicker.getRecord().get('proj');
 
+        // Set the name of the map projection as the projectionId
+        cmp.up('panel')._projectionId = projPicker.getRecord().get('id');
         cmp.up('panel')
             .render(this.projection, width, height)
             .setBasemap(state.basemap.value, basemapPicker.getRecord().get('url'),
@@ -180,7 +184,7 @@ Ext.define('Flux.controller.MapController', {
         @param  recs    {Array}
      */
     onBasemapChange: function (c, recs) {
-        Ext.Array.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
             // For every d3geopanel instance, update the basemap
             cmp.setBasemap(recs[0].get('id'), recs[0].get('url'));
         });
@@ -192,7 +196,7 @@ Ext.define('Flux.controller.MapController', {
         @param  recs    {Array}
      */
     onPaletteChange: function (c, recs) {
-        Ext.Array.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
             // For every d3geopanel instance, update the scale's output range
             if (cmp.getScale()) {
                 cmp.setScale(cmp.getScale().range(recs[0].get('colors')));
@@ -206,9 +210,9 @@ Ext.define('Flux.controller.MapController', {
         @param  recs    {Array}
      */
     onProjectionChange: function (c, recs) {
-        Ext.Array.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
             // For every d3geopanel instance, update the projection
-            cmp.setProjection(recs[0].get('proj')).update();
+            cmp.setProjection(recs[0].get('proj'), recs[0].get('id')).update();
         });
 
         this.projection = recs[0].get('proj');
@@ -229,7 +233,6 @@ Ext.define('Flux.controller.MapController', {
         //  of the initial layout; we want to avoid acting on this firing
         if (oldWidth && oldHeight && width !== oldWidth && height !== oldHeight) {
             basemap = this.getMapSettings().down('combo[name=basemap]').getRecord();
-
             cmp.up('panel')
                 .render(this.projection, width, height)
                 .setBasemap(basemap.get('id'), basemap.get('url'))
@@ -257,7 +260,7 @@ Ext.define('Flux.controller.MapController', {
         @param  checked {Boolean}
      */
     toggleBasemapStyle: function (cb, checked) {
-        var basemap = this.getMapSettings.down('combo[name=basemap]').getRecord();
+        var basemap = this.getMapSettings().down('combo[name=basemap]').getRecord();
         var keyword;
 
         if (checked) {
@@ -287,7 +290,7 @@ Ext.define('Flux.controller.MapController', {
         }
 
         // For every d3geopanel instance, update the basemap
-        Ext.Array.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
             cmp.setBasemap(basemap.get('id'), basemap.get('url'), keyword);
         });
     },
@@ -316,13 +319,11 @@ Ext.define('Flux.controller.MapController', {
             return;
         }
 
-        scale = metadata.getQuantileScale(opts);
-
-        // Set the output range
-        scale.range(palette.get('colors'));
+        // Get a scale; set the output range
+        scale = metadata.getQuantileScale(opts).range(palette.get('colors'));
 
         // Update the scale of every map
-        Ext.Array.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
             cmp.setScale(scale);
         });
     }

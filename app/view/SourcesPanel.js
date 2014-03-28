@@ -42,7 +42,7 @@ Ext.define('Flux.view.SourcesPanel', {
         }),
         listeners: {
             dirtychange: function () {
-                Ext.Array.each(this.up('form').query('field[name=date], field[name=time]'), function (cmp) {
+                Ext.each(this.up('form').query('field[name=date], field[name=time]'), function (cmp) {
                     cmp.enable();
                 });
             }
@@ -176,7 +176,7 @@ Ext.define('Flux.view.SourcesPanel', {
             listeners: {
                 change: function (cb, checked) {
                     // Enable all the fields in this fieldset when checked
-                    Ext.Array.each(this.up('fieldset').query('field:not(checkbox)'), function (cmp) {
+                    Ext.each(this.up('fieldset').query('field:not(checkbox)'), function (cmp) {
                         if (checked) {
                             cmp.enable();
                         } else {

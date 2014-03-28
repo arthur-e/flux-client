@@ -845,10 +845,24 @@ Ext.ClassManager.addNameAlternateMappings({
   "ExtThemeNeptune.toolbar.Paging": [],
   "ExtThemeNeptune.toolbar.Toolbar": [],
   "Flux.Application": [],
-  "Flux.controller.Main": [],
+  "Flux.controller.Dispatch": [],
+  "Flux.controller.MapController": [],
+  "Flux.controller.UserExperience": [],
+  "Flux.controller.UserInteraction": [],
   "Flux.field.EnumeratedSlider": [],
+  "Flux.field.StatefulCheckbox": [],
+  "Flux.field.StatefulComboBox": [],
+  "Flux.field.StatefulRadioGroup": [],
+  "Flux.model.Geometry": [],
+  "Flux.model.Grid": [],
+  "Flux.model.Metadata": [],
   "Flux.model.Palette": [],
+  "Flux.model.Scenario": [],
+  "Flux.store.AbstractStore": [],
+  "Flux.store.Grids": [],
+  "Flux.store.Metadata": [],
   "Flux.store.Palettes": [],
+  "Flux.store.Scenarios": [],
   "Flux.view.ConfigurationPanel": [],
   "Flux.view.D3GeographicPanel": [],
   "Flux.view.D3Panel": [],
@@ -1862,12 +1876,32 @@ Ext.ClassManager.addNameAliasMappings({
   "ExtThemeNeptune.toolbar.Paging": [],
   "ExtThemeNeptune.toolbar.Toolbar": [],
   "Flux.Application": [],
-  "Flux.controller.Main": [],
+  "Flux.controller.Dispatch": [],
+  "Flux.controller.MapController": [],
+  "Flux.controller.UserExperience": [],
+  "Flux.controller.UserInteraction": [],
   "Flux.field.EnumeratedSlider": [
     "widget.enumslider"
   ],
+  "Flux.field.StatefulCheckbox": [
+    "widget.recheckbox"
+  ],
+  "Flux.field.StatefulComboBox": [
+    "widget.recombo"
+  ],
+  "Flux.field.StatefulRadioGroup": [
+    "widget.reradiogroup"
+  ],
+  "Flux.model.Geometry": [],
+  "Flux.model.Grid": [],
+  "Flux.model.Metadata": [],
   "Flux.model.Palette": [],
+  "Flux.model.Scenario": [],
+  "Flux.store.AbstractStore": [],
+  "Flux.store.Grids": [],
+  "Flux.store.Metadata": [],
   "Flux.store.Palettes": [],
+  "Flux.store.Scenarios": [],
   "Flux.view.ConfigurationPanel": [
     "widget.configpanel"
   ],

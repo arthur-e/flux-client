@@ -45,7 +45,7 @@ Ext.define('Flux.controller.Dispatch', {
             maskTarget.getEl().mask('Loading...');
         }
 
-        Ext.StoreManager.get('grids').load({
+        this.getStore('grids').load({
             params: params,
             callback: function (recs) {
                 if (maskTarget) {
@@ -95,9 +95,8 @@ Ext.define('Flux.controller.Dispatch', {
      */
     setRequestNamespace: function (ns) {
         this._namespaceId = ns;
-        Ext.StoreManager.get('grids').setProxyNamespace(ns, false);
-    },
-
+        this.getStore('grids').setProxyNamespace(ns, false);
+    }
 
 });
 

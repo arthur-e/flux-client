@@ -44,7 +44,7 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     onSourceChange: function (field, sources) {
         var panel = field.up('panel');
-        var store = Ext.StoreManager.get('metadata');
+        var store = this.getStore('metadata');
         var src = sources[0].get('_id');
 
         panel.getEl().mask('Loading...');
@@ -173,7 +173,7 @@ Ext.define('Flux.controller.UserInteraction', {
                         Ext.Object.merge(config, {
                             name: cmp.name,
                             index: Number(cmp.index),
-                            disabled: cmp.isDisabled(),
+                            disabled: cmp.isDisabled()
                         });
 
                         // Replace the old instance with a new one

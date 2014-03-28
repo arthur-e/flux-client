@@ -116,10 +116,10 @@ Ext.define('Flux.controller.MapController', {
         projPicker.getStore().add([
             ['equirectangular', 'Equirectangular (Plate Carrée)', d3.geo.equirectangular().scale(width * 0.15)],
             //['hammer', 'Hammer (Equal-Area)'],
-            ['mercator', 'Mercator', d3.geo.mercator().scale(width * 0.15)],
             //['miller', 'Miller'],
             //['naturalEarth', 'Natural Earth'],
-            //['robinson', 'Robinson']
+            //['robinson', 'Robinson'],
+            ['mercator', 'Mercator', d3.geo.mercator().scale(width * 0.15)]
         ]);
 
         // Initialize the the user interface for ComboBoxes

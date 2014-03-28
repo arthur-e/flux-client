@@ -158,7 +158,7 @@ Ext.define('Flux.view.SourcesPanel', {
                     ['min', 'Minimum'],
                     ['max', 'Maximum']
                 ]
-            }),
+            })
         }]
 
     }, {

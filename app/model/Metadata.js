@@ -37,7 +37,7 @@ Ext.define('Flux.model.Metadata', {
         type: 'auto'
     }, {
         name: 'steps',
-        type: 'auto',
+        type: 'auto'
     }, {
         name: 'uncertainty',
         type: 'auto'
@@ -82,7 +82,7 @@ Ext.define('Flux.model.Metadata', {
         if (config.autoscale) { // If no defined bounds...
             domain = [
                 (stats[tendency] - (sigmas * stats.std)), // Lower bound
-                (stats[tendency] + (sigmas * stats.std)), // Upper bound
+                (stats[tendency] + (sigmas * stats.std))  // Upper bound
             ]
         }
 

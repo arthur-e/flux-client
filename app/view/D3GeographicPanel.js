@@ -41,16 +41,17 @@ Ext.define('Flux.view.D3GeographicPanel', {
     basemapUrl: undefined,
 
     /**
-        The scale used for coloring map elements.
-        @private
-     */
-    _scale: d3.scale.quantile(),
-
-    /**
         Initializes the component.
      */
     initComponent: function () {
         this.addEvents(['scalechange']);
+
+        /**
+            The scale used for coloring map elements.
+            @private
+         */
+        this._scale = d3.scale.quantile();
+
         this.callParent(arguments);
     },
 
@@ -206,8 +207,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
                 this.wrapper.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
             }, this));
 
-        this.panes = {}; // Organizes visualization features into "panes"
-
         // This container will apply zoom and pan transformations to the entire
         //  content area
         this.wrapper = this.svg.append('g').attr('class', 'wrapper')
@@ -229,7 +228,9 @@ Ext.define('Flux.view.D3GeographicPanel', {
         // Create panes in which to organize content at difference z-index
         //  levels using painter's algorithm (first drawn on bottom; last drawn
         //  is on top)
-        this.panes.basemap = this.wrapper.append('g').attr('class', 'pane');
+        this.panes = {
+            basemap: this.wrapper.append('g').attr('class', 'pane')
+        };
 
         this.setProjection(proj);
 

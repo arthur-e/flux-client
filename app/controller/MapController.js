@@ -46,6 +46,14 @@ Ext.define('Flux.controller.MapController', {
                 resize: this.onResize
             },
 
+            'symbology #paletteType': {
+                change: this.onScaleParameterChange
+            },
+
+            'symbology container[name=domain]': {
+                boundschange: this.onScaleParameterChange
+            },
+
             'symbology field[name=autoscale]': {
                 change: this.onScaleParameterChange
             },
@@ -60,10 +68,6 @@ Ext.define('Flux.controller.MapController', {
 
             'symbology field[name=sigmas]': {
                 change: this.onScaleParameterChange
-            },
-
-            'symbology fieldcontainer[name=domain]': {
-                boundschange: this.onScaleParameterChange
             }
 
         });

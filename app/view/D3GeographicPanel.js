@@ -96,9 +96,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
         @return         {Flux.view.D3GeographicPanel}
      */
     draw: function (grid) {
-        var bbox, c1, c2, sel;
+        var bbox, c1, c2, sel, ts;
         var proj = this.getProjection();
-        var ts = grid.get('timestamp');
 
         // Retain references to last drawing data and metadata; for instance,
         //  resize events require drawing again with the same (meta)data
@@ -143,19 +142,22 @@ Ext.define('Flux.view.D3GeographicPanel', {
             this.setZoom(2 * (this.svg.attr('width')) / proj([(bbox[2] - bbox[0]), 0])[0]);
         }
 
-        this.updateDisplay([{
-            id: 'date',
-            text: Ext.String.format('{0} {1}-{2}', ts.getUTCFullYear(), ts.getUTCMonth(), ts.getUTCDate()) //FIXME Ext.Date.format(ts, 'Y m-d') Prints locale time strings
-        }, {
-            id: 'time',
-            text: (function () { //FIXME Ext.Date.format(ts, 'H:i') Prints locale time strings
-                var H = ts.getUTCHours().toString();
-                var i = ts.getUTCMinutes().toString();
-                H = (H.length === 1) ? '0' + H : H;
-                i = (i.length === 1) ? '0' + i : i;
-                return Ext.String.format('{0}:{1}', H, i);
-            }())
-        }]);
+        if (grid) {
+            ts = grid.get('timestamp');
+            this.updateDisplay([{
+                id: 'date',
+                text: Ext.String.format('{0} {1}-{2}', ts.getUTCFullYear(), ts.getUTCMonth(), ts.getUTCDate()) //FIXME Ext.Date.format(ts, 'Y m-d') Prints locale time strings
+            }, {
+                id: 'time',
+                text: (function () { //FIXME Ext.Date.format(ts, 'H:i') Prints locale time strings
+                    var H = ts.getUTCHours().toString();
+                    var i = ts.getUTCMinutes().toString();
+                    H = (H.length === 1) ? '0' + H : H;
+                    i = (i.length === 1) ? '0' + i : i;
+                    return Ext.String.format('{0}:{1}', H, i);
+                }())
+            }]);
+        }
 
         this._isDrawn = true;
 

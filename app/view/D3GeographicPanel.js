@@ -70,6 +70,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
          */
         this._isDrawn = false;
 
+        this._legend = {};
+
         /**
             The scale used for coloring map elements.
             @private
@@ -294,7 +296,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         this.panes.hud = this.svg.append('g').attr('class', 'pane hud');
         this.panes.legend = this.svg.append('g').attr('class', 'pane legend');
 
-        // Create the elements for the heads-up-display (HUD)
+        // Heads-Up-Display (HUD) date/time info ///////////////////////////////
         this.panes.hud.selectAll('.info')
             .data([
                 { text: '', id: 'date' },
@@ -317,6 +319,13 @@ Ext.define('Flux.view.D3GeographicPanel', {
                 },
                 'font-size': '40px'
             });
+
+        // Legend //////////////////////////////////////////////////////////////
+        this.panes.legend.append('g').attr('class', 'ramp y axis');
+        this._legend.yScale = d3.scale.linear();
+        this._legend.yAxis = d3.svg.axis()
+            .scale(this._legend.yScale)
+            .orient('right');
 
         this.setProjection(proj);
 
@@ -459,6 +468,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
         if (this.panes.overlay) {
             this.update(this.panes.overlay.selectAll('.point'));
+            this.updateLegend();
         }
 
         this.fireEvent('scalechange');
@@ -538,24 +548,47 @@ Ext.define('Flux.view.D3GeographicPanel', {
     /**TODO
      */
     updateLegend: function (bins) {
-        bins = bins || this._scale.range();
+        var h;
+        var s = 32; // Length on a side of the legend's bins
+        var colors = this._scale.range();
+        var yOffset = this.svg.attr('height');
+        bins = bins || this._scale.quantiles();
 
-        this.panes.legend.selectAll('.bins').remove();
-        this.panes.legend.selectAll('.bins')
-            .data(bins)
+        // Calculate intended height of the legend
+        h = s * bins.length;
+
+        this._legend.yScale
+            .domain([0, bins.length])
+            .range([h, 0]);
+
+        this._legend.yAxis
+            .tickFormat(function (x, i) {
+                var s = Number(bins[x]).toFixed(1).toString();
+                return (s === 'NaN') ? '' : s;
+            })
+            .scale(this._legend.yScale);
+
+        this.panes.legend.selectAll('.axis')
+            .attr('transform', 'translate(' + s.toString() + ',' +
+                (yOffset - this._legend.yScale(bins.length) - h - s).toString() + ')')
+            .call(this._legend.yAxis);
+
+        this.panes.legend.selectAll('.bin').remove();
+        this.panes.legend.selectAll('.bin')
+            .data(colors)
             .enter()
             .append('rect')
             .attr({
                 'x': 0,
-                'y': Ext.Function.bind(function (d, i) {
-                    return this.svg.attr('height') - (i * 32) - 32;
-                }, this),
-                'width': 32,
-                'height': 32,
-                'fill': Ext.Function.bind(function (d) {
+                'y': function (d, i) {
+                    return yOffset - (i * s) - s;
+                },
+                'width': s,
+                'height': s,
+                'fill': function (d) {
                     return d;
-                }, this),
-                'class': 'bins'
+                },
+                'class': 'bin'
             });
     }
 

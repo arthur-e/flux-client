@@ -200,10 +200,11 @@ Ext.define('Flux.controller.MapController', {
         @param  recs    {Array}
      */
     onPaletteChange: function (c, recs) {
+        var cs = recs[0].get('colors');
         Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
             // For every d3geopanel instance, update the scale's output range
             if (cmp.getScale()) {
-                cmp.setScale(cmp.getScale().range(recs[0].get('colors')));
+                cmp.setScale(cmp.getScale().range(cs));
             }
         });
     },
@@ -241,6 +242,8 @@ Ext.define('Flux.controller.MapController', {
                 .render(this.projection, width, height)
                 .setBasemap(basemap.get('id'), basemap.get('url'))
                 .draw();
+
+            cmp.updateLegend();
         }
     },
 

@@ -1,3 +1,12 @@
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+.axis.label,
+.x.axis text,
+.y.axis text { font: 14px Helvetica,Arial,sans-serif; }
 .boundary {
     fill: none;
     stroke-width: 1px;

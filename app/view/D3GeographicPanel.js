@@ -157,6 +157,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
                     return Ext.String.format('{0}:{1}', H, i);
                 }())
             }]);
+
+            this.updateLegend();
         }
 
         this._isDrawn = true;
@@ -286,10 +288,11 @@ Ext.define('Flux.view.D3GeographicPanel', {
         //  must be appended to the wrapper layer; layers that should NOT zoom
         //  and pan should be appended to something else (e.g this.svg)
         this.panes = {
-            basemap: this.wrapper.append('g').attr('class', 'pane'),
-            hud: this.svg.append('g').attr('class', 'pane hud'),
-            overlay: this.wrapper.append('g').attr('class', 'pane overlay')
+            basemap: this.wrapper.append('g').attr('class', 'pane')
         };
+        this.panes.overlay = this.wrapper.append('g').attr('class', 'pane overlay');
+        this.panes.hud = this.svg.append('g').attr('class', 'pane hud');
+        this.panes.legend = this.svg.append('g').attr('class', 'pane legend');
 
         // Create the elements for the heads-up-display (HUD)
         this.panes.hud.selectAll('.info')
@@ -523,12 +526,37 @@ Ext.define('Flux.view.D3GeographicPanel', {
         return this;
     },
 
-    /**TODO
+    /**
+        Updates the on-map info text in the heads-up-display.
      */
     updateDisplay: function (data) {
         this.panes.hud.selectAll('.info')
             .data(data)
             .text(function (d) { return d.text; });
+    },
+
+    /**TODO
+     */
+    updateLegend: function (bins) {
+        bins = bins || this._scale.range();
+
+        this.panes.legend.selectAll('.bins').remove();
+        this.panes.legend.selectAll('.bins')
+            .data(bins)
+            .enter()
+            .append('rect')
+            .attr({
+                'x': 0,
+                'y': Ext.Function.bind(function (d, i) {
+                    return this.svg.attr('height') - (i * 32) - 32;
+                }, this),
+                'width': 32,
+                'height': 32,
+                'fill': Ext.Function.bind(function (d) {
+                    return d;
+                }, this),
+                'class': 'bins'
+            });
     }
 
 });

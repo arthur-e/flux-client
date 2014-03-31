@@ -31,7 +31,8 @@ Ext.define('Flux.view.Viewport', {
             },
             items: [{
                 xtype: 'button',
-                text: 'Select Visualization'
+                text: 'Select Visualization',
+                disabled: true//TODO
             }, {
                 xtype: 'button',
                 text: 'Settings',
@@ -67,14 +68,22 @@ Ext.define('Flux.view.Viewport', {
                 xtype: 'button',
                 iconCls: 'icon-control-play-gray',
                 text: 'Animate',
-                enableToggle: true
+                enableToggle: true,
+                tooltip: 'Animate the visualization with time',
+                disabled: true//TODO
+            }, {
+                xtype: 'button',
+                itemId: 'animation-settings-btn',
+                iconCls: 'icon-cog',
+                tooltip: 'Change animation settings...',
+                disabled: true//TODO
             }, {
                 xtype: 'slider',
                 name: 'animationDelay',
                 stateful: true,
                 stateId: 'animationDelay',
                 width: '10%',
-                maxWidth: 200,
+                maxWidth: 150,
                 value: 1,
                 minValue: 1,
                 maxValue: 5,
@@ -90,6 +99,14 @@ Ext.define('Flux.view.Viewport', {
                         value: this.getValue()
                     }
                 }
+            }, {
+                xtype: 'button',
+                iconCls: 'icon-control-left',
+                tooltip: 'Step backwards'
+            }, {
+                xtype: 'button',
+                iconCls: 'icon-control-right',
+                tooltip: 'Step forwards'
             }]
         },
 

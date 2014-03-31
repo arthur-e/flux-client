@@ -54,11 +54,19 @@
 .x-panel-header-text-container-default { font-size: 14px !important; }
 
 /* Icons **********************************************************************/
-.icon-app-form-del { background-image: url(application_form_delete.png) !important; }
-.icon-control-play-gray { background-image: url(bullet_arrow_right.png) !important; }
-.icon-zoom-extend { background-image: url(zoom_extend.png) !important; }
-.icon-zoom-in { background-image: url(magnifier_zoom_in.png) !important; }
-.icon-zoom-out { background-image: url(magnifier_zoom_out.png) !important; }
+.icon-app-form-del { background-image: url(application_form_delete.png); }
+.icon-cog {
+    background-image: url(cog.png);
+    background-size: 25px;
+}
+.icon-control-play-gray { background-image: url(bullet_arrow_right.png); }
+.icon-control-right {background-image: url(bullet_arrow_right_2.png); }
+.icon-control-left {background-image: url(bullet_arrow_left_2.png); }
+.icon-control-right,
+.icon-control-left { background-position: -4px -3px; }
+.icon-zoom-extend { background-image: url(zoom_extend.png); }
+.icon-zoom-in { background-image: url(magnifier_zoom_in.png); }
+.icon-zoom-out { background-image: url(magnifier_zoom_out.png); }
 
 /* Panels/Borders *************************************************************/
 .x-panel-default-outer-border-bl { border-bottom: 0 !important; }

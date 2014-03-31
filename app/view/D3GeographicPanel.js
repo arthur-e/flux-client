@@ -41,6 +41,10 @@ Ext.define('Flux.view.D3GeographicPanel', {
         }]
     },
 
+    _mercatorScale: function (phi) {
+        return 1/Math.cos((Math.PI * phi) / 180);
+    },
+
     /**
         Configuration and state for the basemap(s).
      */
@@ -98,7 +102,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         @return         {Flux.view.D3GeographicPanel}
      */
     draw: function (grid) {
-        var bbox, c1, c2, sel, ts;
+        var bbox, lat, lng, c1, c2, sel, ts;
         var proj = this.getProjection();
 
         // Retain references to last drawing data and metadata; for instance,
@@ -136,7 +140,14 @@ Ext.define('Flux.view.D3GeographicPanel', {
             ];
 
             // Average the respective coordinate pairs in the bounds (xmin, ymin, xmax, ymax)
-            c2 = proj([(bbox[0] + bbox[2]) * 0.5, (bbox[1] + bbox[3]) * 0.5]);
+            lat = (bbox[1] + bbox[3]) * 0.5;
+            lng = (bbox[0] + bbox[2]) * 0.5;
+
+            if (this._projectionId === 'mercator') {
+                lat = this._mercatorScale(lat) * lat;
+            }
+
+            c2 = proj([lng, lat]);
 
             this.zoom.translate([(c1[0] - c2[0]), (c1[1] - c2[1])])
                 .event(this.wrapper.transition().duration(500));
@@ -185,7 +196,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         var grid = this.getGridGeometry();
         var gridres = this._metadata.get('gridres'); // Assumes grid spacing given in degrees
         var proj = this.getProjection();
-        var projName = this._projectionId;
+        var scaling = this._mercatorScale;
 
         var attrs = {
             'x': function (d, i) {
@@ -213,10 +224,9 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
         // Use a scaling factor for non-equirectangular projections
         // http://en.wikipedia.org/wiki/Mercator_projection#Scale_factor
-        if (projName === 'mercator') {
-            attrs.height = function (d, i) {
-                var sf = 1/Math.cos((Math.PI * grid[i][1]) / 180);
-                return sf * Math.abs(proj([0, gridres.y])[1] - proj([0, 0])[1]);
+        if (this._projectionId === 'mercator') {
+            attrs.height =function (d, i) {
+                return scaling(grid[i][1]) * Math.abs(proj([0, gridres.y])[1] - proj([0, 0])[1]);
             }
         }
 
@@ -245,7 +255,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         @param  proj    {d3.geo.*}
         @param  width   {Number}
         @param  height  {Number}
-        @return {Flux.view.D3GeographicPanel}
+        @return         {Flux.view.D3GeographicPanel}
      */
     render: function (proj, width, height) {
         var elementId = '#' + this.items.getAt(0).id;
@@ -345,7 +355,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         @param  basemap         {String}    Unique identifier (name) for the basemap
         @param  basemapUrl      {String}
         @param  drawBoundaries  {Boolean}
-        @return {Flux.view.D3GeographicPanel}
+        @return                 {Flux.view.D3GeographicPanel}
      */
     setBasemap: function (basemap, basemapUrl, boundaries) {
         var drawBasemap = Ext.Function.bind(function (json) {
@@ -423,7 +433,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
     /**
         Sets the grid geometry; retains a reference to the grid geometry.
         @param  geom    {Flux.model.Geometry}
-        @return {Flux.view.D3GeographicPanel}
+        @return         {Flux.view.D3GeographicPanel}
      */
     setGridGeometry: function (geom) {
         this._grid = geom.get('coordinates');
@@ -434,7 +444,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         Given a new projection, the drawing path is updated.
         @param  proj    {d3.geo.*}
         @param  id      {String}
-        @return {Flux.view.D3GeographicPanel}
+        @return         {Flux.view.D3GeographicPanel}
      */
     setProjection: function (proj, id) {
         proj.translate([
@@ -461,7 +471,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
     /**
         Sets the color scale used by the map.
         @param  scale   {d3.scale.*}
-        @return {Flux.view.D3GeographicPanel}
+        @return         {Flux.view.D3GeographicPanel}
      */
     setScale: function (scale) {
         this._scale = scale;
@@ -481,7 +491,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         duration of time for the transition to the new zoom level.
         @param  factor      {Number}
         @param  duration    {Number}
-        @return {Flux.view.D3GeographicPanel}
+        @return             {Flux.view.D3GeographicPanel}
      */
     setZoom: function (factor, duration) {
         var scale = this.zoom.scale();
@@ -538,14 +548,21 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
     /**
         Updates the on-map info text in the heads-up-display.
+        @param  data    {Array}
+        @return         {Flux.view.D3GeographicPanel}
      */
     updateDisplay: function (data) {
         this.panes.hud.selectAll('.info')
             .data(data)
             .text(function (d) { return d.text; });
+        return this;
     },
 
-    /**TODO
+    /**
+        Updates the legend based on the current color scale; can be called with
+        or without an Array of breakpoints (bins) for the scale.
+        @param  bins    {Array}
+        @return         {Flux.view.D3GeographicPanel}
      */
     updateLegend: function (bins) {
         var h;

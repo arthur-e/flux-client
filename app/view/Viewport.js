@@ -66,6 +66,7 @@ Ext.define('Flux.view.Viewport', {
                 }
             }, {
                 xtype: 'button',
+                itemId: 'animate-btn',
                 iconCls: 'icon-control-play-gray',
                 text: 'Animate',
                 enableToggle: true,

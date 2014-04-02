@@ -98,6 +98,8 @@ Ext.define('Flux.controller.Dispatch', {
             recs[0].get('stats').min,
             recs[0].get('stats').max
         ]);
+
+        this.getController('Animation').enableAnimation(recs[0]);
     },
 
     /**

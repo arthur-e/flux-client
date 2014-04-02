@@ -78,7 +78,12 @@ Ext.define('Flux.controller.Animation', {
     ////////////////////////////////////////////////////////////////////////////
     // Event Handlers //////////////////////////////////////////////////////////
 
-    /**TODO
+    /**
+        To be executed when the dataset (metadata) changes, this function
+        calculates the default step size (e.g. an hour) and the number of steps
+        (e.g. 3 steps == 3 hours) between each animation frame. The animation
+        controls in the top toolbar are thus enabled and initialized.
+        @param  metadata    {Flux.model.Metadata}
      */
     enableAnimation: function (metadata) {
         var c, d, s0, steps, stepSize;
@@ -139,12 +144,17 @@ Ext.define('Flux.controller.Animation', {
     },
 
     /**
+        Returns the current timestamp known to this Controller.
+        @return {Date}
      */
     getTimestamp: function () {
         return this._timestamp;
     },
 
-    /**TODO
+    /**
+        Handles forwards/backwards iteration through a time series dataset;
+        responds to "forward" or "backward" button being clicked.
+        @param  btn {Ext.button.Button}
      */
     onStepButton: function (btn) {
         switch (btn.getItemId()) {
@@ -157,7 +167,10 @@ Ext.define('Flux.controller.Animation', {
         }
     },
 
-    /**TODO
+    /**
+        Handles a change in the step size as set by the user.
+        @param  cmp     {Ext.form.field.ComboBox}
+        @param  recs    {Array}
      */
     onStepSizeChange: function (cmp, recs) {
         var steps;
@@ -169,19 +182,27 @@ Ext.define('Flux.controller.Animation', {
         this.updateStepSelector((steps === 0) ? 1 : steps);
     },
 
-    /**TODO
+    /**
+        Handles a change in the number of steps as set by the user.
+        @param  cmp     {Ext.form.field.Number}
+        @param  value   {Number}
      */
     onStepsChange: function (cmp, value) {
         this._steps = value;
     },
 
-    /**TODO
+    /**
+        Sets the timestamp as known by this Controller.
+        @param  timestamp   {Date}
      */
     setTimestamp: function (timestamp) {
         this._timestamp = timestamp;
     },
 
-    /**TODO
+    /**
+        Causes the corresponding view to "step" forwards or backwards in time
+        with the animation according to a specified number of steps.
+        @param  steps   {Number}    Negative steps are steps taken backwards
      */
     stepBy: function (steps) {
         this._timestamp = Ext.Date.add(this._timestamp, this._stepSize, steps);
@@ -190,7 +211,10 @@ Ext.define('Flux.controller.Animation', {
         });
     },
 
-    /**TODO
+    /**
+        Removes and inserts the Ext.form.field.Number instance that represents
+        the number of steps to be taken in an animation frame.
+        @param  steps   {Number}
      */
     updateStepSelector: function (steps) {
         var menu = this.getAnimationSettings();

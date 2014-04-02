@@ -355,7 +355,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
         this.panes.hud.selectAll('.info')
             .data([
-                { text: '', id: 'timestamp' },
+                { text: '', id: 'timestamp' }
             ], function (d) {
                 return d.id;
             })
@@ -688,7 +688,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
             text: this._timestamp
         }]);
         return this;
-    },
+    }
 
 });
 

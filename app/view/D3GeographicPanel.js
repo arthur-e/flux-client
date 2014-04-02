@@ -344,6 +344,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
         d3.select('#btn-zoom-way-out').on('click',
             Ext.Function.bind(this.setZoom, this, [0.1]));
 
+        this._isDrawn = false;
+
         return this;
     },
 
@@ -551,6 +553,11 @@ Ext.define('Flux.view.D3GeographicPanel', {
     updateDisplay: function (data) {
         if (!data) {
             data = this.panes.hud.selectAll('.info').data();
+            // Recall the timestamp text (if this function was called after
+            //  the window is resized and this panel is re-rendered)
+            if (data[0].id === 'datetime') {
+                data[0].text = this._timestamp;
+            }
         }
 
         this.panes.hud.selectAll('.backdrop')
@@ -627,14 +634,14 @@ Ext.define('Flux.view.D3GeographicPanel', {
         @return         {Flux.view.D3GeographicPanel}
      */
     updateTimestamp: function (date, fmt) {
+        this._timestamp = Ext.Date.format(Ext.Date.add(date, Ext.Date.MINUTE,
+            date.getTimezoneOffset()), fmt)
         this.updateDisplay([{
             id: 'datetime',
             // The following is necessary because Ext.Date.format prints only
             //  locale time strings, not UTC time strings
-            text: Ext.Date.format(Ext.Date.add(date,
-              Ext.Date.MINUTE, date.getTimezoneOffset()), fmt)
+            text: this._timestamp
         }]);
-
         return this;
     },
 

@@ -28,7 +28,7 @@ Ext.define('Flux.controller.UserInteraction', {
         this.control({
 
             '#animation-settings-btn': {
-                click: this.launchAnimationSettings
+                //click: this.launchAnimationSettings FIXME
             },
 
             'sourcespanel combo[name=source]': {
@@ -192,80 +192,6 @@ Ext.define('Flux.controller.UserInteraction', {
                 });
             });
         }
-    },
-
-    /**TODO
-     */
-    launchAnimationSettings: function () {
-        var c, d, steps;
-        var metadata = this.getStore('metadata').getAt(0);
-        var w = Ext.create('Ext.window.Window', {
-            title: 'Animation Settings',
-            layout: 'form',
-            width: 400,
-            bodyPadding: '3px 10px 10px 10px',
-            items: [{
-                xtype: 'fieldcontainer',
-                layout: 'hbox',
-                fieldLabel: 'Steps each animation frame',
-                labelAlign: 'top',
-                items: [{
-                    xtype: 'numberfield',
-                    name: 'steps',
-                    width: 80,
-                    value: 1,
-                    minValue: 1,
-                    maxValue: 31
-                }, {
-                    xtype: 'splitter',
-                }, {
-                    xtype: 'combo',
-                    name: 'stepType',
-                    queryMode: 'local',
-                    valueField: 's',
-                    displayField: 't',
-                    flex: 1
-                }]
-            }]
-        });
-
-        c = w.down('combo');
-
-        if (metadata) {
-            steps = metadata.get('steps');
-
-            // TODO Currently only checks step data, not span data
-            if (steps.length === 1) { // Step size is...
-                if (steps[0] / 86400 <= 1) { // Less than/equal to 1 day
-                    d = [
-                        [3600, 'hour(s)'],
-                        [86400, 'day(s)']
-                    ];
-                    w.down('numberfield').setValue(Math.floor(steps[0] / 3600));
-                } else {
-                    d = [
-                        [86400, 'day(s)'],
-                        [604800, 'week(s)']
-                    ];
-                    w.down('numberfield').setValue(Math.floor(steps[0] / 86400));
-                }
-            } else {
-                d = [[steps[0], 'steps']];
-            }
-
-            c.setDisabled(!(steps.length === 1));
-        } else {
-            d = [[0, 'steps']];
-            c.disable();
-        }
-
-        c.bindStore(Ext.create('Ext.data.ArrayStore', {
-            fields: ['s', 't'],
-            data: d
-        }));
-        c.setValue(d[0][0]);
-
-        w.show();
     },
 
     /**

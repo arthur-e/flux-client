@@ -2,6 +2,12 @@ Ext.define('Flux.controller.Animation', {
     extend: 'Ext.app.Controller',
 
     refs: [{
+        'ref': 'animationSettings',
+        'selector': '#anim-settings-menu'
+    }, {
+        'ref': 'sourcesPanel',
+        'selector': 'sourcespanel'
+    }, {
         'ref': 'topToolbar',
         'selector': 'viewport toolbar'
     }],
@@ -22,20 +28,51 @@ Ext.define('Flux.controller.Animation', {
             Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
         }
 
-        this.defaults = {
-            steps: 1
-        };
-
         ////////////////////////////////////////////////////////////////////////
         // Event Listeners /////////////////////////////////////////////////////
 
         this.control({
 
-            '#animation-settings-btn': {
-                click: this.launchAnimationSettings
+            '#anim-settings-menu combo': {
+                select: this.onStepSizeChange
+            },
+
+            '#backward-btn': {
+                click: this.onStepButton
+            },
+
+            '#forward-btn': {
+                click: this.onStepButton
             }
 
         });
+    },
+
+    calcStepOrSize: function (s0, stepSize) {
+        if (stepSize) {
+            switch (stepSize) {
+                case Ext.Date.MONTH:
+                steps = s0 / 2678400;
+                break;
+
+                case Ext.Date.DAY:
+                steps = s0 / 86400;
+                break;
+
+                default:
+                steps = s0 / 3600; // Ext.Date.HOUR
+            }
+
+            return Math.floor(steps);
+        }
+
+        if (s0 / 86400 < 1) { // Less than 1 day (86400 seconds)?
+            return Ext.Date.HOUR;
+        } else if (s0 / 2678400 < 1) { // Less than 1 month?
+            return Ext.Date.DAY;
+        } else {
+            return Ext.Date.MONTH;
+        }
     },
 
     ////////////////////////////////////////////////////////////////////////////
@@ -44,95 +81,48 @@ Ext.define('Flux.controller.Animation', {
     /**TODO
      */
     enableAnimation: function (metadata) {
-        var step, steps, stepSize;
+        var c, d, s0, steps, stepSize;
         this._metadata = metadata;
 
-        step = metadata.get('steps')[0];
-        if (step / 86400 < 1) { // Less than 1 day (86400 seconds)?
-            stepSize = Ext.Date.HOUR;
-            steps = Math.floor(step / 3600);
-        } else {
-            stepSize = Ext.Date.DAY
-            steps = Math.floor(step / 86400);
-        }
+        // Figure out the default size of step (e.g. an hour) and the number of
+        //  steps to take in each frame
+        s0 = metadata.get('steps')[0];
+        stepSize = this.calcStepOrSize(s0);
+        steps = this.calcStepOrSize(s0, stepSize);
 
-        this.defaults = Ext.Object.merge(this.defaults, {
-            steps: steps,
-            stepSize: stepSize
+        // Enable all the toolbar buttons related to animation
+        Ext.each(this.getTopToolbar().query('button[cls=anim-btn]'), function (btn) {
+            btn.enable();
         });
 
-        this.getTopToolbar().down('#animate-btn').enable();
-        this.getTopToolbar().down('#animation-settings-btn').enable();
-    },
+        // Configure the Animation Settings ////////////////////////////////////
+        this.updateStepSelector(steps);
 
-    /**TODO
-     */
-    launchAnimationSettings: function () {
-        var c, d, n, metadata, steps, numSteps;
-        var w = Ext.create('Ext.window.Window', {
-            title: 'Animation Settings',
-            layout: 'form',
-            width: 400,
-            bodyPadding: '3px 10px 10px 10px',
-            items: [{
-                xtype: 'fieldcontainer',
-                layout: 'hbox',
-                fieldLabel: 'Steps each animation frame',
-                labelAlign: 'top',
-                items: [{
-                    xtype: 'numberfield',
-                    name: 'steps',
-                    width: 80,
-                    value: 1,
-                    minValue: 1,
-                    maxValue: 31
-                }, {
-                    xtype: 'splitter',
-                }, {
-                    xtype: 'combo',
-                    name: 'stepSize',
-                    queryMode: 'local',
-                    valueField: 'stepSize',
-                    flex: 1
-                }]
-            }]
-        });
-
-        c = w.down('combo');
-        n = w.down('numberfield');
-
-        if (this._metadata) {
-            steps = this._metadata.get('steps');
-
-            // TODO Currently only checks step data, not span data
-            if (steps.length === 1) { // Step size is...
-                if (steps[0] / 86400 <= 1) { // Less than/equal to 1 day
-                    d = [
-                        [Ext.Date.HOUR, 'hour(s)'],
-                        [Ext.Date.DAY, 'day(s)']
-                    ];
-                    numSteps = Math.floor(steps[0] / 3600);
-                } else if (steps[0] / 2678400 < 1) { // Less than 1 month
-                    d = [
-                        [Ext.Date.DAY, 'day(s)']
-                    ];
-                    numSteps = Math.floor(steps[0] / 86400);
-                } else {
-                    d = [
-                        [Ext.Date.DAY, 'day(s)'],
-                        [Ext.Date.MONTH, 'month(s)']
-                    ];
-                    numSteps = Math.floor(steps[0] / 86400);
-                }
-            } else {
-                d = [[steps[0], 'steps']];
-            }
-
-            c.setDisabled(!(steps.length === 1));
-        } else {
-            d = [[0, 'steps']];
-            numSteps = 1;
+        c = this.getAnimationSettings().down('combo');
+        if (metadata.get('steps').length > 1) {
+            d = [[s0, 'steps']];
             c.disable();
+        } else {
+            switch (stepSize) {
+                case Ext.Date.DAY:
+                d = [
+                    [Ext.Date.DAY, 'day(s)']
+                ];
+                break;
+
+                case Ext.Date.MONTH:
+                d = [
+                    [Ext.Date.DAY, 'day(s)'],
+                    [Ext.Date.MONTH, 'month(s)']
+                ];
+                break;
+
+                default:
+                d = [
+                    [Ext.Date.HOUR, 'hour(s)'],
+                    [Ext.Date.DAY, 'day(s)']
+                ];
+            }
         }
 
         // Create and bind a new store to hold the appropriate step sizes
@@ -141,23 +131,82 @@ Ext.define('Flux.controller.Animation', {
             data: d
         }));
 
-        // Apply these default settings to the UI and remember them
-        c.setValue(d[0][0]);
-        n.setValue(numSteps);
-        this.defaults.steps = numSteps;
-        this.defaults.stepSize = d[0][0];
+        // Apply the default settings to the UI
+        c.setValue(stepSize);
 
-        // Listen for changes in the step sizes or number of steps
-        c.on('select', Ext.Function.bind(function (c, recs) {
-            this.defaults.stepSize = recs[0].get('stepSize');
-        }, this));
+        this._steps = steps;
+        this._stepSize = stepSize;
+    },
 
-        // Listen for changes in the step sizes or number of steps
-        n.on('change', Ext.Function.bind(function (n, v) {
-            this.defaults.steps = v;
-        }, this));
+    /**
+     */
+    getTimestamp: function () {
+        return this._timestamp;
+    },
 
-        w.show();
+    /**TODO
+     */
+    onStepButton: function (btn) {
+        switch (btn.getItemId()) {
+            case 'backward-btn':
+            this.stepBy(this._steps * -1);
+            break;
+
+            default:
+            this.stepBy(this._steps);
+        }
+    },
+
+    /**TODO
+     */
+    onStepSizeChange: function (cmp, recs) {
+        var steps;
+
+        this._stepSize = recs[0].get('stepSize');
+        steps = this.calcStepOrSize(this._metadata.get('steps')[0],
+            recs[0].get('stepSize'));
+
+        this.updateStepSelector((steps === 0) ? 1 : steps);
+    },
+
+    /**TODO
+     */
+    onStepsChange: function (cmp, value) {
+        this._steps = value;
+    },
+
+    /**TODO
+     */
+    setTimestamp: function (timestamp) {
+        this._timestamp = timestamp;
+    },
+
+    /**TODO
+     */
+    stepBy: function (steps) {
+        this._timestamp = Ext.Date.add(this._timestamp, this._stepSize, steps);
+        this.getController('Dispatch').loadMap({
+            time: Ext.Date.format(this._timestamp, 'c')
+        });
+    },
+
+    /**TODO
+     */
+    updateStepSelector: function (steps) {
+        var menu = this.getAnimationSettings();
+        if (menu.query('numberfield').length !== 0) {
+            menu.remove('steps');
+        }
+        menu.insert(1, Ext.create('Ext.form.field.Number', {
+            xtype: 'numberfield',
+            itemId: 'steps',
+            value: steps,
+            minValue: steps,
+            step: steps,
+            listeners: {
+                change: Ext.Function.bind(this.onStepsChange, this)
+            }
+        }));
     }
 
 });

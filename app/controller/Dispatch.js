@@ -59,7 +59,9 @@ Ext.define('Flux.controller.Dispatch', {
 
         this.getStore('grids').load({
             params: params,
-            callback: function (recs) {
+            callback: Ext.Function.bind(function (recs) {
+                this.getController('Animation').setTimestamp(recs[0].get('timestamp'));
+
                 if (maskTarget) {
                     maskTarget.getEl().unmask();
                 }
@@ -68,7 +70,7 @@ Ext.define('Flux.controller.Dispatch', {
                     view.draw(recs[0])
                         .updateTimestamp(recs[0].get('timestamp'), 'Y m-d H:i');
                 });
-            }
+            }, this)
         });
 
     },

@@ -39,6 +39,7 @@ Ext.define('Flux.view.Viewport', {
                 menu: {
                     itemId: 'settings-menu',
                     showSeparator: false,
+                    width: 220,
                     items: [{
                         text: 'Clear Local Settings',
                         itemId: 'clear-local-state',
@@ -47,7 +48,8 @@ Ext.define('Flux.view.Viewport', {
                         xtype: 'menuseparator'
                     }, {
                         text: 'Measure of Central Tendency:',
-                        cls: 'ui-menu-group-text'
+                        cls: 'ui-menu-group-text',
+                        plain: true
                     }, {
                         xtype: 'menucheckitem',
                         name: 'mean',
@@ -66,18 +68,32 @@ Ext.define('Flux.view.Viewport', {
                 }
             }, {
                 xtype: 'button',
+                cls: 'anim-btn',
                 itemId: 'animate-btn',
                 iconCls: 'icon-control-play-gray',
                 text: 'Animate',
                 enableToggle: true,
                 tooltip: 'Animate the visualization with time',
-                disabled: true//TODO
+                disabled: true
             }, {
                 xtype: 'button',
+                cls: 'anim-btn',
                 itemId: 'animation-settings-btn',
                 iconCls: 'icon-cog',
                 tooltip: 'Change animation settings...',
-                disabled: true//TODO
+                disabled: true,
+                menu: {
+                    itemId: 'anim-settings-menu',
+                    items: [{
+                        text: 'Steps each frame:',
+                        cls: 'ui-menu-group-text',
+                        plain: true
+                    }, {
+                        xtype: 'combo',
+                        valueField: 'stepSize',
+                        queryMode: 'local'
+                    }]
+                }
             }, {
                 xtype: 'slider',
                 name: 'animationDelay',
@@ -102,12 +118,18 @@ Ext.define('Flux.view.Viewport', {
                 }
             }, {
                 xtype: 'button',
+                cls: 'anim-btn',
+                itemId: 'backward-btn',
                 iconCls: 'icon-control-left',
-                tooltip: 'Step backwards'
+                tooltip: 'Step backwards',
+                disabled: true
             }, {
                 xtype: 'button',
+                cls: 'anim-btn',
+                itemId: 'forward-btn',
                 iconCls: 'icon-control-right',
-                tooltip: 'Step forwards'
+                tooltip: 'Step forwards',
+                disabled: true
             }]
         },
 

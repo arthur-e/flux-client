@@ -533,7 +533,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
     update: function (selection) {
         if (selection) {
             selection.attr('fill', Ext.Function.bind(function (d, i) {
-                return this.getScale()((!d) ? undefined : d);
+                return this.getScale()((d === undefined) ? undefined : d);
             }, this));
 
             return this;

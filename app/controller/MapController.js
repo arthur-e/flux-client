@@ -216,6 +216,9 @@ Ext.define('Flux.controller.MapController', {
      */
     onProjectionChange: function (c, recs) {
         Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
+            if (cmp._projectionId === recs[0].get('id')) {
+                return;
+            }
             // For every d3geopanel instance, update the projection
             cmp.setProjection(recs[0].get('proj'), recs[0].get('id')).update();
         });
@@ -233,17 +236,25 @@ Ext.define('Flux.controller.MapController', {
         @param  oldHeight   {Number}        The original height
      */
     onResize: function (cmp, width, height, oldWidth, oldHeight) {
-        var basemap;
+        var basemap, picker;
         // oldWidth and oldHeight undefined when 'resize' event fires as part
         //  of the initial layout; we want to avoid acting on this firing
         if (oldWidth && oldHeight && width !== oldWidth && height !== oldHeight) {
             basemap = this.getMapSettings().down('combo[name=basemap]').getRecord();
+
+            // Update the projections ComboBox; rescale each projection contained
+            picker = this.getMapSettings().down('combo[name=projection]');
+            picker.getStore().each(function (proj) {
+                proj.set('proj', proj.get('proj').scale(width * 0.15));
+            });
+            this.projection = picker.getStore().getById(picker.getValue()).get('proj');
+
             cmp.up('panel')
                 .render(this.projection, width, height)
                 .setBasemap(basemap.get('id'), basemap.get('url'))
-                .draw();
-
-            cmp.updateLegend();
+                .draw()
+                .updateLegend()
+                .updateDisplay();
         }
     },
 

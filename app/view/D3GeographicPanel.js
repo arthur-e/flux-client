@@ -159,7 +159,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
             ts = grid.get('timestamp');
             this.updateDisplay([{
                 id: 'date',
-                text: Ext.String.format('{0} {1}-{2}', ts.getUTCFullYear(), ts.getUTCMonth(), ts.getUTCDate()) //FIXME Ext.Date.format(ts, 'Y m-d') Prints locale time strings
+                text: Ext.String.format('{0} {1}-{2}', ts.getUTCFullYear(), (ts.getUTCMonth() + 1), ts.getUTCDate()) //FIXME Ext.Date.format(ts, 'Y m-d') Prints locale time strings
             }, {
                 id: 'time',
                 text: (function () { //FIXME Ext.Date.format(ts, 'H:i') Prints locale time strings
@@ -193,12 +193,18 @@ Ext.define('Flux.view.D3GeographicPanel', {
         @return {Object}
      */
     getOverlayAttrs: function () {
+        var attrs, gridres;
         var grid = this.getGridGeometry();
-        var gridres = this._metadata.get('gridres'); // Assumes grid spacing given in degrees
         var proj = this.getProjection();
         var scaling = this._mercatorScale;
 
-        var attrs = {
+        if (!this._metadata) {
+            return;
+        }
+
+        // Assumes grid spacing given in degrees
+        gridres = this._metadata.get('gridres');
+        attrs = {
             'x': function (d, i) {
                 // We want to start drawing at the upper left (half the cell
                 //  width, or half a degree)
@@ -307,6 +313,17 @@ Ext.define('Flux.view.D3GeographicPanel', {
         this.panes.legend = this.svg.append('g').attr('class', 'pane legend');
 
         // Heads-Up-Display (HUD) date/time info ///////////////////////////////
+//        this.panes.hud.selectAll('.backdrop')TODO
+//            .data([0])
+//            .enter()
+//            .append('rect')
+//            .attr({
+//                'fill': '#fff',
+//                'fill-opacity': 0.0,
+//                'class': 'backdrop',
+//                'x': 
+//            });
+
         this.panes.hud.selectAll('.info')
             .data([
                 { text: '', id: 'date' },
@@ -320,14 +337,11 @@ Ext.define('Flux.view.D3GeographicPanel', {
                 return d.text;
             })
             .attr({
-                'x': 0,
-                'y': function (d, i) {
-                    return (i + 1) * 40;
-                },
                 'class': function (d) {
                     return 'info ' + d.id;
                 },
-                'font-size': '40px'
+                'font-size': '40px',
+                'text-anchor': 'middle'
             });
 
         // Legend //////////////////////////////////////////////////////////////
@@ -552,9 +566,18 @@ Ext.define('Flux.view.D3GeographicPanel', {
         @return         {Flux.view.D3GeographicPanel}
      */
     updateDisplay: function (data) {
+        if (!data) {
+            data = this.panes.hud.selectAll('.info').data();
+        }
         this.panes.hud.selectAll('.info')
             .data(data)
-            .text(function (d) { return d.text; });
+            .text(function (d) { return d.text; })
+            .attr({
+                'x': this.svg.attr('width') * 0.5,
+                'y': function (d, i) {
+                    return (i + 1) * 40;
+                }
+            });
         return this;
     },
 
@@ -566,7 +589,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
      */
     updateLegend: function (bins) {
         var h;
-        var s = 32; // Length on a side of the legend's bins
+        var s = 0.025 * this.svg.attr('width'); // Length on a side of the legend's bins
         var colors = this._scale.range();
         var yOffset = this.svg.attr('height');
         bins = bins || this._scale.quantiles();
@@ -607,6 +630,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
                 },
                 'class': 'bin'
             });
+
+        return this;
     }
 
 });

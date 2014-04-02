@@ -126,13 +126,13 @@ Ext.define('Flux.view.Symbology', {
             boxLabel: 'Sequential',
             name: 'paletteType',
             inputValue: 'sequential',
-            id: 'sequential',
-            checked: true // Checked by default
+            id: 'sequential'
         }, {
             boxLabel: 'Diverging',
             name: 'paletteType',
             inputValue: 'diverging',
-            id: 'diverging'
+            id: 'diverging',
+            checked: true // Checked by default
         }],
         propagateChange: function (sel) {
             var segments;

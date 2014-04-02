@@ -2,7 +2,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
     extend: 'Flux.view.D3Panel',
     alias: 'widget.d3geopanel',
     requires: [
-        'Ext.Function'
+        'Ext.Function',
+        'Ext.tip.QuickTip'
     ],
 
     bbar: {
@@ -86,6 +87,38 @@ Ext.define('Flux.view.D3GeographicPanel', {
     },
 
     /**
+        Add event listeners to the drawn elements.
+        @param  sel {d3.selection}
+        @return     {Flux.view.D3GeographicPanel}
+     */
+    addListeners: function (sel) {
+        sel = sel || this.panes.overlay.selectAll('.point');
+        sel.on('mouseover', Ext.Function.bind(function (d) {
+            var c = d3.mouse(this.svg[0][0]);
+            //this.updateDisplay([{
+            //    id: 'tooltip',
+            //    text: d.toFixed(2)
+            //}]);
+            this.panes.tooltip.selectAll('.tip')
+                .text(d.toFixed(2))
+                .attr({
+                    'x': c[0] + 20,
+                    'y': c[1] + 30
+                });
+        }, this));
+
+        sel.on('mouseout', Ext.Function.bind(function (d) {
+            //this.updateDisplay([{
+            //    id: 'timestamp',
+            //    text: this._timestamp
+            //}]);
+            this.panes.tooltip.selectAll('.tip').text('');
+        }, this));
+
+        return this;
+    },
+
+    /**
         Initially configure this view with the relevant Metadata.
         @param  metadata    {Flux.model.Metadata}
         @return             {Flux.view.D3GeographicPanel}
@@ -121,6 +154,9 @@ Ext.define('Flux.view.D3GeographicPanel', {
         //  been drawn before
         if (!this._isDrawn) {
             sel.enter().append('rect');
+
+            // Add mouseover and mouseout event listeners
+            this.addListeners(sel);
         }
 
         // Calculate the position and dimensions attributes of the elements
@@ -292,6 +328,15 @@ Ext.define('Flux.view.D3GeographicPanel', {
         this.panes.overlay = this.wrapper.append('g').attr('class', 'pane overlay');
         this.panes.hud = this.svg.append('g').attr('class', 'pane hud');
         this.panes.legend = this.svg.append('g').attr('class', 'pane legend');
+        this.panes.tooltip = this.svg.append('g').attr('class', 'pane tooltip');
+
+        // Tooltip /////////////////////////////////////////////////////////////
+        this.panes.tooltip.selectAll('.tip')
+            .data([0])
+            .enter()
+            .append('text')
+            .text('')
+            .attr('class', 'info tip');
 
         // Heads-Up-Display (HUD) date/time info ///////////////////////////////
         this.panes.hud.selectAll('.backdrop')
@@ -310,7 +355,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
         this.panes.hud.selectAll('.info')
             .data([
-                { text: '', id: 'datetime' },
+                { text: '', id: 'timestamp' },
             ], function (d) {
                 return d.id;
             })
@@ -555,7 +600,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
             data = this.panes.hud.selectAll('.info').data();
             // Recall the timestamp text (if this function was called after
             //  the window is resized and this panel is re-rendered)
-            if (data[0].id === 'datetime') {
+            if (data[0].id === 'timestamp') {
                 data[0].text = this._timestamp;
             }
         }
@@ -637,7 +682,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         this._timestamp = Ext.Date.format(Ext.Date.add(date, Ext.Date.MINUTE,
             date.getTimezoneOffset()), fmt)
         this.updateDisplay([{
-            id: 'datetime',
+            id: 'timestamp',
             // The following is necessary because Ext.Date.format prints only
             //  locale time strings, not UTC time strings
             text: this._timestamp

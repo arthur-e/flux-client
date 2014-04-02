@@ -24,7 +24,6 @@ text.info {
     stroke-width: 0.25;
     stroke-linejoin: round;
 }
-text.info.date,
-text.info.time { font-family: "Courier New","Lucida Console",monospace; }
+text.info.datetime { font-family: "Courier New","Lucida Console",monospace; }
 .region { fill: #fff; }
 

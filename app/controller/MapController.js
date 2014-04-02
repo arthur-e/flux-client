@@ -82,7 +82,8 @@ Ext.define('Flux.controller.MapController', {
      */
     defaultState: {
         basemap: { value: 'globalSmall' },
-        projection: { value: 'equirectangular' }
+        projection: { value: 'equirectangular' },
+        displayFormat: { value: 'Y m-d H:i' }
     },
 
     /**
@@ -347,5 +348,6 @@ Ext.define('Flux.controller.MapController', {
     }
     
 });
+
 
 

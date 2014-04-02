@@ -102,7 +102,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         @return         {Flux.view.D3GeographicPanel}
      */
     draw: function (grid) {
-        var bbox, lat, lng, c1, c2, sel, ts;
+        var bbox, lat, lng, c1, c2, sel;
         var proj = this.getProjection();
 
         // Retain references to last drawing data and metadata; for instance,
@@ -153,25 +153,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
                 .event(this.wrapper.transition().duration(500));
 
             this.setZoom(2 * (this.svg.attr('width')) / proj([(bbox[2] - bbox[0]), 0])[0]);
-        }
-
-        if (grid) {
-            ts = grid.get('timestamp');
-            this.updateDisplay([{
-                id: 'date',
-                text: Ext.String.format('{0} {1}-{2}', ts.getUTCFullYear(), (ts.getUTCMonth() + 1), ts.getUTCDate()) //FIXME Ext.Date.format(ts, 'Y m-d') Prints locale time strings
-            }, {
-                id: 'time',
-                text: (function () { //FIXME Ext.Date.format(ts, 'H:i') Prints locale time strings
-                    var H = ts.getUTCHours().toString();
-                    var i = ts.getUTCMinutes().toString();
-                    H = (H.length === 1) ? '0' + H : H;
-                    i = (i.length === 1) ? '0' + i : i;
-                    return Ext.String.format('{0}:{1}', H, i);
-                }())
-            }]);
-
-            this.updateLegend();
         }
 
         this._isDrawn = true;
@@ -231,7 +212,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         // Use a scaling factor for non-equirectangular projections
         // http://en.wikipedia.org/wiki/Mercator_projection#Scale_factor
         if (this._projectionId === 'mercator') {
-            attrs.height =function (d, i) {
+            attrs.height = function (d, i) {
                 return scaling(grid[i][1]) * Math.abs(proj([0, gridres.y])[1] - proj([0, 0])[1]);
             }
         }
@@ -313,21 +294,23 @@ Ext.define('Flux.view.D3GeographicPanel', {
         this.panes.legend = this.svg.append('g').attr('class', 'pane legend');
 
         // Heads-Up-Display (HUD) date/time info ///////////////////////////////
-//        this.panes.hud.selectAll('.backdrop')TODO
-//            .data([0])
-//            .enter()
-//            .append('rect')
-//            .attr({
-//                'fill': '#fff',
-//                'fill-opacity': 0.0,
-//                'class': 'backdrop',
-//                'x': 
-//            });
+        this.panes.hud.selectAll('.backdrop')
+            .data([0])
+            .enter()
+            .append('rect')
+            .attr({
+                'fill': '#fff',
+                'fill-opacity': 0.0,
+                'class': 'backdrop',
+                'x': (this.svg.attr('width') - 400) * 0.5,
+                'y': 0,
+                'width': 400,
+                'height': 55
+            });
 
         this.panes.hud.selectAll('.info')
             .data([
-                { text: '', id: 'date' },
-                { text: '', id: 'time' }
+                { text: '', id: 'datetime' },
             ], function (d) {
                 return d.id;
             })
@@ -569,6 +552,9 @@ Ext.define('Flux.view.D3GeographicPanel', {
         if (!data) {
             data = this.panes.hud.selectAll('.info').data();
         }
+
+        this.panes.hud.selectAll('.backdrop')
+            .attr('fill-opacity', (data === []) ? 0.0 : 0.6);
         this.panes.hud.selectAll('.info')
             .data(data)
             .text(function (d) { return d.text; })
@@ -632,7 +618,25 @@ Ext.define('Flux.view.D3GeographicPanel', {
             });
 
         return this;
-    }
+    },
+
+    /**
+        Updates the on-map info text in the heads-up-display.
+        @param  date    {Date}
+        @param  fmt     {Array}
+        @return         {Flux.view.D3GeographicPanel}
+     */
+    updateTimestamp: function (date, fmt) {
+        this.updateDisplay([{
+            id: 'datetime',
+            // The following is necessary because Ext.Date.format prints only
+            //  locale time strings, not UTC time strings
+            text: Ext.Date.format(Ext.Date.add(date,
+              Ext.Date.MINUTE, date.getTimezoneOffset()), fmt)
+        }]);
+
+        return this;
+    },
 
 });
 

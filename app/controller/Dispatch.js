@@ -2,6 +2,9 @@ Ext.define('Flux.controller.Dispatch', {
     extend: 'Ext.app.Controller',
 
     refs: [{
+        ref: 'mapSettings',
+        selector: 'mapsettings'
+    }, {
         ref: 'viewport',
         selector: 'viewport'
     }, {
@@ -62,7 +65,8 @@ Ext.define('Flux.controller.Dispatch', {
                 }
 
                 Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
-                    view.draw(recs[0]);
+                    view.draw(recs[0])
+                        .updateTimestamp(recs[0].get('timestamp'), 'Y m-d H:i');
                 });
             }
         });

@@ -57,7 +57,7 @@ Ext.define('Flux.controller.Dispatch', {
             maskTarget.getEl().mask('Loading...');
         }
 
-        this.getStore('grids').load({
+        this.getStore('grids').fetch({
             params: params,
             callback: Ext.Function.bind(function (recs) {
                 this.getController('Animation').setTimestamp(recs[0].get('timestamp'));

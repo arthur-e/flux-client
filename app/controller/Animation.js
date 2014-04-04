@@ -37,6 +37,14 @@ Ext.define('Flux.controller.Animation', {
                 select: this.onStepSizeChange
             },
 
+            '#animate-btn': {
+                toggle: this.toggleAnimation
+            },
+
+            '#animate-delay': {
+                dragend: this.onDelayChange
+            },
+
             '#backward-btn': {
                 click: this.onStepButton
             },
@@ -77,6 +85,21 @@ Ext.define('Flux.controller.Animation', {
 
     ////////////////////////////////////////////////////////////////////////////
     // Event Handlers //////////////////////////////////////////////////////////
+
+    /**TODO
+     */
+    animate: function (state, delay) {
+        if (!this._timestamp) {
+            return;
+        }
+
+        if (state) {
+            this._animation = window.setInterval(Ext.Function.bind(this.stepBy,
+                this, [this._steps]), delay * 1000); // Delay in milliseconds
+        } else {
+            window.clearInterval(this._animation);
+        }
+    },
 
     /**
         To be executed when the dataset (metadata) changes, this function
@@ -141,6 +164,7 @@ Ext.define('Flux.controller.Animation', {
 
         this._steps = steps;
         this._stepSize = stepSize;
+        this._delay = this.getTopToolbar().down('#animate-delay').getValue();
     },
 
     /**
@@ -149,6 +173,13 @@ Ext.define('Flux.controller.Animation', {
      */
     getTimestamp: function () {
         return this._timestamp;
+    },
+
+    /**TODO
+     */
+    onDelayChange: function (slider) {
+        this._delay = slider.getValue();
+        this.getTopToolbar().down('#animate-btn').toggle(false);
     },
 
     /**
@@ -205,10 +236,31 @@ Ext.define('Flux.controller.Animation', {
         @param  steps   {Number}    Negative steps are steps taken backwards
      */
     stepBy: function (steps) {
+        if (!this._timestamp) {
+            return;
+        }
         this._timestamp = Ext.Date.add(this._timestamp, this._stepSize, steps);
         this.getController('Dispatch').loadMap({
             time: Ext.Date.format(this._timestamp, 'c')
         });
+    },
+
+    /**TODO
+     */
+    toggleAnimation: function (btn, pressed) {
+        if (!this._timestamp) {
+            return;
+        }
+
+        if (pressed) {
+            btn.setText('Pause');
+            btn.setIconCls('icon-control-pause');
+        } else {
+            btn.setText('Animate');
+            btn.setIconCls('icon-control-play');
+        }
+
+        this.animate(pressed, this._delay);
     },
 
     /**

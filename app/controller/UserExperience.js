@@ -6,6 +6,11 @@ Ext.define('Flux.controller.UserExperience', {
         'Ext.Object'
     ],
 
+    refs: [{
+        'ref': 'topToolbar',
+        'selector': 'viewport toolbar'
+    }],
+
     init: function () {
         // Create a new state Provider if one doesn't already exist
         if (Ext.state.Manager.getProvider().path === undefined) {
@@ -37,6 +42,7 @@ Ext.define('Flux.controller.UserExperience', {
         CheckItem instances in the Settings menu.
      */
     defaultState: {
+        animateDelay: 1,
         tendencyMean: true,
         tendencyMedian: false
     },
@@ -125,6 +131,10 @@ Ext.define('Flux.controller.UserExperience', {
                     it.on('checkchange', this.onTendencyChange, this);
                 }
         }, this));
+
+        if (Ext.state.Manager.get('animateDelay', undefined)) {
+            this.getTopToolbar().down('#animate-delay').setValue(Ext.state.Manager.get('animateDelay').value);
+        }
     },
 
     /**

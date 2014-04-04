@@ -61,7 +61,10 @@
     background-image: url(cog.png);
     background-size: 25px;
 }
-.icon-control-play-gray { background-image: url(bullet_arrow_right.png); }
+.icon-control-play,
+.icon-control-pause { background-size: 24px; }
+.icon-control-play { background-image: url(control_play.png); }
+.icon-control-pause { background-image: url(control_pause.png); }
 .icon-control-right {background-image: url(bullet_arrow_right_2.png); }
 .icon-control-left {background-image: url(bullet_arrow_left_2.png); }
 .icon-control-right,

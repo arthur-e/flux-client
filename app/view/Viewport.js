@@ -70,7 +70,7 @@ Ext.define('Flux.view.Viewport', {
                 xtype: 'button',
                 cls: 'anim-btn',
                 itemId: 'animate-btn',
-                iconCls: 'icon-control-play-gray',
+                iconCls: 'icon-control-play',
                 text: 'Animate',
                 enableToggle: true,
                 tooltip: 'Animate the visualization with time',
@@ -96,9 +96,9 @@ Ext.define('Flux.view.Viewport', {
                 }
             }, {
                 xtype: 'slider',
-                name: 'animationDelay',
+                itemId: 'animate-delay',
                 stateful: true,
-                stateId: 'animationDelay',
+                stateId: 'animateDelay',
                 width: '10%',
                 maxWidth: 150,
                 value: 1,

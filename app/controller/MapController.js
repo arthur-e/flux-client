@@ -119,7 +119,17 @@ Ext.define('Flux.controller.MapController', {
 
                 return 'rgba(0,0,0,0)';
             };
-        } 
+
+        } else {
+            scale = function (d) {
+                if (d >= bkpts[0] && d < bkpts[1]) {
+                    return color;
+                }
+
+                return 'rgba(0,0,0,0)';
+            };
+
+        }
 
         scale._d = bkpts;
         scale._r = [color];

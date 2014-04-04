@@ -196,7 +196,12 @@ Ext.define('Flux.field.EnumeratedSlider', {
 
         slider.setMinValue(values[0]);
         slider.setMaxValue(values[1]);
-        slider.setValue(values); // Don't animate the slider
+
+        if (this.isMulti) {
+            slider.setValue(values);
+        } else {
+            slider.setValue(values[0]);
+        }
 
         Ext.each(this.query('numberfield'), function (field, i) {
             field.setMinValue(values[0]);
@@ -256,7 +261,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
                 maxValue: this.maxValue,
                 listeners: {
                     blur: function () {
-                        this.up('fieldcontainer').fireEvent('boundschange');
+                        this.up('fieldcontainer').fireEventArgs('boundschange', [this]);
                     }
                 }
             });

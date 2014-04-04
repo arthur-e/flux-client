@@ -96,6 +96,13 @@ Ext.define('Flux.controller.MapController', {
     projection: undefined,
 
     /**
+        Creates a threshold scale; a hack that acts like a d3.scale.* object.
+        The result is a function that returns the specified color value for
+        input numeric values that fall within the integer bounds of the given
+        breakpoint(s).
+        @param  bkpts   {Array}     The breakpoint(s) for the binary mask
+        @param  colors  {String}    The color to use for the binary mask
+        @return         {Function}
      */
     generateThresholdScale: function (bkpts, color) {
         var scale;
@@ -104,13 +111,15 @@ Ext.define('Flux.controller.MapController', {
             bkpts = [bkpts];
         }
 
-        scale = function (d) {
-            if (Math.floor(d) === Math.floor(bkpts[0])) {
-                return color;
-            }
+        if (bkpts.length === 1) {
+            scale = function (d) {
+                if (d >= Math.floor(bkpts[0]) && d < (Math.floor(bkpts[0]) + 1)) {
+                    return color;
+                }
 
-            return 'rgba(0,0,0,0)';
-        };
+                return 'rgba(0,0,0,0)';
+            };
+        } 
 
         scale._d = bkpts;
         scale._r = [color];
@@ -320,15 +329,6 @@ Ext.define('Flux.controller.MapController', {
         var cfg = {}
         cfg[c.getName()] = value;
         this.updateColorScale(cfg);
-    },
-
-    /**TODO
-     */
-    onThresholdChange: function (c, value) {
-        if (value) {
-            this.updateColorScale({
-            });
-        }
     },
 
     /**

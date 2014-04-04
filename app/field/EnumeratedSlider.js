@@ -188,6 +188,12 @@ Ext.define('Flux.field.EnumeratedSlider', {
     setValues: function (values) {
         var slider = this.down('multislider');
 
+        if (this.forceIntegers) {
+            values = Ext.Array.map(values, function (v) {
+                return Math.floor(v);
+            });
+        }
+
         slider.setMinValue(values[0]);
         slider.setMaxValue(values[1]);
         slider.setValue(values); // Don't animate the slider

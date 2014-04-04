@@ -305,8 +305,9 @@ Ext.define('Flux.view.Symbology', {
         }, {
             xtype: 'enumslider',
             name: 'thresholdValues',
-            disabled: true,
             itemId: 'threshold',
+            forceIntegers: true,
+            disabled: true,
             width: '90%',
             values: 0,
             minValue: -1,

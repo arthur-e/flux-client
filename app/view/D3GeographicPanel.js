@@ -630,7 +630,12 @@ Ext.define('Flux.view.D3GeographicPanel', {
         var s = 0.025 * this.svg.attr('width'); // Length on a side of the legend's bins
         var colors = this._scale.range();
         var yOffset = this.svg.attr('height');
-        bins = bins || this._scale.quantiles();
+
+        if (typeof this._scale.quantiles === 'function') {
+            bins = bins || this._scale.quantiles();
+        } else {
+            bins = bins || this._scale.domain();
+        }
 
         // Calculate intended height of the legend
         h = s * bins.length;

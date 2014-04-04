@@ -116,9 +116,15 @@ Ext.define('Flux.field.EnumeratedSlider', {
         xtype: 'numberfield',
         hideTrigger: true,
         width: 50,
+        enableKeyEvents: true,
         listeners: {
             blur: function () {
-                this.up('fieldcontainer').fireEvent('boundschange');
+                this.up('fieldcontainer').fireEventArgs('boundschange', [this]);
+            },
+            keydown: function (f, e) {
+                if (e.getKey() === Ext.EventObject.ENTER) {
+                    this.up('fieldcontainer').fireEventArgs('boundschange', [this]);
+                }
             }
         }
     },
@@ -181,9 +187,10 @@ Ext.define('Flux.field.EnumeratedSlider', {
      */
     setValues: function (values) {
         var slider = this.down('multislider');
+
         slider.setMinValue(values[0]);
         slider.setMaxValue(values[1]);
-        slider.setValue(values, false); // Don't animate the slider
+        slider.setValue(values); // Don't animate the slider
 
         Ext.each(this.query('numberfield'), function (field, i) {
             field.setMinValue(values[0]);

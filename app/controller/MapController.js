@@ -46,11 +46,15 @@ Ext.define('Flux.controller.MapController', {
                 resize: this.onResize
             },
 
-            'symbology #paletteType': {
+            'symbology #palette-type': {
                 change: this.onScaleParameterChange
             },
 
-            'symbology container[name=domain]': {
+            'symbology #threshold-toggle': {
+                change: this.onScaleParameterChange
+            },
+
+            'symbology enumslider': {
                 boundschange: this.onScaleParameterChange
             },
 
@@ -90,6 +94,48 @@ Ext.define('Flux.controller.MapController', {
         The spatial projection used (and shared) throughout the map visualizations.
      */
     projection: undefined,
+
+    /**
+     */
+    generateThresholdScale: function (bkpts, color) {
+        var scale;
+
+        if (!Ext.isArray(bkpts)) {
+            bkpts = [bkpts];
+        }
+
+        scale = function (d) {
+            if (Math.floor(d) === Math.floor(bkpts[0])) {
+                return color;
+            }
+
+            return 'rgba(0,0,0,0)';
+        };
+
+        scale._d = bkpts;
+        scale._r = [color];
+        scale.domain = function (d) {
+            if (d) {
+                this._d = d;
+                return this;
+            }
+            return this._d;
+        };
+        scale.range = function (r) {
+            if (r) {
+                if (Ext.isArray(r)) {
+                    r = [r[0]];
+                } else {
+                    r = [r];
+                }
+                this._r = r;
+                return this;
+            }
+            return this._r;
+        };
+
+        return scale;
+    },
 
     ////////////////////////////////////////////////////////////////////////////
     // Event Handlers //////////////////////////////////////////////////////////
@@ -202,12 +248,16 @@ Ext.define('Flux.controller.MapController', {
      */
     onPaletteChange: function (c, recs) {
         var cs = recs[0].get('colors');
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (cmp) {
             // For every d3geopanel instance, update the scale's output range
             if (cmp.getScale()) {
-                cmp.setScale(cmp.getScale().range(cs));
+                if (typeof cmp.getScale().quantiles === 'function') {
+                    cmp.setScale(cmp.getScale().range(cs));
+                } else {
+                    this.updateColorScale();
+                }
             }
-        });
+        }, this));
     },
 
     /**
@@ -270,6 +320,15 @@ Ext.define('Flux.controller.MapController', {
         var cfg = {}
         cfg[c.getName()] = value;
         this.updateColorScale(cfg);
+    },
+
+    /**TODO
+     */
+    onThresholdChange: function (c, value) {
+        if (value) {
+            this.updateColorScale({
+            });
+        }
     },
 
     /**
@@ -338,8 +397,11 @@ Ext.define('Flux.controller.MapController', {
             return;
         }
 
-        // Get a scale; set the output range
-        scale = metadata.getQuantileScale(opts).range(palette.get('colors'));
+        if (opts.threshold) {
+            scale = this.generateThresholdScale(opts.thresholdValues, palette.get('colors')[0]);
+        } else {
+            scale = metadata.getQuantileScale(opts).range(palette.get('colors'));
+        }
 
         // Update the scale of every map
         Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {

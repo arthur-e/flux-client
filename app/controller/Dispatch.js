@@ -95,11 +95,13 @@ Ext.define('Flux.controller.Dispatch', {
         // This is not needed as long as the "domain" field is set next
         // this.getController('MapController').updateColorScale({}, recs[0]);
 
-        // Initialize the values of the domain bounds slider
-        this.getSymbology().down('fieldcontainer[name=domain]').setValues([
-            recs[0].get('stats').min,
-            recs[0].get('stats').max
-        ]);
+        // Initialize the values of the domain bounds and threshold sliders
+        Ext.each(this.getSymbology().query('enumslider'), function (cmp) {
+            cmp.setValues([
+                recs[0].get('stats').min,
+                recs[0].get('stats').max
+            ]);
+        });
 
         this.getController('Animation').enableAnimation(recs[0]);
     },

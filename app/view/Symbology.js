@@ -30,7 +30,7 @@ Ext.define('Flux.view.Symbology', {
             var combo = this.down('combo[name=palette]');
             var palettes = combo.getStore();
             var paletteNames;
-            var type = this.down('#paletteType').getValue()['paletteType'];
+            var type = this.down('#palette-type').getValue()['paletteType'];
             var segments = this.down('#segments').getValue();
             var selection = combo.getValue();
 
@@ -118,7 +118,7 @@ Ext.define('Flux.view.Symbology', {
         name: 'tendency'
     }, {
         xtype: 'reradiogroup',
-        itemId: 'paletteType',
+        itemId: 'palette-type',
         stateId: 'paletteType',
         fieldLabel: 'Color palette type',
         layout: 'vbox',
@@ -263,13 +263,12 @@ Ext.define('Flux.view.Symbology', {
     }, {
         xtype: 'fieldset',
         title: 'Threshold',
-        disabled: true,//TODO
         defaults: {
             labelAlign: 'top',
             anchor: '100%'
         },
         items: [{
-            xtype: 'checkbox',
+            xtype: 'recheckbox',
             name: 'threshold',
             itemId: 'threshold-toggle',
             boxLabel: 'Binary mask',
@@ -286,10 +285,10 @@ Ext.define('Flux.view.Symbology', {
                 }
             }
         }, {
-            xtype: 'checkbox',
+            xtype: 'recheckbox',
             name: 'thresholdRange',
             disabled: true,
-            itemId: 'range',
+            itemId: 'thresholdRange',
             boxLabel: 'Show values within range',
             listeners: {
                 change: function (cb, checked) {

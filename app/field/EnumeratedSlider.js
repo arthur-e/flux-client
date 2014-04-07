@@ -23,6 +23,8 @@ Ext.define('Flux.field.EnumeratedSlider', {
         align: 'middle'
     },
 
+    stateEvents: ['dragend', 'boundschange'],
+
     /**
         Configures the component instance with values and isMulti properties.
      */
@@ -51,8 +53,8 @@ Ext.define('Flux.field.EnumeratedSlider', {
                 name: Ext.String.format('{0}{1}', this.name, 'LowerBound'),
                 padding: '0 7px 0 0',
                 value: -1,
-                minValue: -1,
-                maxValue: 1
+                minValue: -1000,
+                maxValue: 1000
             });
 
             this.add(numberCfg);
@@ -137,8 +139,8 @@ Ext.define('Flux.field.EnumeratedSlider', {
         itemId: 'slider',
         padding: '0 7px 0 0',
         value: 0,
-        minValue: -1,
-        maxValue: 1,
+        minValue: -1000,
+        maxValue: 1000,
         flex: 1,
         listeners: {
             changecomplete: function () {
@@ -157,12 +159,38 @@ Ext.define('Flux.field.EnumeratedSlider', {
         }
     },
 
+    /**
+        Restores the component's state.
+        @param  state   {Object}
+     */
+    applyState: function (state) {
+        this.values = state.value;
+        this.on('render', function () {
+            this.setValues(state.value);
+        });
+    },
+
+    /**
+        Returns the value of the component's name property.
+        @return {String}
+     */
     getName: function () {
         return this.name;
     },
 
     /**
+        Returns an Object representing the component's current state.
+        @return {Object}
+     */
+    getState: function () {
+        return {
+            value: this.getValues()
+        }
+    },
+
+    /**
         Returns an Array of the lower and upper bounds.
+        @return {Array}
      */
     getValue: function () {
         return this.getValues()
@@ -170,6 +198,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
 
     /**
         Returns an Array of the lower and upper bounds.
+        @return {Array}
      */
     getValues: function () {
         var arr = [];
@@ -212,7 +241,10 @@ Ext.define('Flux.field.EnumeratedSlider', {
         this.fireEvent('boundschange', this, values);
     },
 
-    /**TODO
+    /**
+        Sets the min/max bounds (minValue and maxValue) of the field without
+        changing the field's current value(s).
+        @param  values  {Array}
      */
     setBounds: function (values) {
         var slider = this.down('multislider');

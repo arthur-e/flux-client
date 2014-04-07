@@ -8,10 +8,6 @@
 //@require node_modules/d3/d3.min.js
 //@require node_modules/topojson/topojson.min.js
 
-Ext.require([
-    'Flux.store.Scenarios'//FIXME
-]);
-
 Ext.application({
     name: 'Flux',
 

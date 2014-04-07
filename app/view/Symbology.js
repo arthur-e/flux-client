@@ -228,14 +228,6 @@ Ext.define('Flux.view.Symbology', {
                     stddev.disable();
                     domain.enable();
                 }
-            },
-            listeners: {
-                afterrender: function () {
-                    this.propagateChange(this.getValue());
-                },
-                change: function (cb, checked) {
-                    this.propagateChange(checked);
-                }
             }
         }, {
             xtype: 'numberfield',
@@ -274,27 +266,33 @@ Ext.define('Flux.view.Symbology', {
             name: 'threshold',
             itemId: 'threshold-toggle',
             boxLabel: 'Binary mask',
-            listeners: {
-                change: function (cb, checked) {
-                    // Enable all the fields in this fieldset when checked
-                    Ext.each(this.up('fieldset').query('field:not(#threshold-toggle), enumslider'), function (cmp) {
-                        if (checked) {
-                            cmp.enable();
-                        } else {
-                            cmp.disable();
-                        }
-                    });
+            stateful: true,
+            stateId: 'threshold',
+            propagateChange: function (checked) {
+                if (this.up('form') === undefined) {
+                    return;
                 }
+
+                // Enable all the fields in this fieldset when checked
+                Ext.each(this.up('fieldset').query('field:not(#threshold-toggle), enumslider'), function (cmp) {
+                    if (checked) {
+                        cmp.enable();
+                    } else {
+                        cmp.disable();
+                    }
+                });
             }
         }, {
             xtype: 'recheckbox',
             name: 'thresholdRange',
             disabled: true,
             itemId: 'thresholdRange',
+            stateful: true,
+            stateId: 'thresholdRange',
             boxLabel: 'Show values within range',
             listeners: {
                 change: function (cb, checked) {
-                    var slider = this.up('fieldset').down('#threshold');
+                    var slider = this.up('fieldset').down('#thresholdValues');
 
                     if (checked) {
                         slider.toggleMulti(true, [-1, 1]);
@@ -303,11 +301,12 @@ Ext.define('Flux.view.Symbology', {
                     }
                 }
             }
-
         }, {
             xtype: 'enumslider',
             name: 'thresholdValues',
-            itemId: 'threshold',
+            itemId: 'thresholdValues',
+            stateful: true,
+            stateId: 'thresholdValues',
             forceIntegers: true,
             disabled: true,
             width: '90%',

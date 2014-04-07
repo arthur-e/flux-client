@@ -130,7 +130,13 @@ Ext.define('Flux.controller.Dispatch', {
         this.getController('Animation').enableAnimation(recs[0]);
     },
 
-    /**TODO
+    /**
+        Propagates a change in the source of summary statistics. If population
+        statistics are used, the downstream effects of loading Metadata are
+        activated. Otherwise, the current map is reloaded to trigger the use
+        of the current map's summary statistics instead.
+        @param  f       {Ext.form.field.*}
+        @param  value   {Object}
      */
     onStatsChange: function (f, value) {
         if (value.statsFrom === 'population') {
@@ -153,7 +159,10 @@ Ext.define('Flux.controller.Dispatch', {
         this.getStore('grids').setProxyNamespace(ns, true); // No caching
     },
 
-    /**TODO
+    /**
+        Summarizes the values of a given Array.
+        @param  data    {Array}
+        @return {Object}
      */
     summarizeMap: function (data) {
         var s = this.Stats(data);
@@ -169,6 +178,8 @@ Ext.define('Flux.controller.Dispatch', {
     /**
         Returns an object which can be used to calculate statistics on the
         the passed numeric Array.
+        @param  arr {Array}
+        @return {Stats}
      */
     Stats: function (arr) {
         arr = arr || [];

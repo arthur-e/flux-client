@@ -6,6 +6,20 @@ Ext.define('Flux.field.StatefulCheckbox', {
     inputValue: true,
     uncheckedValue: false,
 
+    initComponent: function () {
+        this.on('afterrender', function () {
+            if (typeof this.propagateChange === 'function') {
+                this.propagateChange(this.getValue());
+            }
+        });
+        this.on('change', function (cb, checked) {
+            if (typeof this.propagateChange === 'function') {
+                this.propagateChange(checked);
+            }
+        });
+        this.callParent(arguments);
+    },
+
     getState: function () {
         return {
             value: this.getValue()

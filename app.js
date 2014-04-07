@@ -26,7 +26,7 @@ Ext.application({
                 return {
                     value: this.getValue()
                 }
-            }
+            },
         });
 
         // Initialization and Managers /////////////////////////////////////////

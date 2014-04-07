@@ -138,7 +138,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
         xtype: 'slider',
         itemId: 'slider',
         padding: '0 7px 0 0',
-        value: 0,
+        value: -1,
         minValue: -1000,
         maxValue: 1000,
         flex: 1,
@@ -317,8 +317,12 @@ Ext.define('Flux.field.EnumeratedSlider', {
                     }
                 }
             });
+
+            this.setBounds(values);
         } else {
-            this.remove('upper-bound');
+            if (this.items.length > 2) {
+                this.remove('upper-bound');
+            }
         }
 
         this.down('#slider').fireEvent('changecomplete');

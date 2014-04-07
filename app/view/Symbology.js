@@ -286,31 +286,45 @@ Ext.define('Flux.view.Symbology', {
             xtype: 'recheckbox',
             name: 'thresholdRange',
             disabled: true,
-            itemId: 'thresholdRange',
+            itemId: 'threshold-range',
             stateful: true,
             stateId: 'thresholdRange',
             boxLabel: 'Show values within range',
             listeners: {
+                afterrender: function () {
+                    var checked = this.getValue();
+                    this.up('fieldset').down('#threshold-values').on('afterrender', function () {
+                        if (checked) {
+                            this.toggleMulti(true, [-1, 1]);
+                        } else {
+                            this.toggleMulti(false, 0);
+                        }
+                    });
+                },
                 change: function (cb, checked) {
-                    var slider = this.up('fieldset').down('#thresholdValues');
+                    var slider;
 
-                    if (checked) {
-                        slider.toggleMulti(true, [-1, 1]);
-                    } else {
-                        slider.toggleMulti(false, 0);
+                    if (this.up('fieldset')) {
+                        slider = this.up('fieldset').down('#threshold-values');
+
+                        if (checked) {
+                            slider.toggleMulti(true, [-1, 1]);
+                        } else {
+                            slider.toggleMulti(false, 0);
+                        }
                     }
                 }
             }
         }, {
             xtype: 'enumslider',
             name: 'thresholdValues',
-            itemId: 'thresholdValues',
+            itemId: 'threshold-values',
             stateful: true,
             stateId: 'thresholdValues',
             forceIntegers: true,
             disabled: true,
             width: '90%',
-            values: 0,
+            values: -1,
             minValue: -1,
             maxValue: 1
         }]

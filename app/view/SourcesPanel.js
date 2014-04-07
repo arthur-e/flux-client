@@ -70,10 +70,17 @@ Ext.define('Flux.view.SourcesPanel', {
         disabled: true //TODO
 
     }, {
-        xtype: 'radiogroup',
+        xtype: 'reradiogroup',
         itemId: 'stats-from',
         fieldLabel: 'Statistics from',
+        stateful: true,
+        stateId: 'statsFrom',
         layout: 'vbox',
+        propagateChange: function (sel) {
+            if (this.up('form') === undefined) {
+                return;
+            }
+        },
         items: [{
             boxLabel: 'Population',
             name: 'statsFrom',

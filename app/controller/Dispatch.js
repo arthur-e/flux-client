@@ -41,6 +41,11 @@ Ext.define('Flux.controller.Dispatch', {
 
     },
 
+    /**
+        Convenience function for finding out if the user has specified that
+        population statistics should be used (or otherwise).
+        @return {Boolean}
+     */
     isUsingPopulationStats: function () {
         return (this.getSourcesPanel().down('#stats-from').getValue().statsFrom === 'population');
     },
@@ -54,6 +59,7 @@ Ext.define('Flux.controller.Dispatch', {
         @param  params          {Object}
      */
     loadMap: function (params) {
+        var store = this.getStore('grids');
         var cb = Ext.Function.bind(function (recs) {
             var m;
 
@@ -72,14 +78,16 @@ Ext.define('Flux.controller.Dispatch', {
         }, this);
 
         if (params) {
-            this.getStore('grids').load({
+            store.load({
                 params: params,
                 callback: cb
             });
         } else {
-            this.getStore('grids').reload({
-                callback: cb
-            });
+            if (store.data.items.length !== 0) {
+                store.reload({
+                    callback: cb
+                });
+            }
         }
 
     },

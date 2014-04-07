@@ -485,6 +485,15 @@ Ext.define('Flux.view.D3GeographicPanel', {
     },
 
     /**
+        Returns the stored reference to the Flux.model.Metadata used to drive
+        this visualizations.
+        @return {Flux.model.Metadata}
+     */
+    getMetadata: function () {
+        return this._metadata;
+    },
+
+    /**
         Given a new projection, the drawing path is updated.
         @param  proj    {d3.geo.*}
         @param  id      {String}

@@ -90,11 +90,9 @@ Ext.define('Flux.controller.Dispatch', {
         @param  cb  {Ext.form.field.Checkbox}
      */
     onGlobalTendencyChange: function (cb) {
-        if (this._metadata) {
-            this.getController('MapController').updateColorScale({
-                tendency: cb.name
-            }, this._metadata);
-        }
+        this.getController('MapController').updateColorScale({
+            tendency: cb.name
+        });
     },
 
     /**
@@ -105,9 +103,6 @@ Ext.define('Flux.controller.Dispatch', {
     onMetadataLoad: function (store, recs) {
         // This is not needed as long as the "domain" field is set next
         // this.getController('MapController').updateColorScale({}, recs[0]);
-
-        this._metadata = recs[0];
-
         Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
             // IMPORTANT: Pass the Metadata to the view if loading a map
             //  for the first time (first-time configuration)
@@ -130,13 +125,10 @@ Ext.define('Flux.controller.Dispatch', {
     /**TODO
      */
     onStatsChange: function (f, value) {
-        if (!this._metadata) {
-            return;
-        }
-
         if (value.statsFrom === 'population') {
-            this._metadata = this.getStore('metadata').getById(this._namespaceId).copy();
-            this.onMetadataLoad(undefined, [this._metadata]);
+            this.onMetadataLoad(undefined, [
+                this.getStore('metadata').getById(this._namespaceId).copy()
+            ]);
         } else {
             this.loadMap();
         }

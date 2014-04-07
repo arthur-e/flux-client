@@ -388,9 +388,8 @@ Ext.define('Flux.controller.MapController', {
         (measure of central tendency, number of standard deviations, or a switch
         between sequential and diverging palette types).
         @param  config      {Object}    Properties are palette configs e.g. sigmas, tendency, paletteType
-        @param  metadata    {Flux.model.Metadata}
      */
-    updateColorScale: function (config, metadata) {
+    updateColorScale: function (config) {
         var palette, scale;
         var opts = this.getSymbology().getForm().getValues();
 
@@ -399,24 +398,21 @@ Ext.define('Flux.controller.MapController', {
         // Get the color palette
         palette = this.getStore('palettes').getById(opts.palette);
 
-        if (!metadata) {
-            metadata = this.getStore('metadata').getAt(0);
-        }
-
-        if (!palette || !metadata) {
-            return;
-        }
-
-        if (opts.threshold) {
-            scale = this.generateThresholdScale(opts.thresholdValues, palette.get('colors')[0]);
-        } else {
-            scale = metadata.getQuantileScale(opts).range(palette.get('colors'));
-        }
-
         // Update the scale of every map
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (cmp) {
+            var metadata = cmp.getMetadata();
+            if (!metadata) {
+                return;
+            }
+
+            if (opts.threshold) {
+                scale = this.generateThresholdScale(opts.thresholdValues, palette.get('colors')[0]);
+            } else {
+                scale = metadata.getQuantileScale(opts).range(palette.get('colors'));
+            }
+
             cmp.setScale(scale);
-        });
+        }, this));
     }
     
 });

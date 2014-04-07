@@ -171,6 +171,14 @@ Ext.define('Flux.field.EnumeratedSlider', {
     },
 
     /**
+        Returns the upper and lower bounds on the Slider and NumberFields.
+        @return {Array}
+     */
+    getBounds: function () {
+        return this._bounds;
+    },
+
+    /**
         Returns the value of the component's name property.
         @return {String}
      */
@@ -249,6 +257,12 @@ Ext.define('Flux.field.EnumeratedSlider', {
     setBounds: function (values) {
         var slider = this.down('multislider');
 
+        values = values || this.getBounds();
+
+        if (values === undefined) {
+            return;
+        }
+
         if (this.forceIntegers) {
             values = Ext.Array.map(values, function (v) {
                 return Math.floor(v);
@@ -262,6 +276,8 @@ Ext.define('Flux.field.EnumeratedSlider', {
             field.setMinValue(values[0]);
             field.setMaxValue(values[1]);
         });
+
+        this._bounds = values;
     },
 
     /**
@@ -318,7 +334,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
                 }
             });
 
-            this.setBounds(values);
+            this.setBounds(this.getBounds());
         } else {
             if (this.items.length > 2) {
                 this.remove('upper-bound');

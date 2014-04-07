@@ -43,6 +43,15 @@ Ext.define('Flux.controller.Dispatch', {
 
     /**
         Convenience function for finding out if the user has specified that
+        anomalies should be displayed instead of the raw values.
+        @return {Boolean}
+     */
+    isUsingAnomalies: function () {
+        return (this.getSourcesPanel().down('#display-value').getValue().statsFrom === 'anomalies');
+    },
+
+    /**
+        Convenience function for finding out if the user has specified that
         population statistics should be used (or otherwise).
         @return {Boolean}
      */

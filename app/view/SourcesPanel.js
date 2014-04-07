@@ -97,6 +97,7 @@ Ext.define('Flux.view.SourcesPanel', {
     }, {
         xtype: 'radiogroup',
         fieldLabel: 'Display',
+        itemId: 'display-value', 
         layout: 'vbox',
         items: [{
             boxLabel: 'Values',

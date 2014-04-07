@@ -50,6 +50,10 @@ Ext.define('Flux.controller.MapController', {
                 change: this.onScaleParameterChange
             },
 
+            'symbology #reverse-palette': {
+                change: this.onScaleParameterChange
+            },
+
             'symbology #threshold-toggle': {
                 change: this.onScaleParameterChange
             },

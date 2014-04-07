@@ -30,6 +30,7 @@ Ext.define('Flux.view.Symbology', {
             var combo = this.down('combo[name=palette]');
             var palettes = combo.getStore();
             var paletteNames;
+            var reversed = this.down('#reverse-palette').getValue();
             var type = this.down('#palette-type').getValue()['paletteType'];
             var segments = this.down('#segments').getValue();
             var selection = combo.getValue();
@@ -66,6 +67,10 @@ Ext.define('Flux.view.Symbology', {
                                 i += 1;
                             }
 
+                            if (reversed) {
+                                colors.reverse();
+                            }
+
                             return colors;
                         }())
                     }));
@@ -96,6 +101,10 @@ Ext.define('Flux.view.Symbology', {
                             while (i < (domain.length - 1)) {
                                 colors.push(scale(domain[i]))
                                 i += 1;
+                            }
+
+                            if (reversed) {
+                                colors.reverse();
                             }
 
                             return colors;
@@ -196,6 +205,22 @@ Ext.define('Flux.view.Symbology', {
                 '</div>',
             '</tpl>'
         ].join(''))
+
+    }, {
+        xtype: 'recheckbox',
+        name: 'reversePalette',
+        itemId: 'reverse-palette',
+        stateful: true,
+        stateId: 'reversePalette',
+        boxLabel: 'Reverse palette',
+        checked: true,
+        propagateChange: function () {
+            if (this.up('form') === undefined) {
+                return;
+            }
+
+            this.up('form').fireEvent('palettechange');
+        }
 
     }, {
         xtype: 'fieldset',

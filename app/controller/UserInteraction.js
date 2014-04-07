@@ -27,16 +27,16 @@ Ext.define('Flux.controller.UserInteraction', {
 
         this.control({
 
-            '#animation-settings-btn': {
-                //click: this.launchAnimationSettings FIXME
-            },
-
             'sourcespanel combo[name=source]': {
                 select: this.onSourceChange
             },
 
             'sourcespanel > field[name=date], field[name=time]': {
                 change: this.loadSourceData
+            },
+
+            'sourcespanel #stats-from': {
+                change: this.onStatsChange
             }
 
         });
@@ -122,6 +122,12 @@ Ext.define('Flux.controller.UserInteraction', {
         // Tell the dispatch to use this scenario name in all requests
         this.getController('Dispatch').setRequestNamespace(src);
 
+    },
+
+    /**TODO
+     */
+    onStatsChange: function (f, value) {
+        this.getController('Dispatch').onStatsChange(f, value);
     },
 
     /**

@@ -71,6 +71,7 @@ Ext.define('Flux.view.SourcesPanel', {
 
     }, {
         xtype: 'radiogroup',
+        itemId: 'stats-from',
         fieldLabel: 'Statistics from',
         layout: 'vbox',
         items: [{
@@ -81,7 +82,6 @@ Ext.define('Flux.view.SourcesPanel', {
             checked: true // Checked by default
         }, {
             boxLabel: 'Current Data Frame',
-            disabled: true,//TODO
             name: 'statsFrom',
             inputValue: 'current-data-frame',
             id: 'current-data-frame'

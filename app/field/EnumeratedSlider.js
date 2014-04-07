@@ -212,6 +212,26 @@ Ext.define('Flux.field.EnumeratedSlider', {
         this.fireEvent('boundschange', this, values);
     },
 
+    /**TODO
+     */
+    setBounds: function (values) {
+        var slider = this.down('multislider');
+
+        if (this.forceIntegers) {
+            values = Ext.Array.map(values, function (v) {
+                return Math.floor(v);
+            });
+        }
+
+        slider.setMinValue(values[0]);
+        slider.setMaxValue(values[1]);
+
+        Ext.each(this.query('numberfield'), function (field, i) {
+            field.setMinValue(values[0]);
+            field.setMaxValue(values[1]);
+        });
+    },
+
     /**
         Toggles between a MultiSlider and a (single-thumb) Slider.
      */

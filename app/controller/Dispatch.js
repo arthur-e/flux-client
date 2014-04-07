@@ -1,9 +1,18 @@
 Ext.define('Flux.controller.Dispatch', {
     extend: 'Ext.app.Controller',
 
+    requires: [
+        'Flux.model.Metadata',
+        'Flux.store.Grids',
+        'Flux.store.Metadata'
+    ],
+
     refs: [{
         ref: 'mapSettings',
         selector: 'mapsettings'
+    }, {
+        ref: 'sourcesPanel',
+        selector: 'sourcespanel'
     }, {
         ref: 'viewport',
         selector: 'viewport'
@@ -32,6 +41,10 @@ Ext.define('Flux.controller.Dispatch', {
 
     },
 
+    isUsingPopulationStats: function () {
+        return (this.getSourcesPanel().down('#stats-from').getValue().statsFrom === 'population');
+    },
+
     ////////////////////////////////////////////////////////////////////////////
     // Event Handlers //////////////////////////////////////////////////////////
 
@@ -39,39 +52,35 @@ Ext.define('Flux.controller.Dispatch', {
         Fires a request for new map data using the passed params. Optionally
         masks a target component's element until response is received.
         @param  params          {Object}
-        @param  firstTimeConfig {Boolean}   Flag to indicate map is being loaded for the first time; should configure
-        @param  maskTarget      {Ext.Component}
      */
-    loadMap: function (params, firstTimeConfig, maskTarget) {
-        var metadata = this.getStore('metadata').getById(this._namespaceId);
+    loadMap: function (params) {
+        var cb = Ext.Function.bind(function (recs) {
+            var m;
 
-        // IMPORTANT: Pass the Metadata to the view if loading a map for the
-        //  first time (first-time configuration)
-        if (firstTimeConfig) {
+            this.getController('Animation').setTimestamp(recs[0].get('timestamp'));
+
+            if (!this.isUsingPopulationStats()) {
+                m = this.getStore('metadata').getById(this._namespaceId).copy();
+                m.set('stats', this.summarizeMap(recs[0].get('features')));
+                this.onMetadataLoad(undefined, [m]);
+            }
+
             Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
-                view.configure(metadata);
+                view.draw(recs[0])
+                    .updateTimestamp(recs[0].get('timestamp'), 'Y m-d H:i');
+            });
+        }, this);
+
+        if (params) {
+            this.getStore('grids').load({
+                params: params,
+                callback: cb
+            });
+        } else {
+            this.getStore('grids').reload({
+                callback: cb
             });
         }
-
-        if (maskTarget) {
-            maskTarget.getEl().mask('Loading...');
-        }
-
-        this.getStore('grids').load({
-            params: params,
-            callback: Ext.Function.bind(function (recs) {
-                this.getController('Animation').setTimestamp(recs[0].get('timestamp'));
-
-                if (maskTarget) {
-                    maskTarget.getEl().unmask();
-                }
-
-                Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
-                    view.draw(recs[0])
-                        .updateTimestamp(recs[0].get('timestamp'), 'Y m-d H:i');
-                });
-            }, this)
-        });
 
     },
 
@@ -81,9 +90,11 @@ Ext.define('Flux.controller.Dispatch', {
         @param  cb  {Ext.form.field.Checkbox}
      */
     onGlobalTendencyChange: function (cb) {
-        this.getController('MapController').updateColorScale({
-            tendency: cb.name
-        }, this.getStore('metadata').getById(this._namespaceId));
+        if (this._metadata) {
+            this.getController('MapController').updateColorScale({
+                tendency: cb.name
+            }, this._metadata);
+        }
     },
 
     /**
@@ -95,15 +106,40 @@ Ext.define('Flux.controller.Dispatch', {
         // This is not needed as long as the "domain" field is set next
         // this.getController('MapController').updateColorScale({}, recs[0]);
 
+        this._metadata = recs[0];
+
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
+            // IMPORTANT: Pass the Metadata to the view if loading a map
+            //  for the first time (first-time configuration)
+            view.configure(recs[0]);
+        });
+
         // Initialize the values of the domain bounds and threshold sliders
         Ext.each(this.getSymbology().query('enumslider'), function (cmp) {
-            cmp.setValues([
+            cmp.setBounds([
                 recs[0].get('stats').min,
                 recs[0].get('stats').max
             ]);
         });
 
+        this.getController('MapController').updateColorScale(this.getSymbology().getForm().getValues());
+
         this.getController('Animation').enableAnimation(recs[0]);
+    },
+
+    /**TODO
+     */
+    onStatsChange: function (f, value) {
+        if (!this._metadata) {
+            return;
+        }
+
+        if (value.statsFrom === 'population') {
+            this._metadata = this.getStore('metadata').getById(this._namespaceId).copy();
+            this.onMetadataLoad(undefined, [this._metadata]);
+        } else {
+            this.loadMap();
+        }
     },
 
     /**
@@ -115,6 +151,60 @@ Ext.define('Flux.controller.Dispatch', {
     setRequestNamespace: function (ns) {
         this._namespaceId = ns;
         this.getStore('grids').setProxyNamespace(ns, true); // No caching
+    },
+
+    /**TODO
+     */
+    summarizeMap: function (data) {
+        var s = this.Stats(data);
+        return {
+            min: Ext.Array.min(data),
+            max: Ext.Array.max(data),
+            mean: s.mean(),
+            std: s.stdDev(),
+            median: s.median()
+        };
+    },
+
+    /**
+        Returns an object which can be used to calculate statistics on the
+        the passed numeric Array.
+     */
+    Stats: function (arr) {
+        arr = arr || [];
+
+        this.arithmeticMean = function () {
+            var i, sum = 0;
+     
+            for (i = 0; i < arr.length; i += 1) {
+                sum += arr[i];
+            }
+     
+            return sum / arr.length;
+        };
+     
+        this.mean = this.arithmeticMean;
+     
+        this.stdDev = function () {
+            var mean, i, sum = 0;
+     
+            mean = this.arithmeticMean();
+            for (i = 0; i < arr.length; i += 1) {
+                sum += Math.pow(arr[i] - mean, 2);
+            }
+     
+            return Math.pow(sum / arr.length, 0.5);
+        };
+     
+        this.median = function () {
+            var middleValueId = Math.floor(arr.length / 2);
+     
+            return arr.slice().sort(function (a, b) {
+                return a - b;
+            })[middleValueId];
+        };
+     
+        return this;
     }
 
 });

@@ -25,6 +25,9 @@ text.info {
     stroke-linejoin: round;
 }
 text.info.timestamp { font-family: "Courier New","Lucida Console",monospace; }
-text.info.tip { font-size: 16px; }
+text.info.tip {
+    fill: #000;
+    font-size: 16px;
+}
 .region { fill: #fff; }
 

@@ -95,10 +95,10 @@ Ext.define('Flux.view.D3GeographicPanel', {
         sel = sel || this.panes.overlay.selectAll('.point');
         sel.on('mouseover', Ext.Function.bind(function (d) {
             var c = d3.mouse(this.svg[0][0]);
-            //this.updateDisplay([{
-            //    id: 'tooltip',
-            //    text: d.toFixed(2)
-            //}]);
+            this.updateDisplay([{
+                id: 'tooltip',
+                text: d.toFixed(2)
+            }]);
             this.panes.tooltip.selectAll('.tip')
                 .text(d.toFixed(2))
                 .attr({
@@ -108,10 +108,10 @@ Ext.define('Flux.view.D3GeographicPanel', {
         }, this));
 
         sel.on('mouseout', Ext.Function.bind(function (d) {
-            //this.updateDisplay([{
-            //    id: 'timestamp',
-            //    text: this._timestamp
-            //}]);
+            this.updateDisplay([{
+                id: 'timestamp',
+                text: this._timestamp
+            }]);
             this.panes.tooltip.selectAll('.tip').text('');
         }, this));
 

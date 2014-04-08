@@ -579,6 +579,16 @@ Ext.define('Flux.view.D3GeographicPanel', {
     },
 
     /**
+     */
+    toggleLegend: function (state) {
+        if (state) {
+            this.panes.legend.attr('class', 'pane legend');
+        } else {
+            this.panes.legend.attr('class', 'pane legend hidden');
+        }
+    },
+
+    /**
         Draws again the visualization features of the map by updating their
         SVG attributes. Accepts optional D3 selection which it will style.
         @param  selection   {d3.selection}

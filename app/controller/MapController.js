@@ -46,6 +46,10 @@ Ext.define('Flux.controller.MapController', {
                 resize: this.onResize
             },
 
+            'mapsettings checkbox[name=showLegends]': {
+                change: this.onLegendDisplayChange
+            },
+
             'symbology #palette-type': {
                 change: this.onScaleParameterChange
             },
@@ -261,6 +265,17 @@ Ext.define('Flux.controller.MapController', {
         Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
             // For every d3geopanel instance, update the basemap
             cmp.setBasemap(recs[0].get('id'), recs[0].get('url'));
+        });
+    },
+
+    /**
+        Handles a change in the Checkbox as to whether or not to display the legend.
+        @param  c       {Ext.form.field.CheckBox}
+        @param  state   {Boolean}
+     */
+    onLegendDisplayChange: function (c, state) {
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
+            cmp.toggleLegend(state);
         });
     },
 

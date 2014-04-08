@@ -17,6 +17,7 @@
 .boundary.inside { stroke: #aaa; }
 .boundary.outside { stroke: #fff; }
 .empty { fill: transparent !important; }
+.hidden { display: none; }
 text.info {
     font-family: Helvetica,Arial,sans-serif;
     font-weight: bold;

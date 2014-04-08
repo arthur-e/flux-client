@@ -82,14 +82,14 @@ Ext.define('Flux.view.MapSettings', {
         boxLabel: 'Show political boundaries'
 
     }, {
-        xtype: 'recheckbox',
+        xtype: 'checkbox',
         name: 'showLegends',
-        disabled: true,//TODO
+        checked: true,
         stateId: 'showLegends',
-        boxLabel: 'Show legends'
+        boxLabel: 'Show legend(s)'
 
     }, {
-        xtype: 'recheckbox',
+        xtype: 'checkbox',
         name: 'showLinePlot',
         disabled: true,//TODO
         stateId: 'showLinePlot',

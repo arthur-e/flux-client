@@ -95,10 +95,17 @@ Ext.define('Flux.view.SourcesPanel', {
         }]
 
     }, {
-        xtype: 'radiogroup',
+        xtype: 'reradiogroup',
         fieldLabel: 'Display',
-        itemId: 'display-value', 
+        itemId: 'display-value',
+        stateful: true,
+        stateId: 'displayValue',
         layout: 'vbox',
+        propagateChange: function (sel) {
+            if (this.up('form') === undefined) {
+                return;
+            }
+        },
         items: [{
             boxLabel: 'Values',
             name: 'display',
@@ -107,7 +114,6 @@ Ext.define('Flux.view.SourcesPanel', {
             checked: true // Checked by default
         }, {
             boxLabel: 'Anomalies',
-            disabled: true,//TODO
             name: 'display',
             inputValue: 'anomalies',
             id: 'anomalies'

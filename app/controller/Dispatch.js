@@ -11,6 +11,9 @@ Ext.define('Flux.controller.Dispatch', {
         ref: 'mapSettings',
         selector: 'mapsettings'
     }, {
+        ref: 'settingsMenu',
+        selector: '#settings-menu'
+    }, {
         ref: 'sourcesPanel',
         selector: 'sourcespanel'
     }, {
@@ -42,12 +45,25 @@ Ext.define('Flux.controller.Dispatch', {
     },
 
     /**
+        Convenience function for determining the currently selected global
+        tendency--mean or median.
+        @return {String}
+     */
+    getGlobalTendency: function () {
+        if (this.getSettingsMenu().down('menucheckitem[name=mean]').checked) {
+            return 'mean';
+        }
+
+        return 'median';
+    },
+
+    /**
         Convenience function for finding out if the user has specified that
         anomalies should be displayed instead of the raw values.
         @return {Boolean}
      */
     isUsingAnomalies: function () {
-        return (this.getSourcesPanel().down('#display-value').getValue().statsFrom === 'anomalies');
+        return (this.getSourcesPanel().down('#display-value').getValue().display === 'anomalies');
     },
 
     /**
@@ -70,19 +86,38 @@ Ext.define('Flux.controller.Dispatch', {
     loadMap: function (params) {
         var store = this.getStore('grids');
         var cb = Ext.Function.bind(function (recs) {
-            var m;
+            var m, measure;
+            var rec = recs[0];
+            var tendency = this.getGlobalTendency();
 
             this.getController('Animation').setTimestamp(recs[0].get('timestamp'));
 
             if (!this.isUsingPopulationStats()) {
                 m = this.getStore('metadata').getById(this._namespaceId).copy();
-                m.set('stats', this.summarizeMap(recs[0].get('features')));
+                m.set('stats', this.summarizeMap(rec.get('features')));
                 this.onMetadataLoad(undefined, [m]);
+
+                if (this.isUsingAnomalies()) {
+                    measure = m.get('stats')[tendency];
+                }
+
+            } else {
+                if (this.isUsingAnomalies()) {
+                    measure = this.Stats(rec.get('features'))[tendency]();
+                }
+
+            }
+
+            if (this.isUsingAnomalies()) {
+                rec = recs[0].copy();
+                rec.set('features', Ext.Array.map(rec.get('features'), function (v) {
+                    return v - measure;
+                }));
             }
 
             Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
-                view.draw(recs[0])
-                    .updateTimestamp(recs[0].get('timestamp'), 'Y m-d H:i');
+                view.draw(rec)
+                    .updateTimestamp(rec.get('timestamp'), 'Y m-d H:i');
             });
         }, this);
 

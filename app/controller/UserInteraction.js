@@ -11,11 +11,6 @@ Ext.define('Flux.controller.UserInteraction', {
         'Flux.store.Metadata'
     ],
 
-    refs: [{
-        ref: 'symbology',
-        selector: 'symbology'
-    }],
-
     init: function () {
         // Create a new state Provider if one doesn't already exist
         if (Ext.state.Manager.getProvider().path === undefined) {
@@ -33,6 +28,10 @@ Ext.define('Flux.controller.UserInteraction', {
 
             'sourcespanel > field[name=date], field[name=time]': {
                 change: this.loadSourceData
+            },
+
+            'sourcespanel #display-value': {
+                change: this.onStatsChange
             },
 
             'sourcespanel #stats-from': {
@@ -124,7 +123,11 @@ Ext.define('Flux.controller.UserInteraction', {
 
     },
 
-    /**TODO
+    /**
+        Intercepts changes to the "Statistics from:" or "Display:" fields and
+        calls on an event handler in the Dispatch controller.
+        @param  f       {Ext.form.RadioGroup}
+        @param  value   {Object}
      */
     onStatsChange: function (f, value) {
         this.getController('Dispatch').onStatsChange(f, value);

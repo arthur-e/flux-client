@@ -43,7 +43,7 @@ Ext.define('Flux.controller.UserInteraction', {
             },
 
             'sourcespanel #aggregation-fields field': {
-                change: this.onAggregation
+                change: this.onAggregationChange
             }
 
         });
@@ -52,9 +52,12 @@ Ext.define('Flux.controller.UserInteraction', {
     ////////////////////////////////////////////////////////////////////////////
     // Event Handlers //////////////////////////////////////////////////////////
 
-    /**TODO
+    /**
+        Handles a change in the aggregation fields in the SourcesPanel. When all
+        of the fields are appropriately configured, it performs a request for
+        aggregated data according to the user's specifications.
      */
-    onAggregation: function (f, value) {
+    onAggregationChange: function () {
         var args = {};
         var vals;
 

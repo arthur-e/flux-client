@@ -320,9 +320,9 @@ Ext.define('Flux.view.Symbology', {
                     var checked = this.getValue();
                     this.up('fieldset').down('#threshold-values').on('afterrender', function () {
                         if (checked) {
-                            this.toggleMulti(true, [-1, 1]);
+                            this.toggleMulti(true);
                         } else {
-                            this.toggleMulti(false, 0);
+                            this.toggleMulti(false);
                         }
                     });
                 },
@@ -333,9 +333,9 @@ Ext.define('Flux.view.Symbology', {
                         slider = this.up('fieldset').down('#threshold-values');
 
                         if (checked) {
-                            slider.toggleMulti(true, [-1, 1]);
+                            slider.toggleMulti(true);
                         } else {
-                            slider.toggleMulti(false, 0);
+                            slider.toggleMulti(false);
                         }
                     }
                 }

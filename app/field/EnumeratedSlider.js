@@ -286,6 +286,8 @@ Ext.define('Flux.field.EnumeratedSlider', {
     toggleMulti: function (multiState, values) {
         var config;
 
+        values = values || this._bounds || [-1, 1];
+
         // Do nothing if the Slider is already configured this way
         if (multiState && this.isMulti) {
             return; // e.g. toggle a MultiSlider to a MultiSlider
@@ -325,8 +327,8 @@ Ext.define('Flux.field.EnumeratedSlider', {
                 hideTrigger: true,
                 width: 50,
                 value: values,
-                minValue: this.minValue,
-                maxValue: this.maxValue,
+                minValue: values[0],
+                maxValue: values[1],
                 listeners: {
                     blur: function () {
                         this.up('fieldcontainer').fireEventArgs('boundschange', [this]);
@@ -334,7 +336,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
                 }
             });
 
-            this.setBounds(this.getBounds());
+            this.setBounds(values);
         } else {
             if (this.items.length > 2) {
                 this.remove('upper-bound');

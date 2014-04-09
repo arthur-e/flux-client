@@ -46,11 +46,19 @@ Ext.define('Flux.controller.Dispatch', {
         return r.exec(Ext.Date.format(d, 'c'))[0];
     },
 
-    /**TODO
+    /**
+        An associative array (Object) mapping views by their IDs to their
+        attributes (e.g. the current timestamp) which may be needed by this
+        Controller to assess the current application state.
      */
     activeViews: {},
 
-    /**TODO
+    /**
+        Adds a new view to the activeViews associative array, registering its
+        attributes (e.g. the current timestamp) so that they are available to
+        this Controller for assessing current application state.
+        @param  view    {Ext.Component}
+        @param  attrs   {Object}
      */
     addViewAttrs: function (view, attrs) {
         var id = view.getId();
@@ -61,7 +69,9 @@ Ext.define('Flux.controller.Dispatch', {
         }
     },
 
-    /**TODO
+    /**
+        Return the attributes associated with a registered active view.
+        @param  id  {String}
      */
     getViewAttrs: function (id) {
         return this.activeViews[id];
@@ -83,7 +93,10 @@ Ext.define('Flux.controller.Dispatch', {
     ////////////////////////////////////////////////////////////////////////////
     // Event Handlers //////////////////////////////////////////////////////////
 
-    /**TODO
+    /**
+        Prepares and executes an aggregation request; calls loadMap() with the
+        parameters needed for aggregation in the REST API.
+        @param  args    {Object}
      */
     aggregate: function (args) {
         Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (view) {
@@ -150,7 +163,11 @@ Ext.define('Flux.controller.Dispatch', {
         });
     },
 
-    /**TODO
+    /**
+        The callback function for when a map is loaded; can be called on its own
+        with cached records.
+        @param  recs    {Array|Flux.model.Grid}
+        @param  op      {Ext.data.Operation}
      */
     onMapLoad: function (recs, op) {
         var m, measure, rec;

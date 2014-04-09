@@ -155,10 +155,10 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     onStatsChange: function (f, value) {
         var aggOptions = this.getSourcesPanel().down('#aggregation-fields');
-        if (value.statsFrom === 'population') {
-            aggOptions.disable();
-        } else {
+        if (value.statsFrom === 'current-data-frame') {
             aggOptions.enable();
+        } else if (value.statsFrom === 'population') {
+            aggOptions.disable();
         }
 
         this.getController('Dispatch').onStatsChange(f, value);
@@ -254,7 +254,7 @@ Ext.define('Flux.controller.UserInteraction', {
         if (values.date && values.time && values.date !== '' && values.time !== '') {
             this.getController('Dispatch').loadMap({
                 time: Ext.String.format('{0}T{1}:00', values.date, values.time)
-            }, (last === undefined)); // NOTE: Flag to configure map for first-time load
+            });
         }
     }
 

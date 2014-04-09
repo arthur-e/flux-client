@@ -8,17 +8,11 @@ Ext.define('Flux.controller.Dispatch', {
     ],
 
     refs: [{
-        ref: 'mapSettings',
-        selector: 'mapsettings'
-    }, {
         ref: 'settingsMenu',
         selector: '#settings-menu'
     }, {
         ref: 'sourcesPanel',
         selector: 'sourcespanel'
-    }, {
-        ref: 'viewport',
-        selector: 'viewport'
     }, {
         ref: 'symbology',
         selector: 'symbology'
@@ -86,24 +80,6 @@ Ext.define('Flux.controller.Dispatch', {
         return 'median';
     },
 
-    /**
-        Convenience function for finding out if the user has specified that
-        anomalies should be displayed instead of the raw values.
-        @return {Boolean}
-     */
-    isUsingAnomalies: function () {
-        return (this.getSourcesPanel().down('#display-value').getValue().display === 'anomalies');
-    },
-
-    /**
-        Convenience function for finding out if the user has specified that
-        population statistics should be used (or otherwise).
-        @return {Boolean}
-     */
-    isUsingPopulationStats: function () {
-        return (this.getSourcesPanel().down('#stats-from').getValue().statsFrom === 'population');
-    },
-
     ////////////////////////////////////////////////////////////////////////////
     // Event Handlers //////////////////////////////////////////////////////////
 
@@ -126,7 +102,7 @@ Ext.define('Flux.controller.Dispatch', {
                     args.intervalGrouping, args.intervals))
             };
 
-            this.loadMap(params);//FIXME Do for a specific view
+            this.loadMap(params, this.getSourcesPanel());//FIXME Do for a specific view
         }, this));
     },
 
@@ -135,57 +111,28 @@ Ext.define('Flux.controller.Dispatch', {
         masks a target component's element until response is received.
         @param  params          {Object}
      */
-    loadMap: function (params) {
+    loadMap: function (params, maskTarget) {
+        var cb = this.onMapLoad;
         var store = this.getStore('grids');
-        var tendency = this.getGlobalTendency();
-        var cb = Ext.Function.bind(function (recs, op) {
-            var m, measure;
-            var rec = recs[0];
 
-            //TODO Replace these calls to convenience methods with an examination of the values of the SourcesPanel form
-            if (!this.isUsingPopulationStats() || op.params.aggregate) {
-                m = this.getStore('metadata').getById(this._namespaceId).copy();
-                m.set('stats', this.summarizeMap(rec.get('features')));
-                this.onMetadataLoad(undefined, [m]);
-
-                if (this.isUsingAnomalies()) {
-                    measure = m.get('stats')[tendency];
-                }
-
-            } else {
-                if (this.isUsingAnomalies()) {
-                    measure = this.Stats(rec.get('features'))[tendency]();
-                }
-
-            }
-
-            if (this.isUsingAnomalies()) {
-                rec = recs[0].copy();
-                rec.set('features', Ext.Array.map(rec.get('features'), function (v) {
-                    return v - measure;
-                }));
-            }
-
-            Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (view) {
-                var ts = rec.get('timestamp');
-                this.getController('Animation').setTimestamp(view.getId(), ts);
-                this.addViewAttrs(view, {
-                    timestamp: ts
-                });
-
-                view.draw(rec).updateTimestamp(ts);
-            }, this));
-        }, this);
+        if (maskTarget) {
+            maskTarget.getEl().mask('Loading...');
+            cb = Ext.Function.createSequence(cb, function () {
+                maskTarget.getEl().unmask();
+            });
+        }
 
         if (params) {
             store.load({
                 params: params,
-                callback: cb
+                callback: cb,
+                scope: this
             });
         } else {
             if (store.data.items.length !== 0) {
                 store.reload({
-                    callback: cb
+                    callback: cb,
+                    scope: this
                 });
             }
         }
@@ -201,6 +148,55 @@ Ext.define('Flux.controller.Dispatch', {
         this.getController('MapController').updateColorScale({
             tendency: cb.name
         });
+    },
+
+    /**TODO
+     */
+    onMapLoad: function (recs, op) {
+        var m, measure, rec;
+        var meta = this.getStore('metadata').getById(this._namespaceId);
+        var opts = this.getSourcesPanel().getForm().getValues();
+        var tendency = this.getGlobalTendency();
+
+        if (Ext.isArray(recs)) {        
+            rec = recs[0];
+        } else {
+            rec = recs;
+        }
+
+        measure = meta.get('stats')[tendency];
+
+        // In the case that population statistics are not used, we need to
+        //  calculate summary statistics for this individual data frame
+        if (opts.statsFrom === 'current-data-frame') {
+            // We modify a copy of the Metadata so that it has summary stats
+            //  specific to this data frame
+            m = meta.copy();
+            m.set('stats', this.summarizeMap(rec.get('features')));
+            this.onMetadataLoad(undefined, [m]);
+
+            // Find the new measure of central tendency
+            measure = m.get('stats')[tendency];
+        }
+
+        // If viewing anomalies, take the difference of each value and the measure
+        //  of central tendency
+        if (opts.display === 'anomalies') {
+            rec = rec.copy();
+            rec.set('features', Ext.Array.map(rec.get('features'), function (v) {
+                return v - measure;
+            }));
+        }
+
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (view) {
+            var ts = rec.get('timestamp');
+            this.getController('Animation').setTimestamp(view.getId(), ts);
+            this.addViewAttrs(view, {
+                timestamp: ts
+            });
+
+            view.draw(rec).updateTimestamp(ts);
+        }, this));
     },
 
     /**
@@ -245,7 +241,7 @@ Ext.define('Flux.controller.Dispatch', {
                     this.getStore('metadata').getById(this._namespaceId).copy()
                 ]);
             } else {
-                this.loadMap();
+                this.onMapLoad(this.getStore('grids').last());
             }
         }
     },

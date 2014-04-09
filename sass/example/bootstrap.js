@@ -864,6 +864,7 @@ Ext.ClassManager.addNameAlternateMappings({
   "Flux.store.Metadata": [],
   "Flux.store.Palettes": [],
   "Flux.store.Scenarios": [],
+  "Flux.type.Moment": [],
   "Flux.view.ConfigurationPanel": [],
   "Flux.view.D3GeographicPanel": [],
   "Flux.view.D3Panel": [],
@@ -1904,6 +1905,7 @@ Ext.ClassManager.addNameAliasMappings({
   "Flux.store.Metadata": [],
   "Flux.store.Palettes": [],
   "Flux.store.Scenarios": [],
+  "Flux.type.Moment": [],
   "Flux.view.ConfigurationPanel": [
     "widget.configpanel"
   ],

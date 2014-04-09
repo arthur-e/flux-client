@@ -5,7 +5,8 @@ Ext.require([
     'Flux.field.EnumeratedSlider',
     'Flux.field.StatefulCheckbox',
     'Flux.field.StatefulRadioGroup',
-    'Flux.store.Scenarios'
+    'Flux.store.Scenarios',
+    'Flux.type.Moment'
 ]);
 
 Ext.define('Flux.Application', {

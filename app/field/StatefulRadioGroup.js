@@ -11,7 +11,9 @@ Ext.define('Flux.field.StatefulRadioGroup', {
     },
 
     applyState: function (state) {
-        this.setValue(state && state.value);
+        this.on('afterrender', function () {
+            this.setValue(state && state.value);
+        });
 
         // applyState() is called before rendering or before the component is
         //  laid out, which means ComponentQuery operations (up() and down())

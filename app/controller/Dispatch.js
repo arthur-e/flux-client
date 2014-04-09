@@ -45,6 +45,35 @@ Ext.define('Flux.controller.Dispatch', {
     },
 
     /**
+     */
+    _UTCString: function (d) {
+        var r = /^\d{4}(-\d{2})?(-\d{2})?(T\d{2}:\d{2})?(:\d{2})?/;
+        Ext.Date.add(d, Ext.Date.MINUTE, d.getTimezoneOffset());
+        return r.exec(Ext.Date.format(d, 'c'))[0];
+    },
+
+    /**TODO
+     */
+    activeViews: {},
+
+    /**TODO
+     */
+    addViewAttrs: function (view, attrs) {
+        var id = view.getId();
+        if (this.activeViews[id]) {
+            this.activeViews[id] = Ext.Object.merge(this.activeViews[id], attrs);
+        } else {
+            this.activeViews[id] = attrs;
+        }
+    },
+
+    /**TODO
+     */
+    getViewAttrs: function (id) {
+        return this.activeViews[id];
+    },
+
+    /**
         Convenience function for determining the currently selected global
         tendency--mean or median.
         @return {String}
@@ -78,21 +107,43 @@ Ext.define('Flux.controller.Dispatch', {
     ////////////////////////////////////////////////////////////////////////////
     // Event Handlers //////////////////////////////////////////////////////////
 
-    /**
+    /**TODO
+     */
+    aggregate: function (args) {
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (view) {
+            var attrs = this.getViewAttrs(view.getId());
+            var date;
+            var params;
+
+            if (!attrs) {
+                return;
+            }
+
+            params = {
+                aggregate: args.aggregate,
+                start: this._UTCString(attrs.timestamp),
+                end: this._UTCString(Ext.Date.add(attrs.timestamp,
+                    args.intervalGrouping, args.intervals))
+            };
+
+            this.loadMap(params);//FIXME Do for a specific view
+        }, this));
+    },
+
+    /** FIXME Modify to load for a specific view
         Fires a request for new map data using the passed params. Optionally
         masks a target component's element until response is received.
         @param  params          {Object}
      */
     loadMap: function (params) {
         var store = this.getStore('grids');
-        var cb = Ext.Function.bind(function (recs) {
+        var tendency = this.getGlobalTendency();
+        var cb = Ext.Function.bind(function (recs, op) {
             var m, measure;
             var rec = recs[0];
-            var tendency = this.getGlobalTendency();
 
-            this.getController('Animation').setTimestamp(recs[0].get('timestamp'));
-
-            if (!this.isUsingPopulationStats()) {
+            //TODO Replace these calls to convenience methods with an examination of the values of the SourcesPanel form
+            if (!this.isUsingPopulationStats() || op.params.aggregate) {
                 m = this.getStore('metadata').getById(this._namespaceId).copy();
                 m.set('stats', this.summarizeMap(rec.get('features')));
                 this.onMetadataLoad(undefined, [m]);
@@ -115,10 +166,15 @@ Ext.define('Flux.controller.Dispatch', {
                 }));
             }
 
-            Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
-                view.draw(rec)
-                    .updateTimestamp(rec.get('timestamp'), 'Y m-d H:i');
-            });
+            Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (view) {
+                var ts = rec.get('timestamp');
+                this.getController('Animation').setTimestamp(view.getId(), ts);
+                this.addViewAttrs(view, {
+                    timestamp: ts
+                });
+
+                view.draw(rec).updateTimestamp(ts);
+            }, this));
         }, this);
 
         if (params) {
@@ -183,12 +239,14 @@ Ext.define('Flux.controller.Dispatch', {
         @param  value   {Object}
      */
     onStatsChange: function (f, value) {
-        if (value.statsFrom === 'population') {
-            this.onMetadataLoad(undefined, [
-                this.getStore('metadata').getById(this._namespaceId).copy()
-            ]);
-        } else {
-            this.loadMap();
+        if (this.getStore('metadata').data.items.length !== 0) {
+            if (value.statsFrom === 'population') {
+                this.onMetadataLoad(undefined, [
+                    this.getStore('metadata').getById(this._namespaceId).copy()
+                ]);
+            } else {
+                this.loadMap();
+            }
         }
     },
 

@@ -1,6 +1,14 @@
 Ext.define('Flux.controller.UserInteraction', {
     extend: 'Ext.app.Controller',
 
+    refs: [{
+        ref: 'aggregationFields',
+        selector: '#aggregation-fields'
+    }, {
+        ref: 'sourcesPanel',
+        selector: 'sourcespanel'
+    }],
+
     requires: [
         'Ext.data.ArrayStore',
         'Ext.form.field.ComboBox',
@@ -30,12 +38,12 @@ Ext.define('Flux.controller.UserInteraction', {
                 change: this.loadSourceData
             },
 
-            'sourcespanel #display-value': {
+            'sourcespanel > #display-value, #stats-from': {
                 change: this.onStatsChange
             },
 
-            'sourcespanel #stats-from': {
-                change: this.onStatsChange
+            'sourcespanel #aggregation-fields field': {
+                change: this.onAggregation
             }
 
         });
@@ -43,6 +51,22 @@ Ext.define('Flux.controller.UserInteraction', {
 
     ////////////////////////////////////////////////////////////////////////////
     // Event Handlers //////////////////////////////////////////////////////////
+
+    /**TODO
+     */
+    onAggregation: function (f, value) {
+        var args = {};
+        var vals;
+
+        Ext.Array.each(this.getAggregationFields().query('trigger'), function (cmp) {
+            args[cmp.getName()] = cmp.getValue();
+        });
+
+        vals = Ext.Object.getValues(args);
+        if (Ext.Array.clean(vals).length === vals.length) {
+            this.getController('Dispatch').aggregate(args);
+        }
+    },
 
     /**
         Fetches the metadata for a selected dataset/source (scenario name);
@@ -130,6 +154,13 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  value   {Object}
      */
     onStatsChange: function (f, value) {
+        var aggOptions = this.getSourcesPanel().down('#aggregation-fields');
+        if (value.statsFrom === 'population') {
+            aggOptions.disable();
+        } else {
+            aggOptions.enable();
+        }
+
         this.getController('Dispatch').onStatsChange(f, value);
     },
 

@@ -121,8 +121,8 @@ Ext.define('Flux.view.SourcesPanel', {
 
     }, {
         xtype: 'fieldset',
+        itemId: 'aggregation-fields',
         title: 'Aggregation',
-        disabled: true,//TODO
         defaults: {
             labelAlign: 'top',
             anchor: '100%'
@@ -148,10 +148,9 @@ Ext.define('Flux.view.SourcesPanel', {
                     storeId: 'groupingIntervals',
                     fields: ['id', 'text'],
                     data: [
-                        ['months', 'Months'],
-                        ['weeks', 'Weeks'],
-                        ['days', 'Days'],
-                        ['hours', 'Hours']
+                        [Ext.Date.MONTH, 'Months'],
+                        [Ext.Date.DAY, 'Days'],
+                        [Ext.Date.HOUR, 'Hours']
                     ]
                 })
             }]

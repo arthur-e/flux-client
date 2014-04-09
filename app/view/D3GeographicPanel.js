@@ -711,6 +711,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         @return         {Flux.view.D3GeographicPanel}
      */
     updateTimestamp: function (date, fmt) {
+        fmt = fmt || 'Y m-d H:i';
         this._timestamp = Ext.Date.format(Ext.Date.add(date, Ext.Date.MINUTE,
             date.getTimezoneOffset()), fmt)
         this.updateDisplay([{

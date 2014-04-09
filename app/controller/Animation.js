@@ -224,10 +224,11 @@ Ext.define('Flux.controller.Animation', {
 
     /**
         Sets the timestamp as known by this Controller.
-        @param  timestamp   {Date}
+        @param  id      {String}    ID of the view Component with this timestamp
+        @param  date    {Date}
      */
-    setTimestamp: function (timestamp) {
-        this._timestamp = timestamp;
+    setTimestamp: function (id, date) {
+        this._timestamp = date; //TODO View-specific timestamps
     },
 
     /**

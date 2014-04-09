@@ -39,6 +39,8 @@ Ext.define('Flux.view.Symbology', {
 
             this._lastPaletteType = type;
             this._lastSegments = segments;
+
+            console.log(reversed);//FIXME
             
             if (type === 'sequential') {
                 paletteNames = [
@@ -48,30 +50,19 @@ Ext.define('Flux.view.Symbology', {
 
                 // Create all possible sequential palettes
                 Ext.each(paletteNames, function (name) {
-                    var scale = chroma.scale(name).domain([
-                        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-                    ], (segments), 'quantiles').out('hex');
+                    var colors = colorbrewer[name][segments];
 
                     palettes.add(Ext.create('Flux.model.Palette', {
                         name: name,
                         type: 'sequential',
                         segments: segments,
                         colors: (function () {
-                            var colors, domain, i;
-
-                            colors = [];
-                            domain = scale.domain();
-                            i = 0;
-                            while (i < (domain.length - 1)) {
-                                colors.push(scale(domain[i]))
-                                i += 1;
-                            }
-
+                            var c = colors.slice();
                             if (reversed) {
-                                colors.reverse();
+                                c.reverse();
                             }
 
-                            return colors;
+                            return c;
                         }())
                     }));
 
@@ -84,30 +75,19 @@ Ext.define('Flux.view.Symbology', {
 
                 // Create all possible diverging palettes
                 Ext.each(paletteNames, function (name) {
-                    var scale = chroma.scale(name).domain([
-                        -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-                    ], (segments), 'quantiles').out('hex');
+                    var colors = colorbrewer[name][segments];
 
                     palettes.add(Ext.create('Flux.model.Palette', {
                         name: name,
                         type: 'diverging',
                         segments: segments,
                         colors: (function () {
-                            var colors, domain, i;
-
-                            colors = [];
-                            domain = scale.domain();
-                            i = 0;
-                            while (i < (domain.length - 1)) {
-                                colors.push(scale(domain[i]))
-                                i += 1;
-                            }
-
+                            var c = colors.slice();
                             if (reversed) {
-                                colors.reverse();
+                                c.reverse();
                             }
 
-                            return colors;
+                            return c;
                         }())
                     }));
 

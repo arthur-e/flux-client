@@ -347,10 +347,10 @@ Ext.define('Flux.view.D3GeographicPanel', {
                 'fill': '#fff',
                 'fill-opacity': 0.0,
                 'class': 'backdrop',
-                'x': (this.svg.attr('width') - 400) * 0.5,
+                'x': 0,
                 'y': 0,
-                'width': 400,
-                'height': 55
+                'width': this.svg.attr('width'),
+                'height': (0.05 * this.svg.attr('height'))
             });
 
         this.panes.hud.selectAll('.info')
@@ -368,7 +368,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
                 'class': function (d) {
                     return 'info ' + d.id;
                 },
-                'font-size': '40px',
+                'font-size': (0.04 * this.svg.attr('height')).toString() + 'px',
                 'text-anchor': 'middle'
             });
 
@@ -615,6 +615,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         @return         {Flux.view.D3GeographicPanel}
      */
     updateDisplay: function (data) {
+        scale = 0.039 * this.svg.attr('height');
         if (!data) {
             data = this.panes.hud.selectAll('.info').data();
             // Recall the timestamp text (if this function was called after
@@ -632,7 +633,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
             .attr({
                 'x': this.svg.attr('width') * 0.5,
                 'y': function (d, i) {
-                    return (i + 1) * 40;
+                    return (i + 1) * scale;
                 }
             });
         return this;
@@ -706,18 +707,24 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
     /**
         Updates the on-map info text in the heads-up-display.
-        @param  date    {Date}
-        @param  fmt     {Array}
+        @param  dates   {Array|moment}
+        @param  fmt     {String}
         @return         {Flux.view.D3GeographicPanel}
      */
-    updateTimestamp: function (date, fmt) {
-        fmt = fmt || 'Y m-d H:i';
-        this._timestamp = Ext.Date.format(Ext.Date.add(date, Ext.Date.MINUTE,
-            date.getTimezoneOffset()), fmt)
+    updateTimestamp: function (dates, fmt) {
+        var d0, d1;
+        fmt = fmt || 'YYYY MM-DD HH:ss';
+
+        if (Ext.isArray(dates) && dates.length > 1) {
+            d0 = dates[0].format(fmt);
+            d1 = dates[1].format(fmt);
+            this._timestamp = Ext.String.format('{0} >>> {1}', d0, d1);
+        } else {
+            this._timestamp = dates.format(fmt);
+        }
+
         this.updateDisplay([{
             id: 'timestamp',
-            // The following is necessary because Ext.Date.format prints only
-            //  locale time strings, not UTC time strings
             text: this._timestamp
         }]);
         return this;

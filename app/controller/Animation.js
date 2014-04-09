@@ -59,27 +59,27 @@ Ext.define('Flux.controller.Animation', {
     calcStepOrSize: function (s0, stepSize) {
         if (stepSize) {
             switch (stepSize) {
-                case Ext.Date.MONTH:
+                case 'months':
                 steps = s0 / 2678400;
                 break;
 
-                case Ext.Date.DAY:
+                case 'days':
                 steps = s0 / 86400;
                 break;
 
                 default:
-                steps = s0 / 3600; // Ext.Date.HOUR
+                steps = s0 / 3600; // 'hours'
             }
 
             return Math.floor(steps);
         }
 
         if (s0 / 86400 < 1) { // Less than 1 day (86400 seconds)?
-            return Ext.Date.HOUR;
+            return 'hours';
         } else if (s0 / 2678400 < 1) { // Less than 1 month?
-            return Ext.Date.DAY;
+            return 'days';
         } else {
-            return Ext.Date.MONTH;
+            return 'months';
         }
     },
 
@@ -89,7 +89,7 @@ Ext.define('Flux.controller.Animation', {
     /**TODO
      */
     animate: function (state, delay) {
-        if (!this._timestamp) {
+        if (!this._moment) {
             return;
         }
 
@@ -132,23 +132,23 @@ Ext.define('Flux.controller.Animation', {
             c.disable();
         } else {
             switch (stepSize) {
-                case Ext.Date.DAY:
+                case 'days':
                 d = [
-                    [Ext.Date.DAY, 'day(s)']
+                    ['days', 'day(s)']
                 ];
                 break;
 
-                case Ext.Date.MONTH:
+                case 'months':
                 d = [
-                    [Ext.Date.DAY, 'day(s)'],
-                    [Ext.Date.MONTH, 'month(s)']
+                    ['days', 'day(s)'],
+                    ['months', 'month(s)']
                 ];
                 break;
 
                 default:
                 d = [
-                    [Ext.Date.HOUR, 'hour(s)'],
-                    [Ext.Date.DAY, 'day(s)']
+                    ['hours', 'hour(s)'],
+                    ['days', 'day(s)']
                 ];
             }
         }
@@ -172,7 +172,7 @@ Ext.define('Flux.controller.Animation', {
         @return {Date}
      */
     getTimestamp: function () {
-        return this._timestamp;
+        return this._moment;
     },
 
     /**TODO
@@ -225,10 +225,10 @@ Ext.define('Flux.controller.Animation', {
     /**
         Sets the timestamp as known by this Controller.
         @param  id      {String}    ID of the view Component with this timestamp
-        @param  date    {Date}
+        @param  date    {moment}
      */
     setTimestamp: function (id, date) {
-        this._timestamp = date; //TODO View-specific timestamps
+        this._moment = date; //TODO View-specific timestamps
     },
 
     /**
@@ -237,19 +237,19 @@ Ext.define('Flux.controller.Animation', {
         @param  steps   {Number}    Negative steps are steps taken backwards
      */
     stepBy: function (steps) {
-        if (!this._timestamp) {
+        if (!this._moment) {
             return;
         }
-        this._timestamp = Ext.Date.add(this._timestamp, this._stepSize, steps);
+        this._moment = this._moment.add(steps, this._stepSize);
         this.getController('Dispatch').loadMap({
-            time: Ext.Date.format(this._timestamp, 'c')
+            time: this._moment.toISOString()
         });
     },
 
     /**TODO
      */
     toggleAnimation: function (btn, pressed) {
-        if (!this._timestamp) {
+        if (!this._moment) {
             return;
         }
 

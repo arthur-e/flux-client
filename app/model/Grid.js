@@ -5,7 +5,7 @@ Ext.define('Flux.model.Grid', {
 
     fields: [{
         name: 'timestamp',
-        type: 'date',
+        type: 'moment',
         dateFormat: 'c' // ISO 8601 date
     }, {
         name: 'features',

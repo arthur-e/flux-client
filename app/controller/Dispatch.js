@@ -39,14 +39,6 @@ Ext.define('Flux.controller.Dispatch', {
     },
 
     /**
-     */
-    _UTCString: function (d) {
-        var r = /^\d{4}(-\d{2})?(-\d{2})?(T\d{2}:\d{2})?(:\d{2})?/;
-        Ext.Date.add(d, Ext.Date.MINUTE, d.getTimezoneOffset());
-        return r.exec(Ext.Date.format(d, 'c'))[0];
-    },
-
-    /**
         An associative array (Object) mapping views by their IDs to their
         attributes (e.g. the current timestamp) which may be needed by this
         Controller to assess the current application state.
@@ -108,11 +100,13 @@ Ext.define('Flux.controller.Dispatch', {
                 return;
             }
 
+            console.log(args);//FIXME
+
             params = {
                 aggregate: args.aggregate,
-                start: this._UTCString(attrs.timestamp),
-                end: this._UTCString(Ext.Date.add(attrs.timestamp,
-                    args.intervalGrouping, args.intervals))
+                start: attrs.moment.toISOString(),
+                end: attrs.moment.clone().add(args.intervals,
+                    args.intervalGrouping).toISOString()
             };
 
             this.loadMap(params, this.getSourcesPanel());//FIXME Do for a specific view
@@ -206,13 +200,25 @@ Ext.define('Flux.controller.Dispatch', {
         }
 
         Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (view) {
-            var ts = rec.get('timestamp');
+            var ts = moment.utc(rec.get('timestamp'));
+            var start, end;
             this.getController('Animation').setTimestamp(view.getId(), ts);
             this.addViewAttrs(view, {
-                timestamp: ts
+                moment: ts
             });
 
-            view.draw(rec).updateTimestamp(ts);
+            view.draw(rec);
+
+            if (op) {
+                if (op.params.aggregate) {
+                    return view.updateTimestamp([
+                        moment.utc(op.params.start),
+                        moment.utc(op.params.end)
+                    ]);
+                }
+            }
+
+            view.updateTimestamp(ts);
         }, this));
     },
 

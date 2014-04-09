@@ -77,8 +77,16 @@ Ext.define('Flux.view.SourcesPanel', {
         stateId: 'statsFrom',
         layout: 'vbox',
         propagateChange: function (sel) {
+            var t;
             if (this.up('form') === undefined) {
                 return;
+            }
+            t = this.up('panel').down('#aggregation-fields');
+
+            if (sel.statsFrom === 'population') {
+                t.disable();
+            } else {
+                t.enable();
             }
         },
         items: [{
@@ -148,9 +156,9 @@ Ext.define('Flux.view.SourcesPanel', {
                     storeId: 'groupingIntervals',
                     fields: ['id', 'text'],
                     data: [
-                        [Ext.Date.MONTH, 'Months'],
-                        [Ext.Date.DAY, 'Days'],
-                        [Ext.Date.HOUR, 'Hours']
+                        ['months', 'Months'],
+                        ['days', 'Days'],
+                        ['hours', 'Hours']
                     ]
                 })
             }]

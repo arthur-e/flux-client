@@ -1,23 +1,38 @@
-# Flux/app
+# Apache Server Configuration
 
-This folder contains the javascript files for the application.
+    ############################################################################
+    # Reverse proxies for NASA ACOS
+    ############################################################################
 
-# Flux/resources
+    <Location /flux>
+        ProxyPass http://127.0.0.1:8080/flux
+        ProxyPassReverse http://127.0.0.1:8080/flux
+        Order allow,deny
+        Allow from all
+    </Location>
+
+# ExtJS Architecture
+
+## Flux/app
+
+This folder contains the JavaScript files for the application.
+
+## Flux/resources
 
 This folder contains static resources (typically an `"images"` folder as well).
 
-# Flux/overrides
+## Flux/overrides
 
 This folder contains override classes. All overrides in this folder will be 
 automatically included in application builds if the target class of the override
 is loaded.
 
-# Flux/sass/etc
+## Flux/sass/etc
 
 This folder contains misc. support code for sass builds (global functions, 
 mixins, etc.)
 
-# Flux/sass/src
+## Flux/sass/src
 
 This folder contains sass files defining css rules corresponding to classes
 included in the application's javascript code build.  By default, files in this 
@@ -25,7 +40,7 @@ folder are mapped to the application's root namespace, 'Flux'. The
 namespace to which files in this directory are matched is controlled by the
 app.sass.namespace property in Flux/.sencha/app/sencha.cfg. 
 
-# Flux/sass/var
+## Flux/sass/var
 
 This folder contains sass files defining sass variables corresponding to classes
 included in the application's javascript code build.  By default, files in this 

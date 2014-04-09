@@ -19,7 +19,7 @@ Ext.define('Flux.view.D3Panel', {
             xtype: 'tbitem',
             width: 150,
             height: 45,
-            html: '<a href="http://mtu.edu"><img src="/flux-client/resources/MTRI_logo.png" /></a>'
+            html: '<a href="http://mtu.edu"><img class="mtri-logo" src="/flux-client/resources/MTRI_logo.png" /></a>'
         }]
     },
 

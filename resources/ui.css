@@ -18,6 +18,11 @@
     margin: 5px 0;
 }
 
+.mtri-logo {
+    width: 150px;
+    height: 45px;
+}
+
 /* Buttons ********************************************************************/
 .x-btn-default-toolbar-small,
 .x-btn-default-toolbar-medium,

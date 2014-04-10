@@ -50,7 +50,6 @@ Ext.define('Flux.field.EnumeratedSlider', {
             numberCfg = Ext.clone(this.numberDefaults);
             Ext.Object.merge(numberCfg, {
                 itemId: 'lower-bound',
-                name: Ext.String.format('{0}{1}', this.name, 'LowerBound'),
                 padding: '0 7px 0 0',
                 value: -1,
                 minValue: -1000,
@@ -89,7 +88,6 @@ Ext.define('Flux.field.EnumeratedSlider', {
                 Ext.Object.merge(numberCfg, {
                     xtype: 'numberfield',
                     itemId: 'upper-bound',
-                    name: Ext.String.format('{0}{1}', this.name, 'UpperBound'),
                     value: values[1],
                     minValue: this.minValue,
                     maxValue: this.maxValue
@@ -226,9 +224,13 @@ Ext.define('Flux.field.EnumeratedSlider', {
         var slider = this.down('multislider');
 
         if (this.forceIntegers) {
-            values = Ext.Array.map(values, function (v) {
-                return Math.floor(v);
-            });
+            if (Ext.isArray(values)) {
+                values = Ext.Array.map(values, function (v) {
+                    return Math.floor(v);
+                });
+            } else {
+                values = Math.floor(values);
+            }
         }
 
         slider.setMinValue(values[0]);
@@ -323,7 +325,6 @@ Ext.define('Flux.field.EnumeratedSlider', {
             this.add({
                 xtype: 'numberfield',
                 itemId: 'upper-bound',
-                name: Ext.String.format('{0}{1}', this.name, 'UpperBound'),
                 hideTrigger: true,
                 width: 50,
                 value: values,

@@ -179,7 +179,7 @@ Ext.define('Flux.controller.Dispatch', {
 
         // In the case that population statistics are not used, we need to
         //  calculate summary statistics for this individual data frame
-        if (opts.statsFrom === 'current-data-frame') {
+        if (opts.statsFrom === 'data') {
             // We modify a copy of the Metadata so that it has summary stats
             //  specific to this data frame
             m = meta.copy();

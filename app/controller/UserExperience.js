@@ -8,14 +8,38 @@ Ext.define('Flux.controller.UserExperience', {
     ],
 
     refs: [{
-        'ref': 'topToolbar',
-        'selector': 'viewport toolbar'
+        ref: 'symbology',
+        selector: 'symbology'
+    }, {
+        ref: 'topToolbar',
+        selector: 'viewport toolbar'
     }],
 
     init: function () {
+        var params = window.location.href.split('?'); // Get the HTTP GET query parameters, if any
+
         // Create a new state Provider if one doesn't already exist
         if (Ext.state.Manager.getProvider().path === undefined) {
             Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
+        }
+
+        // If HTTP GET query parameters were specified, use them to set the
+        //  application state
+        if (params.length > 1) {
+            params = Ext.Object.fromQueryString(params.pop());
+
+            Ext.Object.each(params, function (key, value) {
+                // Replace "true" or "false" (String) with Boolean
+                if (value === 'true' || value === 'false') {
+                    params[key] = value = (value === 'true');
+                }
+
+                // IMPORTANT: Makes sure that applyState() recalls the correct state
+                Ext.state.Manager.set(key, {value: value})
+                //console.log(key);//FIXME
+            });
+
+            Ext.Object.merge(this.defaultState, params);
         }
 
         ////////////////////////////////////////////////////////////////////////
@@ -47,9 +71,7 @@ Ext.define('Flux.controller.UserExperience', {
         CheckItem instances in the Settings menu.
      */
     defaultState: {
-        animateDelay: 1,
-        tendencyMean: true,
-        tendencyMedian: false
+        animateDelay: 1
     },
 
     ////////////////////////////////////////////////////////////////////////////
@@ -64,7 +86,9 @@ Ext.define('Flux.controller.UserExperience', {
         });
     },
 
-    /**TODO
+    /**
+        Displays a pop-up utility that has a link (URI) that can be used to
+        load the application with the user's current state and data view.
      */
     displaySharingLink: function () {
         var w = Ext.create('Ext.window.Window', {
@@ -90,7 +114,8 @@ Ext.define('Flux.controller.UserExperience', {
                 height: 150,
                 readOnly: true,
                 fieldStyle: 'font-family:monospace;',
-                value: window.location.href + this.getStateHash()
+                value: Ext.String.format('{0}?{1}', window.location.href,
+                    this.getStateHash())
             }]
         });
 
@@ -102,14 +127,11 @@ Ext.define('Flux.controller.UserExperience', {
         @return {Array}
      */
     getFieldNames: function () {
-        var query = Ext.ComponentQuery.query('form');
-        var names = [];
-
-        Ext.each(query, function (form) {
-            names = names.concat(form.getForm().getFields().collect('name'));
+        var names = Ext.Array.map(Ext.ComponentQuery.query('field[name]'), function (c) {
+            return (Ext.String.endsWith(c.getName(), '-inputEl')) ? undefined : c.getName(); 
         });
 
-        return names;
+        return Ext.Array.clean(names);
     },
 
     /**
@@ -153,8 +175,20 @@ Ext.define('Flux.controller.UserExperience', {
         }, this));
 
         if (Ext.state.Manager.get('animateDelay', undefined)) {
-            this.getTopToolbar().down('#animate-delay').setValue(Ext.state.Manager.get('animateDelay').value);
+            this.getTopToolbar().down('#animate-delay')
+                .setValue(Ext.state.Manager.get('animateDelay').value);
         }
+
+        // For some reason, the hiddenfield gets reset after setting the value
+        //  at this point in the execution (it also saves it state even when
+        //  'stateful' is set to false). SO, we have to set a late event
+        //  listener to set this field to the correct value after it is rendered.
+        if (Ext.state.Manager.get('tendencyMean', undefined) !== undefined) {
+            this.getSymbology().down('hiddenfield[name=tendency]').on('afterrender', function () {
+                this.setValue((Ext.state.Manager.get('tendencyMean')) ? 'mean' : 'median');
+            });
+        }
+
     },
 
     /**
@@ -165,10 +199,7 @@ Ext.define('Flux.controller.UserExperience', {
      */
     onTendencyChange: function (cb, checked, eOpts) {
         if (checked) {
-            Ext.each(Ext.ComponentQuery.query('form > hiddenfield[name=tendency]'), function (field) {
-                field.setValue(cb.name);
-            });
-
+            this.getSymbology().down('hiddenfield[name=tendency]').setValue(cb.name);
             this.getController('Dispatch').onGlobalTendencyChange(cb);
         }
 

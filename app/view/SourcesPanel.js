@@ -118,13 +118,11 @@ Ext.define('Flux.view.SourcesPanel', {
             boxLabel: 'Population',
             name: 'statsFrom',
             inputValue: 'population',
-            id: 'population',
             checked: true // Checked by default
         }, {
             boxLabel: 'Current Data Frame',
             name: 'statsFrom',
-            inputValue: 'current-data-frame',
-            id: 'current-data-frame'
+            inputValue: 'data'
         }]
 
     }, {

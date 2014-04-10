@@ -158,7 +158,7 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     onStatsChange: function (f, value) {
         var aggOptions = this.getSourcesPanel().down('#aggregation-fields');
-        if (value.statsFrom === 'current-data-frame') {
+        if (value.statsFrom === 'data') {
             aggOptions.enable();
         } else if (value.statsFrom === 'population') {
             aggOptions.disable();
@@ -248,8 +248,8 @@ Ext.define('Flux.controller.UserInteraction', {
     loadSourceData: function (field, value, last) {
         var values;
 
-        if (!value || value === last) {
-            return; // Ignore undefined, null, or unchanged values
+        if (!value) {
+            return; // Ignore undefined, null values
         }
 
         values = field.up('panel').getForm().getValues();
@@ -262,7 +262,6 @@ Ext.define('Flux.controller.UserInteraction', {
     }
 
 });
-
 
 
 

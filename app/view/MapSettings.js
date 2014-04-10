@@ -85,6 +85,7 @@ Ext.define('Flux.view.MapSettings', {
         xtype: 'checkbox',
         name: 'showLegends',
         checked: true,
+        inputValue: true,
         stateId: 'showLegends',
         boxLabel: 'Show legend(s)'
 
@@ -92,6 +93,7 @@ Ext.define('Flux.view.MapSettings', {
         xtype: 'checkbox',
         name: 'showLinePlot',
         disabled: true,//TODO
+        inputValue: true,
         stateId: 'showLinePlot',
         boxLabel: 'Show line plot'
 

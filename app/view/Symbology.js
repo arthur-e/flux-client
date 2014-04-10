@@ -36,12 +36,6 @@ Ext.define('Flux.view.Symbology', {
             var selection = combo.getValue();
 
             palettes.removeAll();
-
-            this._lastPaletteType = type;
-            this._lastSegments = segments;
-
-            console.log(reversed);//FIXME
-            
             if (type === 'sequential') {
                 paletteNames = [
                     'BuGn', 'BuPu', 'GnBu', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'RdPu',

@@ -41,23 +41,23 @@ Ext.define('Flux.view.Viewport', {
                 }
             }, {
                 xtype: 'button',
-                text: 'Settings',
+                itemId: 'get-share-link',
+                tooltip: 'Get a link to share the current view...',
+                iconCls: 'icon-link'
+            }, {
+                xtype: 'button',
+                itemId: 'settings-btn',
+                iconCls: 'icon-cog',
                 menu: {
                     itemId: 'settings-menu',
-                    showSeparator: false,
-                    width: 220,
                     items: [{
-                        text: 'Get Link to Share...',
-                        itemId: 'get-share-url',
-                        iconCls: 'icon-link icon-medium'
-                    }, {
                         text: 'Clear Local Settings',
                         itemId: 'clear-local-state',
                         iconCls: 'icon-app-form-del icon-medium'
                     }, {
                         xtype: 'menuseparator'
                     }, {
-                        text: 'Measure of Central Tendency:',
+                        text: 'Measure of central tendency:',
                         cls: 'ui-menu-group-text',
                         plain: true
                     }, {
@@ -74,6 +74,18 @@ Ext.define('Flux.view.Viewport', {
                         stateId: 'tendencyMedian',
                         text: 'Median',
                         group: 'm'
+                    }, {
+                        xtype: 'menuseparator'
+                    }, {
+                        text: 'Steps each animation frame:',
+                        cls: 'ui-menu-group-text',
+                        name: 'steps',
+                        plain: true
+                    }, {
+                        xtype: 'combo',
+                        name: 'stepSize',
+                        valueField: 'stepSize',
+                        queryMode: 'local'
                     }]
                 }
             }, {
@@ -85,25 +97,6 @@ Ext.define('Flux.view.Viewport', {
                 enableToggle: true,
                 tooltip: 'Animate the visualization with time',
                 disabled: true
-            }, {
-                xtype: 'button',
-                cls: 'anim-btn',
-                itemId: 'animation-settings-btn',
-                iconCls: 'icon-cog',
-                tooltip: 'Change animation settings...',
-                disabled: true,
-                menu: {
-                    itemId: 'anim-settings-menu',
-                    items: [{
-                        text: 'Steps each frame:',
-                        cls: 'ui-menu-group-text',
-                        plain: true
-                    }, {
-                        xtype: 'combo',
-                        valueField: 'stepSize',
-                        queryMode: 'local'
-                    }]
-                }
             }, {
                 xtype: 'slider',
                 itemId: 'animate-delay',

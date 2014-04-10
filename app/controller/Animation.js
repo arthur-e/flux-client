@@ -2,8 +2,8 @@ Ext.define('Flux.controller.Animation', {
     extend: 'Ext.app.Controller',
 
     refs: [{
-        'ref': 'animationSettings',
-        'selector': '#anim-settings-menu'
+        'ref': 'settingsMenu',
+        'selector': '#settings-menu'
     }, {
         'ref': 'sourcesPanel',
         'selector': 'sourcespanel'
@@ -33,7 +33,7 @@ Ext.define('Flux.controller.Animation', {
 
         this.control({
 
-            '#anim-settings-menu combo': {
+            '#settings-menu combo': {
                 select: this.onStepSizeChange
             },
 
@@ -126,7 +126,7 @@ Ext.define('Flux.controller.Animation', {
         // Configure the Animation Settings ////////////////////////////////////
         this.updateStepSelector(steps);
 
-        c = this.getAnimationSettings().down('combo');
+        c = this.getSettingsMenu().down('field[name=stepSize]');
         if (metadata.get('steps').length > 1) {
             d = [[s0, 'steps']];
             c.disable();
@@ -270,13 +270,14 @@ Ext.define('Flux.controller.Animation', {
         @param  steps   {Number}
      */
     updateStepSelector: function (steps) {
-        var menu = this.getAnimationSettings();
-        if (menu.query('numberfield').length !== 0) {
+        var menu = this.getSettingsMenu();
+        if (menu.query('field[name=steps]').length !== 0) {
             menu.remove('steps');
         }
-        menu.insert(1, Ext.create('Ext.form.field.Number', {
+        menu.insert(menu.items.length - 1, Ext.create('Ext.form.field.Number', {
             xtype: 'numberfield',
             itemId: 'steps',
+            name: 'steps',
             value: steps,
             minValue: steps,
             step: steps,

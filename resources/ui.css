@@ -72,7 +72,10 @@
 .icon-control-left { background-image: url(bullet_arrow_left_2.png); }
 .icon-control-right,
 .icon-control-left { background-position: -4px -3px; }
-.icon-link { background-image: url(link.png); }
+.icon-link {
+    background-image: url(link.png);
+    background-size: 25px;
+}
 .icon-zoom-extend { background-image: url(zoom_extend.png); }
 .icon-zoom-in { background-image: url(magnifier_zoom_in.png); }
 .icon-zoom-out { background-image: url(magnifier_zoom_out.png); }

@@ -51,7 +51,7 @@ Ext.define('Flux.controller.UserExperience', {
                 click: this.clearLocalState
             },
 
-            '#get-share-url': {
+            '#get-share-link': {
                 click: this.displaySharingLink
             },
 

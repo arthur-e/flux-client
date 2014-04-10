@@ -32,7 +32,13 @@ Ext.define('Flux.view.Viewport', {
             items: [{
                 xtype: 'button',
                 text: 'Select Visualization',
-                disabled: true//TODO
+                menu: {
+                    items: [{
+                        text: 'Single Map'
+                    }, {
+                        text: 'Coordinated View'
+                    }]
+                }
             }, {
                 xtype: 'button',
                 text: 'Settings',
@@ -41,6 +47,10 @@ Ext.define('Flux.view.Viewport', {
                     showSeparator: false,
                     width: 220,
                     items: [{
+                        text: 'Get Link to Share...',
+                        itemId: 'get-share-url',
+                        iconCls: 'icon-link icon-medium'
+                    }, {
                         text: 'Clear Local Settings',
                         itemId: 'clear-local-state',
                         iconCls: 'icon-app-form-del icon-medium'

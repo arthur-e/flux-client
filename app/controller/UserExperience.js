@@ -2,8 +2,9 @@ Ext.define('Flux.controller.UserExperience', {
     extend: 'Ext.app.Controller',
 
     requires: [
-        'Ext.Array',
-        'Ext.Object'
+        'Ext.form.field.Display',
+        'Ext.form.field.TextArea',
+        'Ext.window.Window'
     ],
 
     refs: [{
@@ -24,6 +25,10 @@ Ext.define('Flux.controller.UserExperience', {
 
             '#clear-local-state': {
                 click: this.clearLocalState
+            },
+
+            '#get-share-url': {
+                click: this.displaySharingLink
             },
 
             '#top-toolbar': {
@@ -57,6 +62,39 @@ Ext.define('Flux.controller.UserExperience', {
         Ext.each(this.getFieldNames(), function (key) {
             Ext.state.Manager.clear(key);
         });
+    },
+
+    /**TODO
+     */
+    displaySharingLink: function () {
+        var w = Ext.create('Ext.window.Window', {
+            modal: true,
+            width: 400,
+            height: 300,
+            bodyPadding: '5 10 0 10',
+            layout: 'form',
+            title: 'Share the Current View',
+            buttons: [{
+                text: 'OK',
+                handler: function () {
+                    this.up('window').close();
+                }
+            }],
+            items: [{
+                xtype: 'displayfield',
+                labelWidth: '100%',
+                labelSeparator: '',
+                fieldLabel: "Use this link to restore the application to the way it looks right now. Share this link with someone else so they can see exactly what you're seeing."
+            }, {
+                xtype: 'textarea',
+                height: 150,
+                readOnly: true,
+                fieldStyle: 'font-family:monospace;',
+                value: window.location.href + this.getStateHash()
+            }]
+        });
+
+        w.show();
     },
 
     /**
@@ -99,24 +137,6 @@ Ext.define('Flux.controller.UserExperience', {
     },
 
     /**
-        If checked, update all hidden "tendency" fields with the measure of
-        central tendency chosen.
-        @param  cb      {Ext.menu.MenuCheckItem}
-        @param  checked {Boolean}
-     */
-    onTendencyChange: function (cb, checked, eOpts) {
-        if (checked) {
-            Ext.each(Ext.ComponentQuery.query('form > hiddenfield[name=tendency]'), function (field) {
-                field.setValue(cb.name);
-            });
-
-            this.getController('Dispatch').onGlobalTendencyChange(cb);
-        }
-
-        this.saveFieldState(cb, checked);
-    },
-
-    /**
         Applies saved state to global components and fields that cannot be
         applied, for various reasons (usually because they lack setters/getters,
         through their individual applyState() methods.
@@ -135,6 +155,24 @@ Ext.define('Flux.controller.UserExperience', {
         if (Ext.state.Manager.get('animateDelay', undefined)) {
             this.getTopToolbar().down('#animate-delay').setValue(Ext.state.Manager.get('animateDelay').value);
         }
+    },
+
+    /**
+        If checked, update all hidden "tendency" fields with the measure of
+        central tendency chosen.
+        @param  cb      {Ext.menu.MenuCheckItem}
+        @param  checked {Boolean}
+     */
+    onTendencyChange: function (cb, checked, eOpts) {
+        if (checked) {
+            Ext.each(Ext.ComponentQuery.query('form > hiddenfield[name=tendency]'), function (field) {
+                field.setValue(cb.name);
+            });
+
+            this.getController('Dispatch').onGlobalTendencyChange(cb);
+        }
+
+        this.saveFieldState(cb, checked);
     },
 
     /**

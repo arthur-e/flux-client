@@ -17,6 +17,7 @@ Ext.define('Flux.controller.UserExperience', {
 
     init: function () {
         var params = window.location.href.split('?'); // Get the HTTP GET query parameters, if any
+        var fields = [];
 
         // Create a new state Provider if one doesn't already exist
         if (Ext.state.Manager.getProvider().path === undefined) {
@@ -36,10 +37,34 @@ Ext.define('Flux.controller.UserExperience', {
 
                 // IMPORTANT: Makes sure that applyState() recalls the correct state
                 Ext.state.Manager.set(key, {value: value})
-                //console.log(key);//FIXME
+
+                // Remember these fields to initialize later
+                if (Ext.Array.contains(['tendency', 'display', 'statsFrom'], key)) {
+                    fields.push([key, value]);
+                }
+
             });
 
+            if (params.hasOwnProperty('source') && params.hasOwnProperty('date')
+                && params.hasOwnProperty('time')) {
+            //TODO Need to figure out how to automatically load data
+//                Ext.onReady(Ext.Function.bind(function () {
+//                }, this));
+            }
+
             Ext.Object.merge(this.defaultState, params);
+
+            // Initialize the values of some fields that, for some reason, are
+            //  set from expired state (state is not overwritten in time?)
+            Ext.onReady(Ext.Function.bind(function () {
+                Ext.each(fields, function (f) {
+                    var c = Ext.ComponentQuery.query(Ext.String.format('field[name={0}]', f[0]));
+                    if (c.length > 0) {
+                        c[0].setValue(f[1]);
+                    }
+                });
+            }, this));
+
         }
 
         ////////////////////////////////////////////////////////////////////////
@@ -188,7 +213,6 @@ Ext.define('Flux.controller.UserExperience', {
                 this.setValue((Ext.state.Manager.get('tendencyMean')) ? 'mean' : 'median');
             });
         }
-
     },
 
     /**

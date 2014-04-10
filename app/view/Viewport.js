@@ -21,6 +21,7 @@ Ext.define('Flux.view.Viewport', {
             type: 'border'
         },
 
+        // Toolbar Items ///////////////////////////////////////////////////////
         tbar: {
             xtype: 'toolbar',
             itemId: 'top-toolbar',
@@ -136,9 +137,12 @@ Ext.define('Flux.view.Viewport', {
             }]
         },
 
+        ////////////////////////////////////////////////////////////////////////
+        // Layout Items ////////////////////////////////////////////////////////
         items: [{
             region: 'west',
             xtype: 'sidepanel',
+            resizeHandles: 'e',
             stateId: 'westSidePanel',
             title: 'Data Sources',
             border: true,
@@ -154,6 +158,7 @@ Ext.define('Flux.view.Viewport', {
         }, {
             region: 'east',
             xtype: 'sidepanel',
+            resizeHandles: 'w',
             stateId: 'eastSidePanel',
             title: 'Plot Configuration',
             border: true,

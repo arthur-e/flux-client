@@ -86,7 +86,10 @@ Ext.define('Flux.controller.Animation', {
     ////////////////////////////////////////////////////////////////////////////
     // Event Handlers //////////////////////////////////////////////////////////
 
-    /**TODO
+    /**
+        Creates or clears the timing function for an animation.
+        @param  state   {Boolean}
+        @param  delay   {Number}
      */
     animate: function (state, delay) {
         if (!this._moment) {
@@ -175,7 +178,10 @@ Ext.define('Flux.controller.Animation', {
         return this._moment;
     },
 
-    /**TODO
+    /**
+        Handles a change in the animation delay from the Slider instance in the
+        top Toolbar.
+        @param  slider  {Ext.slide.Multi}
      */
     onDelayChange: function (slider) {
         this._delay = slider.getValue();
@@ -246,7 +252,10 @@ Ext.define('Flux.controller.Animation', {
         });
     },
 
-    /**TODO
+    /**
+        Pause/Play the animation.
+        @param  btn     {Ext.button.Button}
+        @param  pressed {Boolean}
      */
     toggleAnimation: function (btn, pressed) {
         if (!this._moment) {

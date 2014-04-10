@@ -29,7 +29,7 @@ Ext.define('Flux.controller.Dispatch', {
             listeners: {
                 load: Ext.Function.bind(this.onMetadataLoad, this)
             }
-        })
+        });
 
         ////////////////////////////////////////////////////////////////////////
         // Event Listeners /////////////////////////////////////////////////////
@@ -99,8 +99,6 @@ Ext.define('Flux.controller.Dispatch', {
             if (!attrs) {
                 return;
             }
-
-            console.log(args);//FIXME
 
             params = {
                 aggregate: args.aggregate,

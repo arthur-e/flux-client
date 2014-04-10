@@ -61,7 +61,7 @@ Ext.define('Flux.controller.UserInteraction', {
         var args = {};
         var vals;
 
-        Ext.Array.each(this.getAggregationFields().query('trigger'), function (cmp) {
+        Ext.each(this.getAggregationFields().query('trigger'), function (cmp) {
             args[cmp.getName()] = cmp.getValue();
         });
 

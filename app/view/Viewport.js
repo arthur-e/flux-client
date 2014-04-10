@@ -35,9 +35,20 @@ Ext.define('Flux.view.Viewport', {
                 text: 'Select Visualization',
                 menu: {
                     items: [{
-                        text: 'Single Map'
+                        text: 'Single Map',
+                        height: 36,
+                        cls: 'ui-app-menu-item',
+                        iconCls: 'icon-single-map ui-app-icon'
                     }, {
-                        text: 'Coordinated View'
+                        text: 'Coordinated View',
+                        height: 36,
+                        cls: 'ui-app-menu-item',
+                        iconCls: 'icon-coord-view ui-app-icon'
+                    }, {
+                        text: 'Multiplot',
+                        height: 36,
+                        cls: 'ui-app-menu-item',
+                        iconCls: 'icon-multiplot ui-app-icon'
                     }]
                 }
             }, {

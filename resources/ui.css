@@ -42,6 +42,16 @@
 .x-fieldset-header-text { font-weight: bold !important; }
 
 /* Menus **********************************************************************/
+.ui-app-menu-item { margin-bottom: 5px; }
+.ui-app-menu-item .x-menu-item-icon {
+    width: 32px;
+    height: 32px;
+}
+.ui-app-menu-item .x-menu-item-text {
+    position: relative;
+    left: 14px;
+    top: 7px;
+}
 .x-menu-item-text { font-size: 14px !important; }
 .x-menu-item-icon { left: 5px !important; }
 .x-menu-item-checked .x-menu-group-icon,
@@ -61,6 +71,10 @@
 .x-panel-header-text-container-default { font-size: 14px !important; }
 
 /* Icons **********************************************************************/
+.ui-app-icon { background-size: 32px; }
+.icon-single-map { background-image: url(single_map.png); }
+.icon-coord-view { background-image: url(coordinated_view.png); }
+.icon-multiplot { background-image: url(multiplot.png); }
 .icon-app-form-del { background-image: url(application_form_delete.png); }
 .icon-cog {
     background-image: url(cog.png);

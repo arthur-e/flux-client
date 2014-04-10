@@ -44,7 +44,7 @@ Ext.define('Flux.view.Symbology', {
 
                 // Create all possible sequential palettes
                 Ext.each(paletteNames, function (name) {
-                    var colors = colorbrewer[name][segments];
+                    var colors = colorBrewer[name][segments];
 
                     palettes.add(Ext.create('Flux.model.Palette', {
                         name: name,
@@ -69,7 +69,7 @@ Ext.define('Flux.view.Symbology', {
 
                 // Create all possible diverging palettes
                 Ext.each(paletteNames, function (name) {
-                    var colors = colorbrewer[name][segments];
+                    var colors = colorBrewer[name][segments];
 
                     palettes.add(Ext.create('Flux.model.Palette', {
                         name: name,

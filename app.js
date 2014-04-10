@@ -4,7 +4,7 @@
     Sencha Cmd when upgrading.
 */
 
-//@require colorbrewer.js
+//@require colorBrewer.js
 //@require node_modules/d3/d3.min.js
 //@require node_modules/topojson/topojson.min.js
 //@require node_modules/moment/moment.js

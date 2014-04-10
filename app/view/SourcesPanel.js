@@ -71,6 +71,31 @@ Ext.define('Flux.view.SourcesPanel', {
 
     }, {
         xtype: 'reradiogroup',
+        fieldLabel: 'Display',
+        itemId: 'display-value',
+        stateful: true,
+        stateId: 'displayValue',
+        layout: 'vbox',
+        propagateChange: function (sel) {
+            if (this.up('form') === undefined) {
+                return;
+            }
+        },
+        items: [{
+            boxLabel: 'Values',
+            name: 'display',
+            inputValue: 'values',
+            id: 'values',
+            checked: true // Checked by default
+        }, {
+            boxLabel: 'Anomalies',
+            name: 'display',
+            inputValue: 'anomalies',
+            id: 'anomalies'
+        }]
+
+    }, {
+        xtype: 'reradiogroup',
         itemId: 'stats-from',
         fieldLabel: 'Statistics from',
         stateful: true,
@@ -100,31 +125,6 @@ Ext.define('Flux.view.SourcesPanel', {
             name: 'statsFrom',
             inputValue: 'current-data-frame',
             id: 'current-data-frame'
-        }]
-
-    }, {
-        xtype: 'reradiogroup',
-        fieldLabel: 'Display',
-        itemId: 'display-value',
-        stateful: true,
-        stateId: 'displayValue',
-        layout: 'vbox',
-        propagateChange: function (sel) {
-            if (this.up('form') === undefined) {
-                return;
-            }
-        },
-        items: [{
-            boxLabel: 'Values',
-            name: 'display',
-            inputValue: 'values',
-            id: 'values',
-            checked: true // Checked by default
-        }, {
-            boxLabel: 'Anomalies',
-            name: 'display',
-            inputValue: 'anomalies',
-            id: 'anomalies'
         }]
 
     }, {

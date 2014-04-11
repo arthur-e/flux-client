@@ -9,7 +9,7 @@ Ext.define('Flux.controller.UserExperience', {
 
     refs: [{
         ref: 'sourcePanel',
-        selector: 'sourcepanel',
+        selector: 'sourcepanel'
     }, {
         ref: 'symbology',
         selector: 'symbology'

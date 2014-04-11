@@ -37,7 +37,7 @@ Ext.define('Flux.view.Viewport', {
                     itemId: 'vis-menu',
                     defaults: {
                         height: 36,
-                        cls: 'ui-app-menu-item',
+                        cls: 'ui-app-menu-item'
                     },
                     items: [{
                         text: 'Single Map',

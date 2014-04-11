@@ -851,11 +851,14 @@ Ext.ClassManager.addNameAlternateMappings({
   "Flux.controller.UserExperience": [],
   "Flux.controller.UserInteraction": [],
   "Flux.field.EnumeratedSlider": [],
+  "Flux.field.StatefulCheckItem": [],
   "Flux.field.StatefulCheckbox": [],
   "Flux.field.StatefulComboBox": [],
+  "Flux.field.StatefulHiddenField": [],
   "Flux.field.StatefulRadioGroup": [],
   "Flux.model.Geometry": [],
   "Flux.model.Grid": [],
+  "Flux.model.GridView": [],
   "Flux.model.Metadata": [],
   "Flux.model.Palette": [],
   "Flux.model.Scenario": [],
@@ -871,7 +874,9 @@ Ext.ClassManager.addNameAlternateMappings({
   "Flux.view.FormPanel": [],
   "Flux.view.MapSettings": [],
   "Flux.view.SidePanel": [],
-  "Flux.view.SourcesPanel": [],
+  "Flux.view.SourcePanel": [],
+  "Flux.view.SourceSelectionCarousel": [],
+  "Flux.view.SourcesGridPanel": [],
   "Flux.view.Symbology": [],
   "Flux.view.TabbedPanel": [],
   "Flux.view.Viewport": []
@@ -1886,17 +1891,24 @@ Ext.ClassManager.addNameAliasMappings({
   "Flux.field.EnumeratedSlider": [
     "widget.enumslider"
   ],
+  "Flux.field.StatefulCheckItem": [
+    "widget.recheckitem"
+  ],
   "Flux.field.StatefulCheckbox": [
     "widget.recheckbox"
   ],
   "Flux.field.StatefulComboBox": [
     "widget.recombo"
   ],
+  "Flux.field.StatefulHiddenField": [
+    "widget.rehidden"
+  ],
   "Flux.field.StatefulRadioGroup": [
     "widget.reradiogroup"
   ],
   "Flux.model.Geometry": [],
   "Flux.model.Grid": [],
+  "Flux.model.GridView": [],
   "Flux.model.Metadata": [],
   "Flux.model.Palette": [],
   "Flux.model.Scenario": [],
@@ -1924,8 +1936,14 @@ Ext.ClassManager.addNameAliasMappings({
   "Flux.view.SidePanel": [
     "widget.sidepanel"
   ],
-  "Flux.view.SourcesPanel": [
-    "widget.sourcespanel"
+  "Flux.view.SourcePanel": [
+    "widget.sourcepanel"
+  ],
+  "Flux.view.SourceSelectionCarousel": [
+    "widget.sourcecarousel"
+  ],
+  "Flux.view.SourcesGridPanel": [
+    "widget.sourcesgridpanel"
   ],
   "Flux.view.Symbology": [
     "widget.symbology"

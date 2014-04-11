@@ -34,21 +34,23 @@ Ext.define('Flux.view.Viewport', {
                 xtype: 'button',
                 text: 'Select Visualization',
                 menu: {
+                    itemId: 'vis-menu',
+                    defaults: {
+                        height: 36,
+                        cls: 'ui-app-menu-item',
+                    },
                     items: [{
                         text: 'Single Map',
-                        height: 36,
-                        cls: 'ui-app-menu-item',
-                        iconCls: 'icon-single-map ui-app-icon'
+                        iconCls: 'icon-single-map ui-app-icon',
+                        idx: 0
                     }, {
                         text: 'Coordinated View',
-                        height: 36,
-                        cls: 'ui-app-menu-item',
-                        iconCls: 'icon-coord-view ui-app-icon'
+                        iconCls: 'icon-coord-view ui-app-icon',
+                        idx: 1
                     }, {
                         text: 'Multiplot',
-                        height: 36,
-                        cls: 'ui-app-menu-item',
-                        iconCls: 'icon-multiplot ui-app-icon'
+                        iconCls: 'icon-multiplot ui-app-icon',
+                        idx: 2
                     }]
                 }
             }, {
@@ -152,15 +154,19 @@ Ext.define('Flux.view.Viewport', {
         // Layout Items ////////////////////////////////////////////////////////
         items: [{
             region: 'west',
-            xtype: 'sidepanel',
+            xtype: 'sourcecarousel',
             resizeHandles: 'e',
             stateId: 'westSidePanel',
             title: 'Data Sources',
             border: true,
             width: '20%',
-            items: {
-                xtype: 'sourcespanel'
-            }
+            items: [{
+                xtype: 'sourcepanel',
+                id: 'single-map'
+            }, {
+                xtype: 'sourcesgridpanel',
+                id: 'coordinated-view'
+            }]
         }, {
             region: 'center',
             xtype: 'd3geopanel',

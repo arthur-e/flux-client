@@ -5,8 +5,17 @@ Ext.define('Flux.controller.UserInteraction', {
         ref: 'aggregationFields',
         selector: '#aggregation-fields'
     }, {
-        ref: 'sourcesPanel',
-        selector: 'sourcespanel'
+        ref: 'symbology',
+        selector: 'symbology'
+    }, {
+        ref: 'sourcePanel',
+        selector: 'sourcepanel'
+    }, {
+        ref: 'sourceCarousel',
+        selector: 'sourcecarousel'
+    }, {
+        ref: 'viewport',
+        selector: 'viewport'
     }],
 
     requires: [
@@ -30,19 +39,23 @@ Ext.define('Flux.controller.UserInteraction', {
 
         this.control({
 
-            'sourcespanel combo[name=source]': {
+            '#vis-menu': {
+                click: this.onVisChange
+            },
+
+            'combo[name=source]': {
                 select: this.onSourceChange
             },
 
-            'sourcespanel > field[name=date], field[name=time]': {
+            'sourcecarousel panel > field[name=date], field[name=time]': {
                 change: this.loadSourceData
             },
 
-            'sourcespanel > #display-value, #stats-from': {
+            'sourcecarousel panel > #display-value, #stats-from': {
                 change: this.onStatsChange
             },
 
-            'sourcespanel #aggregation-fields field': {
+            'sourcecarousel panel #aggregation-fields field': {
                 change: this.onAggregationChange
             }
 
@@ -77,11 +90,13 @@ Ext.define('Flux.controller.UserInteraction', {
         including initializing the date selection fields (with disabled dates).
      */
     onSourceChange: function (field, sources) {
-        var panel = field.up('panel');
+        var ct = field.up('container');
         var store = this.getStore('metadata');
         var src = sources[0].get('_id');
 
-        panel.getEl().mask('Loading...');
+        if (ct.getEl().mask) {
+            ct.getEl().mask('Loading...');
+        }
 
         store.load({
             params: {
@@ -93,7 +108,9 @@ Ext.define('Flux.controller.UserInteraction', {
                 Ext.Ajax.request({
                     url: Ext.String.format('/flux/api/scenarios/{0}/geometry.json', src),
                     callback: function () {
-                        panel.getEl().unmask();
+                        if (ct.getEl().mask) {
+                            ct.getEl().unmask();
+                        }
                     },
                     success: function (response) {
                         var geom = Ext.create('Flux.model.Geometry',
@@ -128,8 +145,8 @@ Ext.define('Flux.controller.UserInteraction', {
                     }
 
                 } else { // Assume steps are specified instead
-                    this.initializeDateFields(meta, panel);
-                    this.initializeTimeFields(meta, panel);
+                    this.initializeDateFields(meta, ct);
+                    this.initializeTimeFields(meta, ct);
 
                 }
 
@@ -138,7 +155,9 @@ Ext.define('Flux.controller.UserInteraction', {
                     // TODO Something about that...
 
                 } else {
-                    panel.down('checkbox[name=showUncertainty]').disable();
+                    if (ct.down('checkbox[name=showUncertainty]')) {
+                        ct.down('checkbox[name=showUncertainty]').disable();
+                    }
                 }
 
             }, this)
@@ -157,26 +176,35 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  value   {Object}
      */
     onStatsChange: function (f, value) {
-        var aggOptions = this.getSourcesPanel().down('#aggregation-fields');
-        if (value.statsFrom === 'data') {
-            aggOptions.enable();
-        } else if (value.statsFrom === 'population') {
-            aggOptions.disable();
+        var aggOptions = this.getSourcePanel().down('#aggregation-fields');
+        if (aggOptions) {
+            if (value.statsFrom === 'data') {
+                aggOptions.enable();
+            } else if (value.statsFrom === 'population') {
+                aggOptions.disable();
+            }
         }
 
         this.getController('Dispatch').onStatsChange(f, value);
     },
 
-    /**
-        Initializes the Ext.form.field.DateField instances contained by the
-        topNode provided (those that can be reached with topNode.down()).
-        @param  metadata    {Flux.model.Metadata}
-        @param  topNode     {Ext.Component}
+    /**TODO
      */
-    initializeDateFields: function (metadata, topNode) {
+    onVisChange: function (m, item) {
+        this.getSymbology().up('sidepanel').collapse();
+        this.getSourceCarousel().setWidth(300)
+        this.getViewport().doLayout();
+        this.getSourceCarousel().getLayout().setActiveItem(item.idx);
+    },
+
+    /**
+        Initializes the Ext.form.field.DateField instances within the application.
+        @param  metadata    {Flux.model.Metadata}
+     */
+    initializeDateFields: function (metadata) {
         var dates = metadata.get('dates');
         var lastDate = Ext.Date.format(dates[dates.length - 1], 'Y-m-d');
-        var targets = topNode.down('datefield');
+        var targets = Ext.ComponentQuery.query('datefield[name=date]');
 
         Ext.each(targets, function (target) {
             target.setDisabledDates(metadata.getInvalidDates());
@@ -197,7 +225,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  topNode     {Ext.Component}
      */
     initializeTimeFields: function (metadata, topNode) {
-        var targets = topNode.down('timefield');
+        var targets = Ext.ComponentQuery.query('timefield[name=time]');
         if (targets) {
 
             // For every Ext.form.field.Time found...
@@ -214,7 +242,7 @@ Ext.define('Flux.controller.UserInteraction', {
                         if (parent === undefined) {
                             parent = cmp.findParentBy(function (container, cmp) {
                                 if (cmp.name === 'time') {
-                                    return container.isXType('sourcespanel');
+                                    return container.isXType('sourcepanel');
                                 } else {
                                     return container.isXType('fieldcontainer');
                                 }

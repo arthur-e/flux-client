@@ -5,9 +5,6 @@ Ext.define('Flux.controller.Animation', {
         'ref': 'settingsMenu',
         'selector': '#settings-menu'
     }, {
-        'ref': 'sourcesPanel',
-        'selector': 'sourcespanel'
-    }, {
         'ref': 'topToolbar',
         'selector': 'viewport toolbar'
     }],

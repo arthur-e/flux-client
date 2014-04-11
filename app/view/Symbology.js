@@ -237,7 +237,7 @@ Ext.define('Flux.view.Symbology', {
             width: 150,
             fieldLabel: 'Std. deviations',
             labelAlign: 'left',
-            value: 3,
+            value: 2,
             minValue: 1,
             maxValue: 5
 

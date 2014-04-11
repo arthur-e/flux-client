@@ -1,6 +1,7 @@
 Ext.require([
     'Ext.data.ArrayStore',
     'Ext.data.Request',
+    'Ext.grid.plugin.RowEditing',
     'Ext.state.*',
     'Flux.field.EnumeratedSlider',
     'Flux.field.StatefulCheckbox',
@@ -21,7 +22,9 @@ Ext.define('Flux.Application', {
         'FormPanel',
         'MapSettings',
         'SidePanel',
-        'SourcesPanel',
+        'SourcePanel',
+        'SourcesGridPanel',
+        'SourceSelectionCarousel',
         'Symbology',
         'TabbedPanel',
         'Viewport'

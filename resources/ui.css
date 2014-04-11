@@ -72,6 +72,7 @@
 
 /* Icons **********************************************************************/
 .ui-app-icon { background-size: 32px; }
+.icon-add { background-image: url(add.png); }
 .icon-single-map { background-image: url(single_map.png); }
 .icon-coord-view { background-image: url(coordinated_view.png); }
 .icon-multiplot { background-image: url(multiplot.png); }

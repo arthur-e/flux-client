@@ -1,6 +1,6 @@
-Ext.define('Flux.view.SourcesPanel', {
+Ext.define('Flux.view.SourcePanel', {
     extend: 'Flux.view.FormPanel',
-    alias: 'widget.sourcespanel',
+    alias: 'widget.sourcepanel',
 
     requires: [
         'Ext.form.FieldContainer',
@@ -33,14 +33,13 @@ Ext.define('Flux.view.SourcesPanel', {
         fieldLabel: 'Select dataset (e.g. model run) and date/time',
         emptyText: 'Select...',
         style: {maxWidth: '200px'},
-        queryMode: 'local',
         displayField: '_id',
         valueField: '_id',
-        store: Ext.create('Flux.store.Scenarios', {
-            autoLoad: true,
-            storeId: 'scenarios'
-        }),
+        queryMode: 'local',
         listeners: {
+            render: function () {
+                this.bindStore(Ext.StoreManager.get('scenarios'));
+            },
             dirtychange: function () {
                 Ext.each(this.up('form').query('field[name=date], field[name=time]'), function (cmp) {
                     cmp.enable();
@@ -85,13 +84,13 @@ Ext.define('Flux.view.SourcesPanel', {
             boxLabel: 'Values',
             name: 'display',
             inputValue: 'values',
-            id: 'values',
+            itemId: 'values',
             checked: true // Checked by default
         }, {
             boxLabel: 'Anomalies',
             name: 'display',
             inputValue: 'anomalies',
-            id: 'anomalies'
+            itemId: 'anomalies'
         }]
 
     }, {

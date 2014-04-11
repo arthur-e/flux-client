@@ -11,14 +11,19 @@ Ext.define('Flux.controller.Dispatch', {
         ref: 'settingsMenu',
         selector: '#settings-menu'
     }, {
-        ref: 'sourcesPanel',
-        selector: 'sourcespanel'
+        ref: 'sourcePanel',
+        selector: 'sourcepanel'
     }, {
         ref: 'symbology',
         selector: 'symbology'
     }],
 
     init: function () {
+
+        Ext.create('Flux.store.Scenarios', {
+            autoLoad: true,
+            storeId: 'scenarios'
+        });
 
         Ext.create('Flux.store.Grids', {
             storeId: 'grids'
@@ -107,7 +112,7 @@ Ext.define('Flux.controller.Dispatch', {
                     args.intervalGrouping).toISOString()
             };
 
-            this.loadMap(params, this.getSourcesPanel());//FIXME Do for a specific view
+            this.loadMap(params, this.getSourcePanel());//FIXME Do for a specific view
         }, this));
     },
 
@@ -164,7 +169,7 @@ Ext.define('Flux.controller.Dispatch', {
     onMapLoad: function (recs, op) {
         var m, measure, rec;
         var meta = this.getStore('metadata').getById(this._namespaceId);
-        var opts = this.getSourcesPanel().getForm().getValues();
+        var opts = this.getSourcePanel().getForm().getValues();
         var tendency = this.getGlobalTendency();
 
         if (Ext.isArray(recs)) {        

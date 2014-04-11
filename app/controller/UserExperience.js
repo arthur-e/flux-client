@@ -94,10 +94,6 @@ Ext.define('Flux.controller.UserExperience', {
 
             '#settings-menu menucheckitem[group=tendency]': {
                 checkchange: this.onTendencyChange
-            },
-
-            '#top-toolbar': {
-                afterrender: this.initGlobalState
             }
 
         });
@@ -197,81 +193,6 @@ Ext.define('Flux.controller.UserExperience', {
         });
 
         return params;
-    },
-
-    /**
-        TODO This might all be just because the MenuCheckItem instances dont have
-        an applyState method configured and because the HiddenField instances
-        are not stateful.
-
-        Applies saved state to global components and fields that cannot be
-        applied, for various reasons (usually because they lack setters/getters,
-        through their individual applyState() methods.
-     */
-    initGlobalState: function () {
-        // For some reason, the hiddenfield gets reset after setting the value
-        //  at this point in the execution (it also saves it state even when
-        //  'stateful' is set to false). SO, we have to set a late event
-        //  listener to set this field to the correct value after it is rendered.
-        (Ext.Function.bind(function () {
-            var check = this.getTopToolbar().down('menucheckitem[name=median]')
-            var field = this.getSymbology().down('hiddenfield[name=tendency]');
-            var state = Ext.state.Manager.get('tendencyMedian', undefined);
-            if (state !== undefined) {
-                if (!state.value) {
-                    check = this.getTopToolbar().down('menucheckitem[name=mean]')
-                }
-                check.setChecked(true);
-                field.on('afterrender', function () {
-                    this.setValue((state.value) ? 'median' : 'mean');
-                });
-            } else {
-                check.setChecked(true);
-                field.on('afterrender', function () {
-                    this.setValue('median');
-                });
-            }
-        }, this)());
-
-        (Ext.Function.bind(function () {
-            var check = this.getTopToolbar().down('menucheckitem[name=population]')
-            var field = this.getSymbology().down('hiddenfield[name=statsFrom]');
-            var state = Ext.state.Manager.get('statsFromPopulation', undefined);
-            if (state !== undefined) {
-                if (!state.value) {
-                    check = this.getTopToolbar().down('menucheckitem[name=data]')
-                }
-                check.setChecked(true);
-                field.on('afterrender', function () {
-                    this.setValue((state.value) ? 'population' : 'data');
-                });
-            } else {
-                check.setChecked(true);
-                field.on('afterrender', function () {
-                    this.setValue('population');
-                });
-            }
-        }, this)());
-
-        (Ext.Function.bind(function () {
-            var check = this.getTopToolbar().down('menucheckitem[name=values]')
-            var field = this.getSymbology().down('hiddenfield[name=display]');
-            var state = Ext.state.Manager.get('displayValues', undefined);
-            if (state !== undefined) {
-                if (!state.value) {
-                    check = this.getTopToolbar().down('menucheckitem[name=anomalies]')
-                }
-                check.setChecked(true);
-                field.on('afterrender', function () {
-                    this.setValue((state.value) ? 'values' : 'anomalies');
-                });
-            } else {
-                check.setChecked(true);
-                field.on('afterrender', function () {
-                    this.setValue('values');
-                });
-            }
-        }, this)());
     },
 
     /**TODO

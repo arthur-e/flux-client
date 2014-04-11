@@ -4,7 +4,10 @@ Ext.require([
     'Ext.grid.plugin.RowEditing',
     'Ext.state.*',
     'Flux.field.EnumeratedSlider',
+    'Flux.field.StatefulCheckItem',
     'Flux.field.StatefulCheckbox',
+    'Flux.field.StatefulComboBox',
+    'Flux.field.StatefulHiddenField',
     'Flux.field.StatefulRadioGroup',
     'Flux.store.Scenarios',
     'Flux.type.Moment'

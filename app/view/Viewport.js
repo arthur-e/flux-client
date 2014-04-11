@@ -75,20 +75,20 @@ Ext.define('Flux.view.Viewport', {
                         cls: 'ui-menu-group-text',
                         plain: true
                     }, {
-                        xtype: 'menucheckitem',
-                        name: 'mean',
-                        stateful: true,
-                        stateId: 'tendencyMean',
-                        text: 'Mean',
-                        group: 'tendency',
-                        hideOnClick: false
-                    }, {
-                        xtype: 'menucheckitem',
+                        xtype: 'recheckitem',
                         name: 'median',
                         checked: true,
                         stateful: true,
                         stateId: 'tendencyMedian',
                         text: 'Median',
+                        group: 'tendency',
+                        hideOnClick: false
+                    }, {
+                        xtype: 'recheckitem',
+                        name: 'mean',
+                        stateful: true,
+                        stateId: 'tendencyMean',
+                        text: 'Mean',
                         group: 'tendency',
                         hideOnClick: false
                     }, {
@@ -98,7 +98,7 @@ Ext.define('Flux.view.Viewport', {
                         cls: 'ui-menu-group-text',
                         plain: true
                     }, {
-                        xtype: 'menucheckitem',
+                        xtype: 'recheckitem',
                         name: 'population',
                         checked: true,
                         stateful: true,
@@ -107,7 +107,7 @@ Ext.define('Flux.view.Viewport', {
                         group: 'statsFrom',
                         hideOnClick: false
                     }, {
-                        xtype: 'menucheckitem',
+                        xtype: 'recheckitem',
                         name: 'data',
                         stateful: true,
                         stateId: 'statsFromData',
@@ -117,7 +117,7 @@ Ext.define('Flux.view.Viewport', {
                     }, {
                         xtype: 'menuseparator'
                     }, {
-                        xtype: 'menucheckitem',
+                        xtype: 'recheckitem',
                         name: 'values',
                         checked: true,
                         stateful: true,
@@ -126,7 +126,7 @@ Ext.define('Flux.view.Viewport', {
                         group: 'display',
                         hideOnClick: false
                     }, {
-                        xtype: 'menucheckitem',
+                        xtype: 'recheckitem',
                         name: 'anomalies',
                         stateful: true,
                         stateId: 'displayAnomalies',

@@ -97,14 +97,23 @@ Ext.define('Flux.view.Symbology', {
     },
 
     items: [{
-        xtype: 'hiddenfield',
+        xtype: 'rehidden',
         name: 'display',
+        value: 'values',
+        stateful: true,
+        stateId: 'display'
     }, {
-        xtype: 'hiddenfield',
+        xtype: 'rehidden',
         name: 'statsFrom',
+        value: 'population',
+        stateful: true,
+        stateId: 'statsFrom'
     }, {
-        xtype: 'hiddenfield',
+        xtype: 'rehidden',
         name: 'tendency',
+        value: 'median',
+        stateful: true,
+        stateId: 'tendency'
     }, {
         xtype: 'reradiogroup',
         itemId: 'palette-type',

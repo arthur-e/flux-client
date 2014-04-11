@@ -55,12 +55,13 @@ Ext.define('Flux.view.SourcePanel', {
         format: 'Y-m-d'
 
     }, {
-        xtype: 'timefield',
+        xtype: 'combo',
         name: 'time',
-        index: 2, // Index position within the container's items
         disabled: true,
         emptyText: 'Select time...',
-        format: 'H:i'
+        displayField: 'time',
+        valueField: 'time',
+        queryMode: 'local'
 
     }, {
         xtype: 'checkbox',
@@ -215,13 +216,13 @@ Ext.define('Flux.view.SourcePanel', {
             dateFormat: 'Y-m-d',
             disabled: true
         }, {
-            xtype: 'timefield',
+            xtype: 'combo',
             name: 'time2',
-            index: 3, // Index position within the container's items
+            disabled: true,
             emptyText: 'Select time...',
-            format: 'H:i',
-            increment: 30,// 30-minute increments
-            disabled: true
+            displayField: 'time',
+            valueField: 'time',
+            queryMode: 'local'
         }]
 
     }]

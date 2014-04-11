@@ -225,42 +225,28 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  topNode     {Ext.Component}
      */
     initializeTimeFields: function (metadata, topNode) {
-        var targets = Ext.ComponentQuery.query('timefield[name=time]');
+        var targets = Ext.ComponentQuery.query('combo[name=time], combo[name=time2]');
         if (targets) {
 
             // For every Ext.form.field.Time found...
             Ext.each(targets, function (target) {
-                topNode.cascade(function (cmp) {
-                    var config = {
-                        emptyText: 'Select time...',
-                        format: 'H:i',
-                        increment: (Ext.Array.min(metadata.get('steps')) / 60)
-                    }; // Increment values are in minutes
-                    var parent = cmp.ownerCt;
-
-                    if (cmp.isXType('timefield')) {
-                        if (parent === undefined) {
-                            parent = cmp.findParentBy(function (container, cmp) {
-                                if (cmp.name === 'time') {
-                                    return container.isXType('sourcepanel');
-                                } else {
-                                    return container.isXType('fieldcontainer');
-                                }
-                            });
+                var mins = (Ext.Array.min(metadata.get('steps')) / 60);
+                target.bindStore(Ext.create('Ext.data.ArrayStore', {
+                    fields: ['time'],
+                    data: (function () {
+                        var i;
+                        var d0 = moment.utc(Ext.Array.min(metadata.get('dates')));
+                        var times = [];
+                        var m = 0;
+                        for (i = 0; i < (1440 / mins); i += 1) {
+                            times.push([
+                                d0.clone().add(m, 'minutes').format('HH:mm')
+                            ]);
+                            m += mins;
                         }
-
-                        Ext.Object.merge(config, {
-                            name: cmp.name,
-                            index: Number(cmp.index),
-                            disabled: cmp.isDisabled()
-                        });
-
-                        // Replace the old instance with a new one
-                        parent.remove(config.index, true); // And destroy it!
-                        parent.insert(config.index,
-                            Ext.create('Ext.form.field.Time', config));
-                    }
-                });
+                        return times;
+                    }())
+                }));
             });
         }
     },

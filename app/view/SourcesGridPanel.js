@@ -89,13 +89,17 @@ Ext.define('Flux.view.SourcesGridPanel', {
         name: 'time',
         index: 2,
         width: 70,
-        renderer: function (v) {
-            return moment(v).format('HH:mm');
-        },
         editor: {
-            xtype: 'timefield',
+            xtype: 'combo',
+            emptyText: 'Select...',
             disabled: true,
-            format: 'H:i'
+            matchFieldWidth: false,
+            listConfig: {
+                width: 100
+            },
+            displayField: 'time',
+            valueField: 'time',
+            queryMode: 'local'
         }
     }]
 });

@@ -80,14 +80,59 @@ Ext.define('Flux.view.Viewport', {
                         stateful: true,
                         stateId: 'tendencyMean',
                         text: 'Mean',
-                        group: 'm'
+                        group: 'tendency',
+                        hideOnClick: false
                     }, {
                         xtype: 'menucheckitem',
                         name: 'median',
+                        checked: true,
                         stateful: true,
                         stateId: 'tendencyMedian',
                         text: 'Median',
-                        group: 'm'
+                        group: 'tendency',
+                        hideOnClick: false
+                    }, {
+                        xtype: 'menuseparator'
+                    }, {
+                        text: 'Get statistics from:',
+                        cls: 'ui-menu-group-text',
+                        plain: true
+                    }, {
+                        xtype: 'menucheckitem',
+                        name: 'population',
+                        checked: true,
+                        stateful: true,
+                        stateId: 'statsFromPopulation',
+                        text: 'Population',
+                        group: 'statsFrom',
+                        hideOnClick: false
+                    }, {
+                        xtype: 'menucheckitem',
+                        name: 'data',
+                        stateful: true,
+                        stateId: 'statsFromData',
+                        text: 'Current Data Frame',
+                        group: 'statsFrom',
+                        hideOnClick: false
+                    }, {
+                        xtype: 'menuseparator'
+                    }, {
+                        xtype: 'menucheckitem',
+                        name: 'values',
+                        checked: true,
+                        stateful: true,
+                        stateId: 'displayValues',
+                        text: 'Display Raw Values',
+                        group: 'display',
+                        hideOnClick: false
+                    }, {
+                        xtype: 'menucheckitem',
+                        name: 'anomalies',
+                        stateful: true,
+                        stateId: 'displayAnomalies',
+                        text: 'Display Anomalies',
+                        group: 'display',
+                        hideOnClick: false
                     }, {
                         xtype: 'menuseparator'
                     }, {
@@ -99,7 +144,8 @@ Ext.define('Flux.view.Viewport', {
                         xtype: 'combo',
                         name: 'stepSize',
                         valueField: 'stepSize',
-                        queryMode: 'local'
+                        queryMode: 'local',
+                        hideOnClick: false
                     }]
                 }
             }, {

@@ -98,7 +98,13 @@ Ext.define('Flux.view.Symbology', {
 
     items: [{
         xtype: 'hiddenfield',
-        name: 'tendency'
+        name: 'display',
+    }, {
+        xtype: 'hiddenfield',
+        name: 'statsFrom',
+    }, {
+        xtype: 'hiddenfield',
+        name: 'tendency',
     }, {
         xtype: 'reradiogroup',
         itemId: 'palette-type',

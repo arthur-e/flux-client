@@ -33,7 +33,7 @@ Ext.define('Flux.view.SourcesGridPanel', {
             var r = Ext.create('Flux.model.GridView', {
                 source: '',
                 date: '',
-                time: '00:00'
+                time: ''
             });
 
             rowEditor.cancelEdit();

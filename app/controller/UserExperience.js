@@ -8,6 +8,9 @@ Ext.define('Flux.controller.UserExperience', {
     ],
 
     refs: [{
+        ref: 'sourcePanel',
+        selector: 'sourcepanel',
+    }, {
         ref: 'symbology',
         selector: 'symbology'
     }, {
@@ -63,6 +66,11 @@ Ext.define('Flux.controller.UserExperience', {
                         c[0].setValue(f[1]);
                     }
                 });
+
+                if (Ext.state.Manager.get('animateDelay', undefined)) {
+                    this.getTopToolbar().down('#animate-delay')
+                        .setValue(Ext.state.Manager.get('animateDelay').value);
+                }
             }, this));
 
         }
@@ -78,6 +86,14 @@ Ext.define('Flux.controller.UserExperience', {
 
             '#get-share-link': {
                 click: this.displaySharingLink
+            },
+
+            '#settings-menu menucheckitem[group=statsFrom], menucheckitem[group=display]': {
+                checkchange: this.onStatsChange
+            },
+
+            '#settings-menu menucheckitem[group=tendency]': {
+                checkchange: this.onTendencyChange
             },
 
             '#top-toolbar': {
@@ -184,35 +200,114 @@ Ext.define('Flux.controller.UserExperience', {
     },
 
     /**
+        TODO This might all be just because the MenuCheckItem instances dont have
+        an applyState method configured and because the HiddenField instances
+        are not stateful.
+
         Applies saved state to global components and fields that cannot be
         applied, for various reasons (usually because they lack setters/getters,
         through their individual applyState() methods.
      */
     initGlobalState: function () {
-        Ext.each(Ext.ComponentQuery.query('#settings-menu menucheckitem'),
-            Ext.Function.bind(function (it) {
-                if (it.stateId) {
-                    it.setChecked(Ext.state.Manager.get(it.stateId,
-                        this.defaultState[it.stateId]));
-
-                    it.on('checkchange', this.onTendencyChange, this);
-                }
-        }, this));
-
-        if (Ext.state.Manager.get('animateDelay', undefined)) {
-            this.getTopToolbar().down('#animate-delay')
-                .setValue(Ext.state.Manager.get('animateDelay').value);
-        }
-
         // For some reason, the hiddenfield gets reset after setting the value
         //  at this point in the execution (it also saves it state even when
         //  'stateful' is set to false). SO, we have to set a late event
         //  listener to set this field to the correct value after it is rendered.
-        if (Ext.state.Manager.get('tendencyMean', undefined) !== undefined) {
-            this.getSymbology().down('hiddenfield[name=tendency]').on('afterrender', function () {
-                this.setValue((Ext.state.Manager.get('tendencyMean')) ? 'mean' : 'median');
-            });
+        (Ext.Function.bind(function () {
+            var check = this.getTopToolbar().down('menucheckitem[name=median]')
+            var field = this.getSymbology().down('hiddenfield[name=tendency]');
+            var state = Ext.state.Manager.get('tendencyMedian', undefined);
+            if (state !== undefined) {
+                if (!state.value) {
+                    check = this.getTopToolbar().down('menucheckitem[name=mean]')
+                }
+                check.setChecked(true);
+                field.on('afterrender', function () {
+                    this.setValue((state.value) ? 'median' : 'mean');
+                });
+            } else {
+                check.setChecked(true);
+                field.on('afterrender', function () {
+                    this.setValue('median');
+                });
+            }
+        }, this)());
+
+        (Ext.Function.bind(function () {
+            var check = this.getTopToolbar().down('menucheckitem[name=population]')
+            var field = this.getSymbology().down('hiddenfield[name=statsFrom]');
+            var state = Ext.state.Manager.get('statsFromPopulation', undefined);
+            if (state !== undefined) {
+                if (!state.value) {
+                    check = this.getTopToolbar().down('menucheckitem[name=data]')
+                }
+                check.setChecked(true);
+                field.on('afterrender', function () {
+                    this.setValue((state.value) ? 'population' : 'data');
+                });
+            } else {
+                check.setChecked(true);
+                field.on('afterrender', function () {
+                    this.setValue('population');
+                });
+            }
+        }, this)());
+
+        (Ext.Function.bind(function () {
+            var check = this.getTopToolbar().down('menucheckitem[name=values]')
+            var field = this.getSymbology().down('hiddenfield[name=display]');
+            var state = Ext.state.Manager.get('displayValues', undefined);
+            if (state !== undefined) {
+                if (!state.value) {
+                    check = this.getTopToolbar().down('menucheckitem[name=anomalies]')
+                }
+                check.setChecked(true);
+                field.on('afterrender', function () {
+                    this.setValue((state.value) ? 'values' : 'anomalies');
+                });
+            } else {
+                check.setChecked(true);
+                field.on('afterrender', function () {
+                    this.setValue('values');
+                });
+            }
+        }, this)());
+    },
+
+    /**TODO
+        If checked, update all hidden "tendency" fields with the measure of
+        central tendency chosen.
+        @param  cb      {Ext.menu.MenuCheckItem}
+        @param  checked {Boolean}
+     */
+    onStatsChange: function (cb, checked, eOpts) {
+        var targets;
+        var values = {};
+
+        if (checked) {
+            this.getSymbology().down(Ext.String.format('hiddenfield[name={0}]',
+                cb.group)).setValue(cb.name);
+
+            if (cb.name === 'population' || cb.name === 'data') {
+                targets = this.getSourcePanel().down('#aggregation-fields, #difference-fields');
+                if (targets) {
+                    Ext.each(targets, function (t) {
+                        switch (cb.name) {
+                            case 'population':
+                            t.disable();
+                            break;
+
+                            default:
+                            t.enable();
+                        }
+                    });
+                }
+            }
         }
+
+        values[cb.group] = cb.name;
+        this.getController('Dispatch').onStatsChange(cb, values);
+        this.saveFieldState(cb, checked);
     },
 
     /**

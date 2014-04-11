@@ -74,17 +74,21 @@ Ext.define('Flux.controller.Dispatch', {
         return this.activeViews[id];
     },
 
-    /**
+    /**TODO
         Convenience function for determining the currently selected global
         tendency--mean or median.
         @return {String}
      */
-    getGlobalTendency: function () {
-        if (this.getSettingsMenu().down('menucheckitem[name=mean]').checked) {
-            return 'mean';
-        }
+    getGlobalSettings: function () {
+        var opts = {};
 
-        return 'median';
+        Ext.each(this.getSettingsMenu().query('menucheckitem'), function (item) {
+            if (item.checked) {
+                opts[item.group] = item.name;
+            }
+        });
+
+        return opts;
     },
 
     ////////////////////////////////////////////////////////////////////////////
@@ -169,8 +173,7 @@ Ext.define('Flux.controller.Dispatch', {
     onMapLoad: function (recs, op) {
         var m, measure, rec;
         var meta = this.getStore('metadata').getById(this._namespaceId);
-        var opts = this.getSourcePanel().getForm().getValues();
-        var tendency = this.getGlobalTendency();
+        var opts = this.getGlobalSettings();
 
         if (Ext.isArray(recs)) {        
             rec = recs[0];
@@ -178,7 +181,7 @@ Ext.define('Flux.controller.Dispatch', {
             rec = recs;
         }
 
-        measure = meta.get('stats')[tendency];
+        measure = meta.get('stats')[opts.tendency];
 
         // In the case that population statistics are not used, we need to
         //  calculate summary statistics for this individual data frame
@@ -190,7 +193,7 @@ Ext.define('Flux.controller.Dispatch', {
             this.onMetadataLoad(undefined, [m]);
 
             // Find the new measure of central tendency
-            measure = m.get('stats')[tendency];
+            measure = m.get('stats')[opts.tendency];
         }
 
         // If viewing anomalies, take the difference of each value and the measure

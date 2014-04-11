@@ -16,7 +16,6 @@ Ext.define('Flux.view.SidePanel', {
     maxWidth: 300,
     stateful: true,
 
-
     getState: function () {
         return {
             collapsed: this.collapsed,
@@ -29,6 +28,14 @@ Ext.define('Flux.view.SidePanel', {
         if (Ext.state.Manager.getProvider().path === undefined) {
             Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
         }
+
+        this.on('render', function () {
+            if (Ext.getBody().getWidth() > 1000) {
+                this.setWidth(250);
+            } else {
+                this.setWidth('20%');
+            }
+        });
 
         this.callParent(arguments);
     }

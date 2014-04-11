@@ -70,65 +70,10 @@ Ext.define('Flux.view.SourcePanel', {
         disabled: true //TODO
 
     }, {
-        xtype: 'reradiogroup',
-        fieldLabel: 'Display',
-        itemId: 'display-value',
-        stateful: true,
-        stateId: 'displayValue',
-        layout: 'vbox',
-        propagateChange: function (sel) {
-            if (this.up('form') === undefined) {
-                return;
-            }
-        },
-        items: [{
-            boxLabel: 'Values',
-            name: 'display',
-            inputValue: 'values',
-            itemId: 'values',
-            checked: true // Checked by default
-        }, {
-            boxLabel: 'Anomalies',
-            name: 'display',
-            inputValue: 'anomalies',
-            itemId: 'anomalies'
-        }]
-
-    }, {
-        xtype: 'reradiogroup',
-        itemId: 'stats-from',
-        fieldLabel: 'Statistics from',
-        stateful: true,
-        stateId: 'statsFrom',
-        layout: 'vbox',
-        propagateChange: function (sel) {
-            var t;
-            if (this.up('form') === undefined) {
-                return;
-            }
-            t = this.up('panel').down('#aggregation-fields');
-
-            if (sel.statsFrom === 'population') {
-                t.disable();
-            } else {
-                t.enable();
-            }
-        },
-        items: [{
-            boxLabel: 'Population',
-            name: 'statsFrom',
-            inputValue: 'population',
-            checked: true // Checked by default
-        }, {
-            boxLabel: 'Current Data Frame',
-            name: 'statsFrom',
-            inputValue: 'data'
-        }]
-
-    }, {
         xtype: 'fieldset',
         itemId: 'aggregation-fields',
         title: 'Aggregation',
+        disabled: true,
         defaults: {
             labelAlign: 'top',
             anchor: '100%'
@@ -183,7 +128,8 @@ Ext.define('Flux.view.SourcePanel', {
     }, {
         xtype: 'fieldset',
         title: 'Difference',
-        disabled: true,//TODO
+        itemId: 'difference-fields',
+        disabled: true,
         defaults: {
             labelAlign: 'top',
             anchor: '100%'
@@ -224,6 +170,12 @@ Ext.define('Flux.view.SourcePanel', {
             valueField: 'time',
             queryMode: 'local'
         }]
+
+    }, {
+        xtype: 'displayfield',
+        labelStyle: 'font-weight:normal;color:#444;',
+        labelSeparator: '',
+        fieldLabel: 'Note: Aggregation or differencing requires that the <b>Statistics from...</b> setting be set to <b>Current Data Frame</b>.'
 
     }]
 });

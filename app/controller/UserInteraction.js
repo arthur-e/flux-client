@@ -47,12 +47,8 @@ Ext.define('Flux.controller.UserInteraction', {
                 select: this.onSourceChange
             },
 
-            'sourcecarousel panel > field[name=date], field[name=time]': {
+            'field[name=date], field[name=time]': {
                 change: this.loadSourceData
-            },
-
-            'sourcecarousel panel > #display-value, #stats-from': {
-                change: this.onStatsChange
             },
 
             'sourcecarousel panel #aggregation-fields field': {
@@ -167,25 +163,6 @@ Ext.define('Flux.controller.UserInteraction', {
         // Tell the dispatch to use this scenario name in all requests
         this.getController('Dispatch').setRequestNamespace(src);
 
-    },
-
-    /**
-        Intercepts changes to the "Statistics from:" or "Display:" fields and
-        calls on an event handler in the Dispatch controller.
-        @param  f       {Ext.form.RadioGroup}
-        @param  value   {Object}
-     */
-    onStatsChange: function (f, value) {
-        var aggOptions = this.getSourcePanel().down('#aggregation-fields');
-        if (aggOptions) {
-            if (value.statsFrom === 'data') {
-                aggOptions.enable();
-            } else if (value.statsFrom === 'population') {
-                aggOptions.disable();
-            }
-        }
-
-        this.getController('Dispatch').onStatsChange(f, value);
     },
 
     /**TODO

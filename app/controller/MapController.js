@@ -173,12 +173,20 @@ Ext.define('Flux.controller.MapController', {
         ]);
 
         projPicker.getStore().add([
-            ['equirectangular', 'Equirectangular (Plate Carrée)', d3.geo.equirectangular().scale(width * 0.15)],
+            ['equirectangular', 'Equirectangular (Plate Carrée)', (function () {
+                var p = d3.geo.equirectangular().scale(width * 0.15);
+                p.id = 'equirectangular';
+                return p;
+            }())],
             //['hammer', 'Hammer (Equal-Area)'],
             //['miller', 'Miller'],
             //['naturalEarth', 'Natural Earth'],
             //['robinson', 'Robinson'],
-            ['mercator', 'Mercator', d3.geo.mercator().scale(width * 0.15)]
+            ['mercator', 'Mercator', (function () {
+                var p = d3.geo.mercator().scale(width * 0.15);
+                p.id = 'mercator';
+                return p;
+            }())]
         ]);
 
         // Initialize the the user interface for ComboBoxes
@@ -213,8 +221,6 @@ Ext.define('Flux.controller.MapController', {
         // Set the map projection
         this.projection = projPicker.getRecord().get('proj');
 
-        // Set the name of the map projection as the projectionId
-        cmp.up('panel')._projectionId = projPicker.getRecord().get('id');
         cmp.up('panel')
             .render(this.projection, width, height)
             .setBasemap(state.basemap.value, basemapPicker.getRecord().get('url'),
@@ -286,11 +292,11 @@ Ext.define('Flux.controller.MapController', {
      */
     onProjectionChange: function (c, recs) {
         Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
-            if (cmp._projectionId === recs[0].get('id')) {
+            if (cmp.getProjection().id === recs[0].get('id')) {
                 return;
             }
             // For every d3geopanel instance, update the projection
-            cmp.setProjection(recs[0].get('proj'), recs[0].get('id')).update();
+            cmp.setProjection(recs[0].get('proj')).update();
         });
 
         this.projection = recs[0].get('proj');

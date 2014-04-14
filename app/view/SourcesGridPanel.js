@@ -23,6 +23,10 @@ Ext.define('Flux.view.SourcesGridPanel', {
         autoCancel: false
     }),
 
+    viewConfig: {
+        markDirty: false
+    },
+
     tbar: [{
         text: 'Add View',
         iconCls: 'icon-add',

@@ -179,7 +179,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
             lat = (bbox[1] + bbox[3]) * 0.5;
             lng = (bbox[0] + bbox[2]) * 0.5;
 
-            if (this._projectionId === 'mercator') {
+            if (this._projection.id === 'mercator') {
                 lat = this._mercatorScale(lat) * lat;
             }
 
@@ -247,7 +247,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
         // Use a scaling factor for non-equirectangular projections
         // http://en.wikipedia.org/wiki/Mercator_projection#Scale_factor
-        if (this._projectionId === 'mercator') {
+        if (this._projection.id === 'mercator') {
             attrs.height = function (d, i) {
                 return scaling(grid[i][1]) * Math.abs(proj([0, gridres.y])[1] - proj([0, 0])[1]);
             }
@@ -349,8 +349,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
                 'class': 'backdrop',
                 'x': 0,
                 'y': 0,
-                'width': this.svg.attr('width'),
-                'height': (0.05 * this.svg.attr('height'))
+                'width': width,
+                'height': (0.05 * height)
             });
 
         this.panes.hud.selectAll('.info')
@@ -368,7 +368,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
                 'class': function (d) {
                     return 'info ' + d.id;
                 },
-                'font-size': (0.04 * this.svg.attr('height')).toString() + 'px',
+                'font-size': (0.04 * height).toString() + 'px',
                 'text-anchor': 'middle'
             });
 
@@ -379,7 +379,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
             .scale(this._legend.yScale)
             .orient('right');
 
-        this.setProjection(proj);
+        this.setProjection(proj, width, height);
 
         // Initialize the Zoom In/Zoom Out buttons
         d3.select('#btn-zoom-in').on('click',
@@ -496,13 +496,19 @@ Ext.define('Flux.view.D3GeographicPanel', {
     /**
         Given a new projection, the drawing path is updated.
         @param  proj    {d3.geo.*}
-        @param  id      {String}
+        @param  width   {Number}
+        @param  height  {Number}
         @return         {Flux.view.D3GeographicPanel}
      */
-    setProjection: function (proj, id) {
+    setProjection: function (proj, width, height) {
+        if (width === undefined || height === undefined) {
+            width = this.svg.attr('width');
+            height = this.svg.attr('height');
+        }
+
         proj.translate([
-            this.svg.attr('width') * 0.5,
-            this.svg.attr('height') * 0.5
+            width * 0.5,
+            height * 0.5
         ]);
 
         this.path = d3.geo.path()
@@ -513,10 +519,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
             .attr('d', this.path);
 
         this._projection = proj;
-
-        if (id) {
-            this._projectionId = id;
-        }
 
         return this;
     },
@@ -677,7 +679,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
             .scale(this._legend.yScale);
 
         this.panes.legend.selectAll('.axis')
-            .attr('transform', 'translate(' + s.toString() + ',' +
+            .attr('transform', 'translate(' + (s + 1).toString() + ',' +
                 (yOffset - this._legend.yScale(bins.length) - h - s).toString() + ')')
             .call(this._legend.yAxis);
 

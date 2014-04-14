@@ -41,14 +41,17 @@ Ext.define('Flux.view.Viewport', {
                     },
                     items: [{
                         text: 'Single Map',
+                        itemId: 'single-map',
                         iconCls: 'icon-single-map ui-app-icon',
                         idx: 0
                     }, {
                         text: 'Coordinated View',
+                        itemId: 'coordinated-view',
                         iconCls: 'icon-coord-view ui-app-icon',
                         idx: 1
                     }, {
                         text: 'Multiplot',
+                        itemId: 'multiplot',
                         iconCls: 'icon-multiplot ui-app-icon',
                         idx: 2
                     }]

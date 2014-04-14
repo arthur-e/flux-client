@@ -168,10 +168,26 @@ Ext.define('Flux.controller.UserInteraction', {
     /**TODO
      */
     onVisChange: function (m, item) {
+        var mapQuery = Ext.ComponentQuery.query('d3geopanel');
         this.getSymbology().up('sidepanel').collapse();
         this.getSourceCarousel().setWidth(300)
         this.getViewport().doLayout();
         this.getSourceCarousel().getLayout().setActiveItem(item.idx);
+
+        if (item.getItemId() !== 'single-map') {
+            Ext.each(mapQuery, function (cmp) {
+                cmp.ownerCt.remove(cmp);
+            });
+        } else {
+            if (mapQuery.length === 0) {
+                this.getViewport().insert(1, {
+                    region: 'center',
+                    xtype: 'd3geopanel',
+                    title: 'Single Map',
+                    border: true
+                });
+            }
+        }
     },
 
     /**

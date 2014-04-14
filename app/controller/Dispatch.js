@@ -121,17 +121,19 @@ Ext.define('Flux.controller.Dispatch', {
                     args.intervalGrouping).toISOString()
             };
 
-            this.loadMap(params, this.getSourcePanel());//FIXME Do for a specific view
+            //FIXME Do for a specific view
+            this.loadMap(params, 'd3geopanel', this.getSourcePanel());
         }, this));
     },
 
     /** 
         Fires a request for new map data using the passed params. Optionally
         masks a target component's element until response is received.
-        @param  params          {Object}
-        @param  maskTarget      {Ext.Component}
+        @param  params      {Object}
+        @param  selector    {String}
+        @param  maskTarget  {Ext.Component}
      */
-    loadMap: function (params, maskTarget) {
+    loadMap: function (params, selector, maskTarget) {
         var cb = this.onMapLoad;
         var dispatch = this;
         var store = this.getStore('grids');
@@ -143,7 +145,7 @@ Ext.define('Flux.controller.Dispatch', {
             });
         }
 
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
+        Ext.each(Ext.ComponentQuery.query(selector || 'd3geopanel'), function (view) {
             cb = Ext.Function.createSequence(cb, function (recs, op) {
                 var ts = moment.utc(recs[0].get('timestamp'));
                 var start, end;
@@ -166,7 +168,7 @@ Ext.define('Flux.controller.Dispatch', {
 
                 this.updateTimestamp(ts);
             }, view);
-        }, this);
+        });
 
         if (params) {
             store.load({

@@ -55,8 +55,8 @@ Ext.define('Flux.controller.UserInteraction', {
                 change: this.loadSingleMap
             },
 
-            'sourcesgridpanel field[name=date], sourcesgridpanel field[name=time]': {
-                change: this.loadCoordinatedView
+            'sourcesgridpanel': {
+                edit: this.loadCoordinatedView
             }
 
         });
@@ -112,13 +112,18 @@ Ext.define('Flux.controller.UserInteraction', {
                             ct.getEl().unmask();
                         }
                     },
-                    success: function (response) {
+                    success: Ext.Function.bind(function (response) {
                         var geom = Ext.create('Flux.model.Geometry',
                             Ext.JSON.decode(response.responseText));
-                        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (p) {
-                            p.setGridGeometry(geom);
+                        
+                        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
+                            cmp.setGridGeometry(geom);
                         });
-                    }
+
+                        this.getContentPanel().on('beforeadd', function (c, cmp) {
+                            cmp.setGridGeometry(geom);
+                        });
+                    }, this)
                 });
 
                 // Guard against a fatal browser hang-up in Google Chrome that
@@ -216,10 +221,14 @@ Ext.define('Flux.controller.UserInteraction', {
             target.setDisabledDates(metadata.getInvalidDates());
             target.setMaxValue(lastDate);
             target.on('expand', function (f) {
+                f.suspendEvent('change');
                 f.setValue(lastDate);
+                f.resumeEvent('change');
             });
             target.on('focus', function (f) {
+                f.suspendEvent('change');
                 f.setValue(undefined);
+                f.resumeEvent('change');
             });
         });
     },
@@ -259,20 +268,18 @@ Ext.define('Flux.controller.UserInteraction', {
 
     /**TODO
      */
-    loadCoordinatedView: function (field, value, last) {
-        var values = field.up('panel').getForm().getValues();
-        if (!value) {
-            return;
-        }
+    loadCoordinatedView: function (editor) {
+        var container = this.getContentPanel();
+        var values = editor.getCmp().getFieldValues();
+        var cmp = container.add({
+            xtype: 'd3geopanel',
+            title: Ext.String.format('{0} at {1}', values.date, values.time),
+            anchor: Ext.String.format('{0}% {0}%', 100 / (container.items.length + 1))
+        });
 
-        if (values.date && values.time && values.date !== '' && values.time !== '') {
-            console.log(values);//FIXME
-            this.getContentPanel().add({
-                xtype: 'd3geopanel',
-                title: 'Single Map',
-                anchor: '100% 100%'
-            });
-        }
+        this.getController('Dispatch').loadMap({
+            time: Ext.String.format('{0}T{1}:00', values.date, values.time)
+        }, '#' + cmp.getId());
     },
 
     /**

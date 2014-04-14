@@ -15,6 +15,7 @@ Ext.define('Flux.view.SourcesGridPanel', {
             storeId: 'gridviews',
             model: 'Flux.model.GridView'
         });
+        this.addEvents(['itemchange', 'edit']);
         this.callParent(arguments);
     },
 
@@ -25,6 +26,23 @@ Ext.define('Flux.view.SourcesGridPanel', {
 
     viewConfig: {
         markDirty: false
+    },
+
+    listeners: {
+        itemchange: function () {
+            var vals = Ext.Object.getValues(this.getFieldValues());
+            if (Ext.clean(vals).length === 3) {
+                this.findPlugin('rowediting').completeEdit();
+            }
+        }
+    },
+
+    getFieldValues: function () {
+        vals = {};
+        Ext.each(this.findPlugin('rowediting').editor.query('field'), function (f) {
+            vals[f.getName()] = f.getRawValue();
+        });
+        return vals;
     },
 
     tbar: [{
@@ -38,12 +56,6 @@ Ext.define('Flux.view.SourcesGridPanel', {
                 source: '',
                 date: '',
                 time: ''
-            });
-
-
-            foo = rowEditor;//FIXME
-            rowEditor.on('edit', function (e, context) {
-                console.log(e, context);//FIXME
             });
 
             rowEditor.cancelEdit();
@@ -91,7 +103,12 @@ Ext.define('Flux.view.SourcesGridPanel', {
         editor: {
             xtype: 'datefield',
             format: 'Y-m-d',
-            disabled: true
+            disabled: true,
+            listeners: {
+                change: function () {
+                    this.up('sourcesgridpanel').fireEventArgs('itemchange', arguments);
+                }
+            }
         }
     }, {
         text: 'Time',
@@ -109,7 +126,12 @@ Ext.define('Flux.view.SourcesGridPanel', {
             },
             displayField: 'time',
             valueField: 'time',
-            queryMode: 'local'
+            queryMode: 'local',
+            listeners: {
+                select: function () {
+                    this.up('sourcesgridpanel').fireEventArgs('itemchange', arguments);
+                }
+            }
         }
     }]
 });

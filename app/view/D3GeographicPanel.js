@@ -291,6 +291,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
             this.svg.remove()
         }
 
+        console.log(width, height);//FIXME
+
         this.svg = d3.select(elementId).append('svg')
             .attr('width', width)
             .attr('height', height);

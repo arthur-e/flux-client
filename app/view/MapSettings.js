@@ -6,42 +6,6 @@ Ext.define('Flux.view.MapSettings', {
         'Ext.tip.ToolTip'
     ],
 
-    /**
-        The default settings for map-related controls. These should match the
-        settings on the components (with these keys as their `name` or 
-        `stateId` attributes, which should be the same) i.e. the value of the
-        `value` or `checked` attributes; currently this is ONLY needed for the
-        ComboBox instances in the MapSettings panel.
-     */
-    defaultState: {
-        basemap: { value: '/flux-client/political-small.topo.json' },
-        projection: { value: 'equirectangular' },
-    },
-
-    /**TODO
-     */
-//    initComponent: function () {
-//        this.on('render', function () {
-//            var state = {};
-
-//            // Retrieve previous state, if any, or use default values
-//            Ext.Object.each(this.defaultState, function (key, value) {
-//                var result = Ext.state.Manager.get(key, value); // Second argument is default value
-//                state[key] = (result === undefined) ? value : result;
-//            });
-
-//            // Initialize the the user interface for ComboBoxes
-//            Ext.Object.each(state, function (key, value) {
-//                var target = Ext.ComponentQuery.query('combo[name=' + key + ']')[0];
-//                if (target) {
-//                    target.applyState(value);
-//                }
-//            });
-//        });
-
-//        this.callParent(arguments);
-//    },
-
     items: [{
         xtype: 'recombo',
         name: 'projection',
@@ -58,11 +22,7 @@ Ext.define('Flux.view.MapSettings', {
                 ['equirectangular', 'Equirectangular (Plate Carrée)'],
                 ['mercator', 'Mercator']
             ]
-        }),
-        //TODO Get rid of this
-        getRecord: function (id) {
-            return this.getStore().findRecord('id', id || this.getValue());
-        }
+        })
 
     }, {
         xtype: 'recombo',

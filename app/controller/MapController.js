@@ -11,11 +11,6 @@ Ext.define('Flux.controller.MapController', {
 
     init: function () {
 
-        // Create a new state Provider if one doesn't already exist
-        if (Ext.state.Manager.getProvider().path === undefined) {
-            Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
-        }
-
         ////////////////////////////////////////////////////////////////////////
         // Event Listeners /////////////////////////////////////////////////////
 
@@ -65,11 +60,6 @@ Ext.define('Flux.controller.MapController', {
 
         });
     },
-
-    /**
-        The spatial projection used (and shared) throughout the map visualizations.
-     */
-    projection: undefined,
 
     /**
         Creates a threshold scale; a hack that acts like a d3.scale.* object.

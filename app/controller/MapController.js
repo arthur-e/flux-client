@@ -169,7 +169,8 @@ Ext.define('Flux.controller.MapController', {
         });
 
         Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
-            cmp.render(opts.projection, width, height)
+            cmp.init(width, height)
+                .setProjection(opts.projection, width, height)
                 .setBasemap(opts.basemap, kw);
         });
 
@@ -254,8 +255,7 @@ Ext.define('Flux.controller.MapController', {
 
             // Update the projections ComboBox; rescale each projection contained
             cmp.up('panel')
-                .render(this.getMapSettings().down('combo[name=projection]').getValue(),
-                    width, height)
+                .init(width, height)
                 .setBasemap(basemap)
                 .draw()
                 .updateLegend()

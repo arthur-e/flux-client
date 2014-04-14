@@ -30,6 +30,7 @@ Ext.define('Flux.view.SourcePanel', {
     items: [{
         xtype: 'combo',
         name: 'source',
+        anchor: '100%',
         fieldLabel: 'Select dataset (e.g. model run) and date/time',
         emptyText: 'Select...',
         style: {maxWidth: '200px'},
@@ -50,6 +51,7 @@ Ext.define('Flux.view.SourcePanel', {
     }, {
         xtype: 'datefield',
         name: 'date',
+        anchor: '100%',
         disabled: true,
         emptyText: 'Select date...',
         format: 'Y-m-d'
@@ -57,6 +59,7 @@ Ext.define('Flux.view.SourcePanel', {
     }, {
         xtype: 'combo',
         name: 'time',
+        anchor: '100%',
         disabled: true,
         emptyText: 'Select time...',
         displayField: 'time',

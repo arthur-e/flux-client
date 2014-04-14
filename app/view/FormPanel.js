@@ -22,7 +22,7 @@ Ext.define('Flux.view.FormPanel', {
     ],
 
     layout: {
-        type: 'form'
+        type: 'anchor'
     },
 
     autoScroll: true,

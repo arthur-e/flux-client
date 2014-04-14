@@ -155,6 +155,7 @@ Ext.define('Flux.view.Symbology', {
     }, {
         xtype: 'numberfield',
         name: 'segments',
+        anchor: '100%',
         itemId: 'segments',
         stateful: true,
         stateId: 'segments',

@@ -144,6 +144,10 @@ Ext.define('Flux.view.D3GeographicPanel', {
             this._data = grid.get('features');
         }
 
+        if (!this._data) {
+            return this;
+        }
+
         // Sets the enter or update selection's data
         sel = this.panes.overlay.selectAll('.point')
             .data(this._data, function (d, i) {
@@ -275,12 +279,11 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
     /**
         Main drawing function; defines and appends the SVG element.
-        @param  proj    {String}
         @param  width   {Number}
         @param  height  {Number}
         @return         {Flux.view.D3GeographicPanel}
      */
-    render: function (proj, width, height) {
+    init: function (width, height) {
         var elementId = '#' + this.items.getAt(0).id;
 
         // Remove any previously-rendered SVG elements
@@ -378,9 +381,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
         this._legend.yAxis = d3.svg.axis()
             .scale(this._legend.yScale)
             .orient('right');
-
-        //FIXME
-        this.setProjection(proj, width, height);
 
         // Initialize the Zoom In/Zoom Out buttons
         d3.select('#btn-zoom-in').on('click',
@@ -574,6 +574,9 @@ Ext.define('Flux.view.D3GeographicPanel', {
     },
 
     /**
+        Toggles the display of the legend on/off.
+        @param  state   {Boolean}
+        @return         {Flux.view.D3GeographicPanel}
      */
     toggleLegend: function (state) {
         if (state) {
@@ -581,6 +584,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
         } else {
             this.panes.legend.attr('class', 'pane legend hidden');
         }
+
+        return this;
     },
 
     /**
@@ -610,7 +615,12 @@ Ext.define('Flux.view.D3GeographicPanel', {
         @return         {Flux.view.D3GeographicPanel}
      */
     updateDisplay: function (data) {
-        scale = 0.039 * this.svg.attr('height');
+        var scale = 0.039 * this.svg.attr('height');
+
+        if (!this._data) {
+            return this;
+        }
+
         if (!data) {
             data = this.panes.hud.selectAll('.info').data();
             // Recall the timestamp text (if this function was called after
@@ -631,20 +641,24 @@ Ext.define('Flux.view.D3GeographicPanel', {
                     return (i + 1) * scale;
                 }
             });
+
         return this;
     },
 
     /**
         Updates the legend based on the current color scale; can be called with
         or without an Array of breakpoints (bins) for the scale.
-        @param  bins    {Array}
         @return         {Flux.view.D3GeographicPanel}
      */
-    updateLegend: function (bins) {
-        var h, ordinal;
+    updateLegend: function () {
+        var bins, h, ordinal;
         var s = 0.025 * this.svg.attr('width'); // Length on a side of the legend's bins
         var colors = this._scale.range();
         var yOffset = this.svg.attr('height');
+
+        if (this._scale.domain().length === 0) {
+            return this;
+        }
 
         if (typeof this._scale.quantiles === 'function') {
             bins = bins || this._scale.quantiles();
@@ -722,6 +736,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
             id: 'timestamp',
             text: this._timestamp
         }]);
+
         return this;
     }
 

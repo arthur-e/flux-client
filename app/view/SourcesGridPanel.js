@@ -40,6 +40,12 @@ Ext.define('Flux.view.SourcesGridPanel', {
                 time: ''
             });
 
+
+            foo = rowEditor;//FIXME
+            rowEditor.on('edit', function (e, context) {
+                console.log(e, context);//FIXME
+            });
+
             rowEditor.cancelEdit();
             Ext.StoreManager.get('gridviews').insert(0, r);
             rowEditor.startEdit(0, 0);

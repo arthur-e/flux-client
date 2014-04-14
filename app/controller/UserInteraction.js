@@ -5,11 +5,11 @@ Ext.define('Flux.controller.UserInteraction', {
         ref: 'aggregationFields',
         selector: '#aggregation-fields'
     }, {
+        ref: 'contentPanel',
+        selector: '#content'
+    }, {
         ref: 'symbology',
         selector: 'symbology'
-    }, {
-        ref: 'sourcePanel',
-        selector: 'sourcepanel'
     }, {
         ref: 'sourceCarousel',
         selector: 'sourcecarousel'
@@ -47,12 +47,16 @@ Ext.define('Flux.controller.UserInteraction', {
                 select: this.onSourceChange
             },
 
-            'field[name=date], field[name=time]': {
-                change: this.loadSourceData
+            'sourcepanel #aggregation-fields field': {
+                change: this.onAggregationChange
             },
 
-            'sourcecarousel panel #aggregation-fields field': {
-                change: this.onAggregationChange
+            'sourcepanel field[name=date], sourcepanel field[name=time]': {
+                change: this.loadSingleMap
+            },
+
+            'sourcesgridpanel field[name=date], sourcesgridpanel field[name=time]': {
+                change: this.loadCoordinatedView
             }
 
         });
@@ -165,28 +169,33 @@ Ext.define('Flux.controller.UserInteraction', {
 
     },
 
-    /**TODO
+    /**
+        Handles a change in the Visualization type (from 'Select Visualization').
+        @param  m       {Ext.menu.Menu}
+        @param  item    {Ext.menu.Item}
      */
     onVisChange: function (m, item) {
         var mapQuery = Ext.ComponentQuery.query('d3geopanel');
         var w;
 
-        if (item.getItemId() !== 'single-map') {
-            w = 300;
-            this.getSymbology().up('sidepanel').collapse();
-            Ext.each(mapQuery, function (cmp) {
-                cmp.ownerCt.remove(cmp);
-            });
+        // Remove any and all d3geopanel instances
+        Ext.each(mapQuery, function (cmp) {
+            cmp.ownerCt.remove(cmp);
+        });
 
-        } else {
+        if (item.getItemId() === 'single-map') {
             w = '20%';
             if (mapQuery.length === 0) {
-                this.getViewport().down('#content').add({
+                this.getContentPanel.add({
                     xtype: 'd3geopanel',
                     title: 'Single Map',
                     anchor: '100% 100%'
                 });
             }
+
+        } else {
+            w = 300;
+            this.getSymbology().up('sidepanel').collapse();
         }
 
         this.getSourceCarousel()
@@ -248,6 +257,24 @@ Ext.define('Flux.controller.UserInteraction', {
         }
     },
 
+    /**TODO
+     */
+    loadCoordinatedView: function (field, value, last) {
+        var values = field.up('panel').getForm().getValues();
+        if (!value) {
+            return;
+        }
+
+        if (values.date && values.time && values.date !== '' && values.time !== '') {
+            console.log(values);//FIXME
+            this.getContentPanel().add({
+                xtype: 'd3geopanel',
+                title: 'Single Map',
+                anchor: '100% 100%'
+            });
+        }
+    },
+
     /**
         Loads source data corresponding to the date and time selected so long
         as the change in value that triggered the load results in a different
@@ -256,14 +283,11 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  value   {String}
         @param  last    {String}
      */
-    loadSourceData: function (field, value, last) {
-        var values;
-
+    loadSingleMap: function (field, value, last) {
+        var values = field.up('panel').getForm().getValues();
         if (!value) {
             return; // Ignore undefined, null values
         }
-
-        values = field.up('panel').getForm().getValues();
 
         if (values.date && values.time && values.date !== '' && values.time !== '') {
             this.getController('Dispatch').loadMap({

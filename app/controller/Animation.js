@@ -244,7 +244,7 @@ Ext.define('Flux.controller.Animation', {
             return;
         }
         this._moment = this._moment.add(steps, this._stepSize);
-        this.getController('Dispatch').loadMap({
+        this.getController('Dispatch').loadMap({//TODO Call a function that increments all d3panel subclass instances
             time: this._moment.toISOString()
         });
     },

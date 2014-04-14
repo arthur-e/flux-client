@@ -52,13 +52,18 @@ Ext.define('Flux.controller.Dispatch', {
 
     /**
         Adds a new view to the activeViews associative array, registering its
-        attributes (e.g. the current timestamp) so that they are available to
-        this Controller for assessing current application state.
-        @param  view    {Ext.Component}
+        attributes (e.g. the current timestamp) by its ID ("id" property") so
+        that they are available to this Controller for assessing current
+        application state.
+        @param  view    {String|Ext.Component}
         @param  attrs   {Object}
      */
     addViewAttrs: function (view, attrs) {
-        var id = view.getId();
+        var id = view;
+        if (typeof view !== 'string') {
+            id = view.getId();
+        }
+
         if (this.activeViews[id]) {
             this.activeViews[id] = Ext.Object.merge(this.activeViews[id], attrs);
         } else {
@@ -120,13 +125,15 @@ Ext.define('Flux.controller.Dispatch', {
         }, this));
     },
 
-    /** FIXME Modify to load for a specific view
+    /** 
         Fires a request for new map data using the passed params. Optionally
         masks a target component's element until response is received.
         @param  params          {Object}
+        @param  maskTarget      {Ext.Component}
      */
     loadMap: function (params, maskTarget) {
         var cb = this.onMapLoad;
+        var dispatch = this;
         var store = this.getStore('grids');
 
         if (maskTarget) {
@@ -135,6 +142,31 @@ Ext.define('Flux.controller.Dispatch', {
                 maskTarget.getEl().unmask();
             });
         }
+
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
+            cb = Ext.Function.createSequence(cb, function (recs, op) {
+                var ts = moment.utc(recs[0].get('timestamp'));
+                var start, end;
+
+                dispatch.getController('Animation').setTimestamp(this.getId(), ts);
+                dispatch.addViewAttrs(this, {
+                    moment: ts
+                });
+
+                this.draw(recs[0]);
+
+                if (op) {
+                    if (op.params.aggregate) {
+                        return this.updateTimestamp([
+                            moment.utc(op.params.start),
+                            moment.utc(op.params.end)
+                        ]);
+                    }
+                }
+
+                this.updateTimestamp(ts);
+            }, view);
+        }, this);
 
         if (params) {
             store.load({
@@ -204,28 +236,6 @@ Ext.define('Flux.controller.Dispatch', {
                 return v - measure;
             }));
         }
-
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (view) {
-            var ts = moment.utc(rec.get('timestamp'));
-            var start, end;
-            this.getController('Animation').setTimestamp(view.getId(), ts);
-            this.addViewAttrs(view, {
-                moment: ts
-            });
-
-            view.draw(rec);
-
-            if (op) {
-                if (op.params.aggregate) {
-                    return view.updateTimestamp([
-                        moment.utc(op.params.start),
-                        moment.utc(op.params.end)
-                    ]);
-                }
-            }
-
-            view.updateTimestamp(ts);
-        }, this));
     },
 
     /**

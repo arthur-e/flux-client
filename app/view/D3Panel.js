@@ -25,14 +25,13 @@ Ext.define('Flux.view.D3Panel', {
 
     items: {
         xtype: 'component',
-        id: 'd3content',
         autoEl: {
             tag: 'div'
         }
     },
 
     bodyStyle: {
-        backgroundColor: '#ffffff'
+        backgroundColor: '#aaa'
     }
 
 });

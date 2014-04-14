@@ -179,7 +179,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
             lat = (bbox[1] + bbox[3]) * 0.5;
             lng = (bbox[0] + bbox[2]) * 0.5;
 
-            if (this._projection.id === 'mercator') {
+            if (this._projId === 'mercator') {
                 lat = this._mercatorScale(lat) * lat;
             }
 
@@ -247,7 +247,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
         // Use a scaling factor for non-equirectangular projections
         // http://en.wikipedia.org/wiki/Mercator_projection#Scale_factor
-        if (this._projection.id === 'mercator') {
+        if (this._projId === 'mercator') {
             attrs.height = function (d, i) {
                 return scaling(grid[i][1]) * Math.abs(proj([0, gridres.y])[1] - proj([0, 0])[1]);
             }
@@ -262,7 +262,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         @return {d3.geo.*}
      */
     getProjection: function () {
-        return this._projection;
+        return this._proj;
     },
 
     /**
@@ -275,7 +275,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
     /**
         Main drawing function; defines and appends the SVG element.
-        @param  proj    {d3.geo.*}
+        @param  proj    {String}
         @param  width   {Number}
         @param  height  {Number}
         @return         {Flux.view.D3GeographicPanel}
@@ -379,6 +379,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
             .scale(this._legend.yScale)
             .orient('right');
 
+        //FIXME
         this.setProjection(proj, width, height);
 
         // Initialize the Zoom In/Zoom Out buttons
@@ -396,12 +397,11 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
     /**
         Draws or redraws the basemap given the URL of a new TopoJSON file.
-        @param  basemap         {String}    Unique identifier (name) for the basemap
         @param  basemapUrl      {String}
         @param  drawBoundaries  {Boolean}
         @return                 {Flux.view.D3GeographicPanel}
      */
-    setBasemap: function (basemap, basemapUrl, boundaries) {
+    setBasemap: function (basemapUrl, boundaries) {
         var drawBasemap = Ext.Function.bind(function (json) {
             var sel = this.panes.basemap.append('g')
                 .attr('id', 'basemap')
@@ -442,11 +442,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
         boundaries = boundaries || this.basemaps.boundaries;
 
-        // Unwrap state objects
-        if (typeof basemap === 'object') {
-            basemap = basemap.value;
-        }
-
         // Remove the old basemap, if one exists
         this.panes.basemap.select('#basemap').remove()
 
@@ -454,15 +449,15 @@ Ext.define('Flux.view.D3GeographicPanel', {
             // If the requested basemap is already displayed, do nothing
             return;
 
-        } else if (this.basemaps[basemap]) {
+        } else if (this.basemaps.hasOwnProperty(basemapUrl)) {
             // If the requested basemap was loaded before, just re-draw it
-            drawBasemap(this.basemaps[basemap]);
+            drawBasemap(this.basemaps[basemapUrl]);
 
         } else {
             // Execute XMLHttpRequest for new basemap data
             d3.json(basemapUrl, Ext.Function.bind(function (error, json) {
                 drawBasemap(json);
-                this.basemaps[basemap] = json;
+                this.basemaps[basemapUrl] = json;
             }, this));
         }
 
@@ -495,30 +490,28 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
     /**
         Given a new projection, the drawing path is updated.
-        @param  proj    {d3.geo.*}
+        @param  proj    {String}
         @param  width   {Number}
         @param  height  {Number}
         @return         {Flux.view.D3GeographicPanel}
      */
     setProjection: function (proj, width, height) {
-        if (width === undefined || height === undefined) {
-            width = this.svg.attr('width');
-            height = this.svg.attr('height');
-        }
+        width = width || this.svg.attr('width');
+        height = height || this.svg.attr('height');
 
-        proj.translate([
-            width * 0.5,
-            height * 0.5
-        ]);
+        this._projId = proj;
+        this._proj = d3.geo[proj]().scale(width * 0.15)
+            .translate([
+                Number(width) * 0.5,
+                Number(height) * 0.5
+            ]);
 
         this.path = d3.geo.path()
-            .projection(proj);
+            .projection(this._proj);
 
         // Update the data in every currently drawn path
         this.svg.selectAll('path')
             .attr('d', this.path);
-
-        this._projection = proj;
 
         return this;
     },

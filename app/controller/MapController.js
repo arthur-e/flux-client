@@ -22,7 +22,7 @@ Ext.define('Flux.controller.MapController', {
         this.control({
 
             // Draws the D3 element(s) when their container(s) are ready    
-            'd3panel > component[autoEl]': {
+            'd3geopanel > component[autoEl]': {
                 boxready: this.initialize,
                 resize: this.onResize
             },
@@ -64,19 +64,6 @@ Ext.define('Flux.controller.MapController', {
             }
 
         });
-    },
-
-    /**
-        The default settings for map-related controls. These should match the
-        settings on the components (with these keys as their `name` or 
-        `stateId` attributes, which should be the same) i.e. the value of the
-        `value` or `checked` attributes; currently this is ONLY needed for the
-        ComboBox instances in the MapSettings panel.
-     */
-    defaultState: {
-        basemap: { value: 'globalSmall' },
-        projection: { value: 'equirectangular' },
-        displayFormat: { value: 'Y m-d H:i' }
     },
 
     /**
@@ -155,47 +142,20 @@ Ext.define('Flux.controller.MapController', {
         @param  height  {Number}
      */
     initialize: function (cmp, width, height) {
-        var basemapPicker = this.getMapSettings().down('combo[name=basemap]');
-        var projPicker = this.getMapSettings().down('combo[name=projection]');
-        var state = {};
+        var opts = this.getMapSettings().getForm().getValues();
+        var kw = (Ext.Function.bind(function () {
+                var kw = 'none';
+                var basemapOutlines = this.getMapSettings().down('checkbox[name=showBasemapOutlines]').getValue();
+                var politicalBoundaries = this.getMapSettings().down('checkbox[name=showPoliticalBoundaries]').getValue();
 
-        // Retrieve previous state, if any, or use default values
-        Ext.Object.each(this.defaultState, function (key, value) {
-            var result = Ext.state.Manager.get(key, value); // Second argument is default value
-            state[key] = (result === undefined) ? value : result;
-        });
+                if (basemapOutlines) {
+                    kw = 'outer';
+                } else {
+                    kw = (politicalBoundaries) ? 'both' : 'none';
+                }
 
-        basemapPicker.getStore().add([
-            ['usa', 'U.S.A.', '/flux-client/political-usa.topo.json'],
-            ['northAmerica', 'North America', '/flux-client/political-north-america.topo.json'],
-            ['global', 'Global', '/flux-client/political.topo.json'],
-            ['globalSmall', 'Global (Small Scale)', '/flux-client/political-small.topo.json']
-        ]);
-
-        projPicker.getStore().add([
-            ['equirectangular', 'Equirectangular (Plate Carrée)', (function () {
-                var p = d3.geo.equirectangular().scale(width * 0.15);
-                p.id = 'equirectangular';
-                return p;
-            }())],
-            //['hammer', 'Hammer (Equal-Area)'],
-            //['miller', 'Miller'],
-            //['naturalEarth', 'Natural Earth'],
-            //['robinson', 'Robinson'],
-            ['mercator', 'Mercator', (function () {
-                var p = d3.geo.mercator().scale(width * 0.15);
-                p.id = 'mercator';
-                return p;
-            }())]
-        ]);
-
-        // Initialize the the user interface for ComboBoxes
-        Ext.Object.each(state, function (key, value) {
-            var target = Ext.ComponentQuery.query('combo[name=' + key + ']')[0];
-            if (target) {
-                target.applyState(value);
-            }
-        });
+                return kw;
+        }, this)());
 
         ////////////////////////////////////////////////////////////////////////
         // Event Listeners /////////////////////////////////////////////////////
@@ -218,25 +178,10 @@ Ext.define('Flux.controller.MapController', {
 
         });
 
-        // Set the map projection
-        this.projection = projPicker.getRecord().get('proj');
-
-        cmp.up('panel')
-            .render(this.projection, width, height)
-            .setBasemap(state.basemap.value, basemapPicker.getRecord().get('url'),
-                Ext.Function.bind(function () {
-                    var kw = 'none';
-                    var basemapOutlines = this.getMapSettings().down('checkbox[name=showBasemapOutlines]').getValue();
-                    var politicalBoundaries = this.getMapSettings().down('checkbox[name=showPoliticalBoundaries]').getValue();
-
-                    if (basemapOutlines) {
-                        kw = 'outer';
-                    } else {
-                        kw = (politicalBoundaries) ? 'both' : 'none';
-                    }
-
-                    return kw;
-            }, this)());
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
+            cmp.render(opts.projection, width, height)
+                .setBasemap(opts.basemap, kw);
+        });
 
     },
 
@@ -295,11 +240,10 @@ Ext.define('Flux.controller.MapController', {
             if (cmp.getProjection().id === recs[0].get('id')) {
                 return;
             }
-            // For every d3geopanel instance, update the projection
-            cmp.setProjection(recs[0].get('proj')).update();
-        });
 
-        this.projection = recs[0].get('proj');
+            // For every d3geopanel instance, update the projection
+            cmp.setProjection(recs[0].get('id')).update();
+        });
     },
 
     /**
@@ -312,22 +256,17 @@ Ext.define('Flux.controller.MapController', {
         @param  oldHeight   {Number}        The original height
      */
     onResize: function (cmp, width, height, oldWidth, oldHeight) {
-        var basemap, picker;
+        var basemap;
         // oldWidth and oldHeight undefined when 'resize' event fires as part
         //  of the initial layout; we want to avoid acting on this firing
         if (oldWidth && oldHeight && width !== oldWidth && height !== oldHeight) {
-            basemap = this.getMapSettings().down('combo[name=basemap]').getRecord();
+            basemap = this.getMapSettings().down('combo[name=basemap]').getValue();
 
             // Update the projections ComboBox; rescale each projection contained
-            picker = this.getMapSettings().down('combo[name=projection]');
-            picker.getStore().each(function (proj) {
-                proj.set('proj', proj.get('proj').scale(width * 0.15));
-            });
-            this.projection = picker.getStore().getById(picker.getValue()).get('proj');
-
             cmp.up('panel')
-                .render(this.projection, width, height)
-                .setBasemap(basemap.get('id'), basemap.get('url'))
+                .render(this.getMapSettings().down('combo[name=projection]').getValue(),
+                    width, height)
+                .setBasemap(basemap)
                 .draw()
                 .updateLegend()
                 .updateDisplay();
@@ -354,7 +293,7 @@ Ext.define('Flux.controller.MapController', {
         @param  checked {Boolean}
      */
     toggleBasemapStyle: function (cb, checked) {
-        var basemap = this.getMapSettings().down('combo[name=basemap]').getRecord();
+        var basemap = this.getMapSettings().down('combo[name=basemap]').getValue();
         var keyword;
 
         if (checked) {
@@ -385,7 +324,7 @@ Ext.define('Flux.controller.MapController', {
 
         // For every d3geopanel instance, update the basemap
         Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
-            cmp.setBasemap(basemap.get('id'), basemap.get('url'), keyword);
+            cmp.setBasemap(basemap, keyword);
         });
     },
 

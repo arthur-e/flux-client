@@ -49,6 +49,10 @@ Ext.define('Flux.controller.UserInteraction', {
                 select: this.onSourceChange
             },
 
+            'sourcepanel #aggregation-fields': {
+                afterrender: this.initAggregationFields
+            },
+
             'sourcepanel #aggregation-fields field': {
                 change: this.onAggregationChange
             },
@@ -66,6 +70,17 @@ Ext.define('Flux.controller.UserInteraction', {
 
     ////////////////////////////////////////////////////////////////////////////
     // Event Handlers //////////////////////////////////////////////////////////
+
+    /**
+        Ensures that the Aggreation Fieldset is enabled if the
+        "Statistics from..." setting is set to the "Current Data Frame."
+        @param  fieldset    {Ext.form.Fieldset}
+     */
+    initAggregationFields: function (fieldset) {
+        if (this.getSymbology().down('hiddenfield[name=statsFrom]').getValue() === 'data') {
+            fieldset.enable();
+        }
+    },
 
     /**
         Handles a change in the aggregation fields in the SourcesPanel. When all
@@ -110,6 +125,8 @@ Ext.define('Flux.controller.UserInteraction', {
             },
             callback: Ext.Function.bind(function (recs, op, success) {
                 var meta = recs.pop();
+
+                this.getController('Animation').enableAnimation(meta);
 
                 geometry.load({
                     callback: function () {
@@ -185,7 +202,7 @@ Ext.define('Flux.controller.UserInteraction', {
             case 'single-map':
             w = '20%';
             if (mapQuery.length === 0) {
-                this.getContentPanel.add({
+                this.getContentPanel().add({
                     xtype: 'd3geopanel',
                     title: 'Single Map',
                     anchor: '100% 100%'

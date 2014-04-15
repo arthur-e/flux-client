@@ -82,6 +82,32 @@ Ext.define('Flux.view.SourcePanel', {
             anchor: '100%'
         },
         items: [{
+            xtype: 'recheckbox',
+            name: 'showAggregation',
+            stateId: 'showAggregation',
+            boxLabel: 'Show aggregation',
+            propagateChange: function (checked) {
+                if (this.up('fieldset') === undefined) {
+                    return;
+                }
+
+                // Enable all the fields in this fieldset when checked
+                Ext.each(this.up('fieldset').query('field:not(checkbox)'), function (cmp) {
+                    if (checked) {
+                        cmp.enable();
+                    } else {
+                        cmp.disable();
+                    }
+                });    
+            },
+            listeners: {
+                afterrender: function () {
+                    // Need to enable/disable AFTER rendering, as when applyState()
+                    //  is called this component is laid out with its siblings!
+                    this.propagateChange(this.getValue());
+                }
+            }
+        }, {
             xtype: 'fieldcontainer',
             layout: 'hbox',
             fieldLabel: 'Grouping interval',
@@ -138,19 +164,29 @@ Ext.define('Flux.view.SourcePanel', {
             anchor: '100%'
         },
         items: [{
-            xtype: 'checkbox',
+            xtype: 'recheckbox',
             name: 'showDifference',
+            stateId: 'showDifference',
             boxLabel: 'Show difference',
+            propagateChange: function (checked) {
+                if (this.up('fieldset') === undefined) {
+                    return;
+                }
+
+                // Enable all the fields in this fieldset when checked
+                Ext.each(this.up('fieldset').query('field:not(checkbox)'), function (cmp) {
+                    if (checked) {
+                        cmp.enable();
+                    } else {
+                        cmp.disable();
+                    }
+                });    
+            },
             listeners: {
-                change: function (cb, checked) {
-                    // Enable all the fields in this fieldset when checked
-                    Ext.each(this.up('fieldset').query('field:not(checkbox)'), function (cmp) {
-                        if (checked) {
-                            cmp.enable();
-                        } else {
-                            cmp.disable();
-                        }
-                    });
+                afterrender: function () {
+                    // Need to enable/disable AFTER rendering, as when applyState()
+                    //  is called this component is laid out with its siblings!
+                    this.propagateChange(this.getValue());
                 }
             }
         }, {

@@ -32,6 +32,7 @@ Ext.define('Flux.view.Viewport', {
             },
             items: [{
                 xtype: 'button',
+                disabled: true,//TODO
                 text: 'Select Visualization',
                 menu: {
                     itemId: 'vis-menu',

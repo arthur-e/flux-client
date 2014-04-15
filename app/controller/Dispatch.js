@@ -155,7 +155,6 @@ Ext.define('Flux.controller.Dispatch', {
      */
     loadMap: function (params, selector, maskTarget) {
         var cb = this.onMapLoad;
-        var dispatch = this;
         var store = this.getStore('grids');
 
         // If there is an element to be visually masked, do so and extend the 
@@ -207,17 +206,6 @@ Ext.define('Flux.controller.Dispatch', {
         });
     },
 
-//    /**
-//        Handles a change to the measure of central tendency through one of the
-//        global checkboxes.
-//        @param  cb  {Ext.form.field.Checkbox}
-//     */
-//    onGlobalTendencyChange: function (cb) {
-//        this.getController('MapController').updateColorScales({
-//            tendency: cb.name
-//        });
-//    },TODO
-
     /**
         The callback function for when grid geometry is loaded.
         @param  st      {Flux.store.Geometries}
@@ -234,58 +222,45 @@ Ext.define('Flux.controller.Dispatch', {
     },
 
     /**
-        The callback function for when map data are (re)loaded or when the map
-        stretch calculated from those data changes; can be called on its own
-        with cached records.
-        @param  recs    {Array|Flux.model.Grid}
-        @param  op      {Ext.data.Operation}
+        The callback function for when map data are (re)loaded.
+        @param  recs    {Array}
      */
-    //TODO Refactor for each view
-    onMapLoad: function (recs, op) {
-        var m, rec;
-        var meta = this.getStore('metadata').getById(this._namespaceId);
-        var opts = this.getGlobalSettings();
-
-        if (Ext.isArray(recs)) {        
-            rec = recs[0];
-        } else {
-            rec = recs;
-        }
-
-        // In the case that population statistics are not used, we need to
-        //  calculate summary statistics for this individual data frame
-        if (opts.statsFrom === 'data') {
-            // We modify a copy of the Metadata so that it has summary stats
-            //  specific to this data frame
-            m = meta.copy();
-            m.set('stats', this.summarizeMap(rec.get('features')));
-            this.onMetadataLoad(undefined, [m]);
-        }
-
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
-            view.toggleAnomalies((opts.display === 'anomalies'), opts.tendency);
-        });
-
-        return rec;
+    onMapLoad: function (recs) {
+        this.propagateGlobalChange(this.getGlobalSettings(), recs);
     },
 
     /**
         Handles the callback from the Metadata store when loaded.
-        @param  st      {Ext.data.Store}
+        @param  store   {Ext.data.Store}
         @param  recs    {Array}
      */
-    onMetadataLoad: function (st, recs) {
+    onMetadataLoad: function (store, recs) {
         var rec = recs[0];
         // This is not needed as long as the "domain" field is set next
         // this.getController('MapController').updateColorScales({}, recs[0]);
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
+
+        //TODO Refactor for specific views
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (view) {
             // IMPORTANT: Pass the Metadata to the view if loading a map
             //  for the first time (first-time configuration)
             view.configure(rec);
-        });
+
+            if (store) {
+                this.addViewAttrs(view, {
+                    populationMetadata: rec
+                });
+            }
+        }, this));
 
         this.getContentPanel().on('beforeadd', Ext.Function.bind(function (c, view) {
             view.configure(rec);
+
+            if (store) {
+                this.addViewAttrs(view, {
+                    populationMetadata: rec
+                });
+            }
+
             //TODO this.getController('MapController').updateColorScale(view);
         }, this));
 
@@ -298,34 +273,79 @@ Ext.define('Flux.controller.Dispatch', {
         });
 
         this.getController('MapController').updateColorScales();
-        this.getController('Animation').enableAnimation(rec);
     },
 
     /**
-        Propagates a change in the source of summary statistics. If population
-        statistics are used, the downstream effects of loading Metadata are
-        activated. Otherwise, the current map is reloaded to trigger the use
-        of the current map's summary statistics instead.
+        Handles a change in the global settings through the top toolbar's
+        Settings Menu, assuming that Metadata have already been loaded for
+        a view.
         @param  cb      {Ext.menu.CheckItem}
         @param  value   {Object}
      */
     onStatsChange: function (cb, value) {
-        if (this.getStore('metadata').data.items.length !== 0) {
-            if (value.statsFrom === 'population') {
-                this.onMetadataLoad(undefined, [
-                    this.getStore('metadata').getById(this._namespaceId).copy()
-                ]);
+        if (this.getStore('metadata').data.items.length === 0) {
+            return;
+        }
 
-            } else if (value.tendency !== undefined) {
-                this.getController('MapController').updateColorScales({
-                    tendency: cb.name
-                });
+        this.propagateGlobalChange(value);
 
-            } else {
-                Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (view) {
-                    view.draw(this.onMapLoad(view._model));
-                }, this));
-            }
+        // Need to call draw() on each view in the case where the anomalies
+        //  display changes
+        if (value.display !== undefined) {
+            Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
+                view.draw();
+            });
+        }
+
+    },
+
+    /**
+        Propagates changes in the global settings to ensure the proper display
+        of data. Accepts an optional Array of Flux.model.Grid instances in the
+        case that such data are being loaded for the first time (and views do
+        not have a model instance set on them).
+        @param  change  {Object}
+        @param  recs    {Array}
+     */
+    propagateGlobalChange: function (change, recs) {
+        var opts = this.getGlobalSettings();
+        var rec;
+
+        if (recs) {
+            rec = recs[0];
+        }
+
+        if (change.statsFrom !== undefined ) {
+            Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (view) {
+                var m;
+
+                if (view._model) {
+                    rec = view._model;
+                }
+
+                if (change.statsFrom === 'population') {
+                    m = this.getViewAttrs(view.getId()).populationMetadata.copy();
+
+                } else {
+                    m = view.getMetadata().copy();
+                    m.set('stats', this.summarizeMap(rec.get('features')));
+                }
+
+                this.onMetadataLoad(undefined, [m]);
+            }, this));
+        }
+
+        if (change.display !== undefined) {
+            Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
+                view.toggleAnomalies((opts.display === 'anomalies'), opts.tendency);
+            });
+        }
+
+        if (change.tendency !== undefined) {
+            this.getController('MapController').updateColorScales({
+                tendency: change.tendency
+            });
+
         }
     },
 

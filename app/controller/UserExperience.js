@@ -14,8 +14,8 @@ Ext.define('Flux.controller.UserExperience', {
         ref: 'symbology',
         selector: 'symbology'
     }, {
-        ref: 'topToolbar',
-        selector: 'viewport toolbar'
+        ref: 'settingsMenu',
+        selector: '#settings-menu'
     }],
 
     init: function () {
@@ -41,9 +41,12 @@ Ext.define('Flux.controller.UserExperience', {
                 // IMPORTANT: Makes sure that applyState() recalls the correct state
                 Ext.state.Manager.set(key, {value: value})
 
-                // Remember these fields to initialize later
+                // Initialize global settings (Ext.menu.CheckItem instances)
                 if (Ext.Array.contains(['tendency', 'display', 'statsFrom'], key)) {
-                    fields.push([key, value]);
+                    Ext.onReady(function () {
+                        var cmp = Ext.ComponentQuery.query(Ext.String.format('menucheckitem[name={0}]', value))[0];
+                        cmp.setChecked(true);
+                    });
                 }
 
             });
@@ -56,22 +59,6 @@ Ext.define('Flux.controller.UserExperience', {
             }
 
             Ext.Object.merge(this.defaultState, params);
-
-            // Initialize the values of some fields that, for some reason, are
-            //  set from expired state (state is not overwritten in time?)
-            Ext.onReady(Ext.Function.bind(function () {
-                Ext.each(fields, function (f) {
-                    var c = Ext.ComponentQuery.query(Ext.String.format('field[name={0}]', f[0]));
-                    if (c.length > 0) {
-                        c[0].setValue(f[1]);
-                    }
-                });
-
-                if (Ext.state.Manager.get('animateDelay', undefined)) {
-                    this.getTopToolbar().down('#animate-delay')
-                        .setValue(Ext.state.Manager.get('animateDelay').value);
-                }
-            }, this));
 
         }
 

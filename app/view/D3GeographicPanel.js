@@ -211,7 +211,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         }
 
         this._isDrawn = true;
-        this.fireEventArgs('draw', [this, grid]);
+        this.fireEventArgs('draw', [this, (grid || this._model)]);
         return this;
     },
 
@@ -594,6 +594,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         Toggles the display of anomalies in the data.
         @param  state       {Boolean}
         @param  tendency    {String}
+        @return             {Flux.view.D3GeographicPanel}
      */
     toggleAnomalies: function (state, tendency) {
         this._showAnomalies = state;
@@ -601,6 +602,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
             // Rescale the data points subtracting the measure of central tendency
             this._addOffset = -this.getMetadata().get('stats')[tendency];
         }
+
+        return this;
     },
 
     /**

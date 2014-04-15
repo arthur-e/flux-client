@@ -112,6 +112,8 @@ Ext.define('Flux.controller.Animation', {
         var c, d, s0, steps, stepSize;
         this._metadata = metadata;
 
+        console.log(metadata);//FIXME
+
         // Figure out the default size of step (e.g. an hour) and the number of
         //  steps to take in each frame
         s0 = metadata.get('steps')[0];

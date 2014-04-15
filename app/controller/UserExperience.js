@@ -88,12 +88,8 @@ Ext.define('Flux.controller.UserExperience', {
                 click: this.displaySharingLink
             },
 
-            'menucheckitem[group=statsFrom], menucheckitem[group=display]': {
+            '#settings-menu menucheckitem': {
                 checkchange: this.onStatsChange
-            },
-
-            'menucheckitem[group=tendency]': {
-                checkchange: this.onTendencyChange
             }
 
         });
@@ -227,21 +223,6 @@ Ext.define('Flux.controller.UserExperience', {
 
             values[cb.group] = cb.name;
             this.getController('Dispatch').onStatsChange(cb, values);
-        }
-
-        this.saveFieldState(cb, checked);
-    },
-
-    /**
-        If checked, update all hidden "tendency" fields with the measure of
-        central tendency chosen.
-        @param  cb      {Ext.menu.MenuCheckItem}
-        @param  checked {Boolean}
-     */
-    onTendencyChange: function (cb, checked) {
-        if (checked) {
-            this.getSymbology().down('hiddenfield[name=tendency]').setValue(cb.name);
-            this.getController('Dispatch').onGlobalTendencyChange(cb);
         }
 
         this.saveFieldState(cb, checked);

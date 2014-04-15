@@ -207,16 +207,16 @@ Ext.define('Flux.controller.Dispatch', {
         });
     },
 
-    /**
-        Handles a change to the measure of central tendency through one of the
-        global checkboxes.
-        @param  cb  {Ext.form.field.Checkbox}
-     */
-    onGlobalTendencyChange: function (cb) {
-        this.getController('MapController').updateColorScales({
-            tendency: cb.name
-        });
-    },
+//    /**
+//        Handles a change to the measure of central tendency through one of the
+//        global checkboxes.
+//        @param  cb  {Ext.form.field.Checkbox}
+//     */
+//    onGlobalTendencyChange: function (cb) {
+//        this.getController('MapController').updateColorScales({
+//            tendency: cb.name
+//        });
+//    },TODO
 
     /**
         The callback function for when grid geometry is loaded.
@@ -306,15 +306,20 @@ Ext.define('Flux.controller.Dispatch', {
         statistics are used, the downstream effects of loading Metadata are
         activated. Otherwise, the current map is reloaded to trigger the use
         of the current map's summary statistics instead.
-        @param  f       {Ext.form.field.*}
+        @param  cb      {Ext.menu.CheckItem}
         @param  value   {Object}
      */
-    onStatsChange: function (f, value) {
+    onStatsChange: function (cb, value) {
         if (this.getStore('metadata').data.items.length !== 0) {
             if (value.statsFrom === 'population') {
                 this.onMetadataLoad(undefined, [
                     this.getStore('metadata').getById(this._namespaceId).copy()
                 ]);
+
+            } else if (value.tendency !== undefined) {
+                this.getController('MapController').updateColorScales({
+                    tendency: cb.name
+                });
 
             } else {
                 Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (view) {

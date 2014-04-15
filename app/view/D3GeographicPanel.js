@@ -67,7 +67,18 @@ Ext.define('Flux.view.D3GeographicPanel', {
         Initializes the component.
      */
     initComponent: function () {
-        this.addEvents(['scalechange']);
+        this.addEvents(['draw', 'scalechange']);
+
+        /**
+            Update the timestamp display.
+         */
+        this.on('draw', function (v, grid) {
+            this._timestamp = grid.getTimestampDisplay('YYYY MM-DD HH:ss');
+            this.updateDisplay([{
+                id: 'timestamp',
+                text: this._timestamp
+            }]);
+        });
 
         /**
             Flag to indicate whether or not the <rect> elements have already
@@ -76,6 +87,9 @@ Ext.define('Flux.view.D3GeographicPanel', {
          */
         this._isDrawn = false;
 
+        /**
+            An internal reference to the legend selection.
+          */
         this._legend = {};
 
         /**
@@ -197,7 +211,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         }
 
         this._isDrawn = true;
-
+        this.fireEventArgs('draw', [this, grid]);
         return this;
     },
 
@@ -713,32 +727,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
                 },
                 'class': 'bin'
             });
-
-        return this;
-    },
-
-    /**
-        Updates the on-map info text in the heads-up-display.
-        @param  dates   {Array|moment}
-        @param  fmt     {String}
-        @return         {Flux.view.D3GeographicPanel}
-     */
-    updateTimestamp: function (dates, fmt) {
-        var d0, d1;
-        fmt = fmt || 'YYYY MM-DD HH:ss';
-
-        if (Ext.isArray(dates) && dates.length > 1) {
-            d0 = dates[0].format(fmt);
-            d1 = dates[1].format(fmt);
-            this._timestamp = Ext.String.format('{0} >>> {1}', d0, d1);
-        } else {
-            this._timestamp = dates.format(fmt);
-        }
-
-        this.updateDisplay([{
-            id: 'timestamp',
-            text: this._timestamp
-        }]);
 
         return this;
     }

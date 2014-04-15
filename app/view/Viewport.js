@@ -120,12 +120,16 @@ Ext.define('Flux.view.Viewport', {
                     }, {
                         xtype: 'menuseparator'
                     }, {
+                        text: 'Values displayed as:',
+                        cls: 'ui-menu-group-text',
+                        plain: true
+                    }, {
                         xtype: 'recheckitem',
                         name: 'values',
                         checked: true,
                         stateful: true,
                         stateId: 'displayValues',
-                        text: 'Display Raw Values',
+                        text: 'Raw Values',
                         group: 'display',
                         hideOnClick: false
                     }, {
@@ -133,7 +137,7 @@ Ext.define('Flux.view.Viewport', {
                         name: 'anomalies',
                         stateful: true,
                         stateId: 'displayAnomalies',
-                        text: 'Display Anomalies',
+                        text: 'Anomalies',
                         group: 'display',
                         hideOnClick: false
                     }, {

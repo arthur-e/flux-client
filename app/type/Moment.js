@@ -8,6 +8,6 @@ Ext.define('Flux.type.Moment', {
         sortType: function (v) {
             return v.toString();
         },
-        type: 'moment'
+        type: 'Moment'
     };
 });

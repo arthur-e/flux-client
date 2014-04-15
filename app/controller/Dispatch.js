@@ -52,7 +52,13 @@ Ext.define('Flux.controller.Dispatch', {
         ////////////////////////////////////////////////////////////////////////
         // Event Listeners /////////////////////////////////////////////////////
 
-        this.control({});
+        this.control({
+
+            'd3panel': {
+                draw: this.onD3Draw
+            }
+
+        });
 
     },
 
@@ -92,9 +98,10 @@ Ext.define('Flux.controller.Dispatch', {
         return this.activeViews[id];
     },
 
-    /**TODO
+    /**
         Convenience function for determining the currently selected global
-        tendency--mean or median.
+        statistics settings; measure of central tendency, raw values versus
+        anomalies, and whether to use population statistics or not.
         @return {String}
      */
     getGlobalSettings: function () {
@@ -134,7 +141,7 @@ Ext.define('Flux.controller.Dispatch', {
                     args.intervalGrouping).toISOString()
             };
 
-            //FIXME Do for a specific view
+            //TODO Do for a specific view?
             this.loadMap(params, 'd3geopanel', this.getSourcePanel());
         }, this));
     },
@@ -151,6 +158,8 @@ Ext.define('Flux.controller.Dispatch', {
         var dispatch = this;
         var store = this.getStore('grids');
 
+        // If there is an element to be visually masked, do so and extend the 
+        //  callback function to include unmasking
         if (maskTarget) {
             maskTarget.getEl().mask('Loading...');
             cb = Ext.Function.createSequence(cb, function () {
@@ -158,31 +167,14 @@ Ext.define('Flux.controller.Dispatch', {
             });
         }
 
+        // For each map view, extend the callback function
         Ext.each(Ext.ComponentQuery.query(selector || 'd3geopanel'), function (view) {
             cb = Ext.Function.createSequence(cb, function (recs, op) {
-                var ts = moment.utc(recs[0].get('timestamp'));
-                var start, end;
-
-                dispatch.getController('Animation').setTimestamp(this.getId(), ts);
-                dispatch.addViewAttrs(this, {
-                    moment: ts
-                });
-
-                this.draw(recs[0]);
-
-                if (op) {
-                    if (op.params.aggregate) {
-                        return this.updateTimestamp([
-                            moment.utc(op.params.start),
-                            moment.utc(op.params.end)
-                        ]);
-                    }
-                }
-
-                this.updateTimestamp(ts);
-            }, view);
+                view.draw(recs[0]);
+            }, this);
         });
 
+        // Execute the map load request
         if (params) {
             store.load({
                 params: params,
@@ -201,31 +193,49 @@ Ext.define('Flux.controller.Dispatch', {
     },
 
     /**
+        Callback for the "draw" event on any D3Panel instance; propagates the
+        time state to the Animation controller and updates internal trakcing
+        of the time for a given D3Panel instance.
+        @param  view    {Flux.view.D3Panel}
+        @param  model   {Ext.data.Model}
+     */
+    onD3Draw: function (view, model) {
+        var ts = model.get('timestamp');
+        this.getController('Animation').setTimestamp(view.getId(), ts);
+        this.addViewAttrs(view, {
+            moment: ts
+        });
+    },
+
+    /**
         Handles a change to the measure of central tendency through one of the
         global checkboxes.
         @param  cb  {Ext.form.field.Checkbox}
      */
     onGlobalTendencyChange: function (cb) {
-        this.getController('MapController').updateColorScale({
+        this.getController('MapController').updateColorScales({
             tendency: cb.name
         });
     },
 
-    /**TODO
+    /**
+        The callback function for when grid geometry is loaded.
+        @param  st      {Flux.store.Geometries}
+        @param  recs    {Array}
      */
-    onGeometryLoad: function (store, recs) {
+    onGeometryLoad: function (st, recs) {
         Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
             cmp.setGridGeometry(recs[0]);
         });
 
         this.getContentPanel().on('beforeadd', function (c, cmp) {
-            console.log('setGridGeometry()');//FIXME
             cmp.setGridGeometry(recs[0]);
         });
     },
 
     /**
-        The callback function for when a map is loaded; can be called on its own
+        The callback function for when map data are (re)loaded or when the map
+        stretch calculated from those data changes; can be called on its own
         with cached records.
         @param  recs    {Array|Flux.model.Grid}
         @param  op      {Ext.data.Operation}
@@ -268,14 +278,13 @@ Ext.define('Flux.controller.Dispatch', {
 
     /**
         Handles the callback from the Metadata store when loaded.
-        @param  store   {Ext.data.Store}
+        @param  st      {Ext.data.Store}
         @param  recs    {Array}
      */
-    onMetadataLoad: function (store, recs) {
+    onMetadataLoad: function (st, recs) {
         var rec = recs[0];
-        console.log('onMetadataLoad()');//FIXME
         // This is not needed as long as the "domain" field is set next
-        // this.getController('MapController').updateColorScale({}, recs[0]);
+        // this.getController('MapController').updateColorScales({}, recs[0]);
         Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
             // IMPORTANT: Pass the Metadata to the view if loading a map
             //  for the first time (first-time configuration)
@@ -295,7 +304,7 @@ Ext.define('Flux.controller.Dispatch', {
             ]);
         });
 
-        this.getController('MapController').updateColorScale(this.getSymbology().getForm().getValues());
+        this.getController('MapController').updateColorScales();
         this.getController('Animation').enableAnimation(rec);
     },
 
@@ -314,6 +323,7 @@ Ext.define('Flux.controller.Dispatch', {
                     this.getStore('metadata').getById(this._namespaceId).copy()
                 ]);
             } else {
+                console.log(value);//FIXME
                 this.onMapLoad(this.getStore('grids').last());
             }
         }

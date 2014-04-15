@@ -34,6 +34,8 @@ Ext.define('Flux.controller.UserInteraction', {
             Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
         }
 
+        this._vis = 'single-map';
+
         ////////////////////////////////////////////////////////////////////////
         // Event Listeners /////////////////////////////////////////////////////
 
@@ -102,7 +104,7 @@ Ext.define('Flux.controller.UserInteraction', {
         // Tell the dispatch to use this scenario name in all requests
         this.getController('Dispatch').setRequestNamespace(src);
 
-        metadata.load({
+        metadata.fetch({
             params: {
                 scenario: src
             },
@@ -170,12 +172,17 @@ Ext.define('Flux.controller.UserInteraction', {
         var mapQuery = Ext.ComponentQuery.query('d3geopanel');
         var w;
 
+        if (this._vis === item.getItemId()) {
+            return;
+        }
+
         // Remove any and all d3geopanel instances
         Ext.each(mapQuery, function (cmp) {
             cmp.ownerCt.remove(cmp);
         });
 
-        if (item.getItemId() === 'single-map') {
+        switch (item.getItemId()) {
+            case 'single-map':
             w = '20%';
             if (mapQuery.length === 0) {
                 this.getContentPanel.add({
@@ -184,8 +191,9 @@ Ext.define('Flux.controller.UserInteraction', {
                     anchor: '100% 100%'
                 });
             }
+            break;
 
-        } else {
+            default:
             w = 300;
             this.getSymbology().up('sidepanel').collapse();
         }
@@ -193,6 +201,8 @@ Ext.define('Flux.controller.UserInteraction', {
         this.getSourceCarousel()
             .setWidth(w)
             .getLayout().setActiveItem(item.idx);
+
+        this._vis = item.getItemId();
     },
 
     /**
@@ -266,20 +276,22 @@ Ext.define('Flux.controller.UserInteraction', {
         var y = (container.getHeight() / n);
 
         if (query.length !== 0) {
+            console.log('resizing...');//FIXME
             Ext.each(query, function (cmp) {
-                cmp.setSize(s, s).anchorTo(container.getEl(), 'tl-bl?', [x, y]);
+                console.log(cmp);//FIXME
+                cmp.setSize(s, s);//.anchorTo(container.getEl(), 'tl-bl?', [x, y]);
             });
+        } else {//FIXME
+            cmp = container.add({
+                xtype: 'd3geopanel',
+                title: Ext.String.format('{0} at {1}', values.date, values.time),
+                anchor: Ext.String.format('{0} {0}', s)
+            });
+
+            this.getController('Dispatch').loadMap({
+                time: Ext.String.format('{0}T{1}:00', values.date, values.time)
+            }, '#' + cmp.getId());
         }
-
-        cmp = container.add({
-            xtype: 'd3geopanel',
-            title: Ext.String.format('{0} at {1}', values.date, values.time),
-            anchor: Ext.String.format('{0} {0}', s)
-        });
-
-        this.getController('Dispatch').loadMap({
-            time: Ext.String.format('{0}T{1}:00', values.date, values.time)
-        }, '#' + cmp.getId());
     },
 
     /**

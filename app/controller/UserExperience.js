@@ -224,10 +224,11 @@ Ext.define('Flux.controller.UserExperience', {
                     });
                 }
             }
+
+            values[cb.group] = cb.name;
+            this.getController('Dispatch').onStatsChange(cb, values);
         }
 
-        values[cb.group] = cb.name;
-        this.getController('Dispatch').onStatsChange(cb, values);
         this.saveFieldState(cb, checked);
     },
 

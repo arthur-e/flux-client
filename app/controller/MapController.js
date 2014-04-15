@@ -215,7 +215,7 @@ Ext.define('Flux.controller.MapController', {
                 if (typeof cmp.getScale().quantiles === 'function') {
                     cmp.setScale(cmp.getScale().range(cs));
                 } else {
-                    this.updateColorScale();
+                    this.updateColorScales();
                 }
             }
         }, this));
@@ -273,7 +273,7 @@ Ext.define('Flux.controller.MapController', {
     onScaleParameterChange: function (c, value)  {
         var cfg = {}
         cfg[c.getName()] = value;
-        this.updateColorScale(cfg);
+        this.updateColorScales(cfg);
     },
 
     /**
@@ -319,34 +319,48 @@ Ext.define('Flux.controller.MapController', {
     },
 
     /**
+        Updates the color scale configuration of a specific view, as provided.
         Creates a new color scale based on changes in the scale configuration
         (measure of central tendency, number of standard deviations, or a switch
         between sequential and diverging palette types).
-        @param  config      {Object}    Properties are palette configs e.g. sigmas, tendency, paletteType
+        @param  view    {Ext.Component}
+        @param  config  {Object}    Properties are palette configs e.g. sigmas, tendency, paletteType
      */
-    updateColorScale: function (config) {
+    updateColorScale: function (view, config) {
+        var opts = config || this.getSymbology().getForm().getValues();
         var palette, scale;
-        var opts = this.getSymbology().getForm().getValues();
+        var metadata = view.getMetadata();
 
-        opts = Ext.Object.merge(opts, config);
+        if (!metadata) {
+            return;
+        }
 
         // Get the color palette
         palette = this.getStore('palettes').getById(opts.palette);
 
+        if (opts.threshold) {
+            scale = this.generateThresholdScale(opts.thresholdValues, palette.get('colors')[0]);
+        } else {
+            scale = metadata.getQuantileScale(opts).range(palette.get('colors'));
+        }
+
+        view.setScale(scale);
+    },
+
+    /**
+        Creates a new color scale based on changes in the scale configuration
+        (measure of central tendency, number of standard deviations, or a switch
+        between sequential and diverging palette types).
+        @param  config  {Object}    Properties are palette configs e.g. sigmas, tendency, paletteType
+     */
+    updateColorScales: function (config) {
+        var opts = this.getSymbology().getForm().getValues();
+
+        opts = Ext.Object.merge(opts, config || {});
+
         // Update the scale of every map
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (cmp) {
-            var metadata = cmp.getMetadata();
-            if (!metadata) {
-                return;
-            }
-
-            if (opts.threshold) {
-                scale = this.generateThresholdScale(opts.thresholdValues, palette.get('colors')[0]);
-            } else {
-                scale = metadata.getQuantileScale(opts).range(palette.get('colors'));
-            }
-
-            cmp.setScale(scale);
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (view) {
+            this.updateColorScale(view, opts);
         }, this));
     }
     

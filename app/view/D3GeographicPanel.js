@@ -156,16 +156,16 @@ Ext.define('Flux.view.D3GeographicPanel', {
         // Retain references to last drawing data and metadata; for instance,
         //  resize events require drawing again with the same (meta)data
         if (grid) {
-            this._data = grid.get('features');
+            this._model = grid;
         }
 
-        if (!this._data) {
+        if (!this._model) {
             return this;
         }
 
         // Sets the enter or update selection's data
         sel = this.panes.overlay.selectAll('.point')
-            .data(this._data, function (d, i) {
+            .data(this._model.get('features'), function (d, i) {
                 return i; // Use the cell index as the key
             });
 
@@ -591,6 +591,19 @@ Ext.define('Flux.view.D3GeographicPanel', {
     },
 
     /**
+        Toggles the display of anomalies in the data.
+        @param  state       {Boolean}
+        @param  tendency    {String}
+     */
+    toggleAnomalies: function (state, tendency) {
+        this._showAnomalies = state;
+        if (state) {
+            // Rescale the data points subtracting the measure of central tendency
+            this._addOffset = -this.getMetadata().get('stats')[tendency];
+        }
+    },
+
+    /**
         Toggles the display of the legend on/off.
         @param  state   {Boolean}
         @return         {Flux.view.D3GeographicPanel}
@@ -614,6 +627,9 @@ Ext.define('Flux.view.D3GeographicPanel', {
     update: function (selection) {
         if (selection) {
             selection.attr('fill', Ext.Function.bind(function (d, i) {
+                if (this._showAnomalies && d !== undefined) {
+                    return this.getScale()(d + this._addOffset);
+                }
                 return this.getScale()((d === undefined) ? undefined : d);
             }, this));
 
@@ -634,7 +650,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
     updateDisplay: function (data) {
         var scale = 0.039 * this.svg.attr('height');
 
-        if (!this._data) {
+        if (!this._model) {
             return this;
         }
 

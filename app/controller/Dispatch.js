@@ -240,8 +240,9 @@ Ext.define('Flux.controller.Dispatch', {
         @param  recs    {Array|Flux.model.Grid}
         @param  op      {Ext.data.Operation}
      */
+    //TODO Refactor for each view
     onMapLoad: function (recs, op) {
-        var m, measure, rec;
+        var m, rec;
         var meta = this.getStore('metadata').getById(this._namespaceId);
         var opts = this.getGlobalSettings();
 
@@ -251,8 +252,6 @@ Ext.define('Flux.controller.Dispatch', {
             rec = recs;
         }
 
-        measure = meta.get('stats')[opts.tendency];
-
         // In the case that population statistics are not used, we need to
         //  calculate summary statistics for this individual data frame
         if (opts.statsFrom === 'data') {
@@ -261,19 +260,13 @@ Ext.define('Flux.controller.Dispatch', {
             m = meta.copy();
             m.set('stats', this.summarizeMap(rec.get('features')));
             this.onMetadataLoad(undefined, [m]);
-
-            // Find the new measure of central tendency
-            measure = m.get('stats')[opts.tendency];
         }
 
-        // If viewing anomalies, take the difference of each value and the measure
-        //  of central tendency
-        if (opts.display === 'anomalies') {
-            rec = rec.copy();
-            rec.set('features', Ext.Array.map(rec.get('features'), function (v) {
-                return v - measure;
-            }));
-        }
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
+            view.toggleAnomalies((opts.display === 'anomalies'), opts.tendency);
+        });
+
+        return rec;
     },
 
     /**
@@ -291,10 +284,10 @@ Ext.define('Flux.controller.Dispatch', {
             view.configure(rec);
         });
 
-        this.getContentPanel().on('beforeadd', function (c, view) {
-            console.log('configure()');//FIXME
+        this.getContentPanel().on('beforeadd', Ext.Function.bind(function (c, view) {
             view.configure(rec);
-        });
+            //TODO this.getController('MapController').updateColorScale(view);
+        }, this));
 
         // Initialize the values of the domain bounds and threshold sliders
         Ext.each(this.getSymbology().query('enumslider'), function (cmp) {
@@ -322,9 +315,11 @@ Ext.define('Flux.controller.Dispatch', {
                 this.onMetadataLoad(undefined, [
                     this.getStore('metadata').getById(this._namespaceId).copy()
                 ]);
+
             } else {
-                console.log(value);//FIXME
-                this.onMapLoad(this.getStore('grids').last());
+                Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (view) {
+                    view.draw(this.onMapLoad(view._model));
+                }, this));
             }
         }
     },

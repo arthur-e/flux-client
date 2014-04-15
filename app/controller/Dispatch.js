@@ -2,12 +2,18 @@ Ext.define('Flux.controller.Dispatch', {
     extend: 'Ext.app.Controller',
 
     requires: [
+        'Flux.model.Geometry',
+        'Flux.model.Grid',
         'Flux.model.Metadata',
+        'Flux.store.Geometries',
         'Flux.store.Grids',
         'Flux.store.Metadata'
     ],
 
     refs: [{
+        ref: 'contentPanel',
+        selector: '#content'
+    }, {
         ref: 'settingsMenu',
         selector: '#settings-menu'
     }, {
@@ -20,9 +26,11 @@ Ext.define('Flux.controller.Dispatch', {
 
     init: function () {
 
-        Ext.create('Flux.store.Scenarios', {
-            autoLoad: true,
-            storeId: 'scenarios'
+        Ext.create('Flux.store.Geometries', {
+            storeId: 'geometries',
+            listeners: {
+                load: Ext.Function.bind(this.onGeometryLoad, this)
+            }
         });
 
         Ext.create('Flux.store.Grids', {
@@ -34,6 +42,11 @@ Ext.define('Flux.controller.Dispatch', {
             listeners: {
                 load: Ext.Function.bind(this.onMetadataLoad, this)
             }
+        });
+
+        Ext.create('Flux.store.Scenarios', {
+            autoLoad: true,
+            storeId: 'scenarios'
         });
 
         ////////////////////////////////////////////////////////////////////////
@@ -198,6 +211,19 @@ Ext.define('Flux.controller.Dispatch', {
         });
     },
 
+    /**TODO
+     */
+    onGeometryLoad: function (store, recs) {
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
+            cmp.setGridGeometry(recs[0]);
+        });
+
+        this.getContentPanel().on('beforeadd', function (c, cmp) {
+            console.log('setGridGeometry()');//FIXME
+            cmp.setGridGeometry(recs[0]);
+        });
+    },
+
     /**
         The callback function for when a map is loaded; can be called on its own
         with cached records.
@@ -246,25 +272,31 @@ Ext.define('Flux.controller.Dispatch', {
         @param  recs    {Array}
      */
     onMetadataLoad: function (store, recs) {
+        var rec = recs[0];
+        console.log('onMetadataLoad()');//FIXME
         // This is not needed as long as the "domain" field is set next
         // this.getController('MapController').updateColorScale({}, recs[0]);
         Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
             // IMPORTANT: Pass the Metadata to the view if loading a map
             //  for the first time (first-time configuration)
-            view.configure(recs[0]);
+            view.configure(rec);
+        });
+
+        this.getContentPanel().on('beforeadd', function (c, view) {
+            console.log('configure()');//FIXME
+            view.configure(rec);
         });
 
         // Initialize the values of the domain bounds and threshold sliders
         Ext.each(this.getSymbology().query('enumslider'), function (cmp) {
             cmp.setBounds([
-                recs[0].get('stats').min,
-                recs[0].get('stats').max
+                rec.get('stats').min,
+                rec.get('stats').max
             ]);
         });
 
         this.getController('MapController').updateColorScale(this.getSymbology().getForm().getValues());
-
-        this.getController('Animation').enableAnimation(recs[0]);
+        this.getController('Animation').enableAnimation(rec);
     },
 
     /**
@@ -295,6 +327,7 @@ Ext.define('Flux.controller.Dispatch', {
      */
     setRequestNamespace: function (ns) {
         this._namespaceId = ns;
+        this.getStore('geometries').setProxyNamespace(ns);
         this.getStore('grids').setProxyNamespace(ns, true); // No caching
     },
 

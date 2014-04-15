@@ -3,7 +3,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
     alias: 'widget.d3geopanel',
     requires: [
         'Ext.Function',
-        'Ext.tip.QuickTip'
+        'Ext.tip.QuickTip',
+        'Ext.toolbar.Toolbar'
     ],
 
     bbar: {
@@ -28,15 +29,15 @@ Ext.define('Flux.view.D3GeographicPanel', {
             width: 34
         },
         items: [{
-            id: 'btn-zoom-in',
+            itemId: 'btn-zoom-in',
             iconCls: 'icon-zoom-in',
             tooltip: 'Zoom In'
         }, {
-            id: 'btn-zoom-out',
+            itemId: 'btn-zoom-out',
             iconCls: 'icon-zoom-out',
             tooltip: 'Zoom Out'
         }, {
-            id: 'btn-zoom-way-out',
+            itemId: 'btn-zoom-way-out',
             iconCls: 'icon-zoom-extend',
             tooltip: 'Zoom to Layer'
         }]

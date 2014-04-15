@@ -15,7 +15,7 @@ Ext.define('Flux.view.SourcesGridPanel', {
             storeId: 'gridviews',
             model: 'Flux.model.GridView'
         });
-        this.addEvents(['itemchange', 'edit']);
+        this.addEvents(['itemchange', 'beforeedit', 'edit']);
         this.callParent(arguments);
     },
 
@@ -50,8 +50,6 @@ Ext.define('Flux.view.SourcesGridPanel', {
         iconCls: 'icon-add',
         handler : function() {
             var rowEditor = this.up('panel').findPlugin('rowediting');
-
-            // Create a model instance
             var r = Ext.create('Flux.model.GridView', {
                 source: '',
                 date: '',

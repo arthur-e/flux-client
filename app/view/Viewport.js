@@ -218,7 +218,7 @@ Ext.define('Flux.view.Viewport', {
             }]
         }, {
             region: 'center',
-            itemId: 'content',
+            id: 'content',
             xtype: 'panel',
             border: false,
             layout: 'anchor',

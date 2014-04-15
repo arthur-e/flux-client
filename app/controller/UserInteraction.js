@@ -91,39 +91,30 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     onSourceChange: function (field, sources) {
         var ct = field.up('container');
-        var store = this.getStore('metadata');
+        var geometry = this.getStore('geometries');
+        var metadata = this.getStore('metadata');
         var src = sources[0].get('_id');
 
         if (ct.getEl().mask) {
             ct.getEl().mask('Loading...');
         }
 
-        store.load({
+        // Tell the dispatch to use this scenario name in all requests
+        this.getController('Dispatch').setRequestNamespace(src);
+
+        metadata.load({
             params: {
                 scenario: src
             },
             callback: Ext.Function.bind(function (recs, op, success) {
                 var meta = recs.pop();
 
-                Ext.Ajax.request({
-                    url: Ext.String.format('/flux/api/scenarios/{0}/geometry.json', src),
+                geometry.load({
                     callback: function () {
                         if (ct.getEl().mask) {
                             ct.getEl().unmask();
                         }
-                    },
-                    success: Ext.Function.bind(function (response) {
-                        var geom = Ext.create('Flux.model.Geometry',
-                            Ext.JSON.decode(response.responseText));
-                        
-                        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
-                            cmp.setGridGeometry(geom);
-                        });
-
-                        this.getContentPanel().on('beforeadd', function (c, cmp) {
-                            cmp.setGridGeometry(geom);
-                        });
-                    }, this)
+                    }
                 });
 
                 // Guard against a fatal browser hang-up in Google Chrome that
@@ -168,10 +159,6 @@ Ext.define('Flux.controller.UserInteraction', {
             }, this)
 
         });
-
-        // Tell the dispatch to use this scenario name in all requests
-        this.getController('Dispatch').setRequestNamespace(src);
-
     },
 
     /**
@@ -269,12 +256,25 @@ Ext.define('Flux.controller.UserInteraction', {
     /**TODO
      */
     loadCoordinatedView: function (editor) {
+        var cmp;
         var container = this.getContentPanel();
         var values = editor.getCmp().getFieldValues();
-        var cmp = container.add({
+        var query = Ext.ComponentQuery.query('d3geopanel');
+        var n = (container.items.length + 1);
+        var s = Ext.String.format('{0}%', 100 / n);
+        var x = (container.getWidth() / n);
+        var y = (container.getHeight() / n);
+
+        if (query.length !== 0) {
+            Ext.each(query, function (cmp) {
+                cmp.setSize(s, s).anchorTo(container.getEl(), 'tl-bl?', [x, y]);
+            });
+        }
+
+        cmp = container.add({
             xtype: 'd3geopanel',
             title: Ext.String.format('{0} at {1}', values.date, values.time),
-            anchor: Ext.String.format('{0}% {0}%', 100 / (container.items.length + 1))
+            anchor: Ext.String.format('{0} {0}', s)
         });
 
         this.getController('Dispatch').loadMap({

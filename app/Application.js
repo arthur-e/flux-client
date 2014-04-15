@@ -42,6 +42,7 @@ Ext.define('Flux.Application', {
     ],
 
     stores: [
+        'Geometries',
         'Grids',
         'Metadata',
         'Palettes',

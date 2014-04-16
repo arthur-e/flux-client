@@ -58,8 +58,8 @@ Ext.define('Flux.controller.UserInteraction', {
                 click: this.onViewChange
             },
 
-            'sourcepanel combo[name=source]': {
-                change: this.onSingleSourceChange
+            'combo[name=source]': {
+                change: this.onSourceChange
             },
 
             'sourcepanel #aggregation-fields': {
@@ -67,12 +67,9 @@ Ext.define('Flux.controller.UserInteraction', {
             },
 
             'sourcesgridpanel': {
-                beforeedit: this.onSourceGridEdit,
-                canceledit: this.onSourceGridCancel
-            },
-
-            'sourcesgridpanel combo[name=source]': {
-                change: this.onSingleSourceChange
+                beforeedit: this.onSourceGridEntry,
+                canceledit: this.onSourceGridCancel,
+                edit: this.onSourceGridEdit
             }
 
         });
@@ -126,7 +123,7 @@ Ext.define('Flux.controller.UserInteraction', {
     // Event Handlers //////////////////////////////////////////////////////////
 
     bindMetadata: function (response) {
-        //console.log(response);//FIXME
+        console.log(response);//FIXME
     },
 
     /**
@@ -200,17 +197,27 @@ Ext.define('Flux.controller.UserInteraction', {
 
     /**TODO
      */
-    onSingleSourceChange: function (field, source, last) {
+    onSourceChange: function (field, source, last) {
+        var container;
+        var editor = field.up('roweditor');
         var view;
 
         if (Ext.isEmpty(source) || source === last) {
             return;
         }
 
-        if (Ext.isEmpty(last)) {
-            view = this.addMap(source);
+        if (editor) {
+            container = editor;
+            view = editor.editingPlugin.getCmp().getView().getSelectionModel()
+                .getSelection()[0].get('view');
+
         } else {
-            view = this.getMap();
+            container = field.up('container');
+            if (Ext.isEmpty(last)) {
+                view = this.addMap(source);
+            } else {
+                view = this.getMap();
+            }
         }
 
         Ext.Ajax.request({
@@ -222,17 +229,20 @@ Ext.define('Flux.controller.UserInteraction', {
                 scenario: source
             },
 
-            callback: Ext.Function.bind(this.onMetadataLoad,
-                field.up('container')),
+            callback: Ext.Function.bind(this.onMetadataLoad, container),
 
             success: this.bindMetadata,
 
             scope: view
-
         });
+
     },
 
-    /**TODO
+    /**
+        When the user cancels the editing/addition of a row to the RowEditor,
+        remove the associated view that was created.
+        @param  editor  {Ext.grid.plugin.Editing}
+        @param  context {Object}
      */
     onSourceGridCancel: function (editor, context) {
         var view = context.record.get('view');
@@ -242,9 +252,26 @@ Ext.define('Flux.controller.UserInteraction', {
         //TODO Need to resize maps after one is removed
     },
 
-    /**TODO
+    /**
+        When the user completes an edit on a new row in the RowEditor...
+        @param  editor  {Ext.grid.plugin.Editing}
+        @param  context {Object}
      */
     onSourceGridEdit: function (editor, context) {
+        var rec = context.record;
+        var view = rec.get('view');
+
+        view.setTitle(Ext.String.format('{0} at {1}',
+            moment(rec.get('date')).format('YYYY-MM-DD'), rec.get('time')));
+    },
+
+    /**
+        When the user adds a new row to the RowEditor, set the "view" property
+        on the associated Flux.model.GridView instance that is created.
+        @param  editor  {Ext.grid.plugin.Editing}
+        @param  context {Object}
+     */
+    onSourceGridEntry: function (editor, context) {
         view = this.addMap('New Map');
         context.record.set('view', view);
     },

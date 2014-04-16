@@ -5,6 +5,9 @@ Ext.define('Flux.controller.UserInteraction', {
         ref: 'contentPanel',
         selector: '#content'
     }, {
+        ref: 'settingsMenu',
+        selector: '#settings-menu'
+    }, {
         ref: 'sourceCarousel',
         selector: 'sourcecarousel',
     }, {
@@ -54,6 +57,10 @@ Ext.define('Flux.controller.UserInteraction', {
 
         this.control({
 
+            '#content': {
+                resize: this.onContentResize
+            },
+
             '#view-menu': {
                 click: this.onViewChange
             },
@@ -75,7 +82,12 @@ Ext.define('Flux.controller.UserInteraction', {
         });
     },
 
-    /**TODO
+    /**
+        Creates a new instance of Flux.view.D3GeographicPanel and inserts it
+        into the appropriate place inside a target Anchor layout panel, resizing
+        its siblings as necessary.
+        @param  title   {String}
+        @return         {Flux.view.D3GeographicPanel}
      */
     addMap: function (title) {
         var anchor, view;
@@ -96,7 +108,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 anchor = '50% 50%';
                 j = 2;
             } else {
-                anchor = '33% 33%';
+                anchor = '33.33% 33.33%';
                 j = 3;
             }
         }
@@ -108,7 +120,7 @@ Ext.define('Flux.controller.UserInteraction', {
             // Align those odd-indexed (towards-the-right) panels
             if (i !== 0) {
                 if (i % j !== 0) {
-                    item.alignTo(query[i - 1].getEl(), 'tr');
+                    item.alignTo(query[i - 1].getEl(), 'tl-tr');
                 } else {
                     item.alignTo(query[i - j].getEl(), 'tl-bl');
                 }
@@ -130,7 +142,7 @@ Ext.define('Flux.controller.UserInteraction', {
         //  view towards-the-right of the last view
         if (n !== 0) {
             if (n % j !== 0) {
-                view.alignTo(query[query.length - 1].getEl(), 'tr');
+                view.alignTo(query[query.length - 1].getEl(), 'tl-tr');
             } else {
                 if ((n - 1) - j < 0) {
                     view.alignTo(query[0].getEl(), 'tl-bl');
@@ -143,7 +155,27 @@ Ext.define('Flux.controller.UserInteraction', {
         return view;
     },
 
-    /**TODO
+    /**
+        Convenience function for determining the currently selected global
+        statistics settings; measure of central tendency, raw values versus
+        anomalies, and whether to use population statistics or not.
+        @return {String}
+     */
+    getGlobalSettings: function () {
+        var opts = {};
+
+        Ext.each(this.getSettingsMenu().query('menucheckitem'), function (item) {
+            if (item.checked) {
+                opts[item.group] = item.name;
+            }
+        });
+
+        return opts;
+    },
+
+    /**
+        Finds or creates a single instance of D3GeographicPanel and returns it.
+        @return {Flux.view.D3GeographicPanel}
      */
     getMap: function () {
         var query = Ext.ComponentQuery.query('d3geopanel');
@@ -156,7 +188,6 @@ Ext.define('Flux.controller.UserInteraction', {
             xtype: 'd3geopanel',
             title: 'Single Map',
             anchor: '100% 100%',
-            cls: 'zoom',
             enableZoom: true
         });
     },
@@ -164,8 +195,16 @@ Ext.define('Flux.controller.UserInteraction', {
     ////////////////////////////////////////////////////////////////////////////
     // Event Handlers //////////////////////////////////////////////////////////
 
+    /**
+        Called as a method of the Flux.view.D3Panel instance (or subclass
+        instance) that is to receive the Flux.model.Metadata instance.
+        @param  response    {Object}
+     */
     bindMetadata: function (response) {
-        console.log(response);//FIXME
+        var metadata = Ext.create('Flux.model.Metadata',
+            Ext.JSON.decode(response.responseText));
+
+        this.configure(metadata);
     },
 
     /**
@@ -176,6 +215,29 @@ Ext.define('Flux.controller.UserInteraction', {
     initAggregationFields: function (fieldset) {
         if (this.getSymbology().down('hiddenfield[name=statsFrom]').getValue() === 'data') {
             fieldset.enable();
+        }
+    },
+
+    /**
+        Propagates the resize to child Components which may not have been
+        automatically resized correctly.
+     */
+    onContentResize: function () {
+        var query = Ext.ComponentQuery.query('d3geopanel');
+
+        if (query.length > 1) {
+            Ext.each(query, function (item, i) {
+                var j = (query.length < 4) ? 2 : 3;
+
+                // Align those odd-indexed (towards-the-right) panels
+                if (i !== 0) {
+                    if (i % j !== 0) {
+                        item.alignTo(query[i - 1].getEl(), 'tl-tr');
+                    } else {
+                        item.alignTo(query[i - j].getEl(), 'tl-bl');
+                    }
+                }
+            });
         }
     },
 
@@ -237,7 +299,12 @@ Ext.define('Flux.controller.UserInteraction', {
         }
     },
 
-    /**TODO
+    /**
+        Handles a change in the data "source" from a ComboBox configured for
+        selecting from among sources (e.g. scenarios, model runs, etc.).
+        @param  field   {Ext.form.field.ComboBox}
+        @param  source  {String}
+        @param  last    {String}
      */
     onSourceChange: function (field, source, last) {
         var container;
@@ -287,7 +354,8 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // Remove the view associated with the Flux.model.GridView instance
         view.ownerCt.remove(view);
-        //TODO Need to resize maps after one is removed
+
+        this.onContentResize();
     },
 
     /**
@@ -314,7 +382,10 @@ Ext.define('Flux.controller.UserInteraction', {
         context.record.set('view', view);
     },
 
-    /**TODO
+    /**
+        Handles a change in the overall visualization type.
+        @param  menu    {Ext.menu.Menu}
+        @param  item    {Ext.menu.Item}
      */
     onViewChange: function (menu, item) {
         var viewQuery = Ext.ComponentQuery.query('d3panel');
@@ -332,7 +403,7 @@ Ext.define('Flux.controller.UserInteraction', {
         switch (item.getItemId()) {
             case 'single-map':
             w = '20%';
-            if (mapQuery.length === 0) {
+            if (viewQuery.length === 0) {
                 this.getContentPanel().add({
                     xtype: 'd3geopanel',
                     title: 'Single Map',

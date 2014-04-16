@@ -225,7 +225,10 @@ Ext.define('Flux.view.Viewport', {
             id: 'content',
             xtype: 'panel',
             border: false,
-            layout: 'anchor',
+            layout: {
+                type: 'anchor',
+                reserveScrollbar: false
+            },
             bodyStyle: 'background-color:#aaa;',
             items: [],
             bbar: {

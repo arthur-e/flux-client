@@ -7,18 +7,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
         'Ext.toolbar.Toolbar'
     ],
 
-    bbar: {
-        border: true,
-        cls: 'map-tbar',
-        style: { borderColor: '#157fcc' },
-        items: ['->', {
-            xtype: 'tbitem',
-            width: 150,
-            height: 45,
-            html: '<a href="http://mtu.edu"><img src="/flux-client/resources/MTRI_logo_dark_bg.png" /></a>'
-        }]
-    },
-
     lbar: {
         defaultType: 'button',
         cls: 'map-tbar',
@@ -60,7 +48,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
     basemapUrl: undefined,
 
     bodyStyle: {
-        backgroundColor: '#aaaaaa'
+        backgroundColor: '#aaa'
     },
 
     /**

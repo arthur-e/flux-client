@@ -12,17 +12,6 @@ Ext.define('Flux.view.D3Panel', {
         type: 'fit'
     },
 
-    bbar: {
-        border: true,
-        style: { borderColor: '#157fcc' },
-        items: ['->', {
-            xtype: 'tbitem',
-            width: 150,
-            height: 45,
-            html: '<a href="http://mtu.edu"><img class="mtri-logo" src="/flux-client/resources/MTRI_logo.png" /></a>'
-        }]
-    },
-
     items: {
         xtype: 'component',
         autoEl: {

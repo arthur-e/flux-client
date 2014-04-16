@@ -15,13 +15,13 @@ Ext.define('Flux.view.SourcesGridPanel', {
             storeId: 'gridviews',
             model: 'Flux.model.GridView'
         });
-        this.addEvents(['itemchange', 'beforeedit', 'edit']);
+        this.addEvents(['itemchange', 'beforeedit', 'canceledit', 'edit']);
         this.callParent(arguments);
     },
 
     plugins: Ext.create('Ext.grid.plugin.RowEditing', {
         clicksToMoveEditor: 1,
-        autoCancel: false
+        autoCancel: true
     }),
 
     viewConfig: {
@@ -34,6 +34,10 @@ Ext.define('Flux.view.SourcesGridPanel', {
             if (Ext.clean(vals).length === 3) {
                 this.findPlugin('rowediting').completeEdit();
             }
+        },
+
+        canceledit: function (e, context) {
+            this.getStore().remove(context.record);
         }
     },
 
@@ -50,11 +54,7 @@ Ext.define('Flux.view.SourcesGridPanel', {
         iconCls: 'icon-add',
         handler : function() {
             var rowEditor = this.up('panel').findPlugin('rowediting');
-            var r = Ext.create('Flux.model.GridView', {
-                source: '',
-                date: '',
-                time: ''
-            });
+            var r = Ext.create('Flux.model.GridView');
 
             rowEditor.cancelEdit();
             Ext.StoreManager.get('gridviews').insert(0, r);
@@ -71,6 +71,7 @@ Ext.define('Flux.view.SourcesGridPanel', {
             xtype: 'combo',
             emptyText: 'Select...',
             matchFieldWidth: false,
+            allowBlank: false,
             listConfig: {
                 width: 200
             },
@@ -102,6 +103,7 @@ Ext.define('Flux.view.SourcesGridPanel', {
             xtype: 'datefield',
             format: 'Y-m-d',
             disabled: true,
+            allowBlank: false,
             listeners: {
                 change: function () {
                     this.up('sourcesgridpanel').fireEventArgs('itemchange', arguments);
@@ -118,6 +120,7 @@ Ext.define('Flux.view.SourcesGridPanel', {
             xtype: 'combo',
             emptyText: 'Select...',
             disabled: true,
+            allowBlank: false,
             matchFieldWidth: false,
             listConfig: {
                 width: 100

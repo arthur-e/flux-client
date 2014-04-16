@@ -32,10 +32,9 @@ Ext.define('Flux.view.Viewport', {
             },
             items: [{
                 xtype: 'button',
-                disabled: true,//TODO
                 text: 'Select Visualization',
                 menu: {
-                    itemId: 'vis-menu',
+                    itemId: 'view-menu',
                     defaults: {
                         height: 36,
                         cls: 'ui-app-menu-item'
@@ -228,7 +227,20 @@ Ext.define('Flux.view.Viewport', {
             border: false,
             layout: 'anchor',
             bodyStyle: 'background-color:#aaa;',
-            items: []
+            items: [],
+            bbar: {
+                border: true,
+                style: {
+                    borderColor: '#157fcc',
+                    backgroundColor: '#aaa'
+                },
+                items: ['->', {
+                    xtype: 'tbitem',
+                    width: 150,
+                    height: 45,
+                    html: '<a href="http://mtu.edu"><img src="/flux-client/resources/MTRI_logo_dark_bg.png" /></a>'
+                }]
+            }
         }, {
             region: 'east',
             xtype: 'sidepanel',

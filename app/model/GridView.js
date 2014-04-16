@@ -7,6 +7,9 @@ Ext.define('Flux.model.GridView', {
     fields: ['source', 'time', {
         name: 'date',
         type: Ext.data.Types.Moment
+    }, {
+        name: 'view',
+        type: 'auto'
     }]
 
 });

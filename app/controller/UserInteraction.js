@@ -5,6 +5,9 @@ Ext.define('Flux.controller.UserInteraction', {
         ref: 'contentPanel',
         selector: '#content'
     }, {
+        ref: 'sourceCarousel',
+        selector: 'sourcecarousel',
+    }, {
         ref: 'symbology',
         selector: 'symbology'
     }, {
@@ -51,12 +54,25 @@ Ext.define('Flux.controller.UserInteraction', {
 
         this.control({
 
+            '#view-menu': {
+                click: this.onViewChange
+            },
+
             'sourcepanel combo[name=source]': {
                 change: this.onSingleSourceChange
             },
 
             'sourcepanel #aggregation-fields': {
                 afterrender: this.initAggregationFields
+            },
+
+            'sourcesgridpanel': {
+                beforeedit: this.onSourceGridEdit,
+                canceledit: this.onSourceGridCancel
+            },
+
+            'sourcesgridpanel combo[name=source]': {
+                change: this.onSingleSourceChange
             }
 
         });
@@ -64,29 +80,53 @@ Ext.define('Flux.controller.UserInteraction', {
 
     /**TODO
      */
-    getMap: function () {
-        var view;
-        var viewQuery = Ext.ComponentQuery.query('d3geopanel');
+    addMap: function (title) {
+        var cmp;
+        var container = this.getContentPanel();
+        var query = Ext.ComponentQuery.query('d3geopanel');
+        var n = (container.items.length + 1);
+        var anchor = Ext.String.format('{0}% {0}%', 100 / n);
 
-        // Get the target view
-        if (viewQuery.length === 0) {
-            view = this.getContentPanel().add({
-                xtype: 'd3geopanel',
-                title: 'Single Map',
-                anchor: '100% 100%'
-            });
-        } else {
-            view = viewQuery[0];
+        if (query.length === 0) {
+            anchor = '100% 100%';
         }
 
-        return view;
+        console.log(anchor);//FIXME
+
+        Ext.each(query, function (view) {
+            view.anchor = anchor;
+            container.doLayout();
+        });
+
+        return container.add({
+            xtype: 'd3geopanel',
+            title: title,
+            anchor: anchor
+        });
+    },
+
+    /**TODO
+     */
+    getMap: function () {
+        var query = Ext.ComponentQuery.query('d3geopanel');
+
+        // Get the target view
+        if (query.length !== 0) {
+            return query[0];
+        }
+
+        return this.getContentPanel().add({
+            xtype: 'd3geopanel',
+            title: 'Single Map',
+            anchor: '100% 100%'
+        });
     },
 
     ////////////////////////////////////////////////////////////////////////////
     // Event Handlers //////////////////////////////////////////////////////////
 
     bindMetadata: function (response) {
-        console.log(response);//FIXME
+        //console.log(response);//FIXME
     },
 
     /**
@@ -160,8 +200,18 @@ Ext.define('Flux.controller.UserInteraction', {
 
     /**TODO
      */
-    onSingleSourceChange: function (field, source) {
-        var view = this.getMap();
+    onSingleSourceChange: function (field, source, last) {
+        var view;
+
+        if (Ext.isEmpty(source) || source === last) {
+            return;
+        }
+
+        if (Ext.isEmpty(last)) {
+            view = this.addMap(source);
+        } else {
+            view = this.getMap();
+        }
 
         Ext.Ajax.request({
             method: 'GET',
@@ -182,6 +232,61 @@ Ext.define('Flux.controller.UserInteraction', {
         });
     },
 
+    /**TODO
+     */
+    onSourceGridCancel: function (editor, context) {
+        var view = context.record.get('view');
+
+        // Remove the view associated with the Flux.model.GridView instance
+        view.ownerCt.remove(view);
+        //TODO Need to resize maps after one is removed
+    },
+
+    /**TODO
+     */
+    onSourceGridEdit: function (editor, context) {
+        view = this.addMap('New Map');
+        context.record.set('view', view);
+    },
+
+    /**TODO
+     */
+    onViewChange: function (menu, item) {
+        var viewQuery = Ext.ComponentQuery.query('d3panel');
+        var w;
+
+        if (this._activeViewId === item.getItemId()) {
+            return;
+        }
+
+        // Remove any and all view instances
+        Ext.each(viewQuery, function (cmp) {
+            cmp.ownerCt.remove(cmp);
+        });
+
+        switch (item.getItemId()) {
+            case 'single-map':
+            w = '20%';
+            if (mapQuery.length === 0) {
+                this.getContentPanel().add({
+                    xtype: 'd3geopanel',
+                    title: 'Single Map',
+                    anchor: '100% 100%'
+                });
+            }
+            break;
+
+            default:
+            w = 300;
+            this.getSymbology().up('sidepanel').collapse();
+        }
+
+        this.getSourceCarousel()
+            .setWidth(w)
+            .getLayout().setActiveItem(item.idx);
+
+        this._activeViewId = item.getItemId();
+    }
 });
 
 

@@ -1,9 +1,11 @@
 Ext.define('Flux.model.Geometry', {
     extend: 'Ext.data.Model',
+    idProperty: 'viewId',
 
-    requires: [],
+    fields: [
+        // The ID of the view (Flux.view.*) instance
+        'viewId', {
 
-    fields: [{
         name: 'type',
         type: 'string'
     }, {

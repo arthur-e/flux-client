@@ -1,14 +1,14 @@
 Ext.define('Flux.model.Metadata', {
     extend: 'Ext.data.Model',
 
-    requires: [
-        'Ext.Date'
-    ],
-
-    idProperty: '_id',
+    idProperty: 'viewId',
 
     fields: [
+        // The ID of the view (Flux.view.*) instance
+        'viewId',
+
         '_id',
+
         'bboxmd5', {
 
         name: 'bbox',
@@ -19,7 +19,7 @@ Ext.define('Flux.model.Metadata', {
         convert: function (val) {
             var dates = [];
             Ext.each(val, function (str) {
-                dates.push(new Date(str));
+                dates.push(new moment.utc(str));
             });
             return dates;
         }
@@ -47,19 +47,22 @@ Ext.define('Flux.model.Metadata', {
         Returns an Array of Regular Expressions that describe dates that are
         outside the range of the data described by this Metadata instance.
      */
-    getInvalidDates: function () {
+    getInvalidDates: function (fmt) {
         var dates = this.get('dates');
-        var datesArray = [
-            Ext.Date.format(dates[0], 'Y-m-d')
-        ]; // Start with 1st date
+        var datesArray = [];
+
+        fmt = fmt || 'YYYY-MM-DD';
+
+        // Start with 1st date
+        datesArray.push(dates[0].format(fmt));
 
         Ext.each(this.get('steps'), function (step, i) {
             var d = dates[i];
 
             // Keep adding dates until the next breakpoint is reached
             while (d < dates[i + 1]) {
-                d = Ext.Date.add(d, Ext.Date.SECOND, step);
-                datesArray.push(Ext.Date.format(d, 'Y-m-d'));
+                d.add(step, 's'); // Add the specified number of seconds
+                datesArray.push(d.format(fmt));
             }                
         });
 

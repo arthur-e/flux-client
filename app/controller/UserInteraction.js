@@ -2,17 +2,11 @@ Ext.define('Flux.controller.UserInteraction', {
     extend: 'Ext.app.Controller',
 
     refs: [{
-        ref: 'aggregationFields',
-        selector: '#aggregation-fields'
-    }, {
         ref: 'contentPanel',
         selector: '#content'
     }, {
         ref: 'symbology',
         selector: 'symbology'
-    }, {
-        ref: 'sourceCarousel',
-        selector: 'sourcecarousel'
     }, {
         ref: 'viewport',
         selector: 'viewport'
@@ -20,11 +14,12 @@ Ext.define('Flux.controller.UserInteraction', {
 
     requires: [
         'Ext.data.ArrayStore',
-        'Ext.form.field.ComboBox',
-        'Ext.form.field.Number',
-        'Ext.resizer.Splitter',
-        'Ext.window.Window',
+        'Ext.state.CookieProvider',
         'Flux.model.Geometry',
+        'Flux.model.Grid',
+        'Flux.model.Metadata',
+        'Flux.store.Geometries',
+        'Flux.store.Grids',
         'Flux.store.Metadata'
     ],
 
@@ -34,42 +29,65 @@ Ext.define('Flux.controller.UserInteraction', {
             Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
         }
 
-        this._vis = 'single-map';
+        Ext.create('Flux.store.Geometries', {
+            storeId: 'geometries'
+        });
+
+        Ext.create('Flux.store.Grids', {
+            storeId: 'grids'
+        });
+
+        Ext.create('Flux.store.Metadata', {
+            storeId: 'metadata'
+        });
+
+        Ext.create('Flux.store.Scenarios', {
+            autoLoad: true,
+            storeId: 'scenarios'
+        });
 
         ////////////////////////////////////////////////////////////////////////
         // Event Listeners /////////////////////////////////////////////////////
 
         this.control({
 
-            '#vis-menu': {
-                click: this.onVisChange
-            },
-
-            'combo[name=source]': {
-                select: this.onSourceChange
+            'sourcepanel combo[name=source]': {
+                change: this.onSingleSourceChange
             },
 
             'sourcepanel #aggregation-fields': {
                 afterrender: this.initAggregationFields
-            },
-
-            'sourcepanel #aggregation-fields field': {
-                change: this.onAggregationChange
-            },
-
-            'sourcepanel field[name=date], sourcepanel field[name=time]': {
-                change: this.loadSingleMap
-            },
-
-            'sourcesgridpanel': {
-                edit: this.loadCoordinatedView
             }
 
         });
     },
 
+    /**TODO
+     */
+    getMap: function () {
+        var view;
+        var viewQuery = Ext.ComponentQuery.query('d3geopanel');
+
+        // Get the target view
+        if (viewQuery.length === 0) {
+            view = this.getContentPanel().add({
+                xtype: 'd3geopanel',
+                title: 'Single Map',
+                anchor: '100% 100%'
+            });
+        } else {
+            view = viewQuery[0];
+        }
+
+        return view;
+    },
+
     ////////////////////////////////////////////////////////////////////////////
     // Event Handlers //////////////////////////////////////////////////////////
+
+    bindMetadata: function (response) {
+        console.log(response);//FIXME
+    },
 
     /**
         Ensures that the Aggreation Fieldset is enabled if the
@@ -83,182 +101,42 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
-        Handles a change in the aggregation fields in the SourcesPanel. When all
-        of the fields are appropriately configured, it performs a request for
-        aggregated data according to the user's specifications.
+        Called as a method of an Ext.container.Container instance. Propagates
+        metadata response as a Flux.model.Metadata instance.
+        @param  opts        {Object}
+        @param  success     {Boolean}
+        @param  response    {Object}
      */
-    onAggregationChange: function () {
-        var args = {};
-        var vals;
+    onMetadataLoad: function (opts, success, response) {
+        var metadata = Ext.create('Flux.model.Metadata',
+            Ext.JSON.decode(response.responseText));
 
-        Ext.each(this.getAggregationFields().query('trigger'), function (cmp) {
-            args[cmp.getName()] = cmp.getValue();
-        });
+        var dates = this.query('datefield[name=date], datefield[name=date2]');
+        var times = this.query('combo[name=time], combo[name=time2]');
 
-        vals = Ext.Object.getValues(args);
-        if (Ext.Array.clean(vals).length === vals.length) {
-            this.getController('Dispatch').aggregate(args);
-        }
-    },
-
-    /**
-        Fetches the metadata for a selected dataset/source (scenario name);
-        propagates effects of the selection throughout the user interface
-        including initializing the date selection fields (with disabled dates).
-     */
-    onSourceChange: function (field, sources) {
-        var ct = field.up('container');
-        var geometry = this.getStore('geometries');
-        var metadata = this.getStore('metadata');
-        var src = sources[0].get('_id');
-
-        if (ct.getEl().mask) {
-            ct.getEl().mask('Loading...');
-        }
-
-        // Tell the dispatch to use this scenario name in all requests
-        this.getController('Dispatch').setRequestNamespace(src);
-
-        metadata.fetch({
-            params: {
-                scenario: src
-            },
-            callback: Ext.Function.bind(function (recs, op, success) {
-                var meta = recs.pop();
-
-                this.getController('Animation').enableAnimation(meta);
-
-                geometry.load({
-                    callback: function () {
-                        if (ct.getEl().mask) {
-                            ct.getEl().unmask();
-                        }
-                    }
+        if (dates) {
+            Ext.each(dates, function (target) {
+                var fmt = 'YYYY-MM-DD';
+                var dates = metadata.get('dates');
+                var firstDate = dates[0].format(fmt);
+                target.setDisabledDates(metadata.getInvalidDates(fmt));
+                //target.setMinValue(firstDate);
+                target.on('expand', function (f) {
+                    f.suspendEvent('change');
+                    f.setValue(firstDate);
+                    f.resumeEvent('change');
                 });
-
-                // Guard against a fatal browser hang-up in Google Chrome that
-                //  occurs when the Model created doesn't have the right fields
-                if (!success || (!meta.raw.hasOwnProperty('spans') && !meta.raw.hasOwnProperty('steps'))) {
-                    return;
-                }
-
-                // If the data represent spans of times, evaluate what kind of
-                //  DateField is needed
-                if (meta.get('spans')) {
-                    if (Ext.Array.every(meta.get('spans'), function (rng) {
-                        return (/^\d*[Dd]$/.test(rng)); // Some number of days...
-                    })) {
-                        // TODO Need to support multi-day spans...
-
-                    } else if (Ext.Array.every(meta.get('spans'), function (rng) {
-                        return (/^\d*[Mm]$/.test(rng)); // Some number of months...
-                    })) {
-                        // TODO Need to support multi-month spans...
-
-                    } else {
-                        // TODO Provide some kind of generic date/time accessor...
-                    }
-
-                } else { // Assume steps are specified instead
-                    this.initializeDateFields(meta, ct);
-                    this.initializeTimeFields(meta, ct);
-
-                }
-
-                // If any error/uncertainty data are available...
-                if (meta.get('uncertainty')) {
-                    // TODO Something about that...
-
-                } else {
-                    if (ct.down('checkbox[name=showUncertainty]')) {
-                        ct.down('checkbox[name=showUncertainty]').disable();
-                    }
-                }
-
-            }, this)
-
-        });
-    },
-
-    /**
-        Handles a change in the Visualization type (from 'Select Visualization').
-        @param  m       {Ext.menu.Menu}
-        @param  item    {Ext.menu.Item}
-     */
-    onVisChange: function (m, item) {
-        var mapQuery = Ext.ComponentQuery.query('d3geopanel');
-        var w;
-
-        if (this._vis === item.getItemId()) {
-            return;
-        }
-
-        // Remove any and all d3geopanel instances
-        Ext.each(mapQuery, function (cmp) {
-            cmp.ownerCt.remove(cmp);
-        });
-
-        switch (item.getItemId()) {
-            case 'single-map':
-            w = '20%';
-            if (mapQuery.length === 0) {
-                this.getContentPanel().add({
-                    xtype: 'd3geopanel',
-                    title: 'Single Map',
-                    anchor: '100% 100%'
+                target.on('focus', function (f) {
+                    f.suspendEvent('change');
+                    f.setValue(undefined);
+                    f.resumeEvent('change');
                 });
-            }
-            break;
-
-            default:
-            w = 300;
-            this.getSymbology().up('sidepanel').collapse();
+            });
         }
 
-        this.getSourceCarousel()
-            .setWidth(w)
-            .getLayout().setActiveItem(item.idx);
-
-        this._vis = item.getItemId();
-    },
-
-    /**
-        Initializes the Ext.form.field.DateField instances within the application.
-        @param  metadata    {Flux.model.Metadata}
-     */
-    initializeDateFields: function (metadata) {
-        var dates = metadata.get('dates');
-        var lastDate = Ext.Date.format(dates[dates.length - 1], 'Y-m-d');
-        var targets = Ext.ComponentQuery.query('datefield[name=date]');
-
-        Ext.each(targets, function (target) {
-            target.setDisabledDates(metadata.getInvalidDates());
-            target.setMaxValue(lastDate);
-            target.on('expand', function (f) {
-                f.suspendEvent('change');
-                f.setValue(lastDate);
-                f.resumeEvent('change');
-            });
-            target.on('focus', function (f) {
-                f.suspendEvent('change');
-                f.setValue(undefined);
-                f.resumeEvent('change');
-            });
-        });
-    },
-
-    /**
-        Initializes the Ext.form.field.Time instances contained by the
-        topNode provided (those that can be reached with topNode.down()).
-        @param  metadata    {Flux.model.Metadata}
-        @param  topNode     {Ext.Component}
-     */
-    initializeTimeFields: function (metadata, topNode) {
-        var targets = Ext.ComponentQuery.query('combo[name=time], combo[name=time2]');
-        if (targets) {
-
+        if (times) {
             // For every Ext.form.field.Time found...
-            Ext.each(targets, function (target) {
+            Ext.each(times, function (target) {
                 var mins = (Ext.Array.min(metadata.get('steps')) / 60);
                 target.bindStore(Ext.create('Ext.data.ArrayStore', {
                     fields: ['time'],
@@ -282,55 +160,27 @@ Ext.define('Flux.controller.UserInteraction', {
 
     /**TODO
      */
-    loadCoordinatedView: function (editor) {
-        var cmp;
-        var container = this.getContentPanel();
-        var values = editor.getCmp().getFieldValues();
-        var query = Ext.ComponentQuery.query('d3geopanel');
-        var n = (container.items.length + 1);
-        var s = Ext.String.format('{0}%', 100 / n);
-        var x = (container.getWidth() / n);
-        var y = (container.getHeight() / n);
+    onSingleSourceChange: function (field, source) {
+        var view = this.getMap();
 
-        if (query.length !== 0) {
-            console.log('resizing...');//FIXME
-            Ext.each(query, function (cmp) {
-                console.log(cmp);//FIXME
-                cmp.setSize(s, s);//.anchorTo(container.getEl(), 'tl-bl?', [x, y]);
-            });
-        } else {//FIXME
-            cmp = container.add({
-                xtype: 'd3geopanel',
-                title: Ext.String.format('{0} at {1}', values.date, values.time),
-                anchor: Ext.String.format('{0} {0}', s)
-            });
+        Ext.Ajax.request({
+            method: 'GET',
 
-            this.getController('Dispatch').loadMap({
-                time: Ext.String.format('{0}T{1}:00', values.date, values.time)
-            }, '#' + cmp.getId());
-        }
+            url: '/flux/api/scenarios.json',
+
+            params: {
+                scenario: source
+            },
+
+            callback: Ext.Function.bind(this.onMetadataLoad,
+                field.up('container')),
+
+            success: this.bindMetadata,
+
+            scope: view
+
+        });
     },
-
-    /**
-        Loads source data corresponding to the date and time selected so long
-        as the change in value that triggered the load results in a different
-        value from the last.
-        @param  field   {Ext.form.field.*}
-        @param  value   {String}
-        @param  last    {String}
-     */
-    loadSingleMap: function (field, value, last) {
-        var values = field.up('panel').getForm().getValues();
-        if (!value) {
-            return; // Ignore undefined, null values
-        }
-
-        if (values.date && values.time && values.date !== '' && values.time !== '') {
-            this.getController('Dispatch').loadMap({
-                time: Ext.String.format('{0}T{1}:00', values.date, values.time)
-            });
-        }
-    }
 
 });
 

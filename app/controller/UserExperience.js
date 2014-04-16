@@ -53,12 +53,10 @@ Ext.define('Flux.controller.UserExperience', {
 
             if (params.hasOwnProperty('source') && params.hasOwnProperty('date')
                 && params.hasOwnProperty('time')) {
-            //TODO Need to figure out how to automatically load data
+//TODO Need to figure out how to automatically load data
 //                Ext.onReady(Ext.Function.bind(function () {
 //                }, this));
             }
-
-            Ext.Object.merge(this.defaultState, params);
 
         }
 
@@ -81,17 +79,6 @@ Ext.define('Flux.controller.UserExperience', {
 
         });
 
-    },
-
-    /**
-        The default settings for global controls. These should match the
-        settings on the components (with these keys as their `name` or 
-        `stateId` attributes, which should be the same) i.e. the value of the
-        `value` or `checked` attributes; currently this is ONLY needed for the
-        CheckItem instances in the Settings menu.
-     */
-    defaultState: {
-        animateDelay: 1
     },
 
     ////////////////////////////////////////////////////////////////////////////
@@ -209,7 +196,6 @@ Ext.define('Flux.controller.UserExperience', {
             }
 
             values[cb.group] = cb.name;
-            this.getController('Dispatch').onStatsChange(cb, values);
         }
 
         this.saveFieldState(cb, checked);

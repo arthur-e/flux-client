@@ -228,11 +228,7 @@ Ext.define('Flux.view.Viewport', {
             border: false,
             layout: 'anchor',
             bodyStyle: 'background-color:#aaa;',
-            items: [{
-                xtype: 'd3geopanel',
-                title: 'Single Map',
-                anchor: '100% 100%'
-            }]
+            items: []
         }, {
             region: 'east',
             xtype: 'sidepanel',

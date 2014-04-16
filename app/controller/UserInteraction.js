@@ -78,28 +78,69 @@ Ext.define('Flux.controller.UserInteraction', {
     /**TODO
      */
     addMap: function (title) {
-        var cmp;
+        var anchor, view;
         var container = this.getContentPanel();
         var query = Ext.ComponentQuery.query('d3geopanel');
-        var n = (container.items.length + 1);
-        var anchor = Ext.String.format('{0}% {0}%', 100 / n);
+        var n = container.items.length;
+        // Subtract j from the aligning panel's index to find the target panel's index
+        var j;
+
+        if (n > 9) {
+            return; //TODO Warn the user
+        }
 
         if (query.length === 0) {
             anchor = '100% 100%';
+        } else {
+            if (n < 4) {
+                anchor = '50% 50%';
+                j = 2;
+            } else {
+                anchor = '33% 33%';
+                j = 3;
+            }
         }
 
-        console.log(anchor);//FIXME
-
-        Ext.each(query, function (view) {
-            view.anchor = anchor;
+        Ext.each(query, function (item, i) {
+            item.anchor = anchor;
             container.doLayout();
+
+            // Align those odd-indexed (towards-the-right) panels
+            if (i !== 0) {
+                if (i % j !== 0) {
+                    item.alignTo(query[i - 1].getEl(), 'tr');
+                } else {
+                    item.alignTo(query[i - j].getEl(), 'tl-bl');
+                }
+            }
         });
 
-        return container.add({
+        view = container.add({
             xtype: 'd3geopanel',
             title: title,
             anchor: anchor
         });
+
+        // j works here because we want the new item to be positioned below
+        //  the item at index (n - j) where n is the previous number of panels:
+        //  0   1   2   or  0   1
+        //  3   4   5       2   3
+        //  6   7   8
+        // If this is going to make an even-number of views, align this next
+        //  view towards-the-right of the last view
+        if (n !== 0) {
+            if (n % j !== 0) {
+                view.alignTo(query[query.length - 1].getEl(), 'tr');
+            } else {
+                if ((n - 1) - j < 0) {
+                    view.alignTo(query[0].getEl(), 'tl-bl');
+                } else {
+                    view.alignTo(query[n - j].getEl(), 'tl-bl');
+                }
+            }
+        }
+
+        return view;
     },
 
     /**TODO
@@ -107,7 +148,6 @@ Ext.define('Flux.controller.UserInteraction', {
     getMap: function () {
         var query = Ext.ComponentQuery.query('d3geopanel');
 
-        // Get the target view
         if (query.length !== 0) {
             return query[0];
         }
@@ -115,7 +155,9 @@ Ext.define('Flux.controller.UserInteraction', {
         return this.getContentPanel().add({
             xtype: 'd3geopanel',
             title: 'Single Map',
-            anchor: '100% 100%'
+            anchor: '100% 100%',
+            cls: 'zoom',
+            enableZoom: true
         });
     },
 
@@ -213,11 +255,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
         } else {
             container = field.up('container');
-            if (Ext.isEmpty(last)) {
-                view = this.addMap(source);
-            } else {
-                view = this.getMap();
-            }
+            view = this.getMap();
         }
 
         Ext.Ajax.request({

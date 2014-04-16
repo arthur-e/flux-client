@@ -7,30 +7,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
         'Ext.toolbar.Toolbar'
     ],
 
-    lbar: {
-        defaultType: 'button',
-        cls: 'map-tbar',
-        defaults: {
-            cls: 'btn-zoom',
-            scale: 'large',
-            height: 34,
-            width: 34
-        },
-        items: [{
-            itemId: 'btn-zoom-in',
-            iconCls: 'icon-zoom-in',
-            tooltip: 'Zoom In'
-        }, {
-            itemId: 'btn-zoom-out',
-            iconCls: 'icon-zoom-out',
-            tooltip: 'Zoom Out'
-        }, {
-            itemId: 'btn-zoom-way-out',
-            iconCls: 'icon-zoom-extend',
-            tooltip: 'Zoom to Layer'
-        }]
-    },
-
     _mercatorScale: function (phi) {
         return 1/Math.cos((Math.PI * phi) / 180);
     },
@@ -85,6 +61,35 @@ Ext.define('Flux.view.D3GeographicPanel', {
             @private
          */
         this._scale = d3.scale.quantile();
+
+        this.on('render', function () {
+            if (this.enableZoom) {
+                this.addDocked(Ext.create('Ext.toolbar.Toolbar', {
+                    dock: 'left',
+                    defaultType: 'button',
+                    cls: 'map-tbar',
+                    defaults: {
+                        cls: 'btn-zoom',
+                        scale: 'large',
+                        height: 34,
+                        width: 34
+                    },
+                    items: [{
+                        itemId: 'btn-zoom-in',
+                        iconCls: 'icon-zoom-in',
+                        tooltip: 'Zoom In'
+                    }, {
+                        itemId: 'btn-zoom-out',
+                        iconCls: 'icon-zoom-out',
+                        tooltip: 'Zoom Out'
+                    }, {
+                        itemId: 'btn-zoom-way-out',
+                        iconCls: 'icon-zoom-extend',
+                        tooltip: 'Zoom to Layer'
+                    }]
+                }), 0);
+            }
+        });
 
         this.callParent(arguments);
     },

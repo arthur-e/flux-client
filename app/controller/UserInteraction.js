@@ -44,7 +44,10 @@ Ext.define('Flux.controller.UserInteraction', {
         });
 
         Ext.create('Flux.store.Metadata', {
-            storeId: 'metadata'
+            storeId: 'metadata',
+            listeners: {
+                add: Ext.Function.bind(this.onMetadataAdded, this)
+            }
         });
 
         Ext.create('Flux.store.Scenarios', {
@@ -116,16 +119,9 @@ Ext.define('Flux.controller.UserInteraction', {
         Ext.each(query, function (item, i) {
             item.anchor = anchor;
             container.doLayout();
-
-            // Align those odd-indexed (towards-the-right) panels
-            if (i !== 0) {
-                if (i % j !== 0) {
-                    item.alignTo(query[i - 1].getEl(), 'tl-tr');
-                } else {
-                    item.alignTo(query[i - j].getEl(), 'tl-bl');
-                }
-            }
         });
+
+        this.onContentResize();
 
         view = container.add({
             xtype: 'd3geopanel',
@@ -241,9 +237,15 @@ Ext.define('Flux.controller.UserInteraction', {
         }
     },
 
+    /**TODO
+     */
+    onMetadataAdded: function (store, recs) {
+    },
+
     /**
-        Called as a method of an Ext.container.Container instance. Propagates
-        metadata response as a Flux.model.Metadata instance.
+        Propagates changes in the Metadata (most recently received
+        Flux.model.Metadata instance) to other Components that need e.g.
+        population summary statistics.
         @param  opts        {Object}
         @param  success     {Boolean}
         @param  response    {Object}
@@ -252,51 +254,13 @@ Ext.define('Flux.controller.UserInteraction', {
         var metadata = Ext.create('Flux.model.Metadata',
             Ext.JSON.decode(response.responseText));
 
-        var dates = this.query('datefield[name=date], datefield[name=date2]');
-        var times = this.query('combo[name=time], combo[name=time2]');
-
-        if (dates) {
-            Ext.each(dates, function (target) {
-                var fmt = 'YYYY-MM-DD';
-                var dates = metadata.get('dates');
-                var firstDate = dates[0].format(fmt);
-                target.setDisabledDates(metadata.getInvalidDates(fmt));
-                //target.setMinValue(firstDate);
-                target.on('expand', function (f) {
-                    f.suspendEvent('change');
-                    f.setValue(firstDate);
-                    f.resumeEvent('change');
-                });
-                target.on('focus', function (f) {
-                    f.suspendEvent('change');
-                    f.setValue(undefined);
-                    f.resumeEvent('change');
-                });
-            });
-        }
-
-        if (times) {
-            // For every Ext.form.field.Time found...
-            Ext.each(times, function (target) {
-                var mins = (Ext.Array.min(metadata.get('steps')) / 60);
-                target.bindStore(Ext.create('Ext.data.ArrayStore', {
-                    fields: ['time'],
-                    data: (function () {
-                        var i;
-                        var d0 = moment.utc(Ext.Array.min(metadata.get('dates')));
-                        var times = [];
-                        var m = 0;
-                        for (i = 0; i < (1440 / mins); i += 1) {
-                            times.push([
-                                d0.clone().add(m, 'minutes').format('HH:mm')
-                            ]);
-                            m += mins;
-                        }
-                        return times;
-                    }())
-                }));
-            });
-        }
+        // Initialize the values of the domain bounds and threshold sliders
+        Ext.each(this.getSymbology().query('enumslider'), function (cmp) {
+            cmp.setBounds([
+                metadata.get('stats').min,
+                metadata.get('stats').max
+            ]);
+        });
     },
 
     /**
@@ -334,7 +298,9 @@ Ext.define('Flux.controller.UserInteraction', {
                 scenario: source
             },
 
-            callback: Ext.Function.bind(this.onMetadataLoad, container),
+            callback: Ext.Function.createSequence(
+                Ext.Function.bind(this.onMetadataLoad, this), 
+                Ext.Function.bind(this.propagateMetadata, container)),
 
             success: this.bindMetadata,
 
@@ -422,6 +388,64 @@ Ext.define('Flux.controller.UserInteraction', {
             .getLayout().setActiveItem(item.idx);
 
         this._activeViewId = item.getItemId();
+    },
+
+    /**
+        Called as a method of an Ext.container.Container instance. Propagates
+        metadata response as a Flux.model.Metadata instance.
+        @param  opts        {Object}
+        @param  success     {Boolean}
+        @param  response    {Object}
+     */
+    propagateMetadata: function (opts, success, response) {
+        var metadata = Ext.create('Flux.model.Metadata',
+            Ext.JSON.decode(response.responseText));
+
+        var dates = this.query('datefield[name=date], datefield[name=date2]');
+        var times = this.query('combo[name=time], combo[name=time2]');
+
+        if (dates) {
+            Ext.each(dates, function (target) {
+                var fmt = 'YYYY-MM-DD';
+                var dates = metadata.get('dates');
+                var firstDate = dates[0].format(fmt);
+                target.setDisabledDates(metadata.getInvalidDates(fmt));
+                //target.setMinValue(firstDate);
+                target.on('expand', function (f) {
+                    f.suspendEvent('change');
+                    f.setValue(firstDate);
+                    f.resumeEvent('change');
+                });
+                target.on('focus', function (f) {
+                    f.suspendEvent('change');
+                    f.setValue(undefined);
+                    f.resumeEvent('change');
+                });
+            });
+        }
+
+        if (times) {
+            // For every Ext.form.field.Time found...
+            Ext.each(times, function (target) {
+                var mins = (Ext.Array.min(metadata.get('steps')) / 60);
+                target.bindStore(Ext.create('Ext.data.ArrayStore', {
+                    fields: ['time'],
+                    data: (function () {
+                        var i;
+                        var d0 = moment.utc(Ext.Array.min(metadata.get('dates')));
+                        var times = [];
+                        var m = 0;
+                        for (i = 0; i < (1440 / mins); i += 1) {
+                            times.push([
+                                d0.clone().add(m, 'minutes').format('HH:mm')
+                            ]);
+                            m += mins;
+                        }
+                        return times;
+                    }())
+                }));
+            });
+        }
     }
 });
 

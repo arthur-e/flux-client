@@ -111,9 +111,15 @@ Ext.define('Flux.controller.UserInteraction', {
         if (query.length === 0) {
             anchor = '100% 100%';
         } else {
-            if (n < 4) {
+            if (n === 1) {
+                anchor = '50% 100%';
+                j = 2;
+            } else if (n < 4) {
                 anchor = '50% 50%';
                 j = 2;
+            } else if (n >= 4 && n < 6) {
+                anchor = '33.33% 50%';
+                j = 3;
             } else {
                 anchor = '33.33% 33.33%';
                 j = 3;

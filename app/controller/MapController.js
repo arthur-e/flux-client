@@ -168,8 +168,8 @@ Ext.define('Flux.controller.MapController', {
 
         });
 
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
-            cmp.init(width, height)
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
+            view.init(width, height)
                 .setProjection(opts.projection, width, height)
                 .setBasemap(opts.basemap, kw);
         });
@@ -185,9 +185,9 @@ Ext.define('Flux.controller.MapController', {
         @param  recs    {Array}
      */
     onBasemapChange: function (c, recs) {
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
             // For every d3geopanel instance, update the basemap
-            cmp.setBasemap(recs[0].get('id'), recs[0].get('url'));
+            view.setBasemap(recs[0].get('id'), recs[0].get('url'));
         });
     },
 
@@ -197,8 +197,8 @@ Ext.define('Flux.controller.MapController', {
         @param  state   {Boolean}
      */
     onLegendDisplayChange: function (c, state) {
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
-            cmp.toggleLegend(state);
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
+            view.toggleLegend(state);
         });
     },
 
@@ -209,11 +209,11 @@ Ext.define('Flux.controller.MapController', {
      */
     onPaletteChange: function (c, recs) {
         var cs = recs[0].get('colors');
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (cmp) {
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (view) {
             // For every d3geopanel instance, update the scale's output range
-            if (cmp.getScale()) {
+            if (view.getScale()) {
                 if (typeof cmp.getScale().quantiles === 'function') {
-                    cmp.setScale(cmp.getScale().range(cs));
+                    view.setScale(view.getScale().range(cs));
                 } else {
                     this.updateColorScales();
                 }
@@ -227,13 +227,13 @@ Ext.define('Flux.controller.MapController', {
         @param  recs    {Array}
      */
     onProjectionChange: function (c, recs) {
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
-            if (cmp.getProjection().id === recs[0].get('id')) {
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
+            if (view.getProjection().id === recs[0].get('id')) {
                 return;
             }
 
             // For every d3geopanel instance, update the projection
-            cmp.setProjection(recs[0].get('id')).update();
+            view.setProjection(recs[0].get('id')).update();
         });
     },
 
@@ -313,8 +313,8 @@ Ext.define('Flux.controller.MapController', {
         }
 
         // For every d3geopanel instance, update the basemap
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (cmp) {
-            cmp.setBasemap(basemap, keyword);
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
+            view.setBasemap(basemap, keyword);
         });
     },
 

@@ -76,6 +76,10 @@ Ext.define('Flux.controller.UserInteraction', {
                 afterrender: this.initAggregationFields
             },
 
+            'sourcepanel field[name=date], field[name=time]': {
+                change: this.onDateTimeSelection
+            },
+
             'sourcesgridpanel': {
                 beforeedit: this.onSourceGridEntry,
                 canceledit: this.onSourceGridCancel,
@@ -188,6 +192,26 @@ Ext.define('Flux.controller.UserInteraction', {
         });
     },
 
+    /**TODO
+     */
+    requestMap: function (view, source, params) {
+        console.log(params);//FIXME
+
+        Ext.Ajax.request({
+            method: 'GET',
+
+            url: Ext.String.format('/flux/api/scenarios/{0}/xy.json', source),
+
+            params: params,
+
+            callback: this.onMapLoad,
+
+            success: this.bindGrid,
+
+            scope: this
+        });
+    },
+
     ////////////////////////////////////////////////////////////////////////////
     // Event Handlers //////////////////////////////////////////////////////////
 
@@ -200,7 +224,22 @@ Ext.define('Flux.controller.UserInteraction', {
         var metadata = Ext.create('Flux.model.Metadata',
             Ext.JSON.decode(response.responseText));
 
+        // Create a reference to the view by its ID; add to Metadata store
+        metadata.set('viewId', this.getId());
+        Ext.StoreManager.get('metadata').add(metadata);
+
         this.configure(metadata);
+    },
+
+    /**TODO
+        @param  response    {Object}
+     */
+    bindGrid: function (response) {
+        var grid = Ext.create('Flux.model.Grid',
+            Ext.JSON.decode(response.responseText));
+
+        console.log(grid);//FIXME
+        
     },
 
     /**
@@ -238,6 +277,26 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**TODO
+        @param  field   {Ext.form.field.*}
+        @param  value   {String}
+     */
+    onDateTimeSelection: function (field, value) {
+        var values, view;
+
+        if (!value) {
+            return; // Ignore undefined, null values
+        }
+
+        values = field.up('panel').getForm().getValues();
+        view = this.getMap();
+        if (values.date && values.time && values.date !== '' && values.time !== '') {
+            this.requestMap(view, values.source, {
+                time: Ext.String.format('{0}T{1}:00', values.date, values.time)
+            });
+        }
+    },
+
+    /**TODO
      */
     onMetadataAdded: function (store, recs) {
     },
@@ -261,6 +320,8 @@ Ext.define('Flux.controller.UserInteraction', {
                 metadata.get('stats').max
             ]);
         });
+
+        this.getController('MapController').updateColorScales();
     },
 
     /**
@@ -335,6 +396,15 @@ Ext.define('Flux.controller.UserInteraction', {
 
         view.setTitle(Ext.String.format('{0} at {1}',
             moment(rec.get('date')).format('YYYY-MM-DD'), rec.get('time')));
+
+        if (rec.get('date') && rec.get('time') && rec.get('date') !== ''
+            && rec.get('time') !== '') {
+            this.requestMap(view, rec.get('source'), {
+                time: Ext.String.format('{0}T{1}:00',
+                    Ext.Date.format(rec.get('date'), 'Y-m-d'),
+                    rec.get('time'))
+            });
+        }
     },
 
     /**

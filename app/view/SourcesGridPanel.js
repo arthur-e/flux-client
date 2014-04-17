@@ -71,7 +71,7 @@ Ext.define('Flux.view.SourcesGridPanel', {
             xtype: 'combo',
             emptyText: 'Select...',
             matchFieldWidth: false,
-//TODO            allowBlank: false,
+            allowBlank: false,
             listConfig: {
                 width: 200
             },
@@ -103,7 +103,7 @@ Ext.define('Flux.view.SourcesGridPanel', {
             xtype: 'datefield',
             format: 'Y-m-d',
             disabled: true,
-//TODO            allowBlank: false,
+            allowBlank: false,
             listeners: {
                 change: function () {
                     this.up('sourcesgridpanel').fireEventArgs('itemchange', arguments);
@@ -120,7 +120,7 @@ Ext.define('Flux.view.SourcesGridPanel', {
             xtype: 'combo',
             emptyText: 'Select...',
             disabled: true,
-//TODO            allowBlank: false,
+            allowBlank: false,
             matchFieldWidth: false,
             listConfig: {
                 width: 100

@@ -35,7 +35,6 @@ Ext.define('Flux.Application', {
 
     controllers: [
         'Animation',
-        'Dispatch',
         'MapController',
         'UserExperience',
         'UserInteraction'

@@ -127,16 +127,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
     },
 
     /**
-        Initially configure this view with the relevant Metadata.
-        @param  metadata    {Flux.model.Metadata}
-        @return             {Flux.view.D3GeographicPanel}
-     */
-    configure: function (metadata) {
-        this._metadata = metadata;
-        return this;
-    },
-
-    /**
         Draws the visualization features on the map given input data and the
         corresponding metadata.
         @param  grid    {Flux.model.Grid}
@@ -214,6 +204,15 @@ Ext.define('Flux.view.D3GeographicPanel', {
      */
     getGridGeometry: function () {
         return this._grid;
+    },
+
+    /**
+        Returns the stored reference to the Flux.model.Metadata used to drive
+        this visualizations.
+        @return {Flux.model.Metadata}
+     */
+    getMetadata: function () {
+        return this._metadata;
     },
 
     /**
@@ -298,8 +297,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
         if (this.svg !== undefined) {
             this.svg.remove()
         }
-
-        console.log(width, height);//FIXME
 
         this.svg = d3.select(elementId).append('svg')
             .attr('width', width)
@@ -480,7 +477,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
     },
 
     /**
-        Sets the grid geometry; retains a reference to the grid geometry.
+        Sets the grid geometry; retains a reference to the Flux.model.Geometry
+        instance.
         @param  geom    {Flux.model.Geometry}
         @return         {Flux.view.D3GeographicPanel}
      */
@@ -490,12 +488,13 @@ Ext.define('Flux.view.D3GeographicPanel', {
     },
 
     /**
-        Returns the stored reference to the Flux.model.Metadata used to drive
-        this visualizations.
-        @return {Flux.model.Metadata}
+        Set the metadata; retains a reference to Flux.model.Metadata instance.
+        @param  metadata    {Flux.model.Metadata}
+        @return             {Flux.view.D3GeographicPanel}
      */
-    getMetadata: function () {
-        return this._metadata;
+    setMetadata: function (metadata) {
+        this._metadata = metadata;
+        return this;
     },
 
     /**

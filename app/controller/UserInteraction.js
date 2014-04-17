@@ -156,6 +156,7 @@ Ext.define('Flux.controller.UserInteraction', {
                     view.alignTo(query[n - j].getEl(), 'tl-bl');
                 }
             }
+
         }
 
         return view;
@@ -210,11 +211,11 @@ Ext.define('Flux.controller.UserInteraction', {
 
             params: params,
 
-            callback: this.onMapLoad,
+            callback: Ext.Function.bind(this.onMapLoad, this),
 
             success: this.bindGrid,
 
-            scope: this
+            scope: view
         });
     },
 
@@ -230,22 +231,41 @@ Ext.define('Flux.controller.UserInteraction', {
         var metadata = Ext.create('Flux.model.Metadata',
             Ext.JSON.decode(response.responseText));
 
-        // Create a reference to the view by its ID; add to Metadata store
         metadata.set('viewId', this.getId());
         Ext.StoreManager.get('metadata').add(metadata);
 
-        this.configure(metadata);
+        this.setMetadata(metadata);
     },
 
-    /**TODO
+    /**
+        Called as a method of the Flux.view.D3Panel instance (or subclass
+        instance) that is to receive the Flux.model.Geometry instance.
+        @param  response    {Object}
+     */
+    bindGeometry: function (response) {
+        var geometry = Ext.create('Flux.model.Geometry',
+            Ext.JSON.decode(response.responseText));
+
+        geometry.set('viewId', this.getId());
+        Ext.StoreManager.get('metadata').add(geometry);
+
+        this.setGridGeometry(geometry);
+    },
+
+    /**
+        Called as a method of the Flux.view.D3Panel instance (or subclass
+        instance) which then calls its draw() method, receiving the Grid model
+        as the data.
         @param  response    {Object}
      */
     bindGrid: function (response) {
         var grid = Ext.create('Flux.model.Grid',
             Ext.JSON.decode(response.responseText));
 
-        console.log(grid);//FIXME
-        
+        grid.set('viewId', this.getId());
+        Ext.StoreManager.get('grids').add(grid);
+
+        this.draw(grid);
     },
 
     /**
@@ -267,15 +287,15 @@ Ext.define('Flux.controller.UserInteraction', {
         var query = Ext.ComponentQuery.query('d3geopanel');
 
         if (query.length > 1) {
-            Ext.each(query, function (item, i) {
+            Ext.each(query, function (view, i) {
                 var j = (query.length < 4) ? 2 : 3;
 
                 // Align those odd-indexed (towards-the-right) panels
                 if (i !== 0) {
                     if (i % j !== 0) {
-                        item.alignTo(query[i - 1].getEl(), 'tl-tr');
+                        view.alignTo(query[i - 1].getEl(), 'tl-tr');
                     } else {
-                        item.alignTo(query[i - j].getEl(), 'tl-bl');
+                        view.alignTo(query[i - j].getEl(), 'tl-bl');
                     }
                 }
             });
@@ -300,6 +320,14 @@ Ext.define('Flux.controller.UserInteraction', {
                 time: Ext.String.format('{0}T{1}:00', values.date, values.time)
             });
         }
+    },
+
+    /**TODO
+        @param  opts        {Object}
+        @param  success     {Boolean}
+        @param  response    {Object}
+     */
+    onMapLoad: function (opts, success, response) {
     },
 
     /**TODO
@@ -356,21 +384,27 @@ Ext.define('Flux.controller.UserInteraction', {
             view = this.getMap();
         }
 
+        // Load Metadata
         Ext.Ajax.request({
             method: 'GET',
-
             url: '/flux/api/scenarios.json',
-
             params: {
                 scenario: source
             },
-
             callback: Ext.Function.createSequence(
                 Ext.Function.bind(this.onMetadataLoad, this), 
                 Ext.Function.bind(this.propagateMetadata, container)),
 
             success: this.bindMetadata,
 
+            scope: view
+        });
+
+        // Load Geometry
+        Ext.Ajax.request({
+            method: 'GET',
+            url: Ext.String.format('/flux/api/scenarios/{0}/geometry.json', source),
+            success: this.bindGeometry,
             scope: view
         });
 
@@ -522,6 +556,49 @@ Ext.define('Flux.controller.UserInteraction', {
                 }));
             });
         }
+    },
+
+    /**
+        Returns an object which can be used to calculate statistics on the
+        the passed numeric Array.
+        @param  arr {Array}
+        @return {Stats}
+     */
+    Stats: function (arr) {
+        arr = arr || [];
+
+        this.arithmeticMean = function () {
+            var i, sum = 0;
+     
+            for (i = 0; i < arr.length; i += 1) {
+                sum += arr[i];
+            }
+     
+            return sum / arr.length;
+        };
+     
+        this.mean = this.arithmeticMean;
+     
+        this.stdDev = function () {
+            var mean, i, sum = 0;
+     
+            mean = this.arithmeticMean();
+            for (i = 0; i < arr.length; i += 1) {
+                sum += Math.pow(arr[i] - mean, 2);
+            }
+     
+            return Math.pow(sum / arr.length, 0.5);
+        };
+     
+        this.median = function () {
+            var middleValueId = Math.floor(arr.length / 2);
+     
+            return arr.slice().sort(function (a, b) {
+                return a - b;
+            })[middleValueId];
+        };
+     
+        return this;
     }
 });
 

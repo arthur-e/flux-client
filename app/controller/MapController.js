@@ -16,10 +16,12 @@ Ext.define('Flux.controller.MapController', {
 
         this.control({
 
-            // Draws the D3 element(s) when their container(s) are ready    
-            'd3geopanel > component[autoEl]': {
-                boxready: this.initialize,
+            'd3geopanel': {
                 resize: this.onResize
+            },
+
+            'd3geopanel > component[autoEl]': {
+                boxready: this.initialize
             },
 
             'mapsettings checkbox[name=showLegends]': {
@@ -240,26 +242,31 @@ Ext.define('Flux.controller.MapController', {
     /**
         Handles changes in the size of the D3 drawing area by replacing the
         SVG element with a new instance.
-        @param  cmp         {Ext.Component}
+        @param  view        {Flux.view.D3Panel}
         @param  width       {Number}        The resized width
         @param  height      {Number}        The resized height
         @param  oldWidth    {Number}        The original width
         @param  oldHeight   {Number}        The original height
      */
-    onResize: function (cmp, width, height, oldWidth, oldHeight) {
-        var basemap;
+    onResize: function (view, width, height, oldWidth, oldHeight) {
         // oldWidth and oldHeight undefined when 'resize' event fires as part
         //  of the initial layout; we want to avoid acting on this firing
-        if (oldWidth && oldHeight && width !== oldWidth && height !== oldHeight) {
-            basemap = this.getMapSettings().down('combo[name=basemap]').getValue();
+        if (oldWidth && oldHeight) {
+            if (width !== oldWidth && height !== oldHeight) {
+                // Update the projections ComboBox; rescale each projection contained
+                view.init(width, height)
+                    .setBasemap(this.getMapSettings().down('combo[name=basemap]').getValue())
+                    .draw()
+                    .updateLegend()
+                    .updateDisplay();
 
-            // Update the projections ComboBox; rescale each projection contained
-            cmp.up('panel')
-                .init(width, height)
-                .setBasemap(basemap)
-                .draw()
-                .updateLegend()
-                .updateDisplay();
+            } else if (width !== oldWidth || height !== oldHeight) {
+                // If only the width OR only the height changes, we can simply
+                //  redraw the map
+                view.ownerCt.on('afterlayout', function () {
+                    view.draw().updateLegend();
+                });
+            }
         }
     },
 

@@ -194,8 +194,8 @@ Ext.define('Flux.controller.UserInteraction', {
             xtype: 'd3geopanel',
             title: 'Single Map',
             anchor: '100% 100%',
-            enableZoom: true
-        });
+            enableZoomControls: true
+        }).toggleTransitions(true);
     },
 
     /**TODO
@@ -262,7 +262,7 @@ Ext.define('Flux.controller.UserInteraction', {
         grid.set('viewId', this.getId());
         Ext.StoreManager.get('grids').add(grid);
 
-        this.draw(grid);
+        this.draw(grid, true);
     },
 
     /**

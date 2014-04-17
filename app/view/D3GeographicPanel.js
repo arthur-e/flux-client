@@ -53,8 +53,15 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
         /**
             An internal reference to the legend selection.
+            @private
           */
         this._legend = {};
+
+        /**
+            TODO
+            @private
+          */
+        this._transitions = false;
 
         /**
             The scale used for coloring map elements.
@@ -63,7 +70,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         this._scale = d3.scale.quantile();
 
         this.on('render', function () {
-            if (this.enableZoom) {
+            if (this.enableZoomControls) {
                 this.addDocked(Ext.create('Ext.toolbar.Toolbar', {
                     dock: 'left',
                     defaultType: 'button',
@@ -130,11 +137,15 @@ Ext.define('Flux.view.D3GeographicPanel', {
         Draws the visualization features on the map given input data and the
         corresponding metadata.
         @param  grid    {Flux.model.Grid}
+        @param  zoom    {Boolean}
         @return         {Flux.view.D3GeographicPanel}
      */
-    draw: function (grid) {
-        var bbox, lat, lng, c1, c2, sel;
+    draw: function (grid, zoom) {
+        var bbox, lat, lng, c1, c2, sel, target;
         var proj = this.getProjection();
+
+        // Disallow zooming by default
+        zoom = (zoom === true);
 
         // Retain references to last drawing data and metadata; for instance,
         //  resize events require drawing again with the same (meta)data
@@ -188,13 +199,21 @@ Ext.define('Flux.view.D3GeographicPanel', {
             c2 = proj([lng, lat]);
 
             this.zoom.translate([(c1[0] - c2[0]), (c1[1] - c2[1])])
-                .event(this.wrapper.transition().duration(500));
-
+                .event((this._transitions) ? this.wrapper.transition().duration(500) : this.wrapper);
             this.setZoom(2 * (this.svg.attr('width')) / proj([(bbox[2] - bbox[0]), 0])[0]);
         }
 
         this._isDrawn = true;
         this.fireEventArgs('draw', [this, (grid || this._model)]);
+        return this;
+    },
+
+    /**
+        Allow or disallow transitions in attribute transformations.
+        @param  state   {Boolean}
+     */
+    toggleTransitions: function (state) {
+        this._transitions = state;
         return this;
     },
 
@@ -567,7 +586,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
                     c[0] + (t[0] - c[0]) / scale * newScale, 
                     c[1] + (t[1] - c[1]) / scale * newScale
                 ])
-                .event(this.wrapper.transition().duration(duration));
+                .event((this._transitions) ? this.wrapper.transition().duration(duration) : this.wrapper);
 
         } else {
             this.zoom.scale(1)
@@ -575,7 +594,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
                     c[0] + (t[0] - c[0]) / scale, 
                     c[1] + (t[1] - c[1]) / scale
                 ])
-                .event(this.wrapper.transition().duration(duration));
+                .event((this._transitions) ? this.wrapper.transition().duration(duration) : this.wrapper);
 
         }
 

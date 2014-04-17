@@ -256,7 +256,7 @@ Ext.define('Flux.controller.MapController', {
                 // Update the projections ComboBox; rescale each projection contained
                 view.init(width, height)
                     .setBasemap(this.getMapSettings().down('combo[name=basemap]').getValue())
-                    .draw()
+                    .draw(undefined, true)
                     .updateLegend()
                     .updateDisplay();
 

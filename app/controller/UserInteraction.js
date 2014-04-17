@@ -11,6 +11,12 @@ Ext.define('Flux.controller.UserInteraction', {
         ref: 'sourceCarousel',
         selector: 'sourcecarousel',
     }, {
+        ref: 'sourcePanel',
+        selector: 'sourcepanel'
+    }, {
+        ref: 'sourcesGrid',
+        selector: 'sourcesgridpanel'
+    }, {
         ref: 'symbology',
         selector: 'symbology'
     }, {
@@ -64,8 +70,8 @@ Ext.define('Flux.controller.UserInteraction', {
                 resize: this.onContentResize
             },
 
-            '#view-menu': {
-                click: this.onViewChange
+            '#visual-menu': {
+                click: this.onVisualChange
             },
 
             'combo[name=source]': {
@@ -449,7 +455,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  menu    {Ext.menu.Menu}
         @param  item    {Ext.menu.Item}
      */
-    onViewChange: function (menu, item) {
+    onVisualChange: function (menu, item) {
         var viewQuery = Ext.ComponentQuery.query('d3panel');
         var w;
 
@@ -464,19 +470,18 @@ Ext.define('Flux.controller.UserInteraction', {
 
         switch (item.getItemId()) {
             case 'single-map':
-            w = '20%';
-            if (viewQuery.length === 0) {
-                this.getContentPanel().add({
-                    xtype: 'd3geopanel',
-                    title: 'Single Map',
-                    anchor: '100% 100%'
-                });
-            }
-            break;
+                w = '20%';
+                if (viewQuery.length === 0) {
+                    this.getMap();
+                }
+                this.getSourcePanel().getForm().reset();
+                break;
 
-            default:
-            w = 300;
-            this.getSymbology().up('sidepanel').collapse();
+            case 'coordinated-view':
+                w = 300;
+                this.getSymbology().up('sidepanel').collapse();
+                this.getSourcesGrid().getStore().removeAll();
+                break;
         }
 
         this.getSourceCarousel()

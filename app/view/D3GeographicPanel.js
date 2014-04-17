@@ -91,15 +91,24 @@ Ext.define('Flux.view.D3GeographicPanel', {
                     items: [{
                         itemId: 'btn-zoom-in',
                         iconCls: 'icon-zoom-in',
-                        tooltip: 'Zoom In'
+                        tooltip: 'Zoom In',
+                        listeners: {
+                            click: Ext.Function.bind(this.setZoom, this, [1.3])
+                        }
                     }, {
                         itemId: 'btn-zoom-out',
                         iconCls: 'icon-zoom-out',
-                        tooltip: 'Zoom Out'
+                        tooltip: 'Zoom Out',
+                        listeners: {
+                            click: Ext.Function.bind(this.setZoom, this, [0.7])
+                        }
                     }, {
                         itemId: 'btn-zoom-way-out',
                         iconCls: 'icon-zoom-extend',
-                        tooltip: 'Zoom to Layer'
+                        tooltip: 'Zoom to Layer',
+                        listeners: {
+                            click: Ext.Function.bind(this.setZoom, this, [0.1])
+                        }
                     }]
                 }), 0);
             }
@@ -416,14 +425,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
         this._legend.yAxis = d3.svg.axis()
             .scale(this._legend.yScale)
             .orient('right');
-
-        // Initialize the Zoom In/Zoom Out buttons
-        d3.select('#btn-zoom-in').on('click',
-            Ext.Function.bind(this.setZoom, this, [1.3]));
-        d3.select('#btn-zoom-out').on('click',
-            Ext.Function.bind(this.setZoom, this, [0.7]));
-        d3.select('#btn-zoom-way-out').on('click',
-            Ext.Function.bind(this.setZoom, this, [0.1]));
 
         this._isDrawn = false;
 

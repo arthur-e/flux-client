@@ -34,7 +34,7 @@ Ext.define('Flux.view.Viewport', {
                 xtype: 'button',
                 text: 'Select Visualization',
                 menu: {
-                    itemId: 'view-menu',
+                    itemId: 'visual-menu',
                     defaults: {
                         height: 36,
                         cls: 'ui-app-menu-item'

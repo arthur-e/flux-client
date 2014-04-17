@@ -225,15 +225,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
     },
 
     /**
-        Allow or disallow transitions in attribute transformations.
-        @param  state   {Boolean}
-     */
-    toggleTransitions: function (state) {
-        this._transitions = state;
-        return this;
-    },
-
-    /**
         Returns the retained reference to the underlying grid geometry.
         @return {Flux.model.Geometry}
      */
@@ -429,6 +420,13 @@ Ext.define('Flux.view.D3GeographicPanel', {
         this._isDrawn = false;
 
         return this;
+    },
+
+    /**TODO
+     */
+    redraw: function () {
+        this.ownerCt.un('afterlayout', this.redraw);
+        this.draw().updateLegend();
     },
 
     /**
@@ -639,6 +637,16 @@ Ext.define('Flux.view.D3GeographicPanel', {
             this.panes.legend.attr('class', 'pane legend hidden');
         }
 
+        return this;
+    },
+
+
+    /**
+        Allow or disallow transitions in attribute transformations.
+        @param  state   {Boolean}
+     */
+    toggleTransitions: function (state) {
+        this._transitions = state;
         return this;
     },
 

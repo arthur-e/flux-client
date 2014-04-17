@@ -214,9 +214,9 @@ Ext.define('Flux.view.Viewport', {
             border: true,
             width: '20%',
             items: [{
-                xtype: 'sourcepanel',
-                id: 'single-map'
-            }, {
+//                xtype: 'sourcepanel',
+//                id: 'single-map'
+//            }, {
                 xtype: 'sourcesgridpanel',
                 id: 'coordinated-view'
             }]

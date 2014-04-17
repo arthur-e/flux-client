@@ -109,6 +109,9 @@ Ext.define('Flux.controller.UserInteraction', {
         // Subtract j from the aligning panel's index to find the target panel's index
         var j;
 
+        //TODO
+        container._panelLayoutCount = 0;
+
         if (n > 9) {
             return; //TODO Warn the user
         }
@@ -133,6 +136,9 @@ Ext.define('Flux.controller.UserInteraction', {
 
         Ext.each(query, function (item, i) {
             item.anchor = anchor;
+            item.ownerCt.on('afterlayout', item.redraw, item, {
+                buffer: 1
+            });
             container.doLayout();
         });
 
@@ -227,33 +233,21 @@ Ext.define('Flux.controller.UserInteraction', {
     // Event Handlers //////////////////////////////////////////////////////////
 
     /**
-        Called as a method of the Flux.view.D3Panel instance (or subclass
-        instance) that is to receive the Flux.model.Metadata instance.
-        @param  response    {Object}
+        TODO
      */
-    bindMetadata: function (response) {
-        var metadata = Ext.create('Flux.model.Metadata',
-            Ext.JSON.decode(response.responseText));
-
-        metadata.set('viewId', this.getId());
-        Ext.StoreManager.get('metadata').add(metadata);
-
-        this.setMetadata(metadata);
+    bindMetadata: function (view, metadata) {
+        //TODO metadata.set('viewId', this.getId());
+        this.getStore('metadata').add(metadata);
+        view.setMetadata(metadata);
     },
 
     /**
-        Called as a method of the Flux.view.D3Panel instance (or subclass
-        instance) that is to receive the Flux.model.Geometry instance.
-        @param  response    {Object}
+        TODO
      */
-    bindGeometry: function (response) {
-        var geometry = Ext.create('Flux.model.Geometry',
-            Ext.JSON.decode(response.responseText));
-
-        geometry.set('viewId', this.getId());
-        Ext.StoreManager.get('metadata').add(geometry);
-
-        this.setGridGeometry(geometry);
+    bindGeometry: function (view, geometry) {
+        //TODO geometry.set('viewId', this.getId());
+        this.getStore('geometries').add(geometry);
+        view.setGridGeometry(geometry);
     },
 
     /**
@@ -266,7 +260,7 @@ Ext.define('Flux.controller.UserInteraction', {
         var grid = Ext.create('Flux.model.Grid',
             Ext.JSON.decode(response.responseText));
 
-        grid.set('viewId', this.getId());
+        //TODO grid.set('viewId', this.getId());
         Ext.StoreManager.get('grids').add(grid);
 
         this.draw(grid, true);
@@ -355,14 +349,9 @@ Ext.define('Flux.controller.UserInteraction', {
         Propagates changes in the Metadata (most recently received
         Flux.model.Metadata instance) to other Components that need e.g.
         population summary statistics.
-        @param  opts        {Object}
-        @param  success     {Boolean}
-        @param  response    {Object}
+        @param  metadata    {Flux.model.Metadata}
      */
-    onMetadataLoad: function (opts, success, response) {
-        var metadata = Ext.create('Flux.model.Metadata',
-            Ext.JSON.decode(response.responseText));
-
+    onMetadataLoad: function (metadata) {
         // Initialize the values of the domain bounds and threshold sliders
         Ext.each(this.getSymbology().query('enumslider'), function (cmp) {
             cmp.setBounds([
@@ -384,7 +373,7 @@ Ext.define('Flux.controller.UserInteraction', {
     onSourceChange: function (field, source, last) {
         var container = field.up('panel');
         var editor = field.up('roweditor');
-        var view;
+        var metadata, geometry, view;
 
         if (Ext.isEmpty(source) || source === last) {
             return;
@@ -398,29 +387,52 @@ Ext.define('Flux.controller.UserInteraction', {
             view = this.getMap();
         }
 
-        // Load Metadata
-        Ext.Ajax.request({
-            method: 'GET',
-            url: '/flux/api/scenarios.json',
-            params: {
-                scenario: source
-            },
-            callback: Ext.Function.createSequence(
-                Ext.Function.bind(this.onMetadataLoad, this), 
-                Ext.Function.bind(this.propagateMetadata, container)),
+        metadata = this.getStore('metadata').getById(source);
+        geometry = this.getStore('geometries').getById(source);
 
-            success: this.bindMetadata,
+        if (metadata) {
+            Ext.Function.createSequence(
+                this.bindMetadata(view, metadata),
+                this.onMetadataLoad(metadata));
+            this.propagateMetadata(container, metadata);
+            
+        } else {
+            Ext.Ajax.request({
+                method: 'GET',
+                url: '/flux/api/scenarios.json',
+                params: {
+                    scenario: source
+                },
+                callback: function (o, s, response) {
+                    var metadata = Ext.create('Flux.model.Metadata',
+                        Ext.JSON.decode(response.responseText));
 
-            scope: view
-        });
+                    Ext.Function.createSequence(
+                        this.bindMetadata(view, metadata),
+                        this.onMetadataLoad(metadata));
+                    this.propagateMetadata(container, metadata);
+                },
 
-        // Load Geometry
-        Ext.Ajax.request({
-            method: 'GET',
-            url: Ext.String.format('/flux/api/scenarios/{0}/geometry.json', source),
-            success: this.bindGeometry,
-            scope: view
-        });
+                scope: this
+            });
+        }
+
+        if (geometry) {
+            this.bindGeometry(view, geometry);
+
+        } else {
+            Ext.Ajax.request({
+                method: 'GET',
+                url: Ext.String.format('/flux/api/scenarios/{0}/geometry.json', source),
+                callback: function (o, s, response) {
+                    var geometry = Ext.create('Flux.model.Geometry',
+                        Ext.JSON.decode(response.responseText));
+
+                    this.bindGeometry(view, geometry);
+                },
+                scope: this
+            });
+        }
 
     },
 
@@ -491,19 +503,11 @@ Ext.define('Flux.controller.UserInteraction', {
         this._activeViewId = item.getItemId();
     },
 
-    /**
-        Called as a method of an Ext.container.Container instance. Propagates
-        metadata response as a Flux.model.Metadata instance.
-        @param  opts        {Object}
-        @param  success     {Boolean}
-        @param  response    {Object}
+    /**TODO
      */
-    propagateMetadata: function (opts, success, response) {
-        var metadata = Ext.create('Flux.model.Metadata',
-            Ext.JSON.decode(response.responseText));
-
-        var dates = this.query('datefield[name=date], datefield[name=date2]');
-        var times = this.query('combo[name=time], combo[name=time2]');
+    propagateMetadata: function (container, metadata) {
+        var dates = container.query('datefield[name=date], datefield[name=date2]');
+        var times = container.query('combo[name=time], combo[name=time2]');
 
         if (dates) {
             Ext.each(dates, function (target) {

@@ -261,11 +261,6 @@ Ext.define('Flux.controller.MapController', {
                     .updateDisplay();
 
             } else if (width !== oldWidth || height !== oldHeight) {
-                // If only the width OR only the height changes, we can simply
-                //  redraw the map
-                view.ownerCt.on('afterlayout', function () {
-                    view.draw().updateLegend();
-                });
             }
         }
     },
@@ -325,7 +320,7 @@ Ext.define('Flux.controller.MapController', {
         });
     },
 
-    /**
+    /** TODO Migrate to the view?
         Updates the color scale configuration of a specific view, as provided.
         Creates a new color scale based on changes in the scale configuration
         (measure of central tendency, number of standard deviations, or a switch

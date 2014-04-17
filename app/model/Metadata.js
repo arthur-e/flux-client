@@ -1,14 +1,10 @@
 Ext.define('Flux.model.Metadata', {
     extend: 'Ext.data.Model',
 
-    idProperty: 'viewId',
+    idProperty: '_id',
 
     fields: [
-        // The ID of the view (Flux.view.*) instance
-        'viewId',
-
         '_id',
-
         'bboxmd5', {
 
         name: 'bbox',
@@ -53,11 +49,24 @@ Ext.define('Flux.model.Metadata', {
 
         fmt = fmt || 'YYYY-MM-DD';
 
+// Should not be necessary to sort them
+//        dates.sort(function compare (a, b) {
+//            if (a.isBefore(b)) {
+//                return -1;
+//            }
+
+//            if (a.isAfter(b)) {
+//               return 1;
+//            }
+
+//            return 0;
+//        });
+
         // Start with 1st date
         datesArray.push(dates[0].format(fmt));
 
         Ext.each(this.get('steps'), function (step, i) {
-            var d = dates[i];
+            var d = dates[i].clone();
 
             // Keep adding dates until the next breakpoint is reached
             while (d < dates[i + 1]) {

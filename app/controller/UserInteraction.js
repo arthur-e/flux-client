@@ -72,18 +72,17 @@ Ext.define('Flux.controller.UserInteraction', {
                 change: this.onSourceChange
             },
 
+            'field[name=date], field[name=time]': {
+                change: this.onDateTimeSelection
+            },
+
             'sourcepanel #aggregation-fields': {
                 afterrender: this.initAggregationFields
             },
 
-            'sourcepanel field[name=date], field[name=time]': {
-                change: this.onDateTimeSelection
-            },
-
             'sourcesgridpanel': {
                 beforeedit: this.onSourceGridEntry,
-                canceledit: this.onSourceGridCancel,
-                edit: this.onSourceGridEdit
+                canceledit: this.onSourceGridCancel
             }
 
         });
@@ -202,8 +201,6 @@ Ext.define('Flux.controller.UserInteraction', {
     /**TODO
      */
     requestMap: function (view, source, params) {
-        console.log(params);//FIXME
-
         Ext.Ajax.request({
             method: 'GET',
 
@@ -302,20 +299,32 @@ Ext.define('Flux.controller.UserInteraction', {
         }
     },
 
-    /**TODO
+    /**
+        Handles a change in the "date" or "time" fields signifying the user is
+        ready to load map data for that date and time.
         @param  field   {Ext.form.field.*}
         @param  value   {String}
      */
     onDateTimeSelection: function (field, value) {
-        var values, view;
+        var editor = field.up('roweditor');
+        var values = field.up('panel').getForm().getValues();
+        var view;
 
         if (!value) {
             return; // Ignore undefined, null values
         }
 
-        values = field.up('panel').getForm().getValues();
-        view = this.getMap();
-        if (values.date && values.time && values.date !== '' && values.time !== '') {
+        if (editor) {
+            view = editor.editingPlugin.getCmp().getView().getSelectionModel()
+                .getSelection()[0].get('view');
+
+            view.setTitle(Ext.String.format('{0} at {1}', values.date, values.time));
+
+        } else {
+            view = this.getMap();
+        }
+
+        if (!Ext.isEmpty(values.date) && !Ext.isEmpty(values.time)) {
             this.requestMap(view, values.source, {
                 time: Ext.String.format('{0}T{1}:00', values.date, values.time)
             });
@@ -366,7 +375,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  last    {String}
      */
     onSourceChange: function (field, source, last) {
-        var container;
+        var container = field.up('panel');
         var editor = field.up('roweditor');
         var view;
 
@@ -375,12 +384,10 @@ Ext.define('Flux.controller.UserInteraction', {
         }
 
         if (editor) {
-            container = editor;
             view = editor.editingPlugin.getCmp().getView().getSelectionModel()
                 .getSelection()[0].get('view');
 
         } else {
-            container = field.up('container');
             view = this.getMap();
         }
 
@@ -423,28 +430,6 @@ Ext.define('Flux.controller.UserInteraction', {
         view.ownerCt.remove(view);
 
         this.onContentResize();
-    },
-
-    /**
-        When the user completes an edit on a new row in the RowEditor...
-        @param  editor  {Ext.grid.plugin.Editing}
-        @param  context {Object}
-     */
-    onSourceGridEdit: function (editor, context) {
-        var rec = context.record;
-        var view = rec.get('view');
-
-        view.setTitle(Ext.String.format('{0} at {1}',
-            moment(rec.get('date')).format('YYYY-MM-DD'), rec.get('time')));
-
-        if (rec.get('date') && rec.get('time') && rec.get('date') !== ''
-            && rec.get('time') !== '') {
-            this.requestMap(view, rec.get('source'), {
-                time: Ext.String.format('{0}T{1}:00',
-                    Ext.Date.format(rec.get('date'), 'Y-m-d'),
-                    rec.get('time'))
-            });
-        }
     },
 
     /**

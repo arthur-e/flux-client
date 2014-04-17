@@ -135,7 +135,8 @@ Ext.define('Flux.controller.UserInteraction', {
         view = container.add({
             xtype: 'd3geopanel',
             title: title,
-            anchor: anchor
+            anchor: anchor,
+            enableDisplay: false
         });
 
         // j works here because we want the new item to be positioned below

@@ -28,21 +28,15 @@ Ext.define('Flux.view.D3GeographicPanel', {
     },
 
     /**
+        Enables the heads-up-display to show timestamps, mouseover events, etc.
+     */
+    enableDisplay: true,
+
+    /**
         Initializes the component.
      */
     initComponent: function () {
         this.addEvents(['draw', 'scalechange']);
-
-        /**
-            Update the timestamp display.
-         */
-        this.on('draw', function (v, grid) {
-            this._timestamp = grid.getTimestampDisplay('YYYY MM-DD HH:ss');
-            this.updateDisplay([{
-                id: 'timestamp',
-                text: this._timestamp
-            }]);
-        });
 
         /**
             Flag to indicate whether or not the <rect> elements have already
@@ -68,6 +62,19 @@ Ext.define('Flux.view.D3GeographicPanel', {
             @private
          */
         this._scale = d3.scale.quantile();
+
+        // Destroy the updateDisplay() function if displays are disabled
+        if (!this.enableDisplay) {
+            this.updateDisplay = function () {};
+        }
+
+        this.on('draw', function (v, grid) {
+            this._timestamp = grid.getTimestampDisplay('YYYY MM-DD HH:ss');
+            this.updateDisplay([{
+                id: 'timestamp',
+                text: this._timestamp
+            }]);
+        });
 
         this.on('render', function () {
             if (this.enableZoomControls) {
@@ -368,19 +375,21 @@ Ext.define('Flux.view.D3GeographicPanel', {
             .attr('class', 'info tip');
 
         // Heads-Up-Display (HUD) date/time info ///////////////////////////////
-        this.panes.hud.selectAll('.backdrop')
-            .data([0])
-            .enter()
-            .append('rect')
-            .attr({
-                'fill': '#fff',
-                'fill-opacity': 0.0,
-                'class': 'backdrop',
-                'x': 0,
-                'y': 0,
-                'width': width,
-                'height': (0.05 * height)
-            });
+        if (this.enableDisplay) {
+            this.panes.hud.selectAll('.backdrop')
+                .data([0])
+                .enter()
+                .append('rect')
+                .attr({
+                    'fill': '#fff',
+                    'fill-opacity': 0.0,
+                    'class': 'backdrop',
+                    'x': 0,
+                    'y': 0,
+                    'width': width,
+                    'height': (0.05 * height)
+                });
+        }
 
         this.panes.hud.selectAll('.info')
             .data([

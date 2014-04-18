@@ -23,6 +23,82 @@ Ext.define('Flux.view.D3Panel', {
         backgroundColor: '#aaa'
     },
 
+    initComponent: function () {
+        /**
+            @private
+         */
+        this._usePopulationStats = true;
+
+        this.callParent(arguments);
+    },
+
+    /**
+        Returns the associated Flux.model.* instance.
+        @return {Flux.model.*}
+     */
+    getModel: function () {
+        return this._model;
+    },
+
+    /**
+        Returns the stored reference to the Flux.model.Metadata used to drive
+        this visualizations.
+        @return {Flux.model.Metadata}
+     */
+    getMetadata: function () {
+        return this._metadata;
+    },
+
+    /**
+        Set the metadata; retains a reference to Flux.model.Metadata instance.
+        @param  metadata    {Flux.model.Metadata}
+        @return             {Flux.view.D3Panel}
+     */
+    setMetadata: function (metadata) {
+        this._metadata = metadata;
+        return this;
+    },
+
+    /**
+        Toggles the display of anomalies in the data.
+        @param  state       {Boolean}
+        @param  tendency    {String}
+        @return             {Flux.view.D3GeographicPanel}
+     */
+    toggleAnomalies: function (state, tendency) {
+        this._showAnomalies = state;
+        if (state) {
+            // Rescale the data points subtracting the measure of central tendency
+            this._addOffset = -this.getMetadata().get('stats')[tendency];
+        }
+
+        return this;
+    },
+
+    /**
+        Toggles on/off whether to use (and expect to be bound to) population
+        statistics. If population statistics are not used, this view will
+        recalculated the summary statistics for its bound data every time
+        updateColorScale() is called.
+        @param  state       {Boolean}
+        @param  metadata    {Flux.model.Metadata}
+     */
+    togglePopulationStats: function (state, metadata) {
+        var m;
+
+        if (Ext.isEmpty(this.getMetadata())) {
+            return;
+        }
+
+        this._usePopulationStats = state;
+
+        if (this._usePopulationStats && metadata) {
+            this.setMetadata(metadata);
+        }
+
+        return this;
+    },
+
     /**
         Updates the color scale configuration of a specific view, as provided.
         Creates a new color scale based on changes in the scale configuration
@@ -30,13 +106,26 @@ Ext.define('Flux.view.D3Panel', {
         between sequential and diverging palette types).
         @param  view    {Ext.Component}
         @param  opts    {Object}    Properties are palette configs e.g. sigmas, tendency, paletteType
+        //TODO Could add a "_lastOptions" property to this view that stores
+        //  the opts argument and makes it optional? That ways the view could
+        //  call this method on its own
      */
     updateColorScale: function (opts) {
         var palette, scale;
-        var metadata = this.getMetadata();
+        var metadata;
 
-        if (!metadata) {
+        if (!this.getMetadata()) {
             return;
+        }
+
+        if (!this._usePopulationStats && this.getModel()) {
+            metadata = this.getMetadata().copy();
+            metadata.set('stats', this.getModel().summarize());
+
+            this.setMetadata(metadata);
+
+        } else {
+            metadata = this.getMetadata();
         }
 
         // Get the color palette

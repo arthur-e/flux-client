@@ -35,6 +35,66 @@ Ext.define('Flux.model.Grid', {
         }
 
         return this.get('timestamp').format(fmt);
+    },
+
+    /**
+        Returns an object which can be used to calculate statistics on the
+        the passed numeric Array.
+        @param  arr {Array}
+        @return {Stats}
+     */
+    Stats: function (arr) {
+        arr = arr || [];
+
+        this.arithmeticMean = function () {
+            var i, sum = 0;
+     
+            for (i = 0; i < arr.length; i += 1) {
+                sum += arr[i];
+            }
+     
+            return sum / arr.length;
+        };
+     
+        this.mean = this.arithmeticMean;
+     
+        this.stdDev = function () {
+            var mean, i, sum = 0;
+     
+            mean = this.arithmeticMean();
+            for (i = 0; i < arr.length; i += 1) {
+                sum += Math.pow(arr[i] - mean, 2);
+            }
+     
+            return Math.pow(sum / arr.length, 0.5);
+        };
+     
+        this.median = function () {
+            var middleValueId = Math.floor(arr.length / 2);
+     
+            return arr.slice().sort(function (a, b) {
+                return a - b;
+            })[middleValueId];
+        };
+     
+        return this;
+    },
+
+    /**
+        Summarizes the values of a given Array.
+        @param  data    {Array}
+        @return         {Object}
+     */
+    summarize: function () {
+        var data = this.get('features');
+        var s = this.Stats(data);
+        return {
+            min: Ext.Array.min(data),
+            max: Ext.Array.max(data),
+            mean: s.mean(),
+            std: s.stdDev(),
+            median: s.median()
+        };
     }
 
 });

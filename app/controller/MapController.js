@@ -61,6 +61,29 @@ Ext.define('Flux.controller.MapController', {
             }
 
         });
+
+        Ext.onReady(Ext.Function.bind(function () {
+
+            // Add additional listeners to stateful fields only AFTER their
+            //  values have been set from saved state
+            this.control({
+                // Handles change in the basemap
+                'mapsettings > combo[name=basemap]': {
+                    select: this.onBasemapChange
+                },
+
+                // Handles change in the projection
+                'mapsettings > combo[name=projection]': {
+                    select: this.onProjectionChange
+                },
+
+                'mapsettings > checkbox[cls=basemap-options]': {
+                    change: this.toggleBasemapStyle
+                }
+
+            });
+
+        }, this));
     },
 
     ////////////////////////////////////////////////////////////////////////////
@@ -87,27 +110,6 @@ Ext.define('Flux.controller.MapController', {
 
                 return kw;
         }, this)());
-
-        ////////////////////////////////////////////////////////////////////////
-        // Event Listeners /////////////////////////////////////////////////////
-
-        // Add additional listeners to fields AFTER their values have been set
-        this.control({
-            // Handles change in the basemap
-            'mapsettings > combo[name=basemap]': {
-                select: this.onBasemapChange
-            },
-
-            // Handles change in the projection
-            'mapsettings > combo[name=projection]': {
-                select: this.onProjectionChange
-            },
-
-            'mapsettings > checkbox[cls=basemap-options]': {
-                change: this.toggleBasemapStyle
-            }
-
-        });
 
         Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
             view.init(width, height)
@@ -195,7 +197,7 @@ Ext.define('Flux.controller.MapController', {
                 // Update the projections ComboBox; rescale each projection contained
                 view.init(width, height)
                     .setBasemap(this.getMapSettings().down('combo[name=basemap]').getValue())
-                    .draw(undefined, true)
+                    .redraw(true)
                     .updateLegend()
                     .updateDisplay();
             }

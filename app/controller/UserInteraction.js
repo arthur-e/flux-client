@@ -88,16 +88,6 @@ Ext.define('Flux.controller.UserInteraction', {
             }
 
         });
-
-        Ext.onReady(Ext.Function.bind(function () {
-            this.control({
-
-                '#content': {//TODO
-                    add: this.onContentAddition
-                }
-
-            });
-        }, this));
     },
 
     /**
@@ -265,7 +255,6 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     bindGeometry: function (view, geometry) {
         //TODO geometry.set('viewId', this.getId());
-        this.getStore('geometries').add(geometry);
         view.setGridGeometry(geometry);
     },
 
@@ -280,6 +269,12 @@ Ext.define('Flux.controller.UserInteraction', {
         //TODO grid.set('viewId', this.getId());
         view.store.add(grid);
         view.draw(grid, true);
+
+        // The color scale can only be properly adjusted AFTER data are bound
+        //  to the view
+        if (!view._usePopulationStats) {
+            view.updateColorScale(this.getSymbology().getForm().getValues());
+        }
     },
 
     /**
@@ -292,17 +287,15 @@ Ext.define('Flux.controller.UserInteraction', {
         var opts = this.getGlobalSettings();
 
         //TODO metadata.set('viewId', this.getId());
-        this.getStore('metadata').add(metadata);
         view.setMetadata(metadata)
-            .toggleAnomalies(opts.display === 'anomalies', opts.tendency)
-            .updateColorScale(this.getSymbology().getForm().getValues());
-    },
+            .togglePopulationStats(opts.statsFrom === 'population', metadata)
+            .toggleAnomalies(opts.display === 'anomalies', opts.tendency);
 
-    /**TODO
-        @param  container   {Ext.panel.Panel}
-        @param  view        {Flux.view.D3Panel}
-     */
-    onContentAddition: function (container, view) {
+        // Only when using population statistics will the color scale be ready
+        //  before data have been bound to the view
+        if (opts.statsFrom === 'population') {
+            view.updateColorScale(this.getSymbology().getForm().getValues());
+        }
     },
 
     /**
@@ -380,6 +373,10 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  metadata    {Flux.model.Metadata}
      */
     onMetadataLoad: function (metadata) {
+        if (!metadata) {
+            return;
+        }
+
         // Initialize the values of the domain bounds and threshold sliders
         Ext.each(this.getSymbology().query('enumslider'), function (cmp) {
             cmp.setBounds([
@@ -433,6 +430,8 @@ Ext.define('Flux.controller.UserInteraction', {
                     var metadata = Ext.create('Flux.model.Metadata',
                         Ext.JSON.decode(response.responseText));
 
+                    this.getStore('metadata').add(metadata);
+
                     Ext.Function.createSequence(
                         this.bindMetadata(view, metadata),
                         this.onMetadataLoad(metadata));
@@ -453,6 +452,8 @@ Ext.define('Flux.controller.UserInteraction', {
                 callback: function (o, s, response) {
                     var geometry = Ext.create('Flux.model.Geometry',
                         Ext.JSON.decode(response.responseText));
+
+                    this.getStore('geometries').add(geometry);
 
                     this.bindGeometry(view, geometry);
                 },
@@ -493,15 +494,15 @@ Ext.define('Flux.controller.UserInteraction', {
         }
     },
 
-    /**TODO
-        If checked, update all hidden "tendency" fields with the measure of
-        central tendency chosen.
+    /**
+        Handles changes in the global settings concerned with statistics.
         @param  cb      {Ext.menu.MenuCheckItem}
         @param  checked {Boolean}
      */
     onStatsChange: function (cb, checked) {
         var change = {};
-        var opts;
+        var query = Ext.ComponentQuery.query('d3panel');
+        var opts, store;
 
         if (!checked) {
             return;
@@ -517,17 +518,27 @@ Ext.define('Flux.controller.UserInteraction', {
         }
 
         if (change.statsFrom !== undefined ) {
-            // If 'population'...
-            //  Get population stats
-            //  onMetadataLoad() ???
+            store = this.getStore('metadata');
 
-            // If 'data'...
-            //  Make new summary stats
-            //  onMetadataLoad() ???
+            Ext.each(query, function (view) {
+                if (Ext.isEmpty(view.getMetadata())) {
+                    return;
+                }
+
+                view.togglePopulationStats(opts.statsFrom === 'population',
+                    store.getById(view.getMetadata().get('_id')));
+            });
+
+            this.getController('MapController').updateColorScales();
+
+            if (query.length === 1 && !Ext.isEmpty(query[0].getMetadata())) {
+                this.onMetadataLoad(query[0].getMetadata());
+            }
         }
 
         if (change.display !== undefined) {
-            Ext.each(Ext.ComponentQuery.query('d3panel'), function (view) {
+
+            Ext.each(query, function (view) {
                 view.toggleAnomalies((opts.display === 'anomalies'),
                     opts.tendency).redraw();
             });
@@ -626,50 +637,8 @@ Ext.define('Flux.controller.UserInteraction', {
                 }));
             });
         }
-    },
-
-    /**
-        Returns an object which can be used to calculate statistics on the
-        the passed numeric Array.
-        @param  arr {Array}
-        @return {Stats}
-     */
-    Stats: function (arr) {
-        arr = arr || [];
-
-        this.arithmeticMean = function () {
-            var i, sum = 0;
-     
-            for (i = 0; i < arr.length; i += 1) {
-                sum += arr[i];
-            }
-     
-            return sum / arr.length;
-        };
-     
-        this.mean = this.arithmeticMean;
-     
-        this.stdDev = function () {
-            var mean, i, sum = 0;
-     
-            mean = this.arithmeticMean();
-            for (i = 0; i < arr.length; i += 1) {
-                sum += Math.pow(arr[i] - mean, 2);
-            }
-     
-            return Math.pow(sum / arr.length, 0.5);
-        };
-     
-        this.median = function () {
-            var middleValueId = Math.floor(arr.length / 2);
-     
-            return arr.slice().sort(function (a, b) {
-                return a - b;
-            })[middleValueId];
-        };
-     
-        return this;
     }
+
 });
 
 

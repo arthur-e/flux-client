@@ -37,7 +37,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         Initializes the component.
      */
     initComponent: function () {
-        this.addEvents(['draw', 'scalechange']);
+        this.addEvents(['beforedraw', 'draw', 'scalechange']);
 
         /**
             Flag to indicate whether or not the <rect> elements have already
@@ -167,22 +167,22 @@ Ext.define('Flux.view.D3GeographicPanel', {
         var bbox, lat, lng, c1, c2, sel, target;
         var proj = this.getProjection();
 
-        // Disallow zooming by default
-        zoom = (zoom === true);
+        this.fireEventArgs('beforedraw', [this, (grid || this._model), zoom]);
 
-        // Retain references to last drawing data and metadata; for instance,
-        //  resize events require drawing again with the same (meta)data
-        if (grid) {
-            this._model = grid;
-        }
-
-        if (!this._model) {
+        if (!grid) {
             return this;
         }
 
+        // Retain references to last drawing data and metadata; for instance,
+        //  resize events require drawing again with the same (meta)data
+        this._model = grid;
+
+        // Disallow zooming by default
+        zoom = (zoom === true);
+
         // Sets the enter or update selection's data
         sel = this.panes.overlay.selectAll('.point')
-            .data(this._model.get('features'), function (d, i) {
+            .data(grid.get('features'), function (d, i) {
                 return i; // Use the cell index as the key
             });
 
@@ -237,15 +237,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
      */
     getGridGeometry: function () {
         return this._grid;
-    },
-
-    /**
-        Returns the stored reference to the Flux.model.Metadata used to drive
-        this visualizations.
-        @return {Flux.model.Metadata}
-     */
-    getMetadata: function () {
-        return this._metadata;
     },
 
     /**
@@ -430,9 +421,10 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
     /**TODO
      */
-    redraw: function () {
+    redraw: function (zoom) {
         this.ownerCt.un('afterlayout', this.redraw);
-        this.draw().updateLegend();
+        this.draw(this._model, zoom).updateLegend();
+        return this;
     },
 
     /**
@@ -517,16 +509,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
      */
     setGridGeometry: function (geom) {
         this._grid = geom.get('coordinates');
-        return this;
-    },
-
-    /**
-        Set the metadata; retains a reference to Flux.model.Metadata instance.
-        @param  metadata    {Flux.model.Metadata}
-        @return             {Flux.view.D3GeographicPanel}
-     */
-    setMetadata: function (metadata) {
-        this._metadata = metadata;
         return this;
     },
 
@@ -616,22 +598,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
     },
 
     /**
-        Toggles the display of anomalies in the data.
-        @param  state       {Boolean}
-        @param  tendency    {String}
-        @return             {Flux.view.D3GeographicPanel}
-     */
-    toggleAnomalies: function (state, tendency) {
-        this._showAnomalies = state;
-        if (state) {
-            // Rescale the data points subtracting the measure of central tendency
-            this._addOffset = -this.getMetadata().get('stats')[tendency];
-        }
-
-        return this;
-    },
-
-    /**
         Toggles the display of the legend on/off.
         @param  state   {Boolean}
         @return         {Flux.view.D3GeographicPanel}
@@ -645,7 +611,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
         return this;
     },
-
 
     /**
         Allow or disallow transitions in attribute transformations.
@@ -777,6 +742,9 @@ Ext.define('Flux.view.D3GeographicPanel', {
                 'class': 'bin'
             });
 
+        // NOTE: Possible performance hit in removing the axis every time the
+        //  legend is updated; could render it in init() ensuring it is last
+        //  in the drawing order
         this.panes.legend.selectAll('.axis').remove();
         this.panes.legend.append('g').attr({
             'class': 'ramp y axis',

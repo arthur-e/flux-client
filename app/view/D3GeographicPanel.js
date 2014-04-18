@@ -4,7 +4,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
     requires: [
         'Ext.Function',
         'Ext.tip.QuickTip',
-        'Ext.toolbar.Toolbar'
+        'Ext.toolbar.Toolbar',
+        'Flux.store.Grids'
     ],
 
     _mercatorScale: function (phi) {
@@ -52,7 +53,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
         this._legend = {};
 
         /**
-            TODO
+            Indicates whether or not attribute transformations should be allowed
+            to transition smoothly.
             @private
           */
         this._transitions = false;
@@ -62,6 +64,11 @@ Ext.define('Flux.view.D3GeographicPanel', {
             @private
          */
         this._scale = d3.scale.quantile();
+
+        /**
+            The Flux.Store.Grids instance associated with this view.
+         */
+        this.store = Ext.create('Flux.store.Grids');
 
         // Destroy the updateDisplay() function if displays are disabled
         if (!this.enableDisplay) {

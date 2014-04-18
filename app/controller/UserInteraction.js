@@ -41,12 +41,13 @@ Ext.define('Flux.controller.UserInteraction', {
             Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
         }
 
-        Ext.create('Flux.store.Geometries', {
-            storeId: 'geometries'
+        Ext.create('Flux.store.Scenarios', {
+            autoLoad: true,
+            storeId: 'scenarios'
         });
 
-        Ext.create('Flux.store.Grids', {
-            storeId: 'grids'
+        Ext.create('Flux.store.Geometries', {
+            storeId: 'geometries'
         });
 
         Ext.create('Flux.store.Metadata', {
@@ -54,11 +55,6 @@ Ext.define('Flux.controller.UserInteraction', {
             listeners: {
                 add: Ext.Function.bind(this.onMetadataAdded, this)
             }
-        });
-
-        Ext.create('Flux.store.Scenarios', {
-            autoLoad: true,
-            storeId: 'scenarios'
         });
 
         ////////////////////////////////////////////////////////////////////////
@@ -108,9 +104,6 @@ Ext.define('Flux.controller.UserInteraction', {
         var n = container.items.length;
         // Subtract j from the aligning panel's index to find the target panel's index
         var j;
-
-        //TODO
-        container._panelLayoutCount = 0;
 
         if (n > 9) {
             return; //TODO Warn the user
@@ -211,21 +204,41 @@ Ext.define('Flux.controller.UserInteraction', {
         }).toggleTransitions(true);
     },
 
-    /**TODO
+    /**
+        Given a request for a map at based on certain parameters, checks to
+        see if the map has already been loaded by the view and requests it
+        from the server if it has not been loaded.
+        @param  view    {Flux.view.D3GeographicPanel}
+        @param  source  {String}
+        @param  params  {Object}
      */
     requestMap: function (view, source, params) {
+        var grid;
+
+        if (params.hasOwnProperty('time')) {
+            // This may be slow, but using findBy() and moment().isSame()
+            //  doesn't work; need to evaluate how this scales
+            grid = view.store.findRecord('timestamp', moment.utc(params.time));
+
+            if (grid) {
+                this.bindGrid(view, grid);
+                this.onMapLoad(grid);
+                return;
+            }
+        }
+
         Ext.Ajax.request({
             method: 'GET',
-
             url: Ext.String.format('/flux/api/scenarios/{0}/xy.json', source),
-
             params: params,
+            callback: function (o, s, response) {
+                var grid = Ext.create('Flux.model.Grid',
+                    Ext.JSON.decode(response.responseText));
 
-            callback: Ext.Function.bind(this.onMapLoad, this),
-
-            success: this.bindGrid,
-
-            scope: view
+                this.bindGrid(view, grid);
+                this.onMapLoad(grid);
+            },
+            scope: this
         });
     },
 
@@ -233,16 +246,10 @@ Ext.define('Flux.controller.UserInteraction', {
     // Event Handlers //////////////////////////////////////////////////////////
 
     /**
-        TODO
-     */
-    bindMetadata: function (view, metadata) {
-        //TODO metadata.set('viewId', this.getId());
-        this.getStore('metadata').add(metadata);
-        view.setMetadata(metadata);
-    },
-
-    /**
-        TODO
+        Binds a Flux.model.Geometry instance to the provided view, a
+        Flux.view.D3GeographicPanel instance.
+        @param  view    {Flux.view.D3GeographicPanel}
+        @param  grid    {Flux.model.Geometry}
      */
     bindGeometry: function (view, geometry) {
         //TODO geometry.set('viewId', this.getId());
@@ -251,19 +258,28 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
-        Called as a method of the Flux.view.D3Panel instance (or subclass
-        instance) which then calls its draw() method, receiving the Grid model
-        as the data.
-        @param  response    {Object}
+        Binds a Flux.model.Grid instance to the provided view, a
+        Flux.view.D3GeographicPanel instance. The view's store is updated
+        with the nwe Grid instance.
+        @param  view    {Flux.view.D3GeographicPanel}
+        @param  grid    {Flux.model.Grid}
      */
-    bindGrid: function (response) {
-        var grid = Ext.create('Flux.model.Grid',
-            Ext.JSON.decode(response.responseText));
-
+    bindGrid: function (view, grid) {
         //TODO grid.set('viewId', this.getId());
-        Ext.StoreManager.get('grids').add(grid);
+        view.store.add(grid);
+        view.draw(grid, true);
+    },
 
-        this.draw(grid, true);
+    /**
+        Binds a Flux.model.Metadata instance to the provided view, a
+        Flux.view.D3GeographicPanel instance.
+        @param  view    {Flux.view.D3GeographicPanel}
+        @param  grid    {Flux.model.Metadata}
+     */
+    bindMetadata: function (view, metadata) {
+        //TODO metadata.set('viewId', this.getId());
+        this.getStore('metadata').add(metadata);
+        view.setMetadata(metadata);
     },
 
     /**
@@ -333,14 +349,14 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**TODO
-        @param  opts        {Object}
-        @param  success     {Boolean}
-        @param  response    {Object}
+        @param  grid    {Flux.model.Grid}
      */
-    onMapLoad: function (opts, success, response) {
+    onMapLoad: function (grid) {
     },
 
     /**TODO
+        @param  store   {Flux.store.Metadata}
+        @param  recs    {Array}
      */
     onMetadataAdded: function (store, recs) {
     },
@@ -458,8 +474,13 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  context {Object}
      */
     onSourceGridEntry: function (editor, context) {
-        view = this.addMap('New Map');
-        context.record.set('view', view);
+        var query = Ext.ComponentQuery.query('d3panel');
+        var view;
+
+        if (query.length < context.store.count()) {
+            view = this.addMap('New Map');
+            context.record.set('view', view);
+        }
     },
 
     /**
@@ -503,7 +524,9 @@ Ext.define('Flux.controller.UserInteraction', {
         this._activeViewId = item.getItemId();
     },
 
-    /**TODO
+    /**
+        Propagates changes in the metadata to child components of a given
+        container, specifically, setting the DateField and TimeField instances.
      */
     propagateMetadata: function (container, metadata) {
         var dates = container.query('datefield[name=date], datefield[name=date2]');

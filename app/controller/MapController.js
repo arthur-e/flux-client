@@ -259,8 +259,6 @@ Ext.define('Flux.controller.MapController', {
                     .draw(undefined, true)
                     .updateLegend()
                     .updateDisplay();
-
-            } else if (width !== oldWidth || height !== oldHeight) {
             }
         }
     },

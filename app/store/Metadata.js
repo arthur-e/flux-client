@@ -17,24 +17,6 @@ Ext.define('Flux.store.Metadata', {
     reader: {
         type: 'json',
         idProperty: '_id'
-    },
-
-    /**TODO
-     */
-    fetch: function (operation, finder) {
-        var f;
-
-        if (typeof finder === 'function') {
-            f = this.findBy(finder);
-        } else {
-            f = this.find('_id', operation.params.scenario);
-        }
-
-        if (f !== -1) {
-            operation.callback.call(operation.scope || this);
-            return f;
-        }
-
-        this.load(operation);
     }
+
 });

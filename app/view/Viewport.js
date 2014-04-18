@@ -51,6 +51,7 @@ Ext.define('Flux.view.Viewport', {
                         idx: 1
                     }, {
                         text: 'Multiplot',
+                        disabled: true,
                         itemId: 'multiplot',
                         iconCls: 'icon-multiplot ui-app-icon',
                         idx: 2

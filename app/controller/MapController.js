@@ -155,7 +155,7 @@ Ext.define('Flux.controller.MapController', {
         Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (view) {
             // For every d3geopanel instance, update the scale's output range
             if (view.getScale()) {
-                if (typeof cmp.getScale().quantiles === 'function') {
+                if (typeof view.getScale().quantiles === 'function') {
                     view.setScale(view.getScale().range(cs));
                 } else {
                     this.updateColorScales();

@@ -145,10 +145,11 @@ Ext.define('Flux.controller.UserInteraction', {
         });
 
         // j works here because we want the new item to be positioned below
-        //  the item at index (n - j) where n is the previous number of panels:
-        //  0   1   2   or  0   1
-        //  3   4   5       2   3
-        //  6   7   8
+        //  the item at index (n - j) where n is the previous number of panels
+        //  and we want the new panel to appear at the star (*):
+        //  1   2   3   or  1   2   3   or  1   2
+        //  4   5   6       4   5   *       3   *
+        //  7   8   *
         // If this is going to make an even-number of views, align this next
         //  view towards-the-right of the last view
         if (n !== 0) {
@@ -309,12 +310,20 @@ Ext.define('Flux.controller.UserInteraction', {
             Ext.each(query, function (view, i) {
                 var j = (query.length < 4) ? 2 : 3;
 
+                // i refers to the index of the panel being realigned:
+                //  0   1   2   or  0   1   2   or  0   1
+                //  3   4   5       3   4   5       2   3
+                //  6   7   8
                 // Align those odd-indexed (towards-the-right) panels
                 if (i !== 0) {
                     if (i % j !== 0) {
                         view.alignTo(query[i - 1].getEl(), 'tl-tr');
                     } else {
-                        view.alignTo(query[i - j].getEl(), 'tl-bl');
+                        if (i - j < 0) {
+                            view.alignTo(query[0].getEl(), 'tl-bl');
+                        } else {
+                            view.alignTo(query[i - j].getEl(), 'tl-bl');
+                        }
                     }
                 }
             });

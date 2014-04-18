@@ -34,15 +34,15 @@ Ext.define('Flux.view.MapSettings', {
         anchor: '100%',
         queryMode: 'local',
         valueField: 'id',
-        value: '/flux-client/political-small.topo.json',
+        value: '/flux-client/resources/political-small.topo.json',
         store: Ext.create('Ext.data.ArrayStore', {
             storeId: 'basemaps',
             fields: ['id', 'text', 'url'],
             data: [
-                ['/flux-client/political-usa.topo.json', 'U.S.A.'],
-                ['/flux-client/political-north-america.topo.json', 'North America'],
-                ['/flux-client/political.topo.json', 'Global'],
-                ['/flux-client/political-small.topo.json', 'Global (Small Scale)']
+                ['/flux-client/resources/political-usa.topo.json', 'U.S.A.'],
+                ['/flux-client/resources/political-north-america.topo.json', 'North America'],
+                ['/flux-client/resources/political.topo.json', 'Global'],
+                ['/flux-client/resources/political-small.topo.json', 'Global (Small Scale)']
             ]
         }),
         listeners: {

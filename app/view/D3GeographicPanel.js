@@ -499,8 +499,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
             this.basemaps.boundaries = boundaries;
         }
 
-        this._basemapUrl = basemapUrl;
-
         return this;
     },
 

@@ -9,7 +9,7 @@ Ext.define('Flux.controller.UserInteraction', {
         selector: '#settings-menu'
     }, {
         ref: 'sourceCarousel',
-        selector: 'sourcecarousel',
+        selector: 'sourcecarousel'
     }, {
         ref: 'sourcePanel',
         selector: 'sourcepanel'
@@ -336,7 +336,6 @@ Ext.define('Flux.controller.UserInteraction', {
             }
         }
 
-        console.log(params);//FIXME
         this.requestMap(view, view.getMetadata().getId(), params);
     },
 

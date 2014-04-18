@@ -178,6 +178,6 @@ Ext.define('Flux.view.D3Panel', {
         }
 
         this.setScale(scale);
-    },
+    }
 
 });

@@ -76,7 +76,7 @@ Ext.define('Flux.controller.UserExperience', {
 
             'sourcepanel #aggregation-fields': {
                 afterrender: this.initAggregationFields
-            },
+            }
 
         });
 

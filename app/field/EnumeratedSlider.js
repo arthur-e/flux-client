@@ -48,7 +48,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
 
             // Add initial Number field ////////////////////////////////////////
             numberCfg = Ext.clone(this.numberDefaults);
-            Ext.Object.merge(numberCfg, {
+            Ext.merge(numberCfg, {
                 itemId: 'lower-bound',
                 padding: '0 7px 0 0',
                 value: -1,
@@ -65,7 +65,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
 
             // Configure slider field //////////////////////////////////////////
             sliderCfg = Ext.clone(this.sliderDefaults);
-            Ext.Object.merge(sliderCfg, {
+            Ext.merge(sliderCfg, {
                 value: values,
                 minValue: this.minValue,
                 maxValue: this.maxValue,
@@ -73,7 +73,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
             });
 
             if (this.isMulti) {
-                Ext.Object.merge(sliderCfg, {
+                Ext.merge(sliderCfg, {
                     xtype: 'multislider',
                     values: values,
                     minValue: values[0],
@@ -85,7 +85,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
 
                 // Add second Number field /////////////////////////////////////
                 numberCfg = Ext.clone(this.numberDefaults);
-                Ext.Object.merge(numberCfg, {
+                Ext.merge(numberCfg, {
                     xtype: 'numberfield',
                     itemId: 'upper-bound',
                     value: values[1],
@@ -306,12 +306,12 @@ Ext.define('Flux.field.EnumeratedSlider', {
         // Determine the appropriate type of slider
         if (multiState) {
             config.xtype = 'multislider';
-            Ext.Object.merge(config, {
+            Ext.merge(config, {
                 values: values
             });
         } else {
             config.xtype = 'slider';
-            Ext.Object.merge(config, {
+            Ext.merge(config, {
                 value: values
             });
         }

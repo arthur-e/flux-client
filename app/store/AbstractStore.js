@@ -24,7 +24,7 @@ Ext.define('Flux.store.AbstractStore', {
         noCache = !(noCache === false);
         config = config || this.getProxy().getInitialConfig();
 
-        Ext.Object.merge(config, {
+        Ext.merge(config, {
             url: Ext.String.format('/flux/api/scenarios/{0}/{1}', ns,
                 this.resource),
             noCache: noCache,

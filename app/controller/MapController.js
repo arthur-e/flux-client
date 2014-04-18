@@ -62,7 +62,7 @@ Ext.define('Flux.controller.MapController', {
 
         });
 
-        Ext.onReady(Ext.Function.bind(function () {
+        Ext.onReady(Ext.bind(function () {
 
             // Add additional listeners to stateful fields only AFTER their
             //  values have been set from saved state
@@ -97,7 +97,7 @@ Ext.define('Flux.controller.MapController', {
      */
     initialize: function (cmp, width, height) {
         var opts = this.getMapSettings().getForm().getValues();
-        var kw = (Ext.Function.bind(function () {
+        var kw = (Ext.bind(function () {
                 var kw = 'none';
                 var basemapOutlines = this.getMapSettings().down('checkbox[name=showBasemapOutlines]').getValue();
                 var politicalBoundaries = this.getMapSettings().down('checkbox[name=showPoliticalBoundaries]').getValue();
@@ -152,7 +152,7 @@ Ext.define('Flux.controller.MapController', {
      */
     onPaletteChange: function (c, recs) {
         var cs = recs[0].get('colors');
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (view) {
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.bind(function (view) {
             // For every d3geopanel instance, update the scale's output range
             if (view.getScale()) {
                 if (typeof view.getScale().quantiles === 'function') {
@@ -268,10 +268,10 @@ Ext.define('Flux.controller.MapController', {
     updateColorScales: function (config) {
         var opts = this.getSymbology().getForm().getValues();
 
-        opts = Ext.Object.merge(opts, config || {});
+        opts = Ext.merge(opts, config || {});
 
         // Update the scale of every map
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (view) {
+        Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.bind(function (view) {
             view.updateColorScale(opts);
         }, this));
     }

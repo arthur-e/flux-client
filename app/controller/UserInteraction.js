@@ -53,7 +53,7 @@ Ext.define('Flux.controller.UserInteraction', {
         Ext.create('Flux.store.Metadata', {
             storeId: 'metadata',
             listeners: {
-                add: Ext.Function.bind(this.onMetadataAdded, this)
+                add: Ext.bind(this.onMetadataAdded, this)
             }
         });
 

@@ -94,7 +94,7 @@ Ext.define('Flux.controller.Animation', {
         }
 
         if (state) {
-            this._animation = window.setInterval(Ext.Function.bind(this.stepBy,
+            this._animation = window.setInterval(Ext.bind(this.stepBy,
                 this, [this._steps]), delay * 1000); // Delay in milliseconds
         } else {
             window.clearInterval(this._animation);
@@ -290,7 +290,7 @@ Ext.define('Flux.controller.Animation', {
             minValue: steps,
             step: steps,
             listeners: {
-                change: Ext.Function.bind(this.onStepsChange, this)
+                change: Ext.bind(this.onStepsChange, this)
             }
         }));
     }

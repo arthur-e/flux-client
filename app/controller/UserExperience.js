@@ -51,7 +51,7 @@ Ext.define('Flux.controller.UserExperience', {
             if (params.hasOwnProperty('source') && params.hasOwnProperty('date')
                 && params.hasOwnProperty('time')) {
 //TODO Need to figure out how to automatically load data
-//                Ext.onReady(Ext.Function.bind(function () {
+//                Ext.onReady(Ext.bind(function () {
 //                }, this));
             }
 
@@ -160,7 +160,7 @@ Ext.define('Flux.controller.UserExperience', {
         var params = {};
 
         Ext.each(query, function (form) {
-            Ext.Object.merge(params, form.getValues());
+            Ext.merge(params, form.getValues());
         });
 
         return params;

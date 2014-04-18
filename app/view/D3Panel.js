@@ -23,11 +23,29 @@ Ext.define('Flux.view.D3Panel', {
         backgroundColor: '#aaa'
     },
 
+    /**
+        Indicates that anomalies should be displayed instead of raw values.
+        @private
+     */
+    _showAnomalies: false,
+
+    /**
+        Indicates that population statistics are being used in adjusting
+        the color scale.
+        @private
+     */
+    _usePopulationStats: true,
+
+    /**
+        Initializes the component.
+     */
     initComponent: function () {
         /**
+            Indicates whether or not attribute transformations should be allowed
+            to transition smoothly.
             @private
-         */
-        this._usePopulationStats = true;
+          */
+        this._transitions = this.enableTransitions;
 
         this.callParent(arguments);
     },
@@ -53,6 +71,7 @@ Ext.define('Flux.view.D3Panel', {
         Set the metadata; retains a reference to Flux.model.Metadata instance.
         @param  metadata    {Flux.model.Metadata}
         @return             {Flux.view.D3Panel}
+        @return         {Flux.view.D3Panel}
      */
     setMetadata: function (metadata) {
         this._metadata = metadata;
@@ -82,6 +101,7 @@ Ext.define('Flux.view.D3Panel', {
         updateColorScale() is called.
         @param  state       {Boolean}
         @param  metadata    {Flux.model.Metadata}
+        @return         {Flux.view.D3Panel}
      */
     togglePopulationStats: function (state, metadata) {
         var m;
@@ -96,6 +116,16 @@ Ext.define('Flux.view.D3Panel', {
             this.setMetadata(metadata);
         }
 
+        return this;
+    },
+
+    /**
+        Allow or disallow transitions in attribute transformations.
+        @param  state   {Boolean}
+        @return         {Flux.view.D3Panel}
+     */
+    toggleTransitions: function (state) {
+        this._transitions = state;
         return this;
     },
 

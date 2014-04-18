@@ -8,7 +8,34 @@ Ext.define('Flux.view.D3GeographicPanel', {
         'Flux.store.Grids'
     ],
 
-    _mercatorScale: function (phi) {
+    bodyStyle: {
+        backgroundColor: '#aaa'
+    },
+
+    /**
+        The URL of the current (currently loaded) basemap.
+        @private
+     */
+    _basemapUrl: undefined,
+
+    /**
+        Flag to indicate whether or not the <rect> elements have already
+        been added to the map.
+        @private
+     */
+    _isDrawn: false,
+
+    /**
+        An internal reference to the legend selection.
+        @private
+      */
+    _legend: {},
+
+    /**
+        The scaling factor for a Mercator projection.
+        @private
+     */
+    _mercatorFactor: function (phi) {
         return 1/Math.cos((Math.PI * phi) / 180);
     },
 
@@ -17,15 +44,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
      */
     basemaps: {
         boundaries: 'both'
-    },
-
-    /**
-        The URL of the current (currently loaded) basemap.
-     */
-    basemapUrl: undefined,
-
-    bodyStyle: {
-        backgroundColor: '#aaa'
     },
 
     /**
@@ -38,26 +56,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
      */
     initComponent: function () {
         this.addEvents(['beforedraw', 'draw', 'scalechange']);
-
-        /**
-            Flag to indicate whether or not the <rect> elements have already
-            been added to the map.
-            @private
-         */
-        this._isDrawn = false;
-
-        /**
-            An internal reference to the legend selection.
-            @private
-          */
-        this._legend = {};
-
-        /**
-            Indicates whether or not attribute transformations should be allowed
-            to transition smoothly.
-            @private
-          */
-        this._transitions = this.enableTransitions;
 
         /**
             The scale used for coloring map elements.
@@ -100,21 +98,21 @@ Ext.define('Flux.view.D3GeographicPanel', {
                         iconCls: 'icon-zoom-in',
                         tooltip: 'Zoom In',
                         listeners: {
-                            click: Ext.Function.bind(this.setZoom, this, [1.3])
+                            click: Ext.bind(this.setZoom, this, [1.3])
                         }
                     }, {
                         itemId: 'btn-zoom-out',
                         iconCls: 'icon-zoom-out',
                         tooltip: 'Zoom Out',
                         listeners: {
-                            click: Ext.Function.bind(this.setZoom, this, [0.7])
+                            click: Ext.bind(this.setZoom, this, [0.7])
                         }
                     }, {
                         itemId: 'btn-zoom-way-out',
                         iconCls: 'icon-zoom-extend',
                         tooltip: 'Zoom to Layer',
                         listeners: {
-                            click: Ext.Function.bind(this.setZoom, this, [0.1])
+                            click: Ext.bind(this.setZoom, this, [0.1])
                         }
                     }]
                 }), 0);
@@ -131,7 +129,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
      */
     addListeners: function (sel) {
         sel = sel || this.panes.overlay.selectAll('.point');
-        sel.on('mouseover', Ext.Function.bind(function (d) {
+        sel.on('mouseover', Ext.bind(function (d) {
             var c = d3.mouse(this.svg[0][0]);
             this.updateDisplay([{
                 id: 'tooltip',
@@ -145,7 +143,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
                 });
         }, this));
 
-        sel.on('mouseout', Ext.Function.bind(function (d) {
+        sel.on('mouseout', Ext.bind(function (d) {
             this.updateDisplay([{
                 id: 'timestamp',
                 text: this._timestamp
@@ -216,7 +214,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
             lng = (bbox[0] + bbox[2]) * 0.5;
 
             if (this._projId === 'mercator') {
-                lat = this._mercatorScale(lat) * lat;
+                lat = this._mercatorFactor(lat) * lat;
             }
 
             c2 = proj([lng, lat]);
@@ -248,7 +246,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         var attrs, gridres;
         var grid = this.getGridGeometry();
         var proj = this.getProjection();
-        var scaling = this._mercatorScale;
+        var scaling = this._mercatorFactor;
 
         if (!this._metadata) {
             return;
@@ -328,7 +326,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
         this.zoom = d3.behavior.zoom()
             .scaleExtent([1, 10])
-            .on('zoom', Ext.Function.bind(function () {
+            .on('zoom', Ext.bind(function () {
                 this.wrapper.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
             }, this));
 
@@ -419,7 +417,10 @@ Ext.define('Flux.view.D3GeographicPanel', {
         return this;
     },
 
-    /**TODO
+    /**
+        Draws the view again with the same data it already has bound to it.
+        @param  zoom    {Boolean}
+        @return         {Flux.view.D3GeographicPanel}
      */
     redraw: function (zoom) {
         this.ownerCt.un('afterlayout', this.redraw);
@@ -434,7 +435,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         @return                 {Flux.view.D3GeographicPanel}
      */
     setBasemap: function (basemapUrl, boundaries) {
-        var drawBasemap = Ext.Function.bind(function (json) {
+        var drawBasemap = Ext.bind(function (json) {
             var sel = this.panes.basemap.append('g')
                 .attr('id', 'basemap')
 
@@ -477,7 +478,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         // Remove the old basemap, if one exists
         this.panes.basemap.select('#basemap').remove()
 
-        if (this.basemapUrl === basemapUrl && boundaries === this.basemaps.boundaries) {
+        if (this._basemapUrl === basemapUrl && boundaries === this.basemaps.boundaries) {
             // If the requested basemap is already displayed, do nothing
             return;
 
@@ -487,7 +488,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
 
         } else {
             // Execute XMLHttpRequest for new basemap data
-            d3.json(basemapUrl, Ext.Function.bind(function (error, json) {
+            d3.json(basemapUrl, Ext.bind(function (error, json) {
                 drawBasemap(json);
                 this.basemaps[basemapUrl] = json;
             }, this));
@@ -497,6 +498,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
         if (boundaries !== undefined) {
             this.basemaps.boundaries = boundaries;
         }
+
+        this._basemapUrl = basemapUrl;
 
         return this;
     },
@@ -613,15 +616,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
     },
 
     /**
-        Allow or disallow transitions in attribute transformations.
-        @param  state   {Boolean}
-     */
-    toggleTransitions: function (state) {
-        this._transitions = state;
-        return this;
-    },
-
-    /**
         Draws again the visualization features of the map by updating their
         SVG attributes. Accepts optional D3 selection which it will style.
         @param  selection   {d3.selection}
@@ -629,7 +623,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
      */
     update: function (selection) {
         if (selection) {
-            selection.attr('fill', Ext.Function.bind(function (d, i) {
+            selection.attr('fill', Ext.bind(function (d, i) {
                 if (this._showAnomalies && d !== undefined) {
                     return this.getScale()(d + this._addOffset);
                 }

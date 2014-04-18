@@ -13,20 +13,6 @@ Ext.define('Flux.view.SourcePanel', {
         'Flux.store.Scenarios'
     ],
 
-    /**
-        Replaces a TimeField with a new instance. Used to change the "increment"
-        property despite the lack of a "setIncrement()" method.
-        @param  cmp     {Ext.form.field.Time}
-        @param  index   {Number}    The position index in this container
-        @param  config  {Object}    New configuration options
-     */
-    updateTimeField: function (cmp, index, config) {
-        var newConfig = cmp.getInitialConfig();
-        Ext.Object.merge(newConfig, config);
-        this.remove(cmp);
-        this.insert(index, Ext.create('Ext.form.field.Time', config));
-    },
-
     items: [{
         xtype: 'combo',
         name: 'source',

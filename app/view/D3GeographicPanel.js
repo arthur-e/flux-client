@@ -57,7 +57,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
             to transition smoothly.
             @private
           */
-        this._transitions = false;
+        this._transitions = this.enableTransitions;
 
         /**
             The scale used for coloring map elements.

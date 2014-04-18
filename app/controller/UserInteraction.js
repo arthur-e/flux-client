@@ -66,6 +66,10 @@ Ext.define('Flux.controller.UserInteraction', {
                 resize: this.onContentResize
             },
 
+            '#settings-menu menucheckitem': {
+                checkchange: this.onStatsChange
+            },
+
             '#visual-menu': {
                 click: this.onVisualChange
             },
@@ -78,16 +82,22 @@ Ext.define('Flux.controller.UserInteraction', {
                 change: this.onDateTimeSelection
             },
 
-            'sourcepanel #aggregation-fields': {
-                afterrender: this.initAggregationFields
-            },
-
             'sourcesgridpanel': {
                 beforeedit: this.onSourceGridEntry,
                 canceledit: this.onSourceGridCancel
             }
 
         });
+
+        Ext.onReady(Ext.Function.bind(function () {
+            this.control({
+
+                '#content': {//TODO
+                    add: this.onContentAddition
+                }
+
+            });
+        }, this));
     },
 
     /**
@@ -190,6 +200,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @return {Flux.view.D3GeographicPanel}
      */
     getMap: function () {
+        var opts = this.getGlobalSettings();
         var query = Ext.ComponentQuery.query('d3geopanel');
 
         if (query.length !== 0) {
@@ -200,8 +211,9 @@ Ext.define('Flux.controller.UserInteraction', {
             xtype: 'd3geopanel',
             title: 'Single Map',
             anchor: '100% 100%',
+            enableTransitions: true,
             enableZoomControls: true
-        }).toggleTransitions(true);
+        });
     },
 
     /**
@@ -277,20 +289,19 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  grid    {Flux.model.Metadata}
      */
     bindMetadata: function (view, metadata) {
+        var opts = this.getGlobalSettings();
+
         //TODO metadata.set('viewId', this.getId());
         this.getStore('metadata').add(metadata);
-        view.setMetadata(metadata);
+        view.setMetadata(metadata)
+            .toggleAnomalies(opts.display === 'anomalies', opts.tendency)
     },
 
-    /**
-        Ensures that the Aggreation Fieldset is enabled if the
-        "Statistics from..." setting is set to the "Current Data Frame."
-        @param  fieldset    {Ext.form.Fieldset}
+    /**TODO
+        @param  container   {Ext.panel.Panel}
+        @param  view        {Flux.view.D3Panel}
      */
-    initAggregationFields: function (fieldset) {
-        if (this.getSymbology().down('hiddenfield[name=statsFrom]').getValue() === 'data') {
-            fieldset.enable();
-        }
+    onContentAddition: function (container, view) {
     },
 
     /**
@@ -481,6 +492,48 @@ Ext.define('Flux.controller.UserInteraction', {
             view = this.addMap('New Map');
             context.record.set('view', view);
         }
+    },
+
+    /**TODO
+        If checked, update all hidden "tendency" fields with the measure of
+        central tendency chosen.
+        @param  cb      {Ext.menu.MenuCheckItem}
+        @param  checked {Boolean}
+     */
+    onStatsChange: function (cb, checked) {
+        var change = {};
+        var opts;
+
+        if (!checked) {
+            return;
+        }
+
+        change[cb.group] = cb.name;
+        opts = this.getGlobalSettings();
+
+        if (change.tendency !== undefined) {
+            this.getController('MapController').updateColorScales({
+                tendency: change.tendency
+            });
+        }
+
+        if (change.statsFrom !== undefined ) {
+            // If 'population'...
+            //  Get population stats
+            //  onMetadataLoad() ???
+
+            // If 'data'...
+            //  Make new summary stats
+            //  onMetadataLoad() ???
+        }
+
+        if (change.display !== undefined) {
+            Ext.each(Ext.ComponentQuery.query('d3panel'), function (view) {
+                view.toggleAnomalies((opts.display === 'anomalies'),
+                    opts.tendency).redraw();
+            });
+        }
+
     },
 
     /**

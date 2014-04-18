@@ -225,12 +225,18 @@ Ext.define('Flux.view.Viewport', {
             id: 'content',
             xtype: 'panel',
             border: false,
+            items: [{
+                xtype: 'd3geopanel',
+                title: 'Single Map',
+                anchor: '100% 100%',
+                enableZoomControls: true,
+                enableTransitions: true
+            }],
             layout: {
                 type: 'anchor',
                 reserveScrollbar: false
             },
             bodyStyle: 'background-color:#aaa;',
-            items: [],
             bbar: {
                 border: true,
                 style: {

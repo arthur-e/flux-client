@@ -13,9 +13,6 @@ Ext.define('Flux.controller.UserExperience', {
     }, {
         ref: 'symbology',
         selector: 'symbology'
-    }, {
-        ref: 'settingsMenu',
-        selector: '#settings-menu'
     }],
 
     init: function () {
@@ -75,7 +72,11 @@ Ext.define('Flux.controller.UserExperience', {
 
             '#settings-menu menucheckitem': {
                 checkchange: this.onStatsChange
-            }
+            },
+
+            'sourcepanel #aggregation-fields': {
+                afterrender: this.initAggregationFields
+            },
 
         });
 
@@ -163,6 +164,17 @@ Ext.define('Flux.controller.UserExperience', {
         });
 
         return params;
+    },
+
+    /**
+        Ensures that the Aggreation Fieldset is enabled if the
+        "Statistics from..." setting is set to the "Current Data Frame."
+        @param  fieldset    {Ext.form.Fieldset}
+     */
+    initAggregationFields: function (fieldset) {
+        if (this.getSymbology().down('hiddenfield[name=statsFrom]').getValue() === 'data') {
+            fieldset.enable();
+        }
     },
 
     /**

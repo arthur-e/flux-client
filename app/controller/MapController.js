@@ -63,67 +63,6 @@ Ext.define('Flux.controller.MapController', {
         });
     },
 
-    /**
-        Creates a threshold scale; a hack that acts like a d3.scale.* object.
-        The result is a function that returns the specified color value for
-        input numeric values that fall within the integer bounds of the given
-        breakpoint(s).
-        @param  bkpts   {Array}     The breakpoint(s) for the binary mask
-        @param  colors  {String}    The color to use for the binary mask
-        @return         {Function}
-     */
-    generateThresholdScale: function (bkpts, color) {
-        var scale;
-
-        if (!Ext.isArray(bkpts)) {
-            bkpts = [bkpts];
-        }
-
-        if (bkpts.length === 1) {
-            scale = function (d) {
-                if (d >= Math.floor(bkpts[0]) && d < (Math.floor(bkpts[0]) + 1)) {
-                    return color;
-                }
-
-                return 'rgba(0,0,0,0)';
-            };
-
-        } else {
-            scale = function (d) {
-                if (d >= bkpts[0] && d < bkpts[1]) {
-                    return color;
-                }
-
-                return 'rgba(0,0,0,0)';
-            };
-
-        }
-
-        scale._d = bkpts;
-        scale._r = [color];
-        scale.domain = function (d) {
-            if (d) {
-                this._d = d;
-                return this;
-            }
-            return this._d;
-        };
-        scale.range = function (r) {
-            if (r) {
-                if (Ext.isArray(r)) {
-                    r = [r[0]];
-                } else {
-                    r = [r];
-                }
-                this._r = r;
-                return this;
-            }
-            return this._r;
-        };
-
-        return scale;
-    },
-
     ////////////////////////////////////////////////////////////////////////////
     // Event Handlers //////////////////////////////////////////////////////////
 
@@ -318,35 +257,6 @@ Ext.define('Flux.controller.MapController', {
         });
     },
 
-    /** TODO Migrate to the view?
-        Updates the color scale configuration of a specific view, as provided.
-        Creates a new color scale based on changes in the scale configuration
-        (measure of central tendency, number of standard deviations, or a switch
-        between sequential and diverging palette types).
-        @param  view    {Ext.Component}
-        @param  config  {Object}    Properties are palette configs e.g. sigmas, tendency, paletteType
-     */
-    updateColorScale: function (view, config) {
-        var opts = config || this.getSymbology().getForm().getValues();
-        var palette, scale;
-        var metadata = view.getMetadata();
-
-        if (!metadata) {
-            return;
-        }
-
-        // Get the color palette
-        palette = this.getStore('palettes').getById(opts.palette);
-
-        if (opts.threshold) {
-            scale = this.generateThresholdScale(opts.thresholdValues, palette.get('colors')[0]);
-        } else {
-            scale = metadata.getQuantileScale(opts).range(palette.get('colors'));
-        }
-
-        view.setScale(scale);
-    },
-
     /**
         Creates a new color scale based on changes in the scale configuration
         (measure of central tendency, number of standard deviations, or a switch
@@ -360,7 +270,7 @@ Ext.define('Flux.controller.MapController', {
 
         // Update the scale of every map
         Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.Function.bind(function (view) {
-            this.updateColorScale(view, opts);
+            view.updateColorScale(opts);
         }, this));
     }
     

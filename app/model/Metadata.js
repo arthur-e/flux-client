@@ -105,6 +105,67 @@ Ext.define('Flux.model.Metadata', {
 
         return d3.scale.quantile().domain(domain);
 
+    },
+
+    /**
+        Creates a threshold scale; a hack that acts like a d3.scale.* object.
+        The result is a function that returns the specified color value for
+        input numeric values that fall within the integer bounds of the given
+        breakpoint(s).
+        @param  bkpts   {Array}     The breakpoint(s) for the binary mask
+        @param  colors  {String}    The color to use for the binary mask
+        @return         {Function}
+     */
+    getThresholdScale: function (bkpts, color) {
+        var scale;
+
+        if (!Ext.isArray(bkpts)) {
+            bkpts = [bkpts];
+        }
+
+        if (bkpts.length === 1) {
+            scale = function (d) {
+                if (d >= Math.floor(bkpts[0]) && d < (Math.floor(bkpts[0]) + 1)) {
+                    return color;
+                }
+
+                return 'rgba(0,0,0,0)';
+            };
+
+        } else {
+            scale = function (d) {
+                if (d >= bkpts[0] && d < bkpts[1]) {
+                    return color;
+                }
+
+                return 'rgba(0,0,0,0)';
+            };
+
+        }
+
+        scale._d = bkpts;
+        scale._r = [color];
+        scale.domain = function (d) {
+            if (d) {
+                this._d = d;
+                return this;
+            }
+            return this._d;
+        };
+        scale.range = function (r) {
+            if (r) {
+                if (Ext.isArray(r)) {
+                    r = [r[0]];
+                } else {
+                    r = [r];
+                }
+                this._r = r;
+                return this;
+            }
+            return this._r;
+        };
+
+        return scale;
     }
 
 });

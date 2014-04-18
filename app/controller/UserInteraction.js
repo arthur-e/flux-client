@@ -85,6 +85,10 @@ Ext.define('Flux.controller.UserInteraction', {
             'sourcesgridpanel': {
                 beforeedit: this.onSourceGridEntry,
                 canceledit: this.onSourceGridCancel
+            },
+
+            'sourcepanel #aggregation-fields field': {
+                change: this.onAggregationChange
             }
 
         });
@@ -218,25 +222,25 @@ Ext.define('Flux.controller.UserInteraction', {
     requestMap: function (view, source, params) {
         var grid;
 
-        if (params.hasOwnProperty('time')) {
-            // This may be slow, but using findBy() and moment().isSame()
-            //  doesn't work; need to evaluate how this scales
-            grid = view.store.findRecord('timestamp', moment.utc(params.time));
-
-            if (grid) {
-                this.bindGrid(view, grid);
-                this.onMapLoad(grid);
-                return;
-            }
+        // Check for the unique ID, a hash of the parameters passed in this
+        //  request
+        grid = view.store.getById(Ext.Object.toQueryString(params));
+        if (grid) {
+            this.bindGrid(view, grid);
+            this.onMapLoad(grid);
+            return;
         }
 
         Ext.Ajax.request({
             method: 'GET',
             url: Ext.String.format('/flux/api/scenarios/{0}/xy.json', source),
             params: params,
-            callback: function (o, s, response) {
+            callback: function (opts, s, response) {
                 var grid = Ext.create('Flux.model.Grid',
                     Ext.JSON.decode(response.responseText));
+
+                // Create a unique ID that can be used to find this grid
+                grid.set('_id', Ext.Object.toQueryString(opts.params));
 
                 this.bindGrid(view, grid);
                 this.onMapLoad(grid);
@@ -262,7 +266,7 @@ Ext.define('Flux.controller.UserInteraction', {
     /**
         Binds a Flux.model.Grid instance to the provided view, a
         Flux.view.D3GeographicPanel instance. The view's store is updated
-        with the nwe Grid instance.
+        with the new Grid instance.
         @param  view    {Flux.view.D3GeographicPanel}
         @param  grid    {Flux.model.Grid}
      */
@@ -297,6 +301,43 @@ Ext.define('Flux.controller.UserInteraction', {
         if (opts.statsFrom === 'population') {
             view.updateColorScale(this.getSymbology().getForm().getValues());
         }
+    },
+
+    /**TODO
+     */
+    onAggregationChange: function (field, value) {
+        var args = {};
+        var params, vals, view;
+
+        Ext.each(field.up('fieldset').query('trigger'), function (t) {
+            args[t.getName()] = t.getValue();
+        });
+
+        vals = Ext.Object.getValues(args);
+        if (Ext.Array.clean(vals).length !== vals.length) {
+            // Do nothing if not all of the fields are filled out
+            return;
+        }
+
+        view = this.getMap();
+
+        if (field.up('fieldset').down('field[name=showAggregation]').getValue()) {
+            // NOTE: Only available for the Single Map visualization thus far
+            params = {
+                aggregate: args.aggregate,
+                start: view.getMoment().toISOString(),
+                end: view.getMoment().clone().add(args.intervals,
+                    args.intervalGrouping).toISOString()
+            };
+
+        } else {
+            params = {
+                time: view.getMoment().toISOString()
+            }
+        }
+
+        console.log(params);//FIXME
+        this.requestMap(view, view.getMetadata().getId(), params);
     },
 
     /**

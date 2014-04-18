@@ -40,6 +40,8 @@ Ext.define('Flux.view.D3Panel', {
         Initializes the component.
      */
     initComponent: function () {
+        this.addEvents(['beforedraw', 'draw', 'scalechange']);
+
         /**
             Indicates whether or not attribute transformations should be allowed
             to transition smoothly.
@@ -65,6 +67,14 @@ Ext.define('Flux.view.D3Panel', {
      */
     getMetadata: function () {
         return this._metadata;
+    },
+
+    /**
+        Returns the timestamp currently associated with this view.
+        @return {moment}
+     */
+    getMoment: function () {
+        return this._moment;
     },
 
     /**

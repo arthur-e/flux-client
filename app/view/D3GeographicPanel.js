@@ -40,6 +40,12 @@ Ext.define('Flux.view.D3GeographicPanel', {
     },
 
     /**
+        The moment.js time display format to use.
+        @private
+     */
+    _timeFormat: 'YYYY MM-DD HH:ss',
+
+    /**
         Configuration and state for the basemap(s).
      */
     basemaps: {
@@ -55,8 +61,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
         Initializes the component.
      */
     initComponent: function () {
-        this.addEvents(['beforedraw', 'draw', 'scalechange']);
-
         /**
             The scale used for coloring map elements.
             @private
@@ -74,7 +78,8 @@ Ext.define('Flux.view.D3GeographicPanel', {
         }
 
         this.on('draw', function (v, grid) {
-            this._timestamp = grid.getTimestampDisplay('YYYY MM-DD HH:ss');
+            this._moment = grid.get('timestamp');
+            this._timestamp = grid.getTimestampDisplay(this._timeFormat)
             this.updateDisplay([{
                 id: 'timestamp',
                 text: this._timestamp
@@ -654,7 +659,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
             // Recall the timestamp text (if this function was called after
             //  the window is resized and this panel is re-rendered)
             if (data[0].id === 'timestamp') {
-                data[0].text = this._timestamp;
+                data[0].text = this._moment.format(this._timeFormat);
             }
         }
 

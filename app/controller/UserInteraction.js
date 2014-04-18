@@ -295,6 +295,7 @@ Ext.define('Flux.controller.UserInteraction', {
         this.getStore('metadata').add(metadata);
         view.setMetadata(metadata)
             .toggleAnomalies(opts.display === 'anomalies', opts.tendency)
+            .updateColorScale(this.getSymbology().getForm().getValues());
     },
 
     /**TODO
@@ -386,8 +387,6 @@ Ext.define('Flux.controller.UserInteraction', {
                 metadata.get('stats').max
             ]);
         });
-
-        this.getController('MapController').updateColorScales();
     },
 
     /**

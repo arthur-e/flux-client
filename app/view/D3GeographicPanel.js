@@ -418,7 +418,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
             });
 
         // Legend //////////////////////////////////////////////////////////////
-        this.panes.legend.append('g').attr('class', 'ramp y axis');
         this._legend.yScale = d3.scale.linear();
         this._legend.yAxis = d3.svg.axis()
             .scale(this._legend.yScale)
@@ -757,11 +756,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
             })
             .scale(this._legend.yScale);
 
-        this.panes.legend.selectAll('.axis')
-            .attr('transform', 'translate(' + (s + 1).toString() + ',' +
-                (yOffset - this._legend.yScale(bins.length) - h - s).toString() + ')')
-            .call(this._legend.yAxis);
-
         this.panes.legend.selectAll('.bin').remove();
         this.panes.legend.selectAll('.bin')
             .data(colors)
@@ -782,6 +776,13 @@ Ext.define('Flux.view.D3GeographicPanel', {
                 },
                 'class': 'bin'
             });
+
+        this.panes.legend.selectAll('.axis').remove();
+        this.panes.legend.append('g').attr({
+            'class': 'ramp y axis',
+            'transform': 'translate(' + s.toString() + ',' +
+                (yOffset - this._legend.yScale(bins.length) - h - s).toString() + ')'
+        }).call(this._legend.yAxis);
 
         return this;
     }

@@ -428,8 +428,10 @@ Ext.define('Flux.view.D3GeographicPanel', {
         @return         {Flux.view.D3GeographicPanel}
      */
     redraw: function (zoom) {
-        this.ownerCt.un('afterlayout', this.redraw);
-        this.draw(this._model, zoom).updateLegend();
+        if (this.ownerCt) {
+            this.ownerCt.un('afterlayout', this.redraw);
+            this.draw(this._model, zoom).updateLegend();
+        }
         return this;
     },
 

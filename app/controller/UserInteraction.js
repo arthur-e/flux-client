@@ -155,6 +155,7 @@ Ext.define('Flux.controller.UserInteraction', {
             title: title,
             anchor: anchor,
             enableDisplay: false,
+            timeFormat: 'YYYY-MM-DD [at] HH:ss',
             closable: true
         });
 

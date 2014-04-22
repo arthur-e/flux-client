@@ -40,12 +40,6 @@ Ext.define('Flux.view.D3GeographicPanel', {
     },
 
     /**
-        The moment.js time display format to use.
-        @private
-     */
-    _timeFormat: 'YYYY MM-DD HH:ss',
-
-    /**
         Configuration and state for the basemap(s).
      */
     basemaps: {
@@ -56,6 +50,12 @@ Ext.define('Flux.view.D3GeographicPanel', {
         Enables the heads-up-display to show timestamps, mouseover events, etc.
      */
     enableDisplay: true,
+
+    /**
+        The moment.js time display format to use.
+        @private
+     */
+    timeFormat: 'YYYY MM-DD HH:ss',
 
     /**
         Initializes the component.
@@ -72,14 +72,17 @@ Ext.define('Flux.view.D3GeographicPanel', {
          */
         this.store = Ext.create('Flux.store.Grids');
 
-        // Destroy the updateDisplay() function if displays are disabled
+        // Rewrite the updateDisplay() function to update the Panel's header
+        //  title if displays are disabled
         if (!this.enableDisplay) {
-            this.updateDisplay = function () {};
+            this.updateDisplay = function (data) {
+                this.setTitle(data[0].text);
+            };
         }
 
         this.on('draw', function (v, grid) {
             this._moment = grid.get('timestamp');
-            this._timestamp = grid.getTimestampDisplay(this._timeFormat)
+            this._timestamp = grid.getTimestampDisplay(this.timeFormat)
             this.updateDisplay([{
                 id: 'timestamp',
                 text: this._timestamp
@@ -661,7 +664,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
             // Recall the timestamp text (if this function was called after
             //  the window is resized and this panel is re-rendered)
             if (data[0].id === 'timestamp') {
-                data[0].text = this._moment.format(this._timeFormat);
+                data[0].text = this._moment.format(this.timeFormat);
             }
         }
 

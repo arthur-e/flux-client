@@ -79,7 +79,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 click: this.onVisualChange
             },
 
-            'combo[name=source]': {
+            'field[name=source]': {
                 change: this.onSourceChange
             },
 
@@ -98,7 +98,11 @@ Ext.define('Flux.controller.UserInteraction', {
 
             'sourcepanel #aggregation-fields field': {
                 change: this.onAggregationChange
-            }
+            },
+
+            'toolbar button[cls=anim-btn]': {
+                click: this.onAnimation
+            },
 
         });
     },
@@ -402,6 +406,15 @@ Ext.define('Flux.controller.UserInteraction', {
             Ext.each(query, function (item) {
                 item.enable();
             });
+        }
+    },
+
+    /**TODO
+     */
+    onAnimation: function (btn) {
+        if (btn.pressed || btn.getItemId() !== 'animate-btn') {
+            this.getSourcePanel().down('checkbox[name=showAggregation]')
+                .setValue(false);
         }
     },
 

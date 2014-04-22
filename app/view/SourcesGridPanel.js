@@ -52,13 +52,20 @@ Ext.define('Flux.view.SourcesGridPanel', {
     tbar: [{
         text: 'Add View',
         iconCls: 'icon-add',
-        handler : function() {
+        handler: function () {
             var rowEditor = this.up('panel').findPlugin('rowediting');
             var r = Ext.create('Flux.model.GridView');
+            var store = Ext.StoreManager.get('gridviews');
 
-            rowEditor.cancelEdit();
-            Ext.StoreManager.get('gridviews').insert(0, r);
-            rowEditor.startEdit(0, 0);
+            if (store.count() < 9) {
+                rowEditor.cancelEdit();
+                store.insert(0, r);
+                rowEditor.startEdit(0, 0);
+            }
+
+            if (store.count() === 9) {
+                this.disable();
+            }
         }
     }],
 

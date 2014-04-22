@@ -215,9 +215,9 @@ Ext.define('Flux.view.Viewport', {
             border: true,
             width: '20%',
             items: [{
-//                xtype: 'sourcepanel',
-//                id: 'single-map'
-//            }, {
+                xtype: 'sourcepanel',
+                id: 'single-map'
+            }, {
                 xtype: 'sourcesgridpanel',
                 id: 'coordinated-view'
             }]
@@ -226,14 +226,13 @@ Ext.define('Flux.view.Viewport', {
             id: 'content',
             xtype: 'panel',
             border: false,
-//            items: [{
-//                xtype: 'd3geopanel',
-//                title: 'Single Map',
-//                anchor: '100% 100%',
-//                enableZoomControls: true,
-//                enableTransitions: true
-//            }],
-            items: [],
+            items: [{
+                xtype: 'd3geopanel',
+                title: 'Single Map',
+                anchor: '100% 100%',
+                enableZoomControls: true,
+                enableTransitions: true
+            }],
             layout: {
                 type: 'anchor',
                 reserveScrollbar: false

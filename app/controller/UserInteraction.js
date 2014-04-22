@@ -119,7 +119,7 @@ Ext.define('Flux.controller.UserInteraction', {
         var j;
 
         if (n > 9) {
-            return; //TODO Warn the user
+            return;
         }
 
         if (query.length === 0) {
@@ -148,7 +148,7 @@ Ext.define('Flux.controller.UserInteraction', {
             container.doLayout();
         });
 
-        this.onContentResize();
+        this.alignContent(query);
 
         view = container.add({
             xtype: 'd3geopanel',
@@ -180,6 +180,40 @@ Ext.define('Flux.controller.UserInteraction', {
         }
 
         return view;
+    },
+
+    /**
+        Aligns existing D3Panel instances that are children of the #content
+        panel.
+        @param  query   {Array} Result of Ext.ComponentQuery.query()
+     */
+    alignContent: function (query) {
+        var container = this.getContentPanel();
+
+        if (query.length >= 1) {
+            Ext.each(query, function (view, i) {
+                var j = (query.length < 4) ? 2 : 3;
+
+                // i refers to the index of the panel being realigned:
+                //  0   1   2   or  0   1   2   or  0   1
+                //  3   4   5       3   4   5       2   3
+                //  6   7   8
+                // Align those odd-indexed (towards-the-right) panels
+                if (i === 0) {
+                    view.alignTo(container.getEl(), 'tl-tl');
+                } else {
+                    if (i % j !== 0) {
+                        view.alignTo(query[i - 1].getEl(), 'tl-tr');
+                    } else {
+                        if (i - j < 0) {
+                            view.alignTo(query[0].getEl(), 'tl-bl');
+                        } else {
+                            view.alignTo(query[i - j].getEl(), 'tl-bl');
+                        }
+                    }
+                }
+            });
+        }
     },
 
     /**
@@ -383,21 +417,30 @@ Ext.define('Flux.controller.UserInteraction', {
         }));
     },
 
-    /**TODO
+    /**
+        Handles content being removed from the #content panel.
+        @param  c       {Ext.panel.Panel}
+        @param  item    {Flux.view.D3Panel}
      */
-    onContentRemove: function (container, item) {
-        var query = Ext.ComponentQuery.query('d3geopanel');
+    onContentRemove: function (c, item) {
+        var query = Ext.ComponentQuery.query('d3panel');
+
+        if (query.length <= 1) {
+            return;
+        }
 
         // By the time this query is run, the removed panel hasn't been
         //  destroyed yet and so is counted among the extant panels e.g. a count
         //  of "2" panels is really just the one that isn't being destroyed
-        if (query.length === 2) {
-            Ext.each(query, function (view) {
-                if (view.getId() !== item.getId()) {
-                    view.alignTo(container.getEl(), 'tl-tl');
-                }
-            });
-        }
+        query = Ext.Array.clean(Ext.Array.map(query, function (v) {
+            if (v.getId() === item.getId()) {
+                return undefined;
+            }
+
+            return v;
+        }));
+
+        this.alignContent(query);
     },
 
     /**
@@ -407,30 +450,7 @@ Ext.define('Flux.controller.UserInteraction', {
     onContentResize: function () {
         var query = Ext.ComponentQuery.query('d3geopanel');
 
-        if (query.length > 1) {
-            Ext.each(query, function (view, i) {
-                var j = (query.length < 4) ? 2 : 3;
-
-                console.log(i, j, view.getId());//FIXME
-
-                // i refers to the index of the panel being realigned:
-                //  0   1   2   or  0   1   2   or  0   1
-                //  3   4   5       3   4   5       2   3
-                //  6   7   8
-                // Align those odd-indexed (towards-the-right) panels
-                if (i !== 0) {
-                    if (i % j !== 0) {
-                        view.alignTo(query[i - 1].getEl(), 'tl-tr');
-                    } else {
-                        if (i - j < 0) {
-                            view.alignTo(query[0].getEl(), 'tl-bl');
-                        } else {
-                            view.alignTo(query[i - j].getEl(), 'tl-bl');
-                        }
-                    }
-                }
-            });
-        }
+        this.alignContent(query);
     },
 
     /**
@@ -586,8 +606,6 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // Remove the view associated with the Flux.model.GridView instance
         view.ownerCt.remove(view);
-
-        this.onContentResize();
     },
 
     /**

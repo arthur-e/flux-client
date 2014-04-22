@@ -90,8 +90,18 @@ Ext.define('Flux.view.SourcesGridPanel', {
                     this.bindStore(Ext.StoreManager.get('scenarios'));
                 },
                 focus: function () {
-                    this.nextSibling().disable();
-                    this.nextSibling().nextSibling().disable();
+                    var store = this.ownerCt.editingPlugin.getCmp().getStore();
+                    var data = Ext.Array.map(store.getModifiedRecords(), function (item) {
+                        return item.get('date');
+                    });
+
+                    // Only disable the sibling fields if this is a new record,
+                    //  determined by comparing the total number of records to
+                    //  the length of an Array of data for one field
+                    if (store.count() > Ext.Array.clean(data).length) {
+                        this.nextSibling().disable();
+                        this.nextSibling().nextSibling().disable();
+                    }
                 },
                 select: function () {
                     this.nextSibling().enable();

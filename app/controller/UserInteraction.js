@@ -478,7 +478,8 @@ Ext.define('Flux.controller.UserInteraction', {
             view = this.getMap();
         }
 
-        if (!Ext.isEmpty(values.date) && !Ext.isEmpty(values.time)) {
+        if (!Ext.isEmpty(values.source) && !Ext.isEmpty(values.date)
+            && !Ext.isEmpty(values.time)) {
             this.requestMap(view, values.source, {
                 time: Ext.String.format('{0}T{1}:00', values.date, values.time)
             });

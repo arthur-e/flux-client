@@ -63,7 +63,12 @@ Ext.define('Flux.controller.UserInteraction', {
         this.control({
 
             '#content': {
+                remove: this.onContentRemove,
                 resize: this.onContentResize
+            },
+
+            '#content d3panel': {
+                close: this.onContentItemClose
             },
 
             '#settings-menu menucheckitem': {
@@ -137,7 +142,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
         Ext.each(query, function (item, i) {
             item.anchor = anchor;
-            item.ownerCt.on('afterlayout', item.redraw, item, {
+            container.on('afterlayout', item.redraw, item, {
                 buffer: 1
             });
             container.doLayout();
@@ -149,7 +154,8 @@ Ext.define('Flux.controller.UserInteraction', {
             xtype: 'd3geopanel',
             title: title,
             anchor: anchor,
-            enableDisplay: false
+            enableDisplay: false,
+            closable: true
         });
 
         // j works here because we want the new item to be positioned below
@@ -365,6 +371,36 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
+        Removes the corresponding GridView for a D3Panel instance that has
+        been closed.
+        @param  item    {Ext.Component}
+     */
+    onContentItemClose: function (item) {
+        var store = this.getStore('gridviews');
+
+        store.removeAt(store.findBy(function (rec) {
+            return rec.get('view').getId() === item.getId();
+        }));
+    },
+
+    /**TODO
+     */
+    onContentRemove: function (container, item) {
+        var query = Ext.ComponentQuery.query('d3geopanel');
+
+        // By the time this query is run, the removed panel hasn't been
+        //  destroyed yet and so is counted among the extant panels e.g. a count
+        //  of "2" panels is really just the one that isn't being destroyed
+        if (query.length === 2) {
+            Ext.each(query, function (view) {
+                if (view.getId() !== item.getId()) {
+                    view.alignTo(container.getEl(), 'tl-tl');
+                }
+            });
+        }
+    },
+
+    /**
         Propagates the resize to child Components which may not have been
         automatically resized correctly.
      */
@@ -374,6 +410,8 @@ Ext.define('Flux.controller.UserInteraction', {
         if (query.length > 1) {
             Ext.each(query, function (view, i) {
                 var j = (query.length < 4) ? 2 : 3;
+
+                console.log(i, j, view.getId());//FIXME
 
                 // i refers to the index of the panel being realigned:
                 //  0   1   2   or  0   1   2   or  0   1

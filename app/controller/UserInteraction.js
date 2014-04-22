@@ -260,11 +260,11 @@ Ext.define('Flux.controller.UserInteraction', {
         see if the map has already been loaded by the view and requests it
         from the server if it has not been loaded.
         @param  view    {Flux.view.D3GeographicPanel}
-        @param  source  {String}
         @param  params  {Object}
      */
-    requestMap: function (view, source, params) {
+    fetchMap: function (view, params) {
         var grid;
+        var source = view.getMetadata().getId();
 
         // Check for the unique ID, a hash of the parameters passed in this
         //  request
@@ -381,7 +381,7 @@ Ext.define('Flux.controller.UserInteraction', {
             }
         }
 
-        this.requestMap(view, view.getMetadata().getId(), params);
+        this.fetchMap(view, params);
     },
 
     /**
@@ -480,7 +480,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
         if (!Ext.isEmpty(values.source) && !Ext.isEmpty(values.date)
             && !Ext.isEmpty(values.time)) {
-            this.requestMap(view, values.source, {
+            this.fetchMap(view, {
                 time: Ext.String.format('{0}T{1}:00', values.date, values.time)
             });
         }
@@ -492,11 +492,14 @@ Ext.define('Flux.controller.UserInteraction', {
     onMapLoad: function (grid) {
     },
 
-    /**TODO
+    /**
+        Follows the addition of Metadata to a view's metadata store; enables
+        the Animation controls.
         @param  store   {Flux.store.Metadata}
         @param  recs    {Array}
      */
     onMetadataAdded: function (store, recs) {
+        this.getController('Animation').enableAnimation(recs[0]);
     },
 
     /**

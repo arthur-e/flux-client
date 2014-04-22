@@ -80,19 +80,12 @@ Ext.define('Flux.controller.Animation', {
         }
     },
 
-    ////////////////////////////////////////////////////////////////////////////
-    // Event Handlers //////////////////////////////////////////////////////////
-
     /**
         Creates or clears the timing function for an animation.
         @param  state   {Boolean}
         @param  delay   {Number}
      */
     animate: function (state, delay) {
-        if (!this._moment) {
-            return;
-        }
-
         if (state) {
             this._animation = window.setInterval(Ext.bind(this.stepBy,
                 this, [this._steps]), delay * 1000); // Delay in milliseconds
@@ -111,8 +104,6 @@ Ext.define('Flux.controller.Animation', {
     enableAnimation: function (metadata) {
         var c, d, s0, steps, stepSize;
         this._metadata = metadata;
-
-        console.log(metadata);//FIXME
 
         // Figure out the default size of step (e.g. an hour) and the number of
         //  steps to take in each frame
@@ -170,12 +161,29 @@ Ext.define('Flux.controller.Animation', {
     },
 
     /**
-        Returns the current timestamp known to this Controller.
-        @return {Date}
+        Causes the corresponding view to "step" forwards or backwards in time
+        with the animation according to a specified number of steps.
+        @param  steps   {Number}    Negative steps are steps taken backwards
      */
-    getTimestamp: function () {
-        return this._moment;
+    stepBy: function (steps) {
+        var query = Ext.ComponentQuery.query('d3geopanel');
+        Ext.each(query, Ext.Function.bind(function (view) {
+            var ts = view.getMoment();
+
+            if (Ext.isEmpty(ts)) {
+                return;
+            }
+
+            this.getController('UserInteraction').fetchMap(view, {
+                time: ts.clone()
+                    .add(steps, this._stepSize)
+                    .toISOString()
+            });
+        }, this));
     },
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Event Handlers //////////////////////////////////////////////////////////
 
     /**
         Handles a change in the animation delay from the Slider instance in the
@@ -228,39 +236,11 @@ Ext.define('Flux.controller.Animation', {
     },
 
     /**
-        Sets the timestamp as known by this Controller.
-        @param  id      {String}    ID of the view Component with this timestamp
-        @param  date    {moment}
-     */
-    setTimestamp: function (id, date) {
-        this._moment = date; //TODO View-specific timestamps
-    },
-
-    /**
-        Causes the corresponding view to "step" forwards or backwards in time
-        with the animation according to a specified number of steps.
-        @param  steps   {Number}    Negative steps are steps taken backwards
-     */
-    stepBy: function (steps) {
-        if (!this._moment) {
-            return;
-        }
-        this._moment = this._moment.add(steps, this._stepSize);
-        this.getController('Dispatch').loadMap({//TODO Call a function that increments all d3panel subclass instances
-            time: this._moment.toISOString()
-        });
-    },
-
-    /**
         Pause/Play the animation.
         @param  btn     {Ext.button.Button}
         @param  pressed {Boolean}
      */
     toggleAnimation: function (btn, pressed) {
-        if (!this._moment) {
-            return;
-        }
-
         if (pressed) {
             btn.setText('Pause');
             btn.setIconCls('icon-control-pause');

@@ -48,6 +48,12 @@ Ext.define('Flux.controller.UserExperience', {
 
             });
 
+            // Propagate changes to the "Show aggregation" checkbox
+            if (params.hasOwnProperty('showAggregation')) {
+                this.getController('UserInteraction').onAggregationToggle(0,
+                    params.showAggregation);
+            }
+
             if (params.hasOwnProperty('source') && params.hasOwnProperty('date')
                 && params.hasOwnProperty('time')) {
 //TODO Need to figure out how to automatically load data

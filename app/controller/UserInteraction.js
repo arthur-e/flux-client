@@ -87,6 +87,10 @@ Ext.define('Flux.controller.UserInteraction', {
                 canceledit: this.onSourceGridCancel
             },
 
+            'sourcepanel #aggregation-fields checkbox': {
+                change: this.onAggregationToggle
+            },
+
             'sourcepanel #aggregation-fields field': {
                 change: this.onAggregationChange
             }
@@ -259,7 +263,6 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  grid    {Flux.model.Geometry}
      */
     bindGeometry: function (view, geometry) {
-        //TODO geometry.set('viewId', this.getId());
         view.setGridGeometry(geometry);
     },
 
@@ -271,7 +274,6 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  grid    {Flux.model.Grid}
      */
     bindGrid: function (view, grid) {
-        //TODO grid.set('viewId', this.getId());
         view.store.add(grid);
         view.draw(grid, true);
 
@@ -291,7 +293,6 @@ Ext.define('Flux.controller.UserInteraction', {
     bindMetadata: function (view, metadata) {
         var opts = this.getGlobalSettings();
 
-        //TODO metadata.set('viewId', this.getId());
         view.setMetadata(metadata)
             .togglePopulationStats(opts.statsFrom === 'population', metadata)
             .toggleAnomalies(opts.display === 'anomalies', opts.tendency);
@@ -303,7 +304,11 @@ Ext.define('Flux.controller.UserInteraction', {
         }
     },
 
-    /**TODO
+    /**
+        Handles a change in the aggregation parameters; fires a new map
+        request depending on whether aggregation is requested.
+        @param  field   {Ext.form.field.Base}
+        @param  value   {Number|String}
      */
     onAggregationChange: function (field, value) {
         var args = {};
@@ -337,6 +342,26 @@ Ext.define('Flux.controller.UserInteraction', {
         }
 
         this.requestMap(view, view.getMetadata().getId(), params);
+    },
+
+    /**
+        Disables the "Values displayed as..." menu items when aggregation is
+        enabled.
+        @param  cb      {Ext.form.field.Checkbox}
+        @param  checked {Boolean}
+     */
+    onAggregationToggle: function (cb, checked) {
+        var query = this.getSettingsMenu().query('menuitem[group=display]');
+        if (checked) {
+            Ext.each(query, function (item) {
+                item.setChecked(item.name === 'values');
+                item.disable();
+            });
+        } else {
+            Ext.each(query, function (item) {
+                item.enable();
+            });
+        }
     },
 
     /**

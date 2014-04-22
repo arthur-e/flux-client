@@ -84,7 +84,7 @@ Ext.define('Flux.view.SourcePanel', {
                     } else {
                         cmp.disable();
                     }
-                });    
+                });
             },
             listeners: {
                 afterrender: function () {

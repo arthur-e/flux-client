@@ -13,6 +13,9 @@ Ext.define('Flux.controller.UserExperience', {
     }, {
         ref: 'symbology',
         selector: 'symbology'
+    }, {
+        'ref': 'topToolbar',
+        'selector': 'viewport toolbar'
     }],
 
     init: function () {
@@ -141,8 +144,18 @@ Ext.define('Flux.controller.UserExperience', {
         @return {Array}
      */
     getFieldNames: function () {
-        var names = Ext.Array.map(Ext.ComponentQuery.query('field[name]'), function (c) {
-            return (Ext.String.endsWith(c.getName(), '-inputEl')) ? undefined : c.getName(); 
+        var names = Ext.Array.map(Ext.ComponentQuery.query('field[name]'), function (i) {
+            if (i.stateId) return i.stateId;
+            if (i.getName) return i.getName();
+            return name;
+        });
+        names = names.concat(Ext.Array.map(this.getTopToolbar().query('field[name], menuitem[name]'), function (i) {
+            if (i.stateId) return i.stateId;
+            if (i.getName) return i.getName();
+            return name;
+        }));
+        names = Ext.Array.map(names, function (name) {
+            return (Ext.String.endsWith(name, '-inputEl')) ? undefined : name; 
         });
 
         return Ext.Array.clean(names);

@@ -23,7 +23,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
         align: 'middle'
     },
 
-    stateEvents: ['dragend', 'boundschange'],
+    stateEvents: ['enable', 'disable', 'dragend', 'boundschange'],
 
     /**
         Configures the component instance with values and isMulti properties.
@@ -162,6 +162,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
         @param  state   {Object}
      */
     applyState: function (state) {
+        this.setDisabled(state.disabled);
         this.values = state.value;
         this.on('render', function () {
             this.setValues(state.value);
@@ -190,6 +191,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
      */
     getState: function () {
         return {
+            disabled: this.isDisabled(),
             value: this.getValues()
         }
     },

@@ -190,7 +190,7 @@ Ext.define('Flux.controller.UserExperience', {
         @param  checked {Boolean}
      */
     onStatsChange: function (cb, checked) {
-        var targets;
+        var target;
         var values = {};
 
         if (checked) {
@@ -198,19 +198,14 @@ Ext.define('Flux.controller.UserExperience', {
                 cb.group)).setValue(cb.name);
 
             if (cb.name === 'population' || cb.name === 'data') {
-                targets = this.getSourcePanel().down('#aggregation-fields, #difference-fields');
-                if (targets) {
-                    Ext.each(targets, function (t) {
-                        switch (cb.name) {
-                            case 'population':
-                            t.disable();
-                            break;
+                target = this.getSourcePanel()
+                    .down('checkbox[name=showAggregation]');
 
-                            default:
-                            t.enable();
-                        }
-                    });
+                if (cb.name === 'population') {
+                    target.setValue(false);
                 }
+
+                target.up('fieldset').setDisabled(cb.name === 'population');
             }
 
             values[cb.group] = cb.name;

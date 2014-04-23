@@ -96,7 +96,7 @@ Ext.define('Flux.view.D3Panel', {
      */
     toggleAnomalies: function (state, tendency) {
         this._showAnomalies = state;
-        if (state) {
+        if (state && this.getMetadata()) {
             // Rescale the data points subtracting the measure of central tendency
             this._addOffset = -this.getMetadata().get('stats')[tendency];
         }

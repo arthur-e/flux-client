@@ -60,25 +60,12 @@ Ext.define('Flux.view.MapSettings', {
         name: 'showBasemapOutlines',
         stateId: 'showBasemapOutlines',
         boxLabel: 'Basemap outlines only',
-        propagateChange: function (nowChecked) {
-            var target;
-
-            if (this.up('panel') === undefined) {
-                return;
-            }
-
-            target = this.up('panel').down('checkbox[name=showPoliticalBoundaries]');
-            if (nowChecked) {
-                target.disable();
-            } else {
-                target.enable();
-            }
-        },
         listeners: {
-            afterrender: function () {
-                // Need to enable/disable AFTER rendering, as when applyState()
-                //  is called this component is laid out with its siblings!
-                this.propagateChange(this.getValue());
+            change: function (cb, checked) {
+                if (this.up('panel')) {
+                    this.up('panel').down('checkbox[name=showPoliticalBoundaries]')
+                        .setDisabled(checked);
+                }
             }
         }
 

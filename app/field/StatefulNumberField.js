@@ -1,10 +1,8 @@
-Ext.define('Flux.field.StatefulCheckbox', {
-    extend: 'Ext.form.field.Checkbox',
-    alias: 'widget.recheckbox',
+Ext.define('Flux.field.StatefulNumberField', {
+    extend: 'Ext.form.field.Number',
+    alias: 'widget.renumberfield',
     stateful: true,
-    stateEvents: ['enable', 'disable', 'change'],
-    inputValue: true,
-    uncheckedValue: false,
+    stateEvents: ['change'],
 
     getState: function () {
         return {

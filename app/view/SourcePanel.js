@@ -59,10 +59,12 @@ Ext.define('Flux.view.SourcePanel', {
         disabled: true //TODO
 
     }, {
-        xtype: 'fieldset',
+        xtype: 'refieldset',
         itemId: 'aggregation-fields',
         title: 'Aggregation',
         disabled: true,
+        stateful: true,
+        stateId: 'aggregationFields',
         defaults: {
             labelAlign: 'top',
             anchor: '100%'
@@ -71,28 +73,7 @@ Ext.define('Flux.view.SourcePanel', {
             xtype: 'recheckbox',
             name: 'showAggregation',
             stateId: 'showAggregation',
-            boxLabel: 'Show aggregation',
-            propagateChange: function (checked) {
-                if (this.up('fieldset') === undefined) {
-                    return;
-                }
-
-                // Enable all the fields in this fieldset when checked
-                Ext.each(this.up('fieldset').query('field:not(checkbox)'), function (cmp) {
-                    if (checked) {
-                        cmp.enable();
-                    } else {
-                        cmp.disable();
-                    }
-                });
-            },
-            listeners: {
-                afterrender: function () {
-                    // Need to enable/disable AFTER rendering, as when applyState()
-                    //  is called this component is laid out with its siblings!
-                    this.propagateChange(this.getValue());
-                }
-            }
+            boxLabel: 'Show aggregation'
         }, {
             xtype: 'fieldcontainer',
             layout: 'hbox',
@@ -141,9 +122,11 @@ Ext.define('Flux.view.SourcePanel', {
         }]
 
     }, {
-        xtype: 'fieldset',
+        xtype: 'refieldset',
         title: 'Difference',
         itemId: 'difference-fields',
+        stateId: 'differenceFields',
+        stateful: true,
         disabled: true,
         defaults: {
             labelAlign: 'top',
@@ -153,28 +136,7 @@ Ext.define('Flux.view.SourcePanel', {
             xtype: 'recheckbox',
             name: 'showDifference',
             stateId: 'showDifference',
-            boxLabel: 'Show difference',
-            propagateChange: function (checked) {
-                if (this.up('fieldset') === undefined) {
-                    return;
-                }
-
-                // Enable all the fields in this fieldset when checked
-                Ext.each(this.up('fieldset').query('field:not(checkbox)'), function (cmp) {
-                    if (checked) {
-                        cmp.enable();
-                    } else {
-                        cmp.disable();
-                    }
-                });    
-            },
-            listeners: {
-                afterrender: function () {
-                    // Need to enable/disable AFTER rendering, as when applyState()
-                    //  is called this component is laid out with its siblings!
-                    this.propagateChange(this.getValue());
-                }
-            }
+            boxLabel: 'Show difference'
         }, {
             xtype: 'combo',
             name: 'source2',

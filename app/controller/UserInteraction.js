@@ -358,20 +358,21 @@ Ext.define('Flux.controller.UserInteraction', {
     onAggregationChange: function (field, value) {
         var args = {};
         var params, vals, view;
+        var toggle = field.up('fieldset').down('field[name=showAggregation]');
 
         Ext.each(field.up('fieldset').query('trigger'), function (t) {
             args[t.getName()] = t.getValue();
         });
 
         vals = Ext.Object.getValues(args);
-        if (Ext.Array.clean(vals).length !== vals.length) {
+        if (Ext.Array.clean(vals).length !== vals.length && toggle.getValue()) {
             // Do nothing if not all of the fields are filled out
             return;
         }
 
         view = this.getMap();
 
-        if (field.up('fieldset').down('field[name=showAggregation]').getValue()) {
+        if (toggle.getValue()) {
             // NOTE: Only available for the Single Map visualization thus far
             params = {
                 aggregate: args.aggregate,
@@ -495,7 +496,7 @@ Ext.define('Flux.controller.UserInteraction', {
         if (!Ext.isEmpty(values.source) && !Ext.isEmpty(values.date)
             && !Ext.isEmpty(values.time)) {
             this.fetchMap(view, {
-                time: Ext.String.format('{0}T{1}:00', values.date, values.time)
+                time: Ext.String.format('{0}T{1}:00.000Z', values.date, values.time)
             });
         }
     },

@@ -205,12 +205,12 @@ Ext.define('Flux.view.Symbology', {
         stateId: 'reversePalette',
         boxLabel: 'Reverse palette',
         checked: true,
-        propagateChange: function () {
-            if (this.up('form') === undefined) {
-                return;
+        listeners: {
+            change: function () {
+                if (this.up('form')) {
+                    this.up('form').fireEvent('palettechange');
+                }
             }
-
-            this.up('form').fireEvent('palettechange');
         }
 
     }, {
@@ -226,27 +226,18 @@ Ext.define('Flux.view.Symbology', {
             stateId: 'autoscale',
             boxLabel: 'Autoscale',
             checked: true,
-            propagateChange: function (nowChecked) {
-                var stddev, domain;
-
-                if (this.up('fieldset') === undefined) {
-                    return;
-                }
-
-                // Selectively enable fields based on checked condition
-                stddev = this.up('fieldset').query('numberfield')[0];
-                domain = this.up('fieldset').query('enumslider')[0];
-
-                if (nowChecked) {
-                    stddev.enable();
-                    domain.disable();
-                } else {
-                    stddev.disable();
-                    domain.enable();
+            listeners: {
+                change: function (cb, checked) {
+                    var parent = this.up('fieldset');
+                    if (parent) {
+                        // Selectively enable fields based on checked condition
+                        parent.down('numberfield').setDisabled(checked);
+                        parent.down('enumslider').setDisabled(checked);
+                    }
                 }
             }
         }, {
-            xtype: 'numberfield',
+            xtype: 'renumberfield',
             name: 'sigmas',
             itemId: 'std-deviations',
             stateful: true,
@@ -284,19 +275,16 @@ Ext.define('Flux.view.Symbology', {
             boxLabel: 'Binary mask',
             stateful: true,
             stateId: 'threshold',
-            propagateChange: function (checked) {
-                if (this.up('form') === undefined) {
-                    return;
-                }
-
-                // Enable all the fields in this fieldset when checked
-                Ext.each(this.up('fieldset').query('field:not(#threshold-toggle), enumslider'), function (cmp) {
-                    if (checked) {
-                        cmp.enable();
-                    } else {
-                        cmp.disable();
+            listeners: {
+                change: function (cb, checked) {
+                    if (this.up('fieldset')) {
+                        // Enable all the fields in this fieldset when checked
+                        Ext.each(this.up('fieldset')
+                            .query('field:not(#threshold-toggle), enumslider'), function (cmp) {
+                                cmp.setDisabled(!checked);
+                        });
                     }
-                });
+                }
             }
         }, {
             xtype: 'recheckbox',

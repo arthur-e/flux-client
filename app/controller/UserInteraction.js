@@ -102,7 +102,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
             'toolbar button[cls=anim-btn]': {
                 click: this.onAnimation
-            },
+            }
 
         });
     },
@@ -660,12 +660,19 @@ Ext.define('Flux.controller.UserInteraction', {
         change[cb.group] = cb.name;
         opts = this.getGlobalSettings();
 
+        // Measure of central tendency /////////////////////////////////////////
         if (change.tendency !== undefined) {
+            // Update the additive offset for anomalies, in case they're used
+            Ext.each(query, function (view) {
+                view.toggleAnomalies((opts.display === 'anomalies'),
+                    opts.tendency);
+            });
             this.getController('MapController').updateColorScales({
                 tendency: change.tendency
             });
         }
 
+        // Statistics from... //////////////////////////////////////////////////
         if (change.statsFrom !== undefined ) {
             store = this.getStore('metadata');
 
@@ -685,8 +692,8 @@ Ext.define('Flux.controller.UserInteraction', {
             }
         }
 
+        // Values displayed as.... /////////////////////////////////////////////
         if (change.display !== undefined) {
-
             Ext.each(query, function (view) {
                 view.toggleAnomalies((opts.display === 'anomalies'),
                     opts.tendency).redraw();

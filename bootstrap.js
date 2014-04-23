@@ -853,7 +853,9 @@ Ext.ClassManager.addNameAlternateMappings({
   "Flux.field.StatefulCheckItem": [],
   "Flux.field.StatefulCheckbox": [],
   "Flux.field.StatefulComboBox": [],
+  "Flux.field.StatefulFieldSet": [],
   "Flux.field.StatefulHiddenField": [],
+  "Flux.field.StatefulNumberField": [],
   "Flux.field.StatefulRadioGroup": [],
   "Flux.model.Geometry": [],
   "Flux.model.Grid": [],
@@ -1899,8 +1901,14 @@ Ext.ClassManager.addNameAliasMappings({
   "Flux.field.StatefulComboBox": [
     "widget.recombo"
   ],
+  "Flux.field.StatefulFieldSet": [
+    "widget.refieldset"
+  ],
   "Flux.field.StatefulHiddenField": [
     "widget.rehidden"
+  ],
+  "Flux.field.StatefulNumberField": [
+    "widget.renumberfield"
   ],
   "Flux.field.StatefulRadioGroup": [
     "widget.reradiogroup"

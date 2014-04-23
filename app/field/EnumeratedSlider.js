@@ -308,12 +308,16 @@ Ext.define('Flux.field.EnumeratedSlider', {
         // Determine the appropriate type of slider
         if (multiState) {
             config.xtype = 'multislider';
-            Ext.merge(config, {
+            config = Ext.merge(config, {
+                minValue: values[0],
+                maxValue: values[1],
                 values: values
             });
         } else {
             config.xtype = 'slider';
-            Ext.merge(config, {
+            config = Ext.merge(config, {
+                minValue: values[0],
+                maxValue: values[1],
                 value: values
             });
         }

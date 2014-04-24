@@ -518,19 +518,8 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  recs    {Array}
      */
     onMetadataAdded: function (store, recs) {
-        this.getController('Animation').enableAnimation(recs[0]);
-    },
-
-    /**
-        Propagates changes in the Metadata (most recently received
-        Flux.model.Metadata instance) to other Components that need e.g.
-        population summary statistics.
-        @param  metadata    {Flux.model.Metadata}
-     */
-    onMetadataLoad: function (metadata) {
-        if (!metadata) {
-            return;
-        }
+        var metadata = recs[0];
+        this.getController('Animation').enableAnimation(metadata);
 
         // Initialize the values of the domain bounds and threshold sliders
         Ext.each(this.getSymbology().query('enumslider'), function (cmp) {
@@ -569,9 +558,7 @@ Ext.define('Flux.controller.UserInteraction', {
         geometry = this.getStore('geometries').getById(source);
 
         if (metadata) {
-            Ext.Function.createSequence(
-                this.bindMetadata(view, metadata),
-                this.onMetadataLoad(metadata));
+            this.bindMetadata(view, metadata);
             this.propagateMetadata(container, metadata);
             
         } else {
@@ -587,9 +574,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
                     this.getStore('metadata').add(metadata);
 
-                    Ext.Function.createSequence(
-                        this.bindMetadata(view, metadata),
-                        this.onMetadataLoad(metadata));
+                    this.bindMetadata(view, metadata);
                     this.propagateMetadata(container, metadata);
                 },
 
@@ -690,10 +675,6 @@ Ext.define('Flux.controller.UserInteraction', {
             });
 
             this.getController('MapController').updateColorScales();
-
-            if (query.length === 1 && !Ext.isEmpty(query[0].getMetadata())) {
-                this.onMetadataLoad(query[0].getMetadata());
-            }
         }
 
         // Values displayed as.... /////////////////////////////////////////////

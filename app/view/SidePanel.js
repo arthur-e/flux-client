@@ -30,8 +30,8 @@ Ext.define('Flux.view.SidePanel', {
             Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
         }
 
-        // With large displays, resize at 250 pixels wide and otherwise, set
-        //  at 20%; in both cases, saved state is ignored
+        // With large displays, resize at 250 pixels wide; otherwise set at 20%;
+        //  in both cases, saved state is ignored
         this.on('render', function () {
             if (Ext.getBody().getWidth() > 1000) {
                 this.setWidth(250);

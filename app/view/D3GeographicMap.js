@@ -1,6 +1,6 @@
-Ext.define('Flux.view.D3GeographicPanel', {
+Ext.define('Flux.view.D3GeographicMap', {
     extend: 'Flux.view.D3Panel',
-    alias: 'widget.d3geopanel',
+    alias: 'widget.d3geomap',
     requires: [
         'Ext.Function',
         'Ext.tip.QuickTip',
@@ -133,7 +133,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
     /**
         Add event listeners to the drawn elements.
         @param  sel {d3.selection}
-        @return     {Flux.view.D3GeographicPanel}
+        @return     {Flux.view.D3GeographicMap}
      */
     addListeners: function (sel) {
         sel = sel || this.panes.overlay.selectAll('.point');
@@ -167,7 +167,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         corresponding metadata.
         @param  grid    {Flux.model.Grid}
         @param  zoom    {Boolean}
-        @return         {Flux.view.D3GeographicPanel}
+        @return         {Flux.view.D3GeographicMap}
      */
     draw: function (grid, zoom) {
         var bbox, lat, lng, c1, c2, sel, target;
@@ -318,7 +318,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         Main drawing function; defines and appends the SVG element.
         @param  width   {Number}
         @param  height  {Number}
-        @return         {Flux.view.D3GeographicPanel}
+        @return         {Flux.view.D3GeographicMap}
      */
     init: function (width, height) {
         var elementId = '#' + this.items.getAt(0).id;
@@ -428,7 +428,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
     /**
         Draws the view again with the same data it already has bound to it.
         @param  zoom    {Boolean}
-        @return         {Flux.view.D3GeographicPanel}
+        @return         {Flux.view.D3GeographicMap}
      */
     redraw: function (zoom) {
         if (this.ownerCt) {
@@ -442,7 +442,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         Draws or redraws the basemap given the URL of a new TopoJSON file.
         @param  basemapUrl      {String}
         @param  drawBoundaries  {Boolean}
-        @return                 {Flux.view.D3GeographicPanel}
+        @return                 {Flux.view.D3GeographicMap}
      */
     setBasemap: function (basemapUrl, boundaries) {
         var drawBasemap = Ext.bind(function (json) {
@@ -516,7 +516,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         Sets the grid geometry; retains a reference to the Flux.model.Geometry
         instance.
         @param  geom    {Flux.model.Geometry}
-        @return         {Flux.view.D3GeographicPanel}
+        @return         {Flux.view.D3GeographicMap}
      */
     setGridGeometry: function (geom) {
         this._grid = geom.get('coordinates');
@@ -528,7 +528,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         @param  proj    {String}
         @param  width   {Number}
         @param  height  {Number}
-        @return         {Flux.view.D3GeographicPanel}
+        @return         {Flux.view.D3GeographicMap}
      */
     setProjection: function (proj, width, height) {
         width = width || this.svg.attr('width');
@@ -554,7 +554,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
     /**
         Sets the color scale used by the map.
         @param  scale   {d3.scale.*}
-        @return         {Flux.view.D3GeographicPanel}
+        @return         {Flux.view.D3GeographicMap}
      */
     setScale: function (scale) {
         this._scale = scale;
@@ -574,7 +574,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         duration of time for the transition to the new zoom level.
         @param  factor      {Number}
         @param  duration    {Number}
-        @return             {Flux.view.D3GeographicPanel}
+        @return             {Flux.view.D3GeographicMap}
      */
     setZoom: function (factor, duration) {
         var scale = this.zoom.scale();
@@ -611,7 +611,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
     /**
         Toggles the display of the legend on/off.
         @param  state   {Boolean}
-        @return         {Flux.view.D3GeographicPanel}
+        @return         {Flux.view.D3GeographicMap}
      */
     toggleLegend: function (state) {
         if (state) {
@@ -627,7 +627,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
         Draws again the visualization features of the map by updating their
         SVG attributes. Accepts optional D3 selection which it will style.
         @param  selection   {d3.selection}
-        @return             {Flux.view.D3GeographicPanel}
+        @return             {Flux.view.D3GeographicMap}
      */
     update: function (selection) {
         if (selection) {
@@ -653,7 +653,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
     /**
         Updates the on-map info text in the heads-up-display.
         @param  data    {Array}
-        @return         {Flux.view.D3GeographicPanel}
+        @return         {Flux.view.D3GeographicMap}
      */
     updateDisplay: function (data) {
         var scale = 0.039 * this.svg.attr('height');
@@ -689,7 +689,7 @@ Ext.define('Flux.view.D3GeographicPanel', {
     /**
         Updates the legend based on the current color scale; can be called with
         or without an Array of breakpoints (bins) for the scale.
-        @return         {Flux.view.D3GeographicPanel}
+        @return         {Flux.view.D3GeographicMap}
      */
     updateLegend: function () {
         var bins, h, ordinal;

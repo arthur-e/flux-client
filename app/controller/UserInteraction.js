@@ -108,16 +108,16 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
-        Creates a new instance of Flux.view.D3GeographicPanel and inserts it
+        Creates a new instance of Flux.view.D3GeographicMap and inserts it
         into the appropriate place inside a target Anchor layout panel, resizing
         its siblings as necessary.
         @param  title   {String}
-        @return         {Flux.view.D3GeographicPanel}
+        @return         {Flux.view.D3GeographicMap}
      */
     addMap: function (title) {
         var anchor, view;
         var container = this.getContentPanel();
-        var query = Ext.ComponentQuery.query('d3geopanel');
+        var query = Ext.ComponentQuery.query('d3geomap');
         var n = container.items.length;
         // Subtract j from the aligning panel's index to find the target panel's index
         var j;
@@ -155,7 +155,7 @@ Ext.define('Flux.controller.UserInteraction', {
         this.alignContent(query);
 
         view = container.add({
-            xtype: 'd3geopanel',
+            xtype: 'd3geomap',
             title: title,
             anchor: anchor,
             enableDisplay: false,
@@ -240,19 +240,19 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
-        Finds or creates a single instance of D3GeographicPanel and returns it.
-        @return {Flux.view.D3GeographicPanel}
+        Finds or creates a single instance of D3GeographicMap and returns it.
+        @return {Flux.view.D3GeographicMap}
      */
     getMap: function () {
         var opts = this.getGlobalSettings();
-        var query = Ext.ComponentQuery.query('d3geopanel');
+        var query = Ext.ComponentQuery.query('d3geomap');
 
         if (query.length !== 0) {
             return query[0];
         }
 
         return this.getContentPanel().add({
-            xtype: 'd3geopanel',
+            xtype: 'd3geomap',
             title: 'Single Map',
             anchor: '100% 100%',
             enableTransitions: true,
@@ -264,7 +264,7 @@ Ext.define('Flux.controller.UserInteraction', {
         Given a request for a map at based on certain parameters, checks to
         see if the map has already been loaded by the view and requests it
         from the server if it has not been loaded.
-        @param  view    {Flux.view.D3GeographicPanel}
+        @param  view    {Flux.view.D3GeographicMap}
         @param  params  {Object}
      */
     fetchMap: function (view, params) {
@@ -303,8 +303,8 @@ Ext.define('Flux.controller.UserInteraction', {
 
     /**
         Binds a Flux.model.Geometry instance to the provided view, a
-        Flux.view.D3GeographicPanel instance.
-        @param  view    {Flux.view.D3GeographicPanel}
+        Flux.view.D3GeographicMap instance.
+        @param  view    {Flux.view.D3GeographicMap}
         @param  grid    {Flux.model.Geometry}
      */
     bindGeometry: function (view, geometry) {
@@ -313,9 +313,9 @@ Ext.define('Flux.controller.UserInteraction', {
 
     /**
         Binds a Flux.model.Grid instance to the provided view, a
-        Flux.view.D3GeographicPanel instance. The view's store is updated
+        Flux.view.D3GeographicMap instance. The view's store is updated
         with the new Grid instance.
-        @param  view    {Flux.view.D3GeographicPanel}
+        @param  view    {Flux.view.D3GeographicMap}
         @param  grid    {Flux.model.Grid}
      */
     bindGrid: function (view, grid) {
@@ -331,8 +331,8 @@ Ext.define('Flux.controller.UserInteraction', {
 
     /**
         Binds a Flux.model.Metadata instance to the provided view, a
-        Flux.view.D3GeographicPanel instance.
-        @param  view    {Flux.view.D3GeographicPanel}
+        Flux.view.D3GeographicMap instance.
+        @param  view    {Flux.view.D3GeographicMap}
         @param  grid    {Flux.model.Metadata}
      */
     bindMetadata: function (view, metadata) {
@@ -371,6 +371,10 @@ Ext.define('Flux.controller.UserInteraction', {
         }
 
         view = this.getMap();
+
+        if (!field.isVisible(true) || Ext.isEmpty(view.getMoment())) {
+            return;
+        }
 
         if (toggle.getValue()) {
             // NOTE: Only available for the Single Map visualization thus far
@@ -463,7 +467,7 @@ Ext.define('Flux.controller.UserInteraction', {
         automatically resized correctly.
      */
     onContentResize: function () {
-        var query = Ext.ComponentQuery.query('d3geopanel');
+        var query = Ext.ComponentQuery.query('d3geomap');
 
         this.alignContent(query);
     },
@@ -722,11 +726,12 @@ Ext.define('Flux.controller.UserInteraction', {
 
         switch (item.getItemId()) {
             case 'single-map':
-                w = '20%';
+                w = (Ext.getBody().getWidth() > 1000) ? 250 : '20%';
+                this.getSymbology().up('sidepanel').expand(false);
+                this.getSourcePanel().getForm().reset();
                 if (viewQuery.length === 0) {
                     this.getMap();
                 }
-                this.getSourcePanel().getForm().reset();
                 break;
 
             case 'coordinated-view':

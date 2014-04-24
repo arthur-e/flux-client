@@ -92,7 +92,7 @@ Ext.define('Flux.view.D3Panel', {
         Toggles the display of anomalies in the data.
         @param  state       {Boolean}
         @param  tendency    {String}
-        @return             {Flux.view.D3GeographicPanel}
+        @return             {Flux.view.D3Panel}
      */
     toggleAnomalies: function (state, tendency) {
         this._showAnomalies = state;

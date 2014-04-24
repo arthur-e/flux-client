@@ -70,7 +70,7 @@ Ext.define('Flux.view.SourcePanel', {
             anchor: '100%'
         },
         items: [{
-            xtype: 'recheckbox',
+            xtype: 'checkbox',
             name: 'showAggregation',
             stateId: 'showAggregation',
             boxLabel: 'Show aggregation'

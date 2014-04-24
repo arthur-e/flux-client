@@ -193,6 +193,8 @@ Ext.define('Flux.controller.UserExperience', {
     initAggregationFields: function (fieldset) {
         if (this.getSymbology().down('hiddenfield[name=statsFrom]').getValue() === 'data') {
             fieldset.enable();
+        } else {
+            fieldset.disable();
         }
     },
 

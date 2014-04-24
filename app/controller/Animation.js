@@ -166,7 +166,7 @@ Ext.define('Flux.controller.Animation', {
         @param  steps   {Number}    Negative steps are steps taken backwards
      */
     stepBy: function (steps) {
-        var query = Ext.ComponentQuery.query('d3geopanel');
+        var query = Ext.ComponentQuery.query('d3geomap');
         Ext.each(query, Ext.Function.bind(function (view) {
             var ts = view.getMoment();
 

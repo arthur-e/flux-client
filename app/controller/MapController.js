@@ -16,11 +16,11 @@ Ext.define('Flux.controller.MapController', {
 
         this.control({
 
-            'd3geopanel': {
+            'd3geomap': {
                 resize: this.onResize
             },
 
-            'd3geopanel > component[autoEl]': {
+            'd3geomap > component[autoEl]': {
                 boxready: this.initialize
             },
 
@@ -111,7 +111,7 @@ Ext.define('Flux.controller.MapController', {
                 return kw;
         }, this)());
 
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
+        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (view) {
             view.init(width, height)
                 .setProjection(opts.projection, width, height)
                 .setBasemap(opts.basemap, kw);
@@ -128,8 +128,8 @@ Ext.define('Flux.controller.MapController', {
         @param  recs    {Array}
      */
     onBasemapChange: function (c, recs) {
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
-            // For every d3geopanel instance, update the basemap
+        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (view) {
+            // For every d3geomap instance, update the basemap
             view.setBasemap(recs[0].get('id'), recs[0].get('url'));
         });
     },
@@ -140,7 +140,7 @@ Ext.define('Flux.controller.MapController', {
         @param  state   {Boolean}
      */
     onLegendDisplayChange: function (c, state) {
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
+        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (view) {
             view.toggleLegend(state);
         });
     },
@@ -152,8 +152,8 @@ Ext.define('Flux.controller.MapController', {
      */
     onPaletteChange: function (c, recs) {
         var cs = recs[0].get('colors');
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.bind(function (view) {
-            // For every d3geopanel instance, update the scale's output range
+        Ext.each(Ext.ComponentQuery.query('d3geomap'), Ext.bind(function (view) {
+            // For every d3geomap instance, update the scale's output range
             if (view.getScale()) {
                 if (typeof view.getScale().quantiles === 'function') {
                     view.setScale(view.getScale().range(cs));
@@ -170,12 +170,12 @@ Ext.define('Flux.controller.MapController', {
         @param  recs    {Array}
      */
     onProjectionChange: function (c, recs) {
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
+        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (view) {
             if (view.getProjection().id === recs[0].get('id')) {
                 return;
             }
 
-            // For every d3geopanel instance, update the projection
+            // For every d3geomap instance, update the projection
             view.setProjection(recs[0].get('id')).update();
         });
     },
@@ -253,8 +253,8 @@ Ext.define('Flux.controller.MapController', {
             }
         }
 
-        // For every d3geopanel instance, update the basemap
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), function (view) {
+        // For every d3geomap instance, update the basemap
+        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (view) {
             view.setBasemap(basemap, keyword);
         });
     },
@@ -271,7 +271,7 @@ Ext.define('Flux.controller.MapController', {
         opts = Ext.merge(opts, config || {});
 
         // Update the scale of every map
-        Ext.each(Ext.ComponentQuery.query('d3geopanel'), Ext.bind(function (view) {
+        Ext.each(Ext.ComponentQuery.query('d3geomap'), Ext.bind(function (view) {
             view.updateColorScale(opts);
         }, this));
     }

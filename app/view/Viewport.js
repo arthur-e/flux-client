@@ -227,7 +227,7 @@ Ext.define('Flux.view.Viewport', {
             xtype: 'panel',
             border: false,
             items: [{
-                xtype: 'd3geopanel',
+                xtype: 'd3geomap',
                 title: 'Single Map',
                 anchor: '100% 100%',
                 enableZoomControls: true,

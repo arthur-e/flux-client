@@ -204,7 +204,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
         if (query.length >= 1) {
             Ext.each(query, function (view, i) {
-                var j = (query.length < 4) ? 2 : 3;
+                var j = (query.length <= 4) ? 2 : 3;
 
                 // i refers to the index of the panel being realigned:
                 //  0   1   2   or  0   1   2   or  0   1

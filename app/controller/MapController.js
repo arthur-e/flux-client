@@ -17,11 +17,8 @@ Ext.define('Flux.controller.MapController', {
         this.control({
 
             'd3geomap': {
+                boxready: this.initialize,
                 resize: this.onResize
-            },
-
-            'd3geomap > component[autoEl]': {
-                boxready: this.initialize
             },
 
             'mapsettings checkbox[name=showLegends]': {
@@ -92,10 +89,12 @@ Ext.define('Flux.controller.MapController', {
     /**
         Set the spatial projection and begin D3 rendering.
         @param  cmp     {Ext.Component}
-        @param  width   {Number}
-        @param  height  {Number}
      */
-    initialize: function (cmp, width, height) {
+    initialize: function (cmp) {
+        // Width and height are undefined in this boxready call, which originates
+        //  from the component's underlying box (this > component[autoEl])
+        var width = cmp.getWidth();
+        var height = cmp.getHeight();
         var opts = this.getMapSettings().getForm().getValues();
         var kw = (Ext.bind(function () {
                 var kw = 'none';

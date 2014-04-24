@@ -18,6 +18,12 @@
 .boundary.outside { stroke: #fff; }
 .empty { fill: transparent !important; }
 .hidden { display: none; }
+.plot .line {
+    fill: none;
+    stroke: #157fcc;
+    stroke-width: 2px;
+}
+.plot .x.axis path { display: none; }
 text.info {
     font-family: Helvetica,Arial,sans-serif;
     font-weight: bold;

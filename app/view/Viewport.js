@@ -229,9 +229,12 @@ Ext.define('Flux.view.Viewport', {
             items: [{
                 xtype: 'd3geomap',
                 title: 'Single Map',
-                anchor: '100% 100%',
+                anchor: '100% 80%',
                 enableZoomControls: true,
                 enableTransitions: true
+            }, {
+                xtype: 'd3lineplot',
+                anchor: '100% 20%'
             }],
             layout: {
                 type: 'anchor',

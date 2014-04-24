@@ -63,6 +63,10 @@ Ext.define('Flux.controller.UserInteraction', {
             }
         });
 
+        Ext.create('Flux.store.TimeSeries', {
+            storeId: 'timeseries'
+        });
+
         ////////////////////////////////////////////////////////////////////////
         // Event Listeners /////////////////////////////////////////////////////
 
@@ -85,6 +89,10 @@ Ext.define('Flux.controller.UserInteraction', {
                 click: this.onVisualChange
             },
 
+            'field[name=showLinePlot]': {
+                change: this.toggleTimeSeriesDisplay
+            },
+
             'field[name=source]': {
                 change: this.onSourceChange
             },
@@ -96,10 +104,6 @@ Ext.define('Flux.controller.UserInteraction', {
             'sourcesgridpanel': {
                 beforeedit: this.onSourceGridEntry,
                 canceledit: this.onSourceGridCancel
-            },
-
-            'sourcepanel #aggregation-fields checkbox': {
-                change: this.onAggregationToggle
             },
 
             'sourcepanel #aggregation-fields field': {
@@ -578,6 +582,9 @@ Ext.define('Flux.controller.UserInteraction', {
         if (metadata) {
             this.bindMetadata(view, metadata);
             this.propagateMetadata(container, metadata);
+            if (this.getLinePlot()) {
+                this.bindMetadata(this.getLinePlot(), metadata);
+            }
             
         } else {
             Ext.Ajax.request({
@@ -594,6 +601,9 @@ Ext.define('Flux.controller.UserInteraction', {
 
                     this.bindMetadata(view, metadata);
                     this.propagateMetadata(container, metadata);
+                    if (this.getLinePlot()) {
+                        this.bindMetadata(this.getLinePlot(), metadata);
+                    }
                 },
 
                 scope: this
@@ -723,6 +733,7 @@ Ext.define('Flux.controller.UserInteraction', {
             cmp.ownerCt.remove(cmp);
         });
 
+        //TODO What if "Show line plot" is checked?
         switch (item.getItemId()) {
             case 'single-map':
                 container = this.getContentPanel();
@@ -797,6 +808,34 @@ Ext.define('Flux.controller.UserInteraction', {
                 }));
             });
         }
+    },
+
+    /**
+        Toggles on/off the Time Series display below the map in the Single Map
+        visualization.
+        @param  cb      {Ext.form.field.Checkbox}
+        @param  checked {Boolean}
+     */
+    toggleTimeSeriesDisplay: function (cb, checked) {
+        // We either create a new D3LinePlot instance or get the existing one
+        var linePlot = this.getLinePlot();
+        var map = this.getMap();
+        var container = map.ownerCt;
+
+        if (checked) {
+            map.anchor = '100% 80%';
+        } else {
+            if (linePlot) {
+                container.remove(linePlot);
+            }
+            map.anchor = '100% 100%';
+        }
+
+        container.on('afterlayout', map.redraw, {
+            single: true,
+            buffer: 1
+        });
+        container.doLayout();
     }
 
 });

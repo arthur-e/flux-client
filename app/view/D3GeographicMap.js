@@ -697,7 +697,11 @@ Ext.define('Flux.view.D3GeographicMap', {
         var bins, h, ordinal;
         var s = 0.025 * this.svg.attr('width'); // Length on a side of the legend's bins
         var colors = this._scale.range();
-        var yOffset = this.svg.attr('height');
+
+        // Subtract the header width from the legend's y-offset so that it
+        //  is displaced relative to the bottom of the Panel's header, not the 
+        //  top of the Panel's header
+        var yOffset = this.svg.attr('height') - this.getHeader().getHeight();
 
         if (this._scale.domain().length === 0) {
             return this;

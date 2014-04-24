@@ -54,6 +54,14 @@ Ext.define('Flux.view.SourcePanel', {
 
     }, {
         xtype: 'checkbox',
+        name: 'showLinePlot',
+        inputValue: true,
+        checked: true,
+        stateId: 'showLinePlot',
+        boxLabel: 'Show line plot'
+
+    }, {
+        xtype: 'checkbox',
         name: 'showUncertainty',
         boxLabel: 'Show uncertainty',
         disabled: true //TODO

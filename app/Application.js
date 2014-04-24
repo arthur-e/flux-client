@@ -24,6 +24,7 @@ Ext.define('Flux.Application', {
         'ConfigurationPanel',
         'D3Panel',
         'D3GeographicMap',
+        'D3LinePlot',
         'FormPanel',
         'MapSettings',
         'SidePanel',
@@ -37,6 +38,7 @@ Ext.define('Flux.Application', {
 
     controllers: [
         'Animation',
+        'LinePlotController',
         'MapController',
         'UserExperience',
         'UserInteraction'
@@ -47,6 +49,7 @@ Ext.define('Flux.Application', {
         'Grids',
         'Metadata',
         'Palettes',
-        'Scenarios'
+        'Scenarios',
+        'TimeSeries'
     ]
 });

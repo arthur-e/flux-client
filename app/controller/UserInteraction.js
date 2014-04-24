@@ -711,33 +711,31 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  item    {Ext.menu.Item}
      */
     onVisualChange: function (menu, item) {
-        var viewQuery = Ext.ComponentQuery.query('d3panel');
-        var w;
+        var carousel = this.getSourceCarousel();
+        var container, w;
 
-        //TODO Replace with an assessment of the Card layout's active view
-        if (this._activeViewId === item.getItemId()) {
+        if (carousel.getLayout().activeItem.getItemId() === item.getItemId()) {
             return;
         }
 
         // Remove any and all view instances
-        Ext.each(viewQuery, function (cmp) {
+        Ext.each(Ext.ComponentQuery.query('d3panel'), function (cmp) {
             cmp.ownerCt.remove(cmp);
         });
 
         switch (item.getItemId()) {
             case 'single-map':
+                container = this.getContentPanel();
                 w = (Ext.getBody().getWidth() > 1000) ? 250 : '20%';
                 this.getSymbology().up('sidepanel').expand(false);
                 this.getSourcePanel().getForm().reset();
-                if (viewQuery.length === 0) {
-                    this.getContentPanel().add({
-                        xtype: 'd3geomap',
-                        title: 'Single Map',
-                        anchor: '100% 100%',
-                        enableTransitions: true,
-                        enableZoomControls: true
-                    });
-                }
+                container.add({
+                    xtype: 'd3geomap',
+                    title: 'Single Map',
+                    anchor: '100% 100%',
+                    enableTransitions: true,
+                    enableZoomControls: true
+                });
                 break;
 
             case 'coordinated-view':
@@ -747,11 +745,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 break;
         }
 
-        this.getSourceCarousel()
-            .setWidth(w)
-            .getLayout().setActiveItem(item.idx);
-
-        this._activeViewId = item.getItemId();
+        carousel.setWidth(w).getLayout().setActiveItem(item.idx);
     },
 
     /**

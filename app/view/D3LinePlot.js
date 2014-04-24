@@ -90,12 +90,14 @@ Ext.define('Flux.view.D3LinePlot', {
         this.panes.axis.x.call(this.axis.x);
         this.panes.axis.y.call(this.axis.y);
 
-        this.svg.append('path')
+        this.panes.plot.append('path')
             .datum(data)
             .attr({
                 'class': 'line',
                 'd': path
             });
+
+        return this;
     },
 
     /**TODO
@@ -125,6 +127,7 @@ Ext.define('Flux.view.D3LinePlot', {
 
         // Remove any previously-rendered SVG elements
         if (this.svg !== undefined) {
+            console.log('Removing SVG', this.svg);//FIXME
             this.svg.remove()
         }
 
@@ -133,25 +136,24 @@ Ext.define('Flux.view.D3LinePlot', {
                 'width': width,
                 'height': height
             })
-            .append('g')
-            .attr({
-                'transform':
-                    'translate(' + this.margin.left + ',' + this.margin.top + ')',
-                'class': 'plot'
-            })
-
 
         // Create panes in which to organize content at difference z-index
         //  levels using painter's algorithm (first drawn on bottom; last drawn
         //  is on top)
         this.panes = {
-            axis: {
-                x: this.svg.append('g').attr({
-                    'class': 'axis x',
-                    'transform': 'translate(0,' + (height - yPadding).toString() + ')'
-                }),
-                y: this.svg.append('g').attr('class', 'axis y')
-            }
+            plot: this.svg.append('g').attr({
+                'class': 'plot',
+                'transform':
+                    'translate(' + this.margin.left + ',' + this.margin.top + ')'
+            })
+        };
+
+        this.panes.axis = {
+            x: this.panes.plot.append('g').attr({
+                'class': 'axis x',
+                'transform': 'translate(0,' + (height - yPadding).toString() + ')'
+            }),
+            y: this.panes.plot.append('g').attr('class', 'axis y')
         };
 
         this._isDrawn = false;
@@ -162,6 +164,7 @@ Ext.define('Flux.view.D3LinePlot', {
     /**TODO
      */
     redraw: function () {
+        return this.draw(this._model);
     },
 
     /**

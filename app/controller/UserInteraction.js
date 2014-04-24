@@ -290,6 +290,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 var series = Ext.create('Flux.model.TimeSeries',
                     Ext.JSON.decode(response.responseText));
 
+                series.set('_id', metadata.getId());
                 this.getStore('timeseries').add(series);
 
                 this.getLinePlot().draw(series);
@@ -821,9 +822,24 @@ Ext.define('Flux.controller.UserInteraction', {
         var linePlot = this.getLinePlot();
         var map = this.getMap();
         var container = map.ownerCt;
+        var series;
 
         if (checked) {
+            // Get the TimeSeries instance, if there is one
+            series = this.getStore('timeseries')
+                .getById(map.getMetadata().getId());
+
+            // Resize the anchor(s) and add a D3LinePlot instance
             map.anchor = '100% 80%';
+            linePlot = container.add({
+                xtype: 'd3lineplot',
+                anchor: '100% 20%'
+            });
+
+            if (series) {
+                linePlot.draw(series);
+            }
+
         } else {
             if (linePlot) {
                 container.remove(linePlot);

@@ -75,8 +75,10 @@ Ext.define('Flux.view.D3GeographicMap', {
         // Rewrite the updateDisplay() function to update the Panel's header
         //  title if displays are disabled
         if (!this.enableDisplay) {
-            this.updateDisplay = function (data) {
-                this.setTitle(data[0].text);
+            this.updateDisplay = function (data) {  
+                if (Ext.isArray(data)) {
+                    this.setTitle(data[0].text);
+                }
             };
         }
 

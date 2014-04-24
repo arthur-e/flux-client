@@ -216,10 +216,10 @@ Ext.define('Flux.view.Viewport', {
             width: '20%',
             items: [{
                 xtype: 'sourcepanel',
-                id: 'single-map'
+                itemId: 'single-map'
             }, {
                 xtype: 'sourcesgridpanel',
-                id: 'coordinated-view'
+                itemId: 'coordinated-view'
             }]
         }, {
             region: 'center',

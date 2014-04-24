@@ -5,6 +5,12 @@ Ext.define('Flux.controller.UserInteraction', {
         ref: 'contentPanel',
         selector: '#content'
     }, {
+        ref: 'linePlot',
+        selector: 'd3lineplot'
+    }, {
+        ref: 'map',
+        selector: 'd3geomap'
+    }, {
         ref: 'settingsMenu',
         selector: '#settings-menu'
     }, {
@@ -115,7 +121,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @return         {Flux.view.D3GeographicMap}
      */
     addMap: function (title) {
-        var anchor, view;
+        var anchor, newView;
         var container = this.getContentPanel();
         var query = Ext.ComponentQuery.query('d3geomap');
         var n = container.items.length;
@@ -144,9 +150,10 @@ Ext.define('Flux.controller.UserInteraction', {
             }
         }
 
-        Ext.each(query, function (item, i) {
-            item.anchor = anchor;
-            container.on('afterlayout', item.redraw, item, {
+        Ext.each(query, function (view, i) {
+            view.anchor = anchor;
+            container.on('afterlayout', view.redraw, view, {
+                single: true,
                 buffer: 1
             });
             container.doLayout();
@@ -154,7 +161,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
         this.alignContent(query);
 
-        view = container.add({
+        newView = container.add({
             xtype: 'd3geomap',
             title: title,
             anchor: anchor,
@@ -173,18 +180,18 @@ Ext.define('Flux.controller.UserInteraction', {
         //  view towards-the-right of the last view
         if (n !== 0) {
             if (n % j !== 0) {
-                view.alignTo(query[query.length - 1].getEl(), 'tl-tr');
+                newView.alignTo(query[query.length - 1].getEl(), 'tl-tr');
             } else {
                 if ((n - 1) - j < 0) {
-                    view.alignTo(query[0].getEl(), 'tl-bl');
+                    newView.alignTo(query[0].getEl(), 'tl-bl');
                 } else {
-                    view.alignTo(query[n - j].getEl(), 'tl-bl');
+                    newView.alignTo(query[n - j].getEl(), 'tl-bl');
                 }
             }
 
         }
 
-        return view;
+        return newView;
     },
 
     /**
@@ -219,45 +226,6 @@ Ext.define('Flux.controller.UserInteraction', {
                 }
             });
         }
-    },
-
-    /**
-        Convenience function for determining the currently selected global
-        statistics settings; measure of central tendency, raw values versus
-        anomalies, and whether to use population statistics or not.
-        @return {String}
-     */
-    getGlobalSettings: function () {
-        var opts = {};
-
-        Ext.each(this.getSettingsMenu().query('menucheckitem'), function (item) {
-            if (item.checked) {
-                opts[item.group] = item.name;
-            }
-        });
-
-        return opts;
-    },
-
-    /**
-        Finds or creates a single instance of D3GeographicMap and returns it.
-        @return {Flux.view.D3GeographicMap}
-     */
-    getMap: function () {
-        var opts = this.getGlobalSettings();
-        var query = Ext.ComponentQuery.query('d3geomap');
-
-        if (query.length !== 0) {
-            return query[0];
-        }
-
-        return this.getContentPanel().add({
-            xtype: 'd3geomap',
-            title: 'Single Map',
-            anchor: '100% 100%',
-            enableTransitions: true,
-            enableZoomControls: true
-        });
     },
 
     /**
@@ -296,6 +264,52 @@ Ext.define('Flux.controller.UserInteraction', {
             },
             scope: this
         });
+    },
+
+    /**TODO
+     */
+    fetchTimeSeries: function (view, metadata) {
+        var dates = metadata.get('dates');
+
+        Ext.Ajax.request({
+            method: 'GET',
+            url: Ext.String.format('/flux/api/scenarios/{0}/t.json',
+                metadata.getId()),
+            params: {
+                start: dates[0].toISOString(),
+                end: dates[dates.length - 1].toISOString(),
+                //TODO aggregate: this.getGlobalSettings().tendency,
+                aggregate: 'mean',
+                interval: 'daily'
+            },
+            callback: function (o, s, response) {
+                var series = Ext.create('Flux.model.TimeSeries',
+                    Ext.JSON.decode(response.responseText));
+
+                this.getStore('timeseries').add(series);
+
+                this.getLinePlot().draw(series);
+            },
+            scope: this
+        });
+    },
+
+    /**
+        Convenience function for determining the currently selected global
+        statistics settings; measure of central tendency, raw values versus
+        anomalies, and whether to use population statistics or not.
+        @return {String}
+     */
+    getGlobalSettings: function () {
+        var opts = {};
+
+        Ext.each(this.getSettingsMenu().query('menucheckitem'), function (item) {
+            if (item.checked) {
+                opts[item.group] = item.name;
+            }
+        });
+
+        return opts;
     },
 
     ////////////////////////////////////////////////////////////////////////////
@@ -341,6 +355,10 @@ Ext.define('Flux.controller.UserInteraction', {
         view.setMetadata(metadata)
             .togglePopulationStats(opts.statsFrom === 'population', metadata)
             .toggleAnomalies(opts.display === 'anomalies', opts.tendency);
+
+        if (view.getXType() === 'd3lineplot') {
+            this.fetchTimeSeries(view, metadata);
+        }
 
         // Only when using population statistics will the color scale be ready
         //  before data have been bound to the view
@@ -696,6 +714,7 @@ Ext.define('Flux.controller.UserInteraction', {
         var viewQuery = Ext.ComponentQuery.query('d3panel');
         var w;
 
+        //TODO Replace with an assessment of the Card layout's active view
         if (this._activeViewId === item.getItemId()) {
             return;
         }
@@ -711,7 +730,13 @@ Ext.define('Flux.controller.UserInteraction', {
                 this.getSymbology().up('sidepanel').expand(false);
                 this.getSourcePanel().getForm().reset();
                 if (viewQuery.length === 0) {
-                    this.getMap();
+                    this.getContentPanel().add({
+                        xtype: 'd3geomap',
+                        title: 'Single Map',
+                        anchor: '100% 100%',
+                        enableTransitions: true,
+                        enableZoomControls: true
+                    });
                 }
                 break;
 
@@ -743,7 +768,6 @@ Ext.define('Flux.controller.UserInteraction', {
                 var dates = metadata.get('dates');
                 var firstDate = dates[0].format(fmt);
                 target.setDisabledDates(metadata.getInvalidDates(fmt));
-                //target.setMinValue(firstDate);
                 target.on('expand', function (f) {
                     f.suspendEvent('change');
                     f.setValue(firstDate);

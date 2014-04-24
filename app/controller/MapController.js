@@ -193,14 +193,22 @@ Ext.define('Flux.controller.MapController', {
         // oldWidth and oldHeight undefined when 'resize' event fires as part
         //  of the initial layout; we want to avoid acting on this firing
         if (oldWidth && oldHeight) {
-            if (width !== oldWidth && height !== oldHeight) {
-                // Update the projections ComboBox; rescale each projection contained
-                view.init(width, height)
-                    .setBasemap(this.getMapSettings().down('combo[name=basemap]').getValue())
-                    .redraw(true)
-                    .updateLegend()
-                    .updateDisplay();
+            // If only one size dimension changed, this might be an "alignment"
+            //  of one of multiple D3Panels, which should be ignored
+            if (width === oldWidth || height === oldHeight) {
+                // However, if the width is 100% then we know it is not an
+                //  "alignment" as there is only one (column of) D3Panel
+                if (view.anchor.split(' ')[0] !== '100%') {
+                    return;
+                }
             }
+
+            // Update the projections ComboBox; rescale each projection contained
+            view.init(width, height)
+                .setBasemap(this.getMapSettings().down('combo[name=basemap]').getValue())
+                .redraw(true)
+                .updateLegend()
+                .updateDisplay();
         }
     },
 

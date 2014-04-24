@@ -758,6 +758,46 @@ Ext.define('Flux.view.D3GeographicMap', {
         }).call(this._legend.yAxis);
 
         return this;
+    },
+
+    /**
+        Updates the color scale configuration of a specific view, as provided.
+        Creates a new color scale based on changes in the scale configuration
+        (measure of central tendency, number of standard deviations, or a switch
+        between sequential and diverging palette types).
+        @param  opts    {Object}    Properties are palette configs e.g. sigmas, tendency, paletteType
+        //TODO Could add a "_lastOptions" property to this view that stores
+        //  the opts argument and makes it optional? That ways the view could
+        //  call this method on its own
+     */
+    updateScale: function (opts) {
+        var palette, scale;
+        var metadata;
+
+        if (!this.getMetadata()) {
+            return;
+        }
+
+        if (!this._usePopulationStats && this.getModel()) {
+            metadata = this.getMetadata().copy();
+            metadata.set('stats', this.getModel().summarize());
+
+            this.setMetadata(metadata);
+
+        } else {
+            metadata = this.getMetadata();
+        }
+
+        // Get the color palette
+        palette = Ext.StoreManager.get('palettes').getById(opts.palette);
+
+        if (opts.threshold) {
+            scale = metadata.getThresholdScale(opts.thresholdValues, palette.get('colors')[0]);
+        } else {
+            scale = metadata.getQuantileScale(opts).range(palette.get('colors'));
+        }
+
+        this.setScale(scale);
     }
 
 });

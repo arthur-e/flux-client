@@ -325,7 +325,7 @@ Ext.define('Flux.controller.UserInteraction', {
         // The color scale can only be properly adjusted AFTER data are bound
         //  to the view
         if (!view._usePopulationStats) {
-            view.updateColorScale(this.getSymbology().getForm().getValues());
+            view.updateScale(this.getSymbology().getForm().getValues());
         }
     },
 
@@ -345,7 +345,7 @@ Ext.define('Flux.controller.UserInteraction', {
         // Only when using population statistics will the color scale be ready
         //  before data have been bound to the view
         if (opts.statsFrom === 'population') {
-            view.updateColorScale(this.getSymbology().getForm().getValues());
+            view.updateScale(this.getSymbology().getForm().getValues());
         }
     },
 
@@ -656,7 +656,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 view.toggleAnomalies((opts.display === 'anomalies'),
                     opts.tendency);
             });
-            this.getController('MapController').updateColorScales({
+            this.getController('MapController').updateScales({
                 tendency: change.tendency
             });
         }
@@ -674,7 +674,7 @@ Ext.define('Flux.controller.UserInteraction', {
                     store.getById(view.getMetadata().get('_id')));
             });
 
-            this.getController('MapController').updateColorScales();
+            this.getController('MapController').updateScales();
         }
 
         // Values displayed as.... /////////////////////////////////////////////

@@ -158,7 +158,7 @@ Ext.define('Flux.controller.MapController', {
                 if (typeof view.getScale().quantiles === 'function') {
                     view.setScale(view.getScale().range(cs));
                 } else {
-                    this.updateColorScales();
+                    this.updateScales();
                 }
             }
         }, this));
@@ -214,7 +214,7 @@ Ext.define('Flux.controller.MapController', {
     onScaleParameterChange: function (c, value)  {
         var cfg = {}
         cfg[c.getName()] = value;
-        this.updateColorScales(cfg);
+        this.updateScales(cfg);
     },
 
     /**
@@ -265,14 +265,14 @@ Ext.define('Flux.controller.MapController', {
         between sequential and diverging palette types).
         @param  config  {Object}    Properties are palette configs e.g. sigmas, tendency, paletteType
      */
-    updateColorScales: function (config) {
+    updateScales: function (config) {
         var opts = this.getSymbology().getForm().getValues();
 
         opts = Ext.merge(opts, config || {});
 
         // Update the scale of every map
         Ext.each(Ext.ComponentQuery.query('d3geomap'), Ext.bind(function (view) {
-            view.updateColorScale(opts);
+            view.updateScale(opts);
         }, this));
     }
     

@@ -94,7 +94,8 @@ Ext.define('Flux.controller.UserInteraction', {
             },
 
             'field[name=date], field[name=time]': {
-                change: this.onDateTimeSelection
+                change: this.onDateTimeSelection,
+                expand: this.onDateTimeExpansion
             },
 
             'sourcesgridpanel': {
@@ -499,12 +500,22 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
+        Unchecks the "Show aggregation" checkbox.
+     */
+    onDateTimeExpansion: function () {
+        cb = this.getSourcePanel()
+            .down('checkbox[name=showAggregation]');
+        cb.setValue(false);
+    },
+
+    /**
         Handles a change in the "date" or "time" fields signifying the user is
         ready to load map data for that date and time.
         @param  field   {Ext.form.field.*}
         @param  value   {String}
      */
     onDateTimeSelection: function (field, value) {
+        var cb;
         var editor = field.up('roweditor');
         var values = field.up('panel').getForm().getValues();
         var view;
@@ -533,13 +544,12 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  grid    {Flux.model.Grid}
      */
     onMapLoad: function (grid) {
-        var props;
+        var props = grid.get('properties');
         var moments = [
             grid.get('timestamp')
         ];
 
         if (this.getLinePlot()) {
-            props = grid.get('properties')
             if (props.start && props.end) {
                 moments = [
                     moment.utc(props.start),

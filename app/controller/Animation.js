@@ -42,11 +42,7 @@ Ext.define('Flux.controller.Animation', {
                 dragend: this.onDelayChange
             },
 
-            '#backward-btn': {
-                click: this.onStepButton
-            },
-
-            '#forward-btn': {
+            '#forward-btn, #backward-btn': {
                 click: this.onStepButton
             }
 

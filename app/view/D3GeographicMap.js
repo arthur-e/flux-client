@@ -410,11 +410,11 @@ Ext.define('Flux.view.D3GeographicMap', {
             .text(function (d) {
                 return d.text;
             })
+            .style('font-size', (0.04 * height).toString() + 'px')
             .attr({
                 'class': function (d) {
                     return 'info ' + d.id;
                 },
-                'font-size': (0.04 * height).toString() + 'px',
                 'text-anchor': 'middle'
             });
 

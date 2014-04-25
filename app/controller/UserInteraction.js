@@ -86,7 +86,7 @@ Ext.define('Flux.controller.UserInteraction', {
             },
 
             'field[name=showLinePlot]': {
-                change: this.toggleTimeSeriesDisplay
+                change: this.toggleLinePlotDisplay
             },
 
             'field[name=source]': {
@@ -827,7 +827,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  cb      {Ext.form.field.Checkbox}
         @param  checked {Boolean}
      */
-    toggleTimeSeriesDisplay: function (cb, checked) {
+    toggleLinePlotDisplay: function (cb, checked) {
         // We either create a new D3LinePlot instance or get the existing one
         var linePlot = this.getLinePlot();
         var map = this.getMap();
@@ -844,7 +844,7 @@ Ext.define('Flux.controller.UserInteraction', {
             linePlot = container.add({
                 xtype: 'd3lineplot',
                 anchor: '100% 20%'
-            });
+            }).setMetadata(map.getMetadata());
 
             if (series) {
                 linePlot.draw(series);

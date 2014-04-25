@@ -22,6 +22,7 @@
 }
 .grid path { stroke-width: 0; }
 .hidden { display: none; }
+.legend { shape-rendering: crispEdges; }
 .plot .axis path { display: none; }
 .plot .line {
     fill: none;
@@ -29,7 +30,8 @@
     stroke-width: 3px;
     cursor: pointer;
 }
-.plot .overlay { shape-rendering: crispEdges; }
+.overlay { shape-rendering: crispEdges; }
+rect { shape-rendering: crispEdges; }
 text { font: 14px Helvetica,Arial,sans-serif; }
 text.info {
     font-family: Helvetica,Arial,sans-serif;

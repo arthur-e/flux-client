@@ -64,7 +64,7 @@ Ext.define('Flux.view.D3LinePlot', {
         @return     {Flux.view.D3LinePlot}
      */
     addListeners: function (sel) {
-        sel.on('mouseover', Ext.bind(function () {
+        sel.on('mousemove', Ext.bind(function () {
             var c = d3.mouse(sel[0][0]);
             var d = this.scales.y.invert(c[1]);
             this.panes.tooltip.selectAll('.tip')
@@ -299,11 +299,10 @@ Ext.define('Flux.view.D3LinePlot', {
         @return         {Flux.view.D3LinePlot}
      */
     updateAnnotation: function (moments) {
-        var parser = this._model.parser;
-
         this.panes.overlay.selectAll('.slice')
             .data(Ext.Array.map(moments, function (m) {
-                return parser(m.toISOString());
+                return d3.time.format.utc('%Y-%m-%dT%H:%M:%S.%LZ')
+                    .parse(m.toISOString());
             }))
             .attr({
                 'x': Ext.Function.bind(function (d) {

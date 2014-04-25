@@ -524,6 +524,11 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  grid    {Flux.model.Grid}
      */
     onMapLoad: function (grid) {
+        if (this.getLinePlot()) {
+            this.getLinePlot().updateAnnotation([
+                grid.get('timestamp')
+            ]);
+        }
     },
 
     /**
@@ -769,6 +774,8 @@ Ext.define('Flux.controller.UserInteraction', {
     /**
         Propagates changes in the metadata to child components of a given
         container, specifically, setting the DateField and TimeField instances.
+        @param  container   {Ext.container.Contianer}
+        @param  metadata    {Ext.model.Metadata}
      */
     propagateMetadata: function (container, metadata) {
         var dates = container.query('datefield[name=date], datefield[name=date2]');
@@ -781,14 +788,11 @@ Ext.define('Flux.controller.UserInteraction', {
                 var firstDate = dates[0].format(fmt);
                 target.setDisabledDates(metadata.getInvalidDates(fmt));
                 target.on('expand', function (f) {
-                    f.suspendEvent('change');
-                    f.setValue(firstDate);
-                    f.resumeEvent('change');
-                });
-                target.on('focus', function (f) {
-                    f.suspendEvent('change');
-                    f.setValue(undefined);
-                    f.resumeEvent('change');
+                    if (!f.isDirty()) {
+                        f.suspendEvent('change');
+                        f.setValue(firstDate);
+                        f.resumeEvent('change');
+                    }
                 });
             });
         }

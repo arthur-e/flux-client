@@ -22,7 +22,9 @@
     fill: none;
     stroke: #157fcc;
     stroke-width: 3px;
+    cursor: pointer;
 }
+.plot .overlay { shape-rendering: crispEdges; }
 .plot .x.axis path { display: none; }
 text.info {
     font-family: Helvetica,Arial,sans-serif;

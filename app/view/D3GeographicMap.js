@@ -249,8 +249,7 @@ Ext.define('Flux.view.D3GeographicMap', {
     },
 
     /**
-        Draws the visualization features on the map given input data and the
-        corresponding metadata.
+        Creates an Object of attributes for the drawing features.
         @return {Object}
      */
     getOverlayAttrs: function () {
@@ -318,7 +317,9 @@ Ext.define('Flux.view.D3GeographicMap', {
     },
 
     /**
-        Main drawing function; defines and appends the SVG element.
+        Initializes drawing; defines and appends the SVG element(s). The drawing
+        panes are set up and SVG element(s) are initialized, sometimes with
+        empty data sets.
         @param  width   {Number}
         @param  height  {Number}
         @return         {Flux.view.D3GeographicMap}

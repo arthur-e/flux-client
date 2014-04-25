@@ -82,7 +82,11 @@ Ext.define('Flux.view.D3LinePlot', {
         return this;
     },
 
-    /**TODO
+    /**
+        Draws the visualization features on the map given input data and the
+        corresponding metadata.
+        @param  model   {Flux.model.TimeSeries}
+        @return         {Flux.view.D3LinePlot}
      */
     draw: function (model) {
         var sel;
@@ -110,7 +114,7 @@ Ext.define('Flux.view.D3LinePlot', {
         this.panes.axis.x.call(this.axis.x);
         this.panes.axis.y.call(this.axis.y);
 
-        sel = this.panes.plot.append('path')
+        sel = this.panes.plot.selectAll('.line')
             .datum(data)
             .attr({
                 'class': 'line',
@@ -127,19 +131,27 @@ Ext.define('Flux.view.D3LinePlot', {
         return this;
     },
 
-    /**TODO
+    /**
+        Initializes drawing; defines and appends the SVG element(s). The drawing
+        panes are set up and SVG element(s) are initialized, sometimes with
+        empty data sets.
+        @param  width   {Number}
+        @param  height  {Number}
+        @return         {Flux.view.D3LinePlot}
      */
     init: function (width, height) {
         var elementId = '#' + this.items.getAt(0).id;
         var xPadding = (this.margin.left + this.margin.left);
         var yPadding = (this.margin.bottom + this.margin.top);
-        var yRngPadding = yPadding + 30;
+
+        // Remember the plot height for the .marker selection
+        this._plotHeight = height - (yPadding + 30);
 
         // Scales //////////////////////////////////////////////////////////////
         this.scales.x = d3.time.scale()
             .range([0, width - xPadding]);
         this.scales.y = d3.scale.linear()
-            .range([height - yRngPadding, 0]);
+            .range([this._plotHeight, 0]);
 
         // Axes ////////////////////////////////////////////////////////////////
         this.axis.x = d3.svg.axis()
@@ -158,6 +170,7 @@ Ext.define('Flux.view.D3LinePlot', {
             this.svg.remove()
         }
 
+        // Drawing /////////////////////////////////////////////////////////////
         this.svg = d3.select(elementId).append('svg')
             .attr({
                 'width': width,
@@ -180,8 +193,36 @@ Ext.define('Flux.view.D3LinePlot', {
                 'class': 'axis x',
                 'transform': 'translate(0,' + (height - yPadding).toString() + ')'
             }),
-            y: this.panes.plot.append('g').attr('class', 'axis y')
+            y: this.panes.plot.append('g').attr({
+                'class': 'axis y',
+                'transform': 'translate(-3,0)'
+            })
         };
+
+        // <path> //////////////////////////////////////////////////////////////
+        this.panes.plot.selectAll('.line')
+            .data([0])
+            .enter()
+            .append('path')
+            .attr({
+                'class': 'line'
+            });
+
+        this.panes.overlay = this.panes.plot.append('g')
+            .attr('class', 'pane overlay');
+
+        this.panes.overlay.selectAll('.slice')
+            .data([0])
+            .enter()
+            .append('rect')
+            .attr('class', 'slice');
+
+        //TODO Delete?
+        this.panes.overlay.selectAll('.marker')
+            .data([0])
+            .enter()
+            .append('circle')
+            .attr('class', 'marker');
 
         this.panes.tooltip = this.svg.append('g').attr('class', 'pane tooltip');
         this.panes.tooltip.selectAll('.tip')
@@ -196,7 +237,9 @@ Ext.define('Flux.view.D3LinePlot', {
         return this;
     },
 
-    /**TODO
+    /**
+        Redraws the current plot using a reference to the existing data model.
+        @return {Flux.view.D3LinePlot}
      */
     redraw: function () {
         if (Ext.isEmpty(this._model)) {
@@ -216,26 +259,30 @@ Ext.define('Flux.view.D3LinePlot', {
         return this;
     },
 
-    /**TODO
+    /**
+        Updates the overlay annotation; typically a vertical line drawn on
+        the time series at a given time.
+        @param  moments {Array} Array of moment instances
+        @return         {Flux.view.D3LinePlot}
      */
-    toggleLegend: function (state) {
-        if (state) {
-            this.panes.legend.attr('class', 'pane legend');
-        } else {
-            this.panes.legend.attr('class', 'pane legend hidden');
-        }
+    updateAnnotation: function (moments) {
+        var parser = this._model.parser;
+
+        this.panes.overlay.selectAll('.slice')
+            .data(Ext.Array.map(moments, function (m) {
+                return parser(m.toISOString());
+            }))
+            .attr({
+                'x': Ext.Function.bind(function (d) {
+                    return this.scales.x(d);
+                }, this),
+                'y': 0,
+                'width': 2,
+                'height': this._plotHeight,
+                'class': 'slice'
+            });
 
         return this;
-    },
-
-    /**TODO
-     */
-    update: function (selection) {
-    },
-
-    /**TODO
-     */
-    updateLegend: function () {
     },
 
     /**

@@ -23,7 +23,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         been added to the map.
         @private
      */
-    _isDrawn: false,
+    isDrawn: false,
 
     /**
         An internal reference to the legend selection.
@@ -77,7 +77,8 @@ Ext.define('Flux.view.D3GeographicMap', {
         if (!this.enableDisplay) {
             this.updateDisplay = function (data) {  
                 if (Ext.isArray(data)) {
-                    this.setTitle(data[0].text);
+                    this.setTitle(Ext.String.format('{0}: {1}',
+                        this.getMetadata().get('_id'), data[0].text));
                 }
             };
         }
@@ -196,7 +197,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         // Append a <rect> for every grid cell so long as the features haven't
         //  been drawn before
-        if (!this._isDrawn) {
+        if (!this.isDrawn) {
             sel.enter().append('rect');
 
             // Add mouseover and mouseout event listeners
@@ -210,7 +211,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         this.update(sel);
 
         // Skip zooming to the data if they've been drawn or if map is already zoomed
-        if (!this._isDrawn && this.zoom.scale() === 1) {
+        if (!this.isDrawn && this.zoom.scale() === 1) {
             bbox = this._metadata.get('bbox');
 
             // Calculate the center of the view
@@ -234,7 +235,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             this.setZoom(2 * (this.svg.attr('width')) / proj([(bbox[2] - bbox[0]), 0])[0]);
         }
 
-        this._isDrawn = true;
+        this.isDrawn = true;
         this.fireEventArgs('draw', [this, (grid || this._model)]);
         return this;
     },
@@ -422,7 +423,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             .scale(this._legend.yScale)
             .orient('right');
 
-        this._isDrawn = false;
+        this.isDrawn = false;
 
         return this;
     },

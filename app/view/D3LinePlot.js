@@ -10,17 +10,17 @@ Ext.define('Flux.view.D3LinePlot', {
     },
 
     /**
-        Flag to indicate whether or not the <rect> elements have already
-        been added to the map.
-        @private
-     */
-    _isDrawn: false,
-
-    /**
         An internal reference to the legend selection.
         @private
       */
     _legend: {},
+
+    /**
+        Flag to indicate whether or not the <rect> elements have already
+        been added to the map.
+        @private
+     */
+    isDrawn: false,
 
     /**TODO
      */
@@ -74,6 +74,8 @@ Ext.define('Flux.view.D3LinePlot', {
             .x(function (d) { return x(d[0]); })
             .y(function (d) { return y(d[1]); });
 
+        console.log('draw()');//FIXME
+
         // Retain references to last drawing data and metadata; for instance,
         //  resize events require drawing again with the same (meta)data
         this._model = model;
@@ -96,6 +98,8 @@ Ext.define('Flux.view.D3LinePlot', {
                 'class': 'line',
                 'd': path
             });
+
+        this.isDrawn = true;
 
         return this;
     },
@@ -127,7 +131,6 @@ Ext.define('Flux.view.D3LinePlot', {
 
         // Remove any previously-rendered SVG elements
         if (this.svg !== undefined) {
-            console.log('Removing SVG', this.svg);//FIXME
             this.svg.remove()
         }
 
@@ -156,7 +159,7 @@ Ext.define('Flux.view.D3LinePlot', {
             y: this.panes.plot.append('g').attr('class', 'axis y')
         };
 
-        this._isDrawn = false;
+        this.isDrawn = false;
 
         return this;
     },
@@ -164,6 +167,9 @@ Ext.define('Flux.view.D3LinePlot', {
     /**TODO
      */
     redraw: function () {
+        if (Ext.isEmpty(this._model)) {
+            return this;
+        }
         return this.draw(this._model);
     },
 

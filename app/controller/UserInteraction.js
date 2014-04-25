@@ -77,10 +77,6 @@ Ext.define('Flux.controller.UserInteraction', {
                 resize: this.onContentResize
             },
 
-            '#content d3panel': {
-                close: this.onContentItemClose
-            },
-
             '#settings-menu menucheckitem': {
                 checkchange: this.onStatsChange
             },
@@ -233,9 +229,9 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
-        Given a request for a map at based on certain parameters, checks to
-        see if the map has already been loaded by the view and requests it
-        from the server if it has not been loaded.
+        Makes a requests for a map based on the given parameters, first checking
+        to see if the map has already been loaded by the view; requests it from
+        the server only if it has not been loaded.
         @param  view    {Flux.view.D3GeographicMap}
         @param  params  {Object}
      */
@@ -270,7 +266,10 @@ Ext.define('Flux.controller.UserInteraction', {
         });
     },
 
-    /**TODO
+    /**
+        Makes a requests for a time series based on the passed Metadata instance.
+        @param  view        {Flux.view.D3LinePlot}
+        @param  metadata    {Flux.model.Metadata}
      */
     fetchTimeSeries: function (view, metadata) {
         var dates = metadata.get('dates');
@@ -437,7 +436,10 @@ Ext.define('Flux.controller.UserInteraction', {
         }
     },
 
-    /**TODO
+    /**
+        When the Animate button is pressed, checks/unchecks the
+        "Show Aggregation" checkbox in the Aggregation Fieldset.
+        @param  btn {Ext.button.Button}
      */
     onAnimation: function (btn) {
         if (btn.pressed || btn.getItemId() !== 'animate-btn') {
@@ -447,29 +449,21 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
-        Removes the corresponding GridView for a D3Panel instance that has
-        been closed.
-        @param  item    {Ext.Component}
-     */
-    onContentItemClose: function (item) {
-        var store = this.getStore('gridviews');
-
-        store.removeAt(store.findBy(function (rec) {
-            return rec.get('view').getId() === item.getId();
-        }));
-    },
-
-    /**
         Handles content being removed from the #content panel.
         @param  c       {Ext.panel.Panel}
         @param  item    {Flux.view.D3Panel}
      */
     onContentRemove: function (c, item) {
         var query = Ext.ComponentQuery.query('d3panel');
+        var store = this.getStore('gridviews');
 
         if (query.length <= 1) {
             return;
         }
+
+        store.removeAt(store.findBy(function (rec) {
+            return rec.get('view').getId() === item.getId();
+        }));
 
         // By the time this query is run, the removed panel hasn't been
         //  destroyed yet and so is counted among the extant panels e.g. a count
@@ -513,8 +507,6 @@ Ext.define('Flux.controller.UserInteraction', {
         if (editor) {
             view = editor.editingPlugin.getCmp().getView().getSelectionModel()
                 .getSelection()[0].get('view');
-
-            view.setTitle(Ext.String.format('{0} at {1}', values.date, values.time));
 
         } else {
             view = this.getMap();
@@ -583,7 +575,7 @@ Ext.define('Flux.controller.UserInteraction', {
         if (metadata) {
             this.bindMetadata(view, metadata);
             this.propagateMetadata(container, metadata);
-            if (this.getLinePlot()) {
+            if (this.getLinePlot() && !this.getLinePlot().isDrawn) {
                 this.bindMetadata(this.getLinePlot(), metadata);
             }
             
@@ -723,7 +715,7 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     onVisualChange: function (menu, item) {
         var carousel = this.getSourceCarousel();
-        var container, w;
+        var items, container, w;
 
         if (carousel.getLayout().activeItem.getItemId() === item.getItemId()) {
             return;
@@ -734,22 +726,36 @@ Ext.define('Flux.controller.UserInteraction', {
             cmp.ownerCt.remove(cmp);
         });
 
-        //TODO What if "Show line plot" is checked?
         switch (item.getItemId()) {
+            // Single Map //////////////////////////////////////////////////////
             case 'single-map':
                 container = this.getContentPanel();
                 w = (Ext.getBody().getWidth() > 1000) ? 250 : '20%';
                 this.getSymbology().up('sidepanel').expand(false);
-                this.getSourcePanel().getForm().reset();
-                container.add({
+
+                items = [{
                     xtype: 'd3geomap',
                     title: 'Single Map',
-                    anchor: '100% 100%',
+                    anchor: '100% 80%',
                     enableTransitions: true,
                     enableZoomControls: true
-                });
+                }, {
+                    xtype: 'd3lineplot',
+                    anchor: '100% 20%'
+                }];
+
+                if (!this.getSourcePanel().down('checkbox[name=showLinePlot]')
+                    .getValue()) {
+                    items = items[0];
+                    items.anchor = '100% 100%';
+                }
+
+                container.add(items);
+
+                this.getSourcePanel().getForm().reset();
                 break;
 
+            // Coordinated View ////////////////////////////////////////////////
             case 'coordinated-view':
                 w = 300;
                 this.getSymbology().up('sidepanel').collapse();

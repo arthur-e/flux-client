@@ -125,14 +125,14 @@ Ext.define('Flux.view.D3LinePlot', {
             .attr('transform', 'translate(0,-10)');
 
         // Grid lines //////////////////////////////////////////////////////////
-        this.panes.plot.append('g')
+        this.panes.plot.selectAll('.grid')
             .attr('class', 'grid')
             .call(this.axis.y0)
             .attr('transform', 'translate(-' +
                 (this.d3margin.left * 0.5).toString() + ',0)');
 
         // Plot line ///////////////////////////////////////////////////////////
-        sel = this.panes.plot.append('path')
+        sel = this.panes.plot.selectAll('.line')
             .datum(data)
             .attr({
                 'class': 'line',
@@ -227,6 +227,19 @@ Ext.define('Flux.view.D3LinePlot', {
             }),
             y: this.panes.plot.append('g').attr('class', 'axis y')
         };
+
+        // Grid lines //////////////////////////////////////////////////////////
+        this.panes.plot.append('g')
+            .attr('class', 'grid');
+
+        // Plot line ///////////////////////////////////////////////////////////
+        this.panes.plot.selectAll('.line')
+            .data([0])
+            .enter()
+            .append('path')
+            .attr({
+                'class': 'line'
+            });
 
         this.panes.overlay = this.panes.plot.append('g')
             .attr('class', 'pane overlay');

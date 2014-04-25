@@ -154,7 +154,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                 });
         }, this));
 
-        sel.on('mouseout', Ext.bind(function (d) {
+        sel.on('mouseout', Ext.bind(function () {
             this.updateDisplay([{
                 id: 'timestamp',
                 text: this._timestamp

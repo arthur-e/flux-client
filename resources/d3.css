@@ -21,7 +21,7 @@
 .plot .line {
     fill: none;
     stroke: #157fcc;
-    stroke-width: 2px;
+    stroke-width: 3px;
 }
 .plot .x.axis path { display: none; }
 text.info {

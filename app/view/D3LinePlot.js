@@ -58,14 +58,34 @@ Ext.define('Flux.view.D3LinePlot', {
         this.callParent(arguments);
     },
 
-    /**TODO
+    /**
+        Add event listeners to the drawn elements.
+        @param  sel {d3.selection}
+        @return     {Flux.view.D3LinePlot}
      */
     addListeners: function (sel) {
+        sel.on('mouseover', Ext.bind(function () {
+            var c = d3.mouse(sel[0][0]);
+            var d = this.scales.y.invert(c[1]);
+            this.panes.tooltip.selectAll('.tip')
+                .text(d.toFixed(2))
+                .attr({
+                    'x': c[0] + 20 + this.margin.left,
+                    'y': c[1] + 30 + this.margin.bottom
+                });
+        }, this));
+
+        sel.on('mouseout', Ext.bind(function () {
+            this.panes.tooltip.selectAll('.tip').text('');
+        }, this));
+
+        return this;
     },
 
     /**TODO
      */
     draw: function (model) {
+        var sel;
         var x = this.scales.x;
         var y = this.scales.y;
         var data = d3.zip(model.getInterpolation(1, 'day'),
@@ -73,8 +93,6 @@ Ext.define('Flux.view.D3LinePlot', {
         var path = d3.svg.line()
             .x(function (d) { return x(d[0]); })
             .y(function (d) { return y(d[1]); });
-
-        console.log('draw()');//FIXME
 
         // Retain references to last drawing data and metadata; for instance,
         //  resize events require drawing again with the same (meta)data
@@ -92,12 +110,17 @@ Ext.define('Flux.view.D3LinePlot', {
         this.panes.axis.x.call(this.axis.x);
         this.panes.axis.y.call(this.axis.y);
 
-        this.panes.plot.append('path')
+        sel = this.panes.plot.append('path')
             .datum(data)
             .attr({
                 'class': 'line',
                 'd': path
             });
+
+        if (!this.isDrawn) {
+            // Add mouseover and mouseout event listeners
+            this.addListeners(sel);
+        }
 
         this.isDrawn = true;
 
@@ -110,12 +133,13 @@ Ext.define('Flux.view.D3LinePlot', {
         var elementId = '#' + this.items.getAt(0).id;
         var xPadding = (this.margin.left + this.margin.left);
         var yPadding = (this.margin.bottom + this.margin.top);
+        var yRngPadding = yPadding + 30;
 
         // Scales //////////////////////////////////////////////////////////////
         this.scales.x = d3.time.scale()
             .range([0, width - xPadding]);
         this.scales.y = d3.scale.linear()
-            .range([height - yPadding, 0]);
+            .range([height - yRngPadding, 0]);
 
         // Axes ////////////////////////////////////////////////////////////////
         this.axis.x = d3.svg.axis()
@@ -158,6 +182,14 @@ Ext.define('Flux.view.D3LinePlot', {
             }),
             y: this.panes.plot.append('g').attr('class', 'axis y')
         };
+
+        this.panes.tooltip = this.svg.append('g').attr('class', 'pane tooltip');
+        this.panes.tooltip.selectAll('.tip')
+            .data([0])
+            .enter()
+            .append('text')
+            .text('')
+            .attr('class', 'info tip');
 
         this.isDrawn = false;
 

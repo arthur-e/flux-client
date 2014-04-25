@@ -55,6 +55,8 @@ Ext.define('Flux.view.D3LinePlot', {
          */
         this.store = Ext.create('Flux.store.TimeSeries');
 
+        this.addEvents(['plotclick']);
+
         this.callParent(arguments);
     },
 
@@ -77,6 +79,11 @@ Ext.define('Flux.view.D3LinePlot', {
 
         sel.on('mouseout', Ext.bind(function () {
             this.panes.tooltip.selectAll('.tip').text('');
+        }, this));
+
+        sel.on('click', Ext.bind(function () {
+            var c = d3.mouse(sel[0][0]);
+            this.fireEventArgs('plotclick', [this, c]);
         }, this));
 
         return this;
@@ -232,6 +239,15 @@ Ext.define('Flux.view.D3LinePlot', {
         this.panes.plot.append('g')
             .attr('class', 'grid');
 
+        // Overlays ////////////////////////////////////////////////////////////
+        this.panes.overlay = this.panes.plot.append('g')
+            .attr('class', 'pane overlay');
+        this.panes.overlay.selectAll('.slice')
+            .data([0])
+            .enter()
+            .append('rect')
+            .attr('class', 'slice');
+
         // Plot line ///////////////////////////////////////////////////////////
         this.panes.plot.selectAll('.line')
             .data([0])
@@ -241,15 +257,7 @@ Ext.define('Flux.view.D3LinePlot', {
                 'class': 'line'
             });
 
-        this.panes.overlay = this.panes.plot.append('g')
-            .attr('class', 'pane overlay');
-
-        this.panes.overlay.selectAll('.slice')
-            .data([0])
-            .enter()
-            .append('rect')
-            .attr('class', 'slice');
-
+        // Title ///////////////////////////////////////////////////////////////
         this.panes.title.selectAll('.title')
             .data([0])
             .enter()
@@ -257,6 +265,7 @@ Ext.define('Flux.view.D3LinePlot', {
             .text('')
             .attr('class', 'title');
 
+        // Tooltip /////////////////////////////////////////////////////////////
         this.panes.tooltip = this.svg.append('g').attr('class', 'pane tooltip');
         this.panes.tooltip.selectAll('.tip')
             .data([0])
@@ -299,20 +308,30 @@ Ext.define('Flux.view.D3LinePlot', {
         @return         {Flux.view.D3LinePlot}
      */
     updateAnnotation: function (moments) {
+        var attr = {
+            'x': Ext.Function.bind(function (d) {
+                return this.scales.x(d) + 1;
+            }, this),
+            'y': 0,
+            'width': 1,
+            'height': this._plotHeight,
+            'class': 'slice',
+            'fill-opacity': 1
+        };
+        var data = Ext.Array.map(moments, function (m) {
+            return d3.time.format.utc('%Y-%m-%dT%H:%M:%S.%LZ')
+                .parse(m.toISOString());
+        });
+
+        if (data.length > 1) {
+            attr['fill-opacity'] = 0.2;
+            attr['width'] = this.scales.x(data[1]) - this.scales.x(data[0]);
+            data = [data[0]];
+        }
+
         this.panes.overlay.selectAll('.slice')
-            .data(Ext.Array.map(moments, function (m) {
-                return d3.time.format.utc('%Y-%m-%dT%H:%M:%S.%LZ')
-                    .parse(m.toISOString());
-            }))
-            .attr({
-                'x': Ext.Function.bind(function (d) {
-                    return this.scales.x(d) + 1;
-                }, this),
-                'y': 0,
-                'width': 1,
-                'height': this._plotHeight,
-                'class': 'slice'
-            });
+            .data(data)
+            .attr(attr);
 
         return this;
     },

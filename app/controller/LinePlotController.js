@@ -4,6 +4,11 @@ Ext.define('Flux.controller.LinePlotController', {
     requires: [
     ],
 
+    refs: [{
+        ref: 'map',
+        selector: 'd3geomap'
+    }],
+
     init: function () {
         // Create a new state Provider if one doesn't already exist
         if (Ext.state.Manager.getProvider().path === undefined) {
@@ -16,6 +21,7 @@ Ext.define('Flux.controller.LinePlotController', {
         this.control({
 
             'd3lineplot': {
+                plotclick: this.onPlotClick,
                 resize: this.onResize
             },
 
@@ -37,6 +43,41 @@ Ext.define('Flux.controller.LinePlotController', {
      */
     initialize: function (cmp, width, height) {
         cmp.up('d3lineplot').init(width, height);
+    },
+
+    /**TODO
+     */
+    onPlotClick: function (view, coords) {
+        var t = moment.utc(view.scales.x.invert(coords[0]));
+        var s;
+
+        if (!Ext.isEmpty(view.getMetadata().get('steps'))) {
+            s = view.getMetadata().get('steps');
+        } else if (!Ext.isEmpty(view.getMetadata().get('spans'))) {
+            //TODO
+        }
+
+        // Fix the "precision" of this timestamp
+        t.milliseconds(0)
+        t.seconds(0);
+        if (s % 3600 === 0) {
+            // Step/span on the order of hours...
+            t.minutes(0);
+            if (t.hours() % (s / 3600) !== 0) {
+                t.hours(0)
+            }
+        }
+        if (s % 86400 === 0) {
+            // Step/span on the order of days...
+            t.hours(0);
+            if (t.days() % (s / 86400) !== 0) {
+                t.hours(0)
+            }
+        }
+
+        this.getController('UserInteraction').fetchMap(this.getMap(), {
+            time: t.toISOString()
+        });
     },
 
     /** TODO Combine with MapController.onResize() ?

@@ -252,8 +252,14 @@ Ext.define('Flux.controller.UserInteraction', {
             method: 'GET',
             url: Ext.String.format('/flux/api/scenarios/{0}/xy.json', source),
             params: params,
-            callback: function (opts, s, response) {
-                var grid = Ext.create('Flux.model.Grid',
+            callback: function (opts, success, response) {
+                var grid;
+
+                if (!success) {
+                    return;
+                }            
+
+                grid = Ext.create('Flux.model.Grid',
                     Ext.JSON.decode(response.responseText));
 
                 // Create a unique ID that can be used to find this grid
@@ -261,6 +267,9 @@ Ext.define('Flux.controller.UserInteraction', {
 
                 this.bindGrid(view, grid);
                 this.onMapLoad(grid);
+            },
+            failure: function (response) {
+                Ext.Msg.alert('Request Error', response.responseText);
             },
             scope: this
         });
@@ -524,10 +533,21 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  grid    {Flux.model.Grid}
      */
     onMapLoad: function (grid) {
+        var props;
+        var moments = [
+            grid.get('timestamp')
+        ];
+
         if (this.getLinePlot()) {
-            this.getLinePlot().updateAnnotation([
-                grid.get('timestamp')
-            ]);
+            props = grid.get('properties')
+            if (props.start && props.end) {
+                moments = [
+                    moment.utc(props.start),
+                    moment.utc(props.end)
+                ];
+            }
+
+            this.getLinePlot().updateAnnotation(moments);
         }
     },
 

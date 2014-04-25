@@ -5,8 +5,6 @@
     shape-rendering: crispEdges;
 }
 .axis.label,
-.x.axis text,
-.y.axis text { font: 14px Helvetica,Arial,sans-serif; }
 .boundary {
     fill: none;
     stroke-width: 1px;
@@ -17,7 +15,14 @@
 .boundary.inside { stroke: #aaa; }
 .boundary.outside { stroke: #fff; }
 .empty { fill: transparent !important; }
+.grid .tick {
+    shape-rendering: crispEdges;
+    stroke: #888;
+    stroke-width: 1px;
+}
+.grid path { stroke-width: 0; }
 .hidden { display: none; }
+.plot .axis path { display: none; }
 .plot .line {
     fill: none;
     stroke: #157fcc;
@@ -25,7 +30,7 @@
     cursor: pointer;
 }
 .plot .overlay { shape-rendering: crispEdges; }
-.plot .x.axis path { display: none; }
+text { font: 14px Helvetica,Arial,sans-serif; }
 text.info {
     font-family: Helvetica,Arial,sans-serif;
     font-weight: bold;

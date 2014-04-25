@@ -24,11 +24,11 @@ Ext.define('Flux.view.D3LinePlot', {
 
     /**TODO
      */
-    margin: {
-        top: 10,
-        right: 0,
+    d3margin: {
+        top: 50,
+        right: 10,
         bottom: 0,
-        left: 40
+        left: 100
     },
 
     /**
@@ -70,8 +70,8 @@ Ext.define('Flux.view.D3LinePlot', {
             this.panes.tooltip.selectAll('.tip')
                 .text(d.toFixed(2))
                 .attr({
-                    'x': c[0] + 20 + this.margin.left,
-                    'y': c[1] + 30 + this.margin.bottom
+                    'x': c[0] + 20 + (this.d3margin.left - this.d3margin.right),
+                    'y': c[1] + 30 + (this.d3margin.top - this.d3margin.bottom)
                 });
         }, this));
 
@@ -104,6 +104,15 @@ Ext.define('Flux.view.D3LinePlot', {
 
         this.getEl().unmask();
 
+        this.panes.title.selectAll('.title')
+            .text(Ext.String.format('{0}: Daily Mean',
+                this.getMetadata().get('_id')))
+            .attr({
+                'x': 0,
+                'y': 0,
+                'class': 'title'
+            });
+
         this.scales.x.domain(d3.extent(data, function (d) {
             return d[0];
         }));
@@ -112,9 +121,18 @@ Ext.define('Flux.view.D3LinePlot', {
         }));
 
         this.panes.axis.x.call(this.axis.x);
-        this.panes.axis.y.call(this.axis.y);
+        this.panes.axis.y.call(this.axis.y)
+            .attr('transform', 'translate(0,-10)');
 
-        sel = this.panes.plot.selectAll('.line')
+        // Grid lines //////////////////////////////////////////////////////////
+        this.panes.plot.append('g')
+            .attr('class', 'grid')
+            .call(this.axis.y0)
+            .attr('transform', 'translate(-' +
+                (this.d3margin.left * 0.5).toString() + ',0)');
+
+        // Plot line ///////////////////////////////////////////////////////////
+        sel = this.panes.plot.append('path')
             .datum(data)
             .attr({
                 'class': 'line',
@@ -141,8 +159,8 @@ Ext.define('Flux.view.D3LinePlot', {
      */
     init: function (width, height) {
         var elementId = '#' + this.items.getAt(0).id;
-        var xPadding = (this.margin.left + this.margin.left);
-        var yPadding = (this.margin.bottom + this.margin.top);
+        var xPadding = (this.d3margin.left + this.d3margin.right);
+        var yPadding = (this.d3margin.bottom + this.d3margin.top);
 
         // Remember the plot height for the .marker selection
         this._plotHeight = height - (yPadding + 30);
@@ -163,7 +181,16 @@ Ext.define('Flux.view.D3LinePlot', {
             .scale(this.scales.y)
             .orient('left')
             .ticks(5)
-            .tickPadding(6);
+            .tickSize(0, 0, 0)
+            .tickPadding(10);
+
+        this.axis.y0 = d3.svg.axis()
+            .scale(this.scales.y)
+            .orient('left')
+            .ticks(5)
+            .tickSize(-(width - xPadding + (this.d3margin.left * 0.5)), 0, 0)
+            .tickPadding(0)
+            .tickFormat('');
 
         // Remove any previously-rendered SVG elements
         if (this.svg !== undefined) {
@@ -181,32 +208,25 @@ Ext.define('Flux.view.D3LinePlot', {
         //  levels using painter's algorithm (first drawn on bottom; last drawn
         //  is on top)
         this.panes = {
-            plot: this.svg.append('g').attr({
-                'class': 'plot',
-                'transform':
-                    'translate(' + this.margin.left + ',' + this.margin.top + ')'
+            title: this.svg.append('g').attr({
+                'class': 'pane title',
+                'transform': 'translate(50,25)'
             })
         };
+
+        this.panes.plot = this.svg.append('g').attr({
+            'class': 'pane plot',
+            'transform':
+                'translate(' + this.d3margin.left + ',' + this.d3margin.top + ')'
+        });
 
         this.panes.axis = {
             x: this.panes.plot.append('g').attr({
                 'class': 'axis x',
                 'transform': 'translate(0,' + (height - yPadding).toString() + ')'
             }),
-            y: this.panes.plot.append('g').attr({
-                'class': 'axis y',
-                'transform': 'translate(-3,0)'
-            })
+            y: this.panes.plot.append('g').attr('class', 'axis y')
         };
-
-        // <path> //////////////////////////////////////////////////////////////
-        this.panes.plot.selectAll('.line')
-            .data([0])
-            .enter()
-            .append('path')
-            .attr({
-                'class': 'line'
-            });
 
         this.panes.overlay = this.panes.plot.append('g')
             .attr('class', 'pane overlay');
@@ -217,12 +237,12 @@ Ext.define('Flux.view.D3LinePlot', {
             .append('rect')
             .attr('class', 'slice');
 
-        //TODO Delete?
-        this.panes.overlay.selectAll('.marker')
+        this.panes.title.selectAll('.title')
             .data([0])
             .enter()
-            .append('circle')
-            .attr('class', 'marker');
+            .append('text')
+            .text('')
+            .attr('class', 'title');
 
         this.panes.tooltip = this.svg.append('g').attr('class', 'pane tooltip');
         this.panes.tooltip.selectAll('.tip')
@@ -274,10 +294,10 @@ Ext.define('Flux.view.D3LinePlot', {
             }))
             .attr({
                 'x': Ext.Function.bind(function (d) {
-                    return this.scales.x(d);
+                    return this.scales.x(d) + 1;
                 }, this),
                 'y': 0,
-                'width': 2,
+                'width': 1,
                 'height': this._plotHeight,
                 'class': 'slice'
             });

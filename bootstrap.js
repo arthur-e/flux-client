@@ -846,6 +846,7 @@ Ext.ClassManager.addNameAlternateMappings({
   "ExtThemeNeptune.toolbar.Toolbar": [],
   "Flux.Application": [],
   "Flux.controller.Animation": [],
+  "Flux.controller.LinePlotController": [],
   "Flux.controller.MapController": [],
   "Flux.controller.UserExperience": [],
   "Flux.controller.UserInteraction": [],
@@ -863,15 +864,18 @@ Ext.ClassManager.addNameAlternateMappings({
   "Flux.model.Metadata": [],
   "Flux.model.Palette": [],
   "Flux.model.Scenario": [],
+  "Flux.model.TimeSeries": [],
   "Flux.store.AbstractStore": [],
   "Flux.store.Geometries": [],
   "Flux.store.Grids": [],
   "Flux.store.Metadata": [],
   "Flux.store.Palettes": [],
   "Flux.store.Scenarios": [],
+  "Flux.store.TimeSeries": [],
   "Flux.type.Moment": [],
   "Flux.view.ConfigurationPanel": [],
-  "Flux.view.D3GeographicPanel": [],
+  "Flux.view.D3GeographicMap": [],
+  "Flux.view.D3LinePlot": [],
   "Flux.view.D3Panel": [],
   "Flux.view.FormPanel": [],
   "Flux.view.MapSettings": [],
@@ -1886,6 +1890,7 @@ Ext.ClassManager.addNameAliasMappings({
   "ExtThemeNeptune.toolbar.Toolbar": [],
   "Flux.Application": [],
   "Flux.controller.Animation": [],
+  "Flux.controller.LinePlotController": [],
   "Flux.controller.MapController": [],
   "Flux.controller.UserExperience": [],
   "Flux.controller.UserInteraction": [],
@@ -1919,18 +1924,23 @@ Ext.ClassManager.addNameAliasMappings({
   "Flux.model.Metadata": [],
   "Flux.model.Palette": [],
   "Flux.model.Scenario": [],
+  "Flux.model.TimeSeries": [],
   "Flux.store.AbstractStore": [],
   "Flux.store.Geometries": [],
   "Flux.store.Grids": [],
   "Flux.store.Metadata": [],
   "Flux.store.Palettes": [],
   "Flux.store.Scenarios": [],
+  "Flux.store.TimeSeries": [],
   "Flux.type.Moment": [],
   "Flux.view.ConfigurationPanel": [
     "widget.configpanel"
   ],
-  "Flux.view.D3GeographicPanel": [
-    "widget.d3geopanel"
+  "Flux.view.D3GeographicMap": [
+    "widget.d3geomap"
+  ],
+  "Flux.view.D3LinePlot": [
+    "widget.d3lineplot"
   ],
   "Flux.view.D3Panel": [
     "widget.d3panel"

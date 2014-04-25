@@ -240,6 +240,13 @@ Ext.define('Flux.controller.UserInteraction', {
         var grid;
         var source = view.getMetadata().getId();
 
+        // Uncheck the "Show aggregation" checkbox
+        if (!Ext.isEmpty(params.time)) {
+            cb = this.getSourcePanel()
+                .down('checkbox[name=showAggregation]');
+            cb.setValue(false);
+        }
+
         // Check for the unique ID, a hash of the parameters passed in this
         //  request
         grid = view.store.getById(Ext.Object.toQueryString(params));

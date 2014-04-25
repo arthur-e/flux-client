@@ -98,7 +98,7 @@ Ext.define('Flux.controller.LinePlotController', {
                 view.init(width, height).redraw()
             }
         }
-    },
+    }
 
 });
 

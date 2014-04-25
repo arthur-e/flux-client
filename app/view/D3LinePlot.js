@@ -365,7 +365,7 @@ Ext.define('Flux.view.D3LinePlot', {
         }
 
         //TODO Update scales
-    },
+    }
 
 });
 

@@ -435,8 +435,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return         {Flux.view.D3GeographicMap}
      */
     redraw: function (zoom) {
-        if (this.ownerCt) {
-            this.ownerCt.un('afterlayout', this.redraw);
+        if (this._model) {
             this.draw(this._model, zoom).updateLegend();
         }
         return this;

@@ -110,6 +110,13 @@ Ext.define('Flux.controller.MapController', {
                 return kw;
         }, this)());
 
+//TODO
+//-        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (view) {
+//-            view.init(width, height)
+//-                .setProjection(opts.projection, width, height)
+//-                .setBasemap(opts.basemap, kw);
+//-        });
+
         cmp.init(width, height)
             .setProjection(opts.projection, width, height)
             .setBasemap(opts.basemap, kw);

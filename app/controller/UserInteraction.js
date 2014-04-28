@@ -11,6 +11,9 @@ Ext.define('Flux.controller.UserInteraction', {
         ref: 'map',
         selector: 'd3geomap'
     }, {
+        ref: 'mapSettings',
+        selector: 'mapsettings'
+    }, {
         ref: 'settingsMenu',
         selector: '#settings-menu'
     }, {
@@ -123,6 +126,7 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     addMap: function (title) {
         var anchor, newView;
+        var basemap = this.getMapSettings().down('combo[name=basemap]').getValue();
         var container = this.getContentPanel();
         var query = Ext.ComponentQuery.query('d3geomap');
         var n = container.items.length;
@@ -153,10 +157,18 @@ Ext.define('Flux.controller.UserInteraction', {
 
         Ext.each(query, function (view, i) {
             view.anchor = anchor;
-            container.on('afterlayout', view.redraw, view, {
-                single: true,
-                buffer: 1
+
+            // Add a listener to re-initialize the D3GeographicMap instance
+            //  after it has received its layout from the parent container
+            view.on('afterlayout', function () {
+                this.init(this.getWidth(), this.getHeight())
+                    .setBasemap(basemap)
+                    .redraw(true);
+            }, view, {
+                single: true // Remove this listener
             });
+
+            // Calculate the layout for the child panels again
             container.doLayout();
         });
 

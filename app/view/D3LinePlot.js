@@ -22,7 +22,8 @@ Ext.define('Flux.view.D3LinePlot', {
      */
     isDrawn: false,
 
-    /**TODO
+    /**
+        The margin, in pixels, around the SVG that is drawn inside this panel.
      */
     d3margin: {
         top: 50,
@@ -69,8 +70,12 @@ Ext.define('Flux.view.D3LinePlot', {
         sel.on('mousemove', Ext.bind(function () {
             var c = d3.mouse(sel[0][0]);
             var d = this.scales.y.invert(c[1]);
+            var t = Ext.String.format('{0}: {1}',
+                moment.utc(this.scales.x.invert(c[0])).format('YYYY-MM-DD'),
+                d.toFixed(2));
+
             this.panes.tooltip.selectAll('.tip')
-                .text(d.toFixed(2))
+                .text(t)
                 .attr({
                     'x': c[0] + 20 + (this.d3margin.left - this.d3margin.right),
                     'y': c[1] + 30 + (this.d3margin.top - this.d3margin.bottom)

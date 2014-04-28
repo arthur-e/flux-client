@@ -319,7 +319,7 @@ Ext.define('Flux.controller.UserInteraction', {
         Convenience function for determining the currently selected global
         statistics settings; measure of central tendency, raw values versus
         anomalies, and whether to use population statistics or not.
-        @return {String}
+        @return {Object}
      */
     getGlobalSettings: function () {
         var opts = {};
@@ -331,6 +331,14 @@ Ext.define('Flux.controller.UserInteraction', {
         });
 
         return opts;
+    },
+
+    /**TODO
+     */
+    raiseInvalidDateTime: function (moment, d0, d1) {
+        Ext.Msg.alert('Request Error',
+            Ext.String.format('The date/time you requested, {0}, is outside of the range of available dates. Please select a date/time between {1} and {2}',
+                moment.toISOString(), d0.toISOString(), d1.toISOString()));
     },
 
     ////////////////////////////////////////////////////////////////////////////
@@ -350,7 +358,7 @@ Ext.define('Flux.controller.UserInteraction', {
         Binds a Flux.model.Grid instance to the provided view, a
         Flux.view.D3GeographicMap instance. The view's store is updated
         with the new Grid instance.
-        @param  view    {Flux.view.D3GeographicMap}
+        @param  view    {Flux.view.D3Panel}
         @param  grid    {Flux.model.Grid}
      */
     bindGrid: function (view, grid) {
@@ -367,7 +375,7 @@ Ext.define('Flux.controller.UserInteraction', {
     /**
         Binds a Flux.model.Metadata instance to the provided view, a
         Flux.view.D3GeographicMap instance.
-        @param  view    {Flux.view.D3GeographicMap}
+        @param  view    {Flux.view.D3Panel}
         @param  grid    {Flux.model.Metadata}
      */
     bindMetadata: function (view, metadata) {
@@ -522,10 +530,9 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  value   {String}
      */
     onDateTimeSelection: function (field, value) {
-        var cb;
+        var cb, dates, theDate, view;
         var editor = field.up('roweditor');
         var values = field.up('panel').getForm().getValues();
-        var view;
 
         if (!value) {
             return; // Ignore undefined, null values
@@ -539,15 +546,29 @@ Ext.define('Flux.controller.UserInteraction', {
             view = this.getMap();
         }
 
-        if (!Ext.isEmpty(values.source) && !Ext.isEmpty(values.date)
-            && !Ext.isEmpty(values.time)) {
-            this.fetchMap(view, {
-                time: Ext.String.format('{0}T{1}:00.000Z', values.date, values.time)
-            });
+        // Do nothing if not all of these fields are filled out
+        if (Ext.isEmpty(values.source) || Ext.isEmpty(values.date)
+            || Ext.isEmpty(values.time)) {
+            return;
         }
+
+        dates = view.getMetadata().get('dates');
+        theDate = moment.utc(Ext.String.format('{0}T{1}:00.000Z',
+            values.date, values.time));
+
+        // Raise an error, do nothing if the requeste date/time is out of range
+        if (dates[0].isAfter(theDate) || dates[dates.length - 1].isBefore(theDate)) {
+            return this.raiseInvalidDateTime(theDate, dates[0],
+                dates[dates.length - 1]);
+        }
+
+        this.fetchMap(view, {
+            time: theDate.toISOString()
+        });
     },
 
-    /**TODO
+    /**
+        Callback for the 'load' even in the Grids store.
         @param  grid    {Flux.model.Grid}
      */
     onMapLoad: function (grid) {

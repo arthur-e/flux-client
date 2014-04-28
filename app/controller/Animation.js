@@ -49,6 +49,13 @@ Ext.define('Flux.controller.Animation', {
         });
     },
 
+    /**
+        Calculates either the step size (unit length of time in an interval
+        between data frames) or the number of such steps (if step size provided)
+        to take in an animation frame.
+        @param  s0          {Number}    Initial number of seconds between each step/span
+        @param  stepSize    {String}    The size of the step/span
+     */
     calcStepOrSize: function (s0, stepSize) {
         if (stepSize) {
             switch (stepSize) {

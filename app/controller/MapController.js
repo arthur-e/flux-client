@@ -110,11 +110,9 @@ Ext.define('Flux.controller.MapController', {
                 return kw;
         }, this)());
 
-        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (view) {
-            view.init(width, height)
-                .setProjection(opts.projection, width, height)
-                .setBasemap(opts.basemap, kw);
-        });
+        cmp.init(width, height)
+            .setProjection(opts.projection, width, height)
+            .setBasemap(opts.basemap, kw);
 
     },
 
@@ -129,7 +127,7 @@ Ext.define('Flux.controller.MapController', {
     onBasemapChange: function (c, recs) {
         Ext.each(Ext.ComponentQuery.query('d3geomap'), function (view) {
             // For every d3geomap instance, update the basemap
-            view.setBasemap(recs[0].get('id'), recs[0].get('url'));
+            view.setBasemap(recs[0].get('id'));
         });
     },
 
@@ -270,7 +268,8 @@ Ext.define('Flux.controller.MapController', {
         Creates a new color scale based on changes in the scale configuration
         (measure of central tendency, number of standard deviations, or a switch
         between sequential and diverging palette types).
-        @param  config  {Object}    Properties are palette configs e.g. sigmas, tendency, paletteType
+        @param  config  {Object}    Properties are palette configs e.g. sigmas,
+            tendency, paletteType
      */
     updateScales: function (config) {
         var opts = this.getSymbology().getForm().getValues();

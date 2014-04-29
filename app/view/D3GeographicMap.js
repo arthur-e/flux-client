@@ -230,9 +230,11 @@ Ext.define('Flux.view.D3GeographicMap', {
 
             c2 = proj([lng, lat]);
 
-            this.zoom.translate([(c1[0] - c2[0]), (c1[1] - c2[1])])
-                .event((this._transitions) ? this.wrapper.transition().duration(500) : this.wrapper);
-            this.setZoom(2 * (this.svg.attr('width')) / proj([(bbox[2] - bbox[0]), 0])[0]);
+            this.setZoom(2 * (this.svg.attr('width')) / proj([(bbox[2] - bbox[0]), 0])[0], [
+                (c1[0] - c2[0]),
+                (c1[1] - c2[1])
+            ]);
+
         }
 
         this.isDrawn = true;
@@ -329,7 +331,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         // Remove any previously-rendered SVG elements
         if (this.svg !== undefined) {
-            this.svg.remove()
+            this.svg.remove();
         }
 
         this.svg = d3.select(elementId).append('svg')
@@ -576,14 +578,15 @@ Ext.define('Flux.view.D3GeographicMap', {
         Sets the zoom level by a specified factor; also accepts a specified
         duration of time for the transition to the new zoom level.
         @param  factor      {Number}
+        @param  translation {Array}
         @param  duration    {Number}
         @return             {Flux.view.D3GeographicMap}
      */
-    setZoom: function (factor, duration) {
+    setZoom: function (factor, translation, duration) {
         var scale = this.zoom.scale();
         var extent = this.zoom.scaleExtent();
         var newScale = scale * factor;
-        var t = this.zoom.translate();
+        var t = translation || this.zoom.translate();
         var c = [
             this.svg.attr('width') * 0.5,
             this.svg.attr('height') * 0.5

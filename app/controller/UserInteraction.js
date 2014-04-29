@@ -709,7 +709,9 @@ Ext.define('Flux.controller.UserInteraction', {
         var view = context.record.get('view');
 
         // Remove the view associated with the Flux.model.GridView instance
-        view.ownerCt.remove(view);
+        if (view.ownerCt) {
+            view.ownerCt.remove(view);
+        }
     },
 
     /**

@@ -51,12 +51,6 @@ Ext.define('Flux.controller.UserExperience', {
 
             });
 
-            // Propagate changes to the "Show aggregation" checkbox
-            if (params.hasOwnProperty('showAggregation')) {
-                this.getController('UserInteraction').onAggregationToggle(0,
-                    params.showAggregation);
-            }
-
             if (params.hasOwnProperty('source') && params.hasOwnProperty('date')
                 && params.hasOwnProperty('time')) {
 //TODO Need to figure out how to automatically load data
@@ -187,11 +181,13 @@ Ext.define('Flux.controller.UserExperience', {
 
     /**
         Ensures that the Aggreation Fieldset is enabled if the
-        "Statistics from..." setting is set to the "Current Data Frame."
+        "Statistics from..." setting is set to the "Current Data Frame" and
+        the initial date/time fields have been filled out.
         @param  fieldset    {Ext.form.Fieldset}
      */
     initAggregationFields: function (fieldset) {
-        if (this.getSymbology().down('hiddenfield[name=statsFrom]').getValue() === 'data') {
+        if (this.getSymbology().down('hiddenfield[name=statsFrom]').getValue() === 'data'
+            && this.getSourcePanel().initialSelectionsMade()) {
             fieldset.enable();
         } else {
             fieldset.disable();
@@ -215,15 +211,16 @@ Ext.define('Flux.controller.UserExperience', {
             if (cb.name === 'population' || cb.name === 'data') {
                 targets = this.getSourcePanel().query('fieldset checkbox');
 
-                // Disable/uncheck the aggregation and difference checkboxes
-                //  depending on the global stats settings
-                Ext.each(targets, function (target) {
+                Ext.each(targets, Ext.Function.bind(function (target) {
                     if (cb.name === 'population') {
                         target.setValue(false);
                     }
 
-                    target.up('fieldset').setDisabled(cb.name === 'population');
-                });
+                    // Enable the FieldSet only if the initial selections at
+                    //  the top of the form have been made
+                    target.up('fieldset').setDisabled(cb.name === 'population'
+                        || !this.getSourcePanel().initialSelectionsMade());
+                }, this));
             }
 
             values[cb.group] = cb.name;

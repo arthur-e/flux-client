@@ -13,6 +13,16 @@ Ext.define('Flux.view.SourcePanel', {
         'Flux.store.Scenarios'
     ],
 
+    /**
+        Returns true or false indicating whether or not the initial date/time
+        selections have all been made in this Panel's Form.
+        @return {Boolean}
+     */
+    initialSelectionsMade: function () {
+        var hash = this.getForm().getValues();
+        return (Ext.Array.clean([hash.source, hash.date, hash.time]).length === 3);
+    },
+
     items: [{
         xtype: 'combo',
         name: 'source',
@@ -61,7 +71,7 @@ Ext.define('Flux.view.SourcePanel', {
         boxLabel: 'Show line plot'
 
     }, {
-        xtype: 'refieldset',
+        xtype: 'fieldset',
         itemId: 'aggregation-fields',
         title: 'Aggregation',
         disabled: true,
@@ -124,7 +134,7 @@ Ext.define('Flux.view.SourcePanel', {
         }]
 
     }, {
-        xtype: 'refieldset',
+        xtype: 'fieldset',
         itemId: 'difference-fields',
         title: 'Difference',
         disabled: true,

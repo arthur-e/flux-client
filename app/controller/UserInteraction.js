@@ -106,6 +106,10 @@ Ext.define('Flux.controller.UserInteraction', {
                 canceledit: this.onSourceGridCancel
             },
 
+            'sourcepanel fieldset checkbox': {
+                change: this.onAggOrDiffToggle
+            },
+
             'sourcepanel #aggregation-fields field': {
                 change: this.onAggregationChange
             },
@@ -253,8 +257,12 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  params  {Object}
      */
     fetchMap: function (view, params) {
-        var grid;
-        var source = view.getMetadata().getId();
+        var grid, source;
+        
+        if (!view.getMetadata()) {
+            return;
+        }
+        source = view.getMetadata().getId();
 
         // Uncheck the "Show aggregation" checkbox
         if (!Ext.isEmpty(params.time)) {
@@ -510,78 +518,33 @@ Ext.define('Flux.controller.UserInteraction', {
         this.fetchMap(view, params);
     },
 
-    /**TODO
-        Handles a change in the aggregation parameters; fires a new map
-        request depending on whether aggregation is requested.
-        @param  field   {Ext.form.field.Base}
-        @param  value   {Number|String}
-     */
-    onDifferenceChange: function (field, value) {
-        var args = {};
-        var vals, view;
-        var toggle = field.up('fieldset').down('field[name=showDifference]');
-
-        Ext.each(field.up('fieldset').query('trigger'), function (t) {
-            args[t.getName()] = t.getValue();
-        });
-
-        vals = Ext.Object.getValues(args);
-        if (Ext.Array.clean(vals).length !== vals.length && toggle.getValue()) {
-            // Do nothing if not all of the fields are filled out
-            return;
-        }
-
-        view = this.getMap();
-
-        if (!field.isVisible(true) || Ext.isEmpty(view.getMoment())) {
-            return;
-        }
-
-        if (toggle.getValue()) {
-            // NOTE: Only available for the Single Map visualization thus far
-            return console.log(args);//FIXME
-            this.fetchMaps(view, [{
-                time: view.getMoment().toISOString()
-            }, {
-                time: Ext.String.format('{0}T{1}:00', args.date, args.time)                
-            }], function () {console.log(arguments);});
-
-        } else {
-            this.fetchMap({
-                time: view.getMoment().toISOString()
-            });
-        }
-    },
-
     /**
-        Disables the "Values displayed as..." menu items when aggregation is
-        enabled.
+        There can only be one! Only "Show Aggregation" or "Show Difference"
+        can be checked, never both; checking one unchecks the other.
         @param  cb      {Ext.form.field.Checkbox}
         @param  checked {Boolean}
      */
-    onAggregationToggle: function (cb, checked) {
-        var query = this.getSettingsMenu().query('menuitem[group=display]');
+    onAggOrDiffToggle: function (cb, checked) {
+        var n = 'showAggregation';
+        if (cb.getName() === n) {
+            n = 'showDifference';
+        }
         if (checked) {
-            Ext.each(query, function (item) {
-                item.setChecked(item.name === 'values');
-                item.disable();
-            });
-        } else {
-            Ext.each(query, function (item) {
-                item.enable();
-            });
+            cb.up('form').down(Ext.String.format('checkbox[name={0}]', n))
+                .setValue(false);
         }
     },
 
     /**
         When the Animate button is pressed, checks/unchecks the
-        "Show Aggregation" checkbox in the Aggregation Fieldset.
+        "Show Aggregation" and "Show Difference" checkboxex in the FieldSets.
         @param  btn {Ext.button.Button}
      */
     onAnimation: function (btn) {
         if (btn.pressed || btn.getItemId() !== 'animate-btn') {
-            this.getSourcePanel().down('checkbox[name=showAggregation]')
-                .setValue(false);
+            Ext.each(this.getSourcePanel().query('fieldset checkbox'), function (cb) {
+                cb.setValue(false);
+            });
         }
     },
 
@@ -674,9 +637,61 @@ Ext.define('Flux.controller.UserInteraction', {
                 dates[dates.length - 1]);
         }
 
+        // Enable the FieldSets in this form
+        if (this.getGlobalSettings().statsFrom === 'data') {
+            Ext.each(this.getSourcePanel().query('fieldset'), function (fs) {
+                fs.enable();
+            });
+        }
+
         this.fetchMap(view, {
             time: theDate.toISOString()
         });
+    },
+
+    /**TODO
+        Handles a change in the aggregation parameters; fires a new map
+        request depending on whether aggregation is requested.
+        @param  field   {Ext.form.field.Base}
+        @param  value   {Number|String}
+     */
+    onDifferenceChange: function (field, value) {
+        var args = {};
+        var vals, view;
+        var toggle = field.up('fieldset').down('field[name=showDifference]');
+
+        console.log('onDifferenceChange()');//FIXME
+
+        Ext.each(field.up('fieldset').query('trigger'), function (t) {
+            args[t.getName()] = t.getValue();
+        });
+
+        vals = Ext.Object.getValues(args);
+        if (Ext.Array.clean(vals).length !== vals.length || toggle.getValue()) {
+            // Do nothing if not all of the fields are filled out
+            return;
+        }
+
+        view = this.getMap();
+
+        if (!field.isVisible(true) || Ext.isEmpty(view.getMoment())) {
+            return;
+        }
+
+        if (toggle.getValue()) {
+            // NOTE: Only available for the Single Map visualization thus far
+            return console.log(args);//FIXME
+            this.fetchMaps(view, [{
+                time: view.getMoment().toISOString()
+            }, {
+                time: Ext.String.format('{0}T{1}:00', args.date, args.time)                
+            }], function () {console.log(arguments);});
+
+        } else {
+            this.fetchMap({
+                time: view.getMoment().toISOString()
+            });
+        }
     },
 
     /**

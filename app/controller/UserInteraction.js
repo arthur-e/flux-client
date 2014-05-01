@@ -110,6 +110,10 @@ Ext.define('Flux.controller.UserInteraction', {
                 change: this.onAggregationChange
             },
 
+            'sourcepanel #difference-fields field': {
+                change: this.onDifferenceChange
+            },
+
             'toolbar button[cls=anim-btn]': {
                 click: this.onAnimation
             }
@@ -254,9 +258,8 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // Uncheck the "Show aggregation" checkbox
         if (!Ext.isEmpty(params.time)) {
-            cb = this.getSourcePanel()
-                .down('checkbox[name=showAggregation]');
-            cb.setValue(false);
+            this.getSourcePanel()
+                .down('checkbox[name=showAggregation]').setValue(false);
         }
 
         // Check for the unique ID, a hash of the parameters passed in this
@@ -451,6 +454,48 @@ Ext.define('Flux.controller.UserInteraction', {
         }
 
         this.fetchMap(view, params);
+    },
+
+    /**TODO
+        Handles a change in the aggregation parameters; fires a new map
+        request depending on whether aggregation is requested.
+        @param  field   {Ext.form.field.Base}
+        @param  value   {Number|String}
+     */
+    onDifferenceChange: function (field, value) {
+        var args = {};
+        var vals, view;
+        var toggle = field.up('fieldset').down('field[name=showDifference]');
+
+        Ext.each(field.up('fieldset').query('trigger'), function (t) {
+            args[t.getName()] = t.getValue();
+        });
+
+        vals = Ext.Object.getValues(args);
+        if (Ext.Array.clean(vals).length !== vals.length && toggle.getValue()) {
+            // Do nothing if not all of the fields are filled out
+            return;
+        }
+
+        view = this.getMap();
+
+        if (!field.isVisible(true) || Ext.isEmpty(view.getMoment())) {
+            return;
+        }
+
+        if (toggle.getValue()) {
+            // NOTE: Only available for the Single Map visualization thus far
+            this.fetchMaps(view, [{
+                time: view.getMoment().toISOString()
+            }, {
+                time: Ext.String.format('{0}T{1}:00', args.date, args.time)                
+            }]);
+
+        } else {
+            this.fetchMap({
+                time: view.getMoment().toISOString()
+            });
+        }
     },
 
     /**
@@ -850,11 +895,11 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  metadata    {Ext.model.Metadata}
      */
     propagateMetadata: function (container, metadata) {
-        var dates = container.query('datefield[name=date], datefield[name=date2]');
-        var times = container.query('combo[name=time], combo[name=time2]');
+        var datePicks = container.query('datefield');
+        var timePicks = container.query('combo[name=time], combo[name=time2]');
 
-        if (dates) {
-            Ext.each(dates, function (target) {
+        if (datePicks) {
+            Ext.each(datePicks, function (target) {
                 var fmt = 'YYYY-MM-DD';
                 var dates = metadata.get('dates');
                 var firstDate = dates[0].format(fmt);
@@ -869,9 +914,9 @@ Ext.define('Flux.controller.UserInteraction', {
             });
         }
 
-        if (times) {
+        if (timePicks) {
             // For every Ext.form.field.Time found...
-            Ext.each(times, function (target) {
+            Ext.each(timePicks, function (target) {
                 var mins = (Ext.Array.min(metadata.get('steps')) / 60);
                 target.bindStore(Ext.create('Ext.data.ArrayStore', {
                     fields: ['time'],

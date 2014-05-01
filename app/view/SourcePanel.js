@@ -147,7 +147,7 @@ Ext.define('Flux.view.SourcePanel', {
             xtype: 'datefield',
             name: 'date2',
             emptyText: 'Select date...',
-            dateFormat: 'Y-m-d'
+            format: 'Y-m-d'
         }, {
             xtype: 'combo',
             name: 'time2',

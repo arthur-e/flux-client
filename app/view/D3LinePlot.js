@@ -303,7 +303,7 @@ Ext.define('Flux.view.D3LinePlot', {
     setMetadata: function (metadata) {
         this._metadata = metadata;
         this.getEl().mask('Loading...');
-        return this;
+        return this.redraw();
     },
 
     /**

@@ -92,7 +92,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 change: this.toggleLinePlotDisplay
             },
 
-            'field[name=source]': {
+            'field[name=source], field[name=source2]': {
                 change: this.onSourceChange
             },
 
@@ -280,7 +280,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
                 if (!success) {
                     return;
-                }            
+                }
 
                 grid = Ext.create('Flux.model.Grid',
                     Ext.JSON.decode(response.responseText));
@@ -296,6 +296,56 @@ Ext.define('Flux.controller.UserInteraction', {
             },
             scope: this
         });
+    },
+
+    /**TODO
+        Makes a requests for a map based on the given parameters, first checking
+        to see if the map has already been loaded by the view; requests it from
+        the server only if it has not been loaded.
+        @param  view        {Flux.view.D3GeographicMap}
+        @param  params      {Array}
+        @param  operation   {Function}
+     */
+    fetchMaps: function (view, params, operation) {
+        var grid;
+        var source = view.getMetadata().getId();
+        var fetch = function (params, callback) {
+            Ext.Ajax.request({
+                method: 'GET',
+                url: Ext.String.format('/flux/api/scenarios/{0}/xy.json', source),
+                params: params,
+                callback: function (opts, success, response) {
+                    var grid;
+
+                    if (!success) {
+                        callback(response.responseText);
+                    }
+
+                    grid = Ext.create('Flux.model.Grid',
+                        Ext.JSON.decode(response.responseText));
+
+                    callback(null, grid);
+                }
+            });
+        };
+
+        // Uncheck the "Show aggregation" checkbox
+        if (!Ext.isEmpty(params.time)) {
+            this.getSourcePanel()
+                .down('checkbox[name=showAggregation]').setValue(false);
+        }
+
+        queue()
+            .defer(fetch, params[0])
+            .defer(fetch, params[1])
+            .await(function (error, grid1, grid2) {
+                if (error) {
+                    Ext.Msg.alert('Request Error', error);
+                    return;
+                }
+
+                operation.call(view, grid1, grid2)
+            });
     },
 
     /**
@@ -348,7 +398,11 @@ Ext.define('Flux.controller.UserInteraction', {
         return opts;
     },
 
-    /**TODO
+    /**
+        Alerts the user that the date/time requested is invalid.
+        @param  moment  {moment}
+        @param  d0      {moment}
+        @param  d1      {moment}
      */
     raiseInvalidDateTime: function (moment, d0, d1) {
         Ext.Msg.alert('Request Error',
@@ -485,11 +539,12 @@ Ext.define('Flux.controller.UserInteraction', {
 
         if (toggle.getValue()) {
             // NOTE: Only available for the Single Map visualization thus far
+            return console.log(args);//FIXME
             this.fetchMaps(view, [{
                 time: view.getMoment().toISOString()
             }, {
                 time: Ext.String.format('{0}T{1}:00', args.date, args.time)                
-            }]);
+            }], function () {console.log(arguments);});
 
         } else {
             this.fetchMap({

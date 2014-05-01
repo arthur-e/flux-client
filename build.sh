@@ -9,6 +9,7 @@ sed -i 's|<script type="text/javascript" src="/flux-client/d3.lib.colorbrewer.js
 sed -i 's|<script type="text/javascript" src="/flux-client/node_modules/d3/d3.min.js"></script>||g' build/production/Flux/index.html
 sed -i 's|<script type="text/javascript" src="/flux-client/node_modules/topojson/topojson.min.js"></script>||g' build/production/Flux/index.html
 sed -i 's|<script type="text/javascript" src="/flux-client/node_modules/moment/moment.min.js"></script>||g' build/production/Flux/index.html
+sed -i 's|<script type="text/javascript" src="/flux-client/node_modules/queue-async/queue.min.js"></script>||g' build/production/Flux/index.html
 
 git log > build/production/Flux/git.log
 

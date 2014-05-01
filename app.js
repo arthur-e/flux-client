@@ -8,6 +8,7 @@
 //@require node_modules/d3/d3.min.js
 //@require node_modules/topojson/topojson.min.js
 //@require node_modules/moment/moment.js
+//@require node_modules/queue-async/queue.min.js
 
 Ext.Loader.require('Ext.data.Types', function () {
     Ext.Loader.require('Flux.type.Moment');

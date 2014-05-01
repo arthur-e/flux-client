@@ -3,6 +3,7 @@
     "dependencies": {
         "d3": "latest",
         "topojson": "1.1.3",
-        "moment": "latest"
+        "moment": "latest",
+        "queue-async": "1.0.7"
     }
 }

@@ -142,19 +142,34 @@ Ext.define('Flux.view.SourcePanel', {
         }, {
             xtype: 'combo',
             name: 'source2',
-            fieldLabel: 'Another dataset'
+            fieldLabel: 'Another dataset',
+            displayField: '_id',
+            valueField: '_id',
+            queryMode: 'local',
+            listeners: {
+                render: function () {
+                    this.bindStore(Ext.StoreManager.get('scenarios'));
+                },
+                dirtychange: function () {
+                    Ext.each(this.up('form').query('field[name=date2], field[name=time2]'), function (cmp) {
+                        cmp.enable();
+                    });
+                }
+            }
         }, {
             xtype: 'datefield',
             name: 'date2',
             emptyText: 'Select date...',
-            format: 'Y-m-d'
+            format: 'Y-m-d',
+            disabled: true
         }, {
             xtype: 'combo',
             name: 'time2',
             emptyText: 'Select time...',
             displayField: 'time',
             valueField: 'time',
-            queryMode: 'local'
+            queryMode: 'local',
+            disabled: true
         }]
 
     }, {

@@ -901,22 +901,26 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     toggleLinePlotDisplay: function (cb, checked) {
         // We either create a new D3LinePlot instance or get the existing one
+        var basemap = this.getMapSettings().down('combo[name=basemap]').getValue();
         var linePlot = this.getLinePlot();
         var map = this.getMap();
         var container = map.ownerCt;
         var series;
 
         if (checked) {
-            // Get the TimeSeries instance, if there is one
-            series = this.getStore('timeseries')
-                .getById(map.getMetadata().getId());
-
             // Resize the anchor(s) and add a D3LinePlot instance
             map.anchor = '100% 80%';
             linePlot = container.add({
                 xtype: 'd3lineplot',
                 anchor: '100% 20%'
-            }).setMetadata(map.getMetadata());
+            });
+
+            // Get the TimeSeries instance, if there is one
+            if (map.getMetadata()) {
+                series = this.getStore('timeseries')
+                    .getById(map.getMetadata().getId());
+                linePlot.setMetadata(map.getMetadata());
+            }
 
             if (series) {
                 linePlot.draw(series);
@@ -929,9 +933,14 @@ Ext.define('Flux.controller.UserInteraction', {
             map.anchor = '100% 100%';
         }
 
-        container.on('afterlayout', map.redraw, {
-            single: true,
-            buffer: 1
+        // Add a listener to re-initialize the D3GeographicMap instance
+        //  after it has received its layout from the parent container
+        map.on('afterlayout', function () {
+            this.init(this.getWidth(), this.getHeight())
+                .setBasemap(basemap)
+                .redraw(true);
+        }, map, {
+            single: true // Remove this listener
         });
         container.doLayout();
     }

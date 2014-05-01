@@ -13,12 +13,6 @@ Ext.define('Flux.view.D3GeographicMap', {
     },
 
     /**
-        The URL of the current (currently loaded) basemap.
-        @private
-     */
-    _basemapUrl: undefined,
-
-    /**
         An internal reference to the legend selection.
         @private
       */
@@ -493,11 +487,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         // Remove the old basemap, if one exists
         this.panes.basemap.select('#basemap').remove()
 
-        if (this._basemapUrl === basemapUrl && boundaries === this.basemaps.boundaries) {
-            // If the requested basemap is already displayed, do nothing
-            return;
-
-        } else if (this.basemaps.hasOwnProperty(basemapUrl)) {
+        if (this.basemaps.hasOwnProperty(basemapUrl)) {
             // If the requested basemap was loaded before, just re-draw it
             drawBasemap(this.basemaps[basemapUrl]);
 

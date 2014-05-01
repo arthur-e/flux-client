@@ -337,6 +337,10 @@ Ext.define('Flux.controller.UserInteraction', {
             });
         };
 
+        //TODO Need to see if any of or at least the first map is already
+        //  stored in the view's Store
+        console.log(params);//FIXME
+
         // Uncheck the "Show aggregation" checkbox
         if (!Ext.isEmpty(params.time)) {
             this.getSourcePanel()
@@ -489,7 +493,7 @@ Ext.define('Flux.controller.UserInteraction', {
         });
 
         vals = Ext.Object.getValues(args);
-        if (Ext.Array.clean(vals).length !== vals.length && toggle.getValue()) {
+        if (Ext.Array.clean(vals).length !== vals.length) {
             // Do nothing if not all of the fields are filled out
             return;
         }
@@ -656,36 +660,34 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  value   {Number|String}
      */
     onDifferenceChange: function (field, value) {
-        var args = {};
-        var vals, view;
-        var toggle = field.up('fieldset').down('field[name=showDifference]');
+        var diffTime;
+        var vals = field.up('panel').getForm().getValues();
+        var view = this.getMap();
 
-        console.log('onDifferenceChange()');//FIXME
-
-        Ext.each(field.up('fieldset').query('trigger'), function (t) {
-            args[t.getName()] = t.getValue();
-        });
-
-        vals = Ext.Object.getValues(args);
-        if (Ext.Array.clean(vals).length !== vals.length || toggle.getValue()) {
+        if (Ext.Array.clean([vals.date2, vals.time2, vals.source2]).length !== 3) {
             // Do nothing if not all of the fields are filled out
             return;
         }
-
-        view = this.getMap();
 
         if (!field.isVisible(true) || Ext.isEmpty(view.getMoment())) {
             return;
         }
 
-        if (toggle.getValue()) {
+        if (field.up('fieldset').down('field[name=showDifference]').getValue()) {
             // NOTE: Only available for the Single Map visualization thus far
-            return console.log(args);//FIXME
+            diffTime = moment.utc(Ext.String.format('{0}T{1}:00',
+                vals.date2, vals.time2));
+
+            if (diffTime.isSame(view.getMoment())) {
+                Ext.Msg.alert('Request Error', 'First timestamp and second timestamp are the same in requested difference image; will not display.');
+                return;
+            }
+
             this.fetchMaps(view, [{
                 time: view.getMoment().toISOString()
             }, {
-                time: Ext.String.format('{0}T{1}:00', args.date, args.time)                
-            }], function () {console.log(arguments);});
+                time: diffTime.toISOString()
+            }], function () {console.log(arguments);});//FIXME
 
         } else {
             this.fetchMap({

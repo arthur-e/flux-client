@@ -83,7 +83,7 @@ Ext.define('Flux.controller.UserExperience', {
                 checkchange: this.onStatsChange
             },
 
-            'sourcepanel #aggregation-fields': {
+            'sourcepanel fieldset': {
                 afterrender: this.initAggregationFields
             }
 

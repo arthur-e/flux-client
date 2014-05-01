@@ -19,13 +19,6 @@ Ext.define('Flux.view.D3GeographicMap', {
     _basemapUrl: undefined,
 
     /**
-        Flag to indicate whether or not the <rect> elements have already
-        been added to the map.
-        @private
-     */
-    isDrawn: false,
-
-    /**
         An internal reference to the legend selection.
         @private
       */
@@ -50,6 +43,13 @@ Ext.define('Flux.view.D3GeographicMap', {
         Enables the heads-up-display to show timestamps, mouseover events, etc.
      */
     enableDisplay: true,
+
+    /**
+        Flag to indicate whether or not the <rect> elements have already
+        been added to the map.
+        @private
+     */
+    isDrawn: false,
 
     /**
         The moment.js time display format to use.

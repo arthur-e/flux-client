@@ -61,12 +61,6 @@ Ext.define('Flux.view.SourcePanel', {
         boxLabel: 'Show line plot'
 
     }, {
-        xtype: 'checkbox',
-        name: 'showUncertainty',
-        boxLabel: 'Show uncertainty',
-        disabled: true //TODO
-
-    }, {
         xtype: 'refieldset',
         itemId: 'aggregation-fields',
         title: 'Aggregation',
@@ -131,35 +125,32 @@ Ext.define('Flux.view.SourcePanel', {
 
     }, {
         xtype: 'refieldset',
-        title: 'Difference',
         itemId: 'difference-fields',
-        stateId: 'differenceFields',
-        stateful: true,
+        title: 'Difference',
         disabled: true,
+        stateful: true,
+        stateId: 'differenceFields',
         defaults: {
             labelAlign: 'top',
             anchor: '100%'
         },
         items: [{
-            xtype: 'recheckbox',
+            xtype: 'checkbox',
             name: 'showDifference',
             stateId: 'showDifference',
             boxLabel: 'Show difference'
         }, {
             xtype: 'combo',
             name: 'source2',
-            fieldLabel: 'Another dataset',
-            disabled: true
+            fieldLabel: 'Another dataset'
         }, {
             xtype: 'datefield',
             name: 'date2',
             emptyText: 'Select date...',
-            dateFormat: 'Y-m-d',
-            disabled: true
+            dateFormat: 'Y-m-d'
         }, {
             xtype: 'combo',
             name: 'time2',
-            disabled: true,
             emptyText: 'Select time...',
             displayField: 'time',
             valueField: 'time',

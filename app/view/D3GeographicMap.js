@@ -79,10 +79,16 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         this.on('draw', function (v, grid) {
             this._moment = grid.get('timestamp');
-            this._timestamp = grid.getTimestampDisplay(this.timeFormat)
+
+            if (Ext.isEmpty(grid.get('title'))) {
+                this._display = grid.getTimestampDisplay(this.timeFormat)
+            } else {
+                this._display = grid.get('title');
+            }
+
             this.updateDisplay([{
                 id: 'timestamp',
-                text: this._timestamp
+                text: this._display
             }]);
         });
 
@@ -151,7 +157,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         sel.on('mouseout', Ext.bind(function () {
             this.updateDisplay([{
                 id: 'timestamp',
-                text: this._timestamp
+                text: this._display
             }]);
             this.panes.tooltip.selectAll('.tip').text('');
         }, this));

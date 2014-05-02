@@ -8,7 +8,7 @@ Ext.define('Flux.model.Grid', {
 
     idProperty: '_id',
 
-    fields: ['_id', {
+    fields: ['_id', 'title', {
         name: 'timestamp',
         type: Ext.data.Types.Moment
     }, {

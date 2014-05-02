@@ -315,7 +315,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  operation   {Function}
      */
     fetchMaps: function (view, params, operation) {
-        var grid;
+        var grid1, grid2, mapQueue;
         var source = view.getMetadata().getId();
         var fetch = function (params, callback) {
             Ext.Ajax.request({
@@ -337,27 +337,43 @@ Ext.define('Flux.controller.UserInteraction', {
             });
         };
 
-        //TODO Need to see if any of or at least the first map is already
-        //  stored in the view's Store
-        console.log(params);//FIXME
-
         // Uncheck the "Show aggregation" checkbox
         if (!Ext.isEmpty(params.time)) {
             this.getSourcePanel()
                 .down('checkbox[name=showAggregation]').setValue(false);
         }
 
-        queue()
-            .defer(fetch, params[0])
-            .defer(fetch, params[1])
-            .await(function (error, grid1, grid2) {
-                if (error) {
-                    Ext.Msg.alert('Request Error', error);
-                    return;
-                }
+        // Check for both of the needed map grids
+        grid1 = view.store.getById(Ext.Object.toQueryString(params[0]));
+        grid2 = view.store.getById(Ext.Object.toQueryString(params[1]));
 
-                operation.call(view, grid1, grid2)
-            });
+        // Create a request queue in case we need to download one or more grids
+        mapQueue = queue();
+
+        if (grid1 && grid2) {
+            return operation.call(view, grid, grid2);
+        }
+
+        if (grid1) {
+            mapQueue.defer(fetch, params[1]); // 1st grid already loaded; get 2nd
+        }
+
+        if (grid2) {
+            mapQueue.defer(fetch, params[0]); // 2nd grid already loaded; get 1st
+        }
+
+        mapQueue.await(function (error, a, b) {
+            if (error) {
+                Ext.Msg.alert('Request Error', error);
+                return;
+            }
+
+            if (a && b) {
+                return operation.call(view, a, b);
+            }
+            
+            return operation.call(view, grid1 || grid2, a);
+        });
     },
 
     /**
@@ -687,10 +703,32 @@ Ext.define('Flux.controller.UserInteraction', {
                 time: view.getMoment().toISOString()
             }, {
                 time: diffTime.toISOString()
-            }], function () {console.log(arguments);});//FIXME
+            }], function (g1, g2) { // Callback function
+                var f1 = g1.get('features');
+                var f2 = g2.get('features');
+
+                if (f1.length !== f2.length) {
+                   Ext.Msg.alert('Data Error', 'Cannot display the difference of two maps with difference grids. Choose instead maps from two different data sources and/or times that have the same underlying grid.');
+                }
+
+                view.draw(Ext.create('Flux.model.Grid', {
+                    features: (function () {
+                        var i;
+                        var g = [];
+                        for (i = 0; i < f1.length; i += 1) {
+                            g.push(f1[i] - f2[i]);
+                        }
+                        return g;
+                    }()),
+                    timestamp: g1.get('timestamp'),
+                    title: Ext.String.format('{0} - {1}',
+                        g1.get('timestamp').format(view.timeFormat),
+                        g2.get('timestamp').format(view.timeFormat))
+                }));
+            });
 
         } else {
-            this.fetchMap({
+            this.fetchMap(view, {
                 time: view.getMoment().toISOString()
             });
         }

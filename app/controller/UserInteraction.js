@@ -89,8 +89,12 @@ Ext.define('Flux.controller.UserInteraction', {
                 change: this.toggleLinePlotDisplay
             },
 
-            'field[name=source], field[name=source2]': {
+            'field[name=source]': {
                 change: this.onSourceChange
+            },
+
+            'field[name=source2]': {
+                change: this.onSourceDifferenceChange
             },
 
             'field[name=date], field[name=time]': {
@@ -834,6 +838,49 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
+        Handles a change in the data "source" from a ComboBox configured for
+        selecting from among sources (e.g. scenarios, model runs, etc.)
+        RELATIVE TO an original "source" selection ComboBox for the purpose
+        of calculating the difference between data from this source and the
+        other.
+        @param  field   {Ext.form.field.ComboBox}
+        @param  source  {String}
+        @param  last    {String}
+     */
+    onSourceDifferenceChange: function (field, source, last) {
+        var metadata;
+
+        if (Ext.isEmpty(source) || source === last) {
+            return;
+        }
+
+        // Metadata ////////////////////////////////////////////////////////////
+        metadata = this.getStore('metadata').getById(source);
+        if (metadata) {
+            this.propagateMetadata(field.up('fieldset'), metadata);
+            
+        } else {
+            Ext.Ajax.request({
+                method: 'GET',
+                url: '/flux/api/scenarios.json',
+                params: {
+                    scenario: source
+                },
+                callback: function (o, s, response) {
+                    var metadata = Ext.create('Flux.model.Metadata',
+                        Ext.JSON.decode(response.responseText));
+
+                    this.getStore('metadata').add(metadata);
+
+                    this.propagateMetadata(field.up('fieldset'), metadata);
+                },
+
+                scope: this
+            });
+        }
+    },
+
+    /**
         When the user cancels the editing/addition of a row to the RowEditor,
         remove the associated view that was created.
         @param  editor  {Ext.grid.plugin.Editing}
@@ -985,7 +1032,7 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     propagateMetadata: function (container, metadata) {
         var datePicks = container.query('datefield');
-        var timePicks = container.query('combo[name=time], combo[name=time2]');
+        var timePicks = container.query('combo[valueField=time]');
 
         if (datePicks) {
             Ext.each(datePicks, function (target) {

@@ -170,6 +170,10 @@ Ext.define('Flux.controller.Animation', {
      */
     stepBy: function (steps) {
         var query = Ext.ComponentQuery.query('d3geomap');
+
+        // Uncheck the "Show Aggregation" and "Show Difference" checkboxes
+        this.getController('UserInteraction').uncheckAggregates();
+
         Ext.each(query, Ext.Function.bind(function (view) {
             var ts = view.getMoment();
 

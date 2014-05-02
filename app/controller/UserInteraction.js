@@ -264,12 +264,6 @@ Ext.define('Flux.controller.UserInteraction', {
         }
         source = view.getMetadata().getId();
 
-        // Uncheck the "Show aggregation" checkbox
-        if (!Ext.isEmpty(params.time)) {
-            this.getSourcePanel()
-                .down('checkbox[name=showAggregation]').setValue(false);
-        }
-
         // Check for the unique ID, a hash of the parameters passed in this
         //  request
         grid = view.store.getById(Ext.Object.toQueryString(params));
@@ -306,10 +300,11 @@ Ext.define('Flux.controller.UserInteraction', {
         });
     },
 
-    /**TODO
-        Makes a requests for a map based on the given parameters, first checking
-        to see if the map has already been loaded by the view; requests it from
-        the server only if it has not been loaded.
+    /**
+        Queues requests for maps based on the given parameters, first checking
+        to see if those maps have already been loaded by the view. The request
+        queue will fire the callback operation when all the maps have been
+        loaded.
         @param  view        {Flux.view.D3GeographicMap}
         @param  params      {Array}
         @param  operation   {Function}
@@ -332,16 +327,13 @@ Ext.define('Flux.controller.UserInteraction', {
                     grid = Ext.create('Flux.model.Grid',
                         Ext.JSON.decode(response.responseText));
 
+                    // Create a unique ID that can be used to find this grid
+                    grid.set('_id', Ext.Object.toQueryString(opts.params));
+
                     callback(null, grid);
                 }
             });
         };
-
-        // Uncheck the "Show aggregation" checkbox
-        if (!Ext.isEmpty(params.time)) {
-            this.getSourcePanel()
-                .down('checkbox[name=showAggregation]').setValue(false);
-        }
 
         // Check for both of the needed map grids
         grid1 = view.store.getById(Ext.Object.toQueryString(params[0]));
@@ -351,7 +343,7 @@ Ext.define('Flux.controller.UserInteraction', {
         mapQueue = queue();
 
         if (grid1 && grid2) {
-            return operation.call(view, grid, grid2);
+            return operation.call(view, grid1, grid2);
         }
 
         if (grid1) {
@@ -459,7 +451,10 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  grid    {Flux.model.Grid}
      */
     bindGrid: function (view, grid) {
-        view.store.add(grid);
+        if (!Ext.isEmpty(grid.get('_id'))) {
+            view.store.add(grid);
+        }
+
         view.draw(grid, true);
 
         // The color scale can only be properly adjusted AFTER data are bound
@@ -633,6 +628,9 @@ Ext.define('Flux.controller.UserInteraction', {
             return; // Ignore undefined, null values
         }
 
+        // Uncheck the "Show Aggregation" and "Show Difference" checkboxes
+        this.uncheckAggregates();
+
         if (editor) {
             view = editor.editingPlugin.getCmp().getView().getSelectionModel()
                 .getSelection()[0].get('view');
@@ -669,9 +667,9 @@ Ext.define('Flux.controller.UserInteraction', {
         });
     },
 
-    /**TODO
-        Handles a change in the aggregation parameters; fires a new map
-        request depending on whether aggregation is requested.
+    /**
+        Handles a change in the differencing parameters; fires a new map
+        request depending on whether differencing is requested.
         @param  field   {Ext.form.field.Base}
         @param  value   {Number|String}
      */
@@ -703,7 +701,8 @@ Ext.define('Flux.controller.UserInteraction', {
                 time: view.getMoment().toISOString()
             }, {
                 time: diffTime.toISOString()
-            }], function (g1, g2) { // Callback function
+            }], Ext.Function.bind(function (g1, g2) { // Callback function
+                var grid;
                 var f1 = g1.get('features');
                 var f2 = g2.get('features');
 
@@ -711,7 +710,10 @@ Ext.define('Flux.controller.UserInteraction', {
                    Ext.Msg.alert('Data Error', 'Cannot display the difference of two maps with difference grids. Choose instead maps from two different data sources and/or times that have the same underlying grid.');
                 }
 
-                view.draw(Ext.create('Flux.model.Grid', {
+                // Add these model instances to the view's store
+                view.store.add(g1, g2);
+
+                grid = Ext.create('Flux.model.Grid', {
                     features: (function () {
                         var i;
                         var g = [];
@@ -724,8 +726,11 @@ Ext.define('Flux.controller.UserInteraction', {
                     title: Ext.String.format('{0} - {1}',
                         g1.get('timestamp').format(view.timeFormat),
                         g2.get('timestamp').format(view.timeFormat))
-                }));
-            });
+                });
+
+                this.bindGrid(view, grid);
+                this.onMapLoad(grid);
+            }, this));
 
         } else {
             this.fetchMap(view, {
@@ -735,7 +740,8 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
-        Callback for the 'load' even in the Grids store.
+        Propagates wider changes following the loading of a new Grid instance.
+        Specifically, this updates the D3LinePlot instance.
         @param  grid    {Flux.model.Grid}
      */
     onMapLoad: function (grid) {
@@ -1098,6 +1104,15 @@ Ext.define('Flux.controller.UserInteraction', {
             single: true // Remove this listener
         });
         container.doLayout();
+    },
+
+    /**
+        Unchecks the "Show Aggregation" and "Show Difference" checkboxes.
+     */
+    uncheckAggregates: function () {
+        Ext.each(this.getSourcePanel().query('fieldset checkbox'), function (cb) {
+            cb.setValue(false);
+        });
     }
 
 });

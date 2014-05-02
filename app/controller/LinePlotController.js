@@ -45,11 +45,18 @@ Ext.define('Flux.controller.LinePlotController', {
         cmp.up('d3lineplot').init(width, height);
     },
 
-    /**TODO
+    /**
+        Handles a mouse click event on the plot area, effectively firing off
+        a new map load request for the time represented by that point on the plot.
+        @param  view    {D3LinePlot}
+        @param  coords  {Array}
      */
     onPlotClick: function (view, coords) {
         var t = moment.utc(view.scales.x.invert(coords[0]));
         var s;
+
+        // Uncheck the "Show Aggregation" and "Show Difference" checkboxes
+        this.getController('UserInteraction').uncheckAggregates();
 
         if (!Ext.isEmpty(view.getMetadata().get('steps'))) {
             s = view.getMetadata().get('steps');

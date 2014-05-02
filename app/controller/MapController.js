@@ -154,11 +154,11 @@ Ext.define('Flux.controller.MapController', {
             if (view.getScale()) {
                 if (typeof view.getScale().quantiles === 'function') {
                     view.setScale(view.getScale().range(cs));
-                } else {
-                    this.updateScales();
                 }
             }
         }, this));
+
+        this.updateScales();
     },
 
     /**

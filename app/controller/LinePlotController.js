@@ -87,7 +87,7 @@ Ext.define('Flux.controller.LinePlotController', {
         });
     },
 
-    /** TODO Combine with MapController.onResize() ?
+    /**
         Handles changes in the size of the D3 drawing area by replacing the
         SVG element with a new instance.
         @param  view        {Flux.view.D3Panel}
@@ -101,7 +101,6 @@ Ext.define('Flux.controller.LinePlotController', {
         //  of the initial layout; we want to avoid acting on this firing
         if (oldWidth && oldHeight) {
             if (width !== oldWidth || height !== oldHeight) {
-                // Update the projections ComboBox; rescale each projection contained
                 view.init(width, height).redraw()
             }
         }

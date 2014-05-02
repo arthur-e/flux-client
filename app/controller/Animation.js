@@ -171,9 +171,6 @@ Ext.define('Flux.controller.Animation', {
     stepBy: function (steps) {
         var query = Ext.ComponentQuery.query('d3geomap');
 
-        // Uncheck the "Show Aggregation" and "Show Difference" checkboxes
-        this.getController('UserInteraction').uncheckAggregates();
-
         Ext.each(query, Ext.Function.bind(function (view) {
             var ts = view.getMoment();
 
@@ -208,6 +205,9 @@ Ext.define('Flux.controller.Animation', {
         @param  btn {Ext.button.Button}
      */
     onStepButton: function (btn) {
+        // Uncheck the "Show Aggregation" and "Show Difference" checkboxes
+        this.getController('UserInteraction').uncheckAggregates();
+
         switch (btn.getItemId()) {
             case 'backward-btn':
             this.stepBy(this._steps * -1);
@@ -248,6 +248,9 @@ Ext.define('Flux.controller.Animation', {
         @param  pressed {Boolean}
      */
     toggleAnimation: function (btn, pressed) {
+        // Uncheck the "Show Aggregation" and "Show Difference" checkboxes
+        this.getController('UserInteraction').uncheckAggregates();
+
         if (pressed) {
             btn.setText('Pause');
             btn.setIconCls('icon-control-pause');

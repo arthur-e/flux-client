@@ -28,9 +28,6 @@ Ext.define('Flux.controller.UserInteraction', {
     }, {
         ref: 'symbology',
         selector: 'symbology'
-    }, {
-        ref: 'viewport',
-        selector: 'viewport'
     }],
 
     requires: [
@@ -98,7 +95,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
             'field[name=date], field[name=time]': {
                 change: this.onDateTimeSelection,
-                expand: this.onDateTimeExpansion
+                expand: this.uncheckAggregates
             },
 
             'sourcesgridpanel': {
@@ -116,10 +113,6 @@ Ext.define('Flux.controller.UserInteraction', {
 
             'sourcepanel #difference-fields field': {
                 change: this.onDifferenceChange
-            },
-
-            'toolbar button[cls=anim-btn]': {
-                click: this.onAnimation
             }
 
         });
@@ -451,6 +444,8 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  grid    {Flux.model.Grid}
      */
     bindGrid: function (view, grid) {
+        var opts = this.getGlobalSettings();
+
         if (!Ext.isEmpty(grid.get('_id'))) {
             view.store.add(grid);
         }
@@ -459,7 +454,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // The color scale can only be properly adjusted AFTER data are bound
         //  to the view
-        if (!view._usePopulationStats) {
+        if (opts.statsFrom === 'data') {
             view.updateScale(this.getSymbology().getForm().getValues());
         }
     },
@@ -551,19 +546,6 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
-        When the Animate button is pressed, checks/unchecks the
-        "Show Aggregation" and "Show Difference" checkboxex in the FieldSets.
-        @param  btn {Ext.button.Button}
-     */
-    onAnimation: function (btn) {
-        if (btn.pressed || btn.getItemId() !== 'animate-btn') {
-            Ext.each(this.getSourcePanel().query('fieldset checkbox'), function (cb) {
-                cb.setValue(false);
-            });
-        }
-    },
-
-    /**
         Handles content being removed from the #content panel.
         @param  c       {Ext.panel.Panel}
         @param  item    {Flux.view.D3Panel}
@@ -605,15 +587,6 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
-        Unchecks the "Show aggregation" checkbox.
-     */
-    onDateTimeExpansion: function () {
-        cb = this.getSourcePanel()
-            .down('checkbox[name=showAggregation]');
-        cb.setValue(false);
-    },
-
-    /**
         Handles a change in the "date" or "time" fields signifying the user is
         ready to load map data for that date and time.
         @param  field   {Ext.form.field.*}
@@ -627,9 +600,6 @@ Ext.define('Flux.controller.UserInteraction', {
         if (!value) {
             return; // Ignore undefined, null values
         }
-
-        // Uncheck the "Show Aggregation" and "Show Difference" checkboxes
-        this.uncheckAggregates();
 
         if (editor) {
             view = editor.editingPlugin.getCmp().getView().getSelectionModel()
@@ -789,9 +759,9 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  last    {String}
      */
     onSourceChange: function (field, source, last) {
+        var metadata, operation, geometry, view;
         var container = field.up('panel');
         var editor = field.up('roweditor');
-        var metadata, geometry, view;
 
         if (Ext.isEmpty(source) || source === last) {
             return;
@@ -805,15 +775,20 @@ Ext.define('Flux.controller.UserInteraction', {
             view = this.getMap();
         }
 
-        metadata = this.getStore('metadata').getById(source);
-        geometry = this.getStore('geometries').getById(source);
-
-        if (metadata) {
+        // Callback ////////////////////////////////////////////////////////////
+        operation = Ext.Function.bind(function (metadata) {
             this.bindMetadata(view, metadata);
             this.propagateMetadata(container, metadata);
             if (this.getLinePlot() && !this.getLinePlot().isDrawn) {
                 this.bindMetadata(this.getLinePlot(), metadata);
             }
+        }, this);
+
+
+        // Metadata ////////////////////////////////////////////////////////////
+        metadata = this.getStore('metadata').getById(source);
+        if (metadata) {
+            operation(metadata);
             
         } else {
             Ext.Ajax.request({
@@ -828,17 +803,15 @@ Ext.define('Flux.controller.UserInteraction', {
 
                     this.getStore('metadata').add(metadata);
 
-                    this.bindMetadata(view, metadata);
-                    this.propagateMetadata(container, metadata);
-                    if (this.getLinePlot()) {
-                        this.bindMetadata(this.getLinePlot(), metadata);
-                    }
+                    operation(metadata);
                 },
 
                 scope: this
             });
         }
 
+        // Geometry ////////////////////////////////////////////////////////////
+        geometry = this.getStore('geometries').getById(source);
         if (geometry) {
             this.bindGeometry(view, geometry);
 

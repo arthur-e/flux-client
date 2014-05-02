@@ -78,7 +78,7 @@ Ext.define('Flux.controller.UserExperience', {
             },
 
             'sourcepanel fieldset': {
-                afterrender: this.initAggregationFields
+                afterrender: this.initFieldsets
             }
 
         });
@@ -185,7 +185,7 @@ Ext.define('Flux.controller.UserExperience', {
         the initial date/time fields have been filled out.
         @param  fieldset    {Ext.form.Fieldset}
      */
-    initAggregationFields: function (fieldset) {
+    initFieldsets: function (fieldset) {
         if (this.getSymbology().down('hiddenfield[name=statsFrom]').getValue() === 'data'
             && this.getSourcePanel().initialSelectionsMade()) {
             fieldset.enable();

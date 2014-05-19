@@ -85,11 +85,14 @@ Ext.define('Flux.model.Metadata', {
         @param  config  {Object}
         @return {d3.scale.quantile}
      */
-    getQuantileScale: function (config) {
-        var stats = this.get('stats');
+    getQuantileScale: function (config, parameter) {
+        var stats;
         var sigmas = config.sigmas || 2;
         var tendency = config.tendency || 'mean';
         var domain = config.domain; // Default to defined bounds
+
+        stats = this.get('stats')[parameter || 'values'];
+        console.log(this.get('stats'));//FIXME
 
         if (config.autoscale) { // If no defined bounds...
             domain = [

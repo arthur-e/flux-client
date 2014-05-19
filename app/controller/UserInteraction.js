@@ -749,8 +749,8 @@ Ext.define('Flux.controller.UserInteraction', {
         // Initialize the values of the domain bounds and threshold sliders
         Ext.each(this.getSymbology().query('enumslider'), function (cmp) {
             cmp.setBounds([
-                metadata.get('stats').min,
-                metadata.get('stats').max
+                metadata.get('stats').values.min,
+                metadata.get('stats').values.max
             ]);
         });
     },

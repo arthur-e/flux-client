@@ -786,7 +786,9 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         if (!this._usePopulationStats && this.getModel()) {
             metadata = this.getMetadata().copy();
-            metadata.set('stats', this.getModel().summarize());
+            metadata.set('stats', {
+                values: this.getModel().summarize()
+            });
 
             this.setMetadata(metadata);
 

@@ -92,7 +92,6 @@ Ext.define('Flux.model.Metadata', {
         var domain = config.domain; // Default to defined bounds
 
         stats = this.get('stats')[parameter || 'values'];
-        console.log(this.get('stats'));//FIXME
 
         if (config.autoscale) { // If no defined bounds...
             domain = [

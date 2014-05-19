@@ -85,6 +85,10 @@ Ext.define('Flux.controller.UserInteraction', {
                 click: this.onVisualChange
             },
 
+            'd3geomap': {
+                plotclick: this.onPlotClick
+            },
+
             'field[name=showLinePlot]': {
                 change: this.toggleLinePlotDisplay
             },
@@ -681,7 +685,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 var f2 = g2.get('features');
 
                 if (f1.length !== f2.length) {
-                   Ext.Msg.alert('Data Error', 'Cannot display the difference of two maps with difference grids. Choose instead maps from two different data sources and/or times that have the same underlying grid.');
+                    Ext.Msg.alert('Data Error', 'Cannot display the difference of two maps with difference grids. Choose instead maps from two different data sources and/or times that have the same underlying grid.');
                 }
 
                 // Add these model instances to the view's store
@@ -752,6 +756,48 @@ Ext.define('Flux.controller.UserInteraction', {
                 metadata.get('stats').values.min,
                 metadata.get('stats').values.max
             ]);
+        });
+    },
+
+    /**TODO
+     */
+    onPlotClick: function (view, coords) {
+        var meta = view.getMetadata();
+        var geom = view.getProjection().invert(Ext.Array.map(coords, Number));
+
+        // Need to add half the grid spacing as this was subtracted to obtain
+        //  the upper-left corner of the grid cell
+        geom = [
+            geom[0] + (Number(meta.get('gridres').x) * 0.5),
+            geom[1] + (Number(meta.get('gridres').y) * 0.5)
+        ];
+        geom = Ext.Array.map(geom, function (v) {
+            return v.toFixed(5);
+        });
+
+        this.getLinePlot().getEl().mask('Loading...');
+
+        Ext.Ajax.request({
+            method: 'GET',
+            url: Ext.String.format('/flux/api/scenarios/{0}/t.json', meta.getId()),
+            params: {
+                start: meta.get('dates')[0].toISOString(),
+                end: meta.get('dates')[meta.get('dates').length - 1].toISOString(),
+                //TODO aggregate: this.getGlobalSettings().tendency,
+                aggregate: 'mean',
+                interval: 'daily',
+                coords: Ext.String.format('POINT({0})', geom.join('+'))
+            },
+            callback: function (opts, success, response) {
+                this.getLinePlot().unmask();
+            },
+            success: function (response) {
+                var series = Ext.create('Flux.model.TimeSeries',
+                    Ext.JSON.decode(response.responseText));
+
+                this.getLinePlot().draw(series);
+            },
+            scope: this
         });
     },
 

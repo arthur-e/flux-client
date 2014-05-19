@@ -44,10 +44,18 @@ Ext.define('Flux.view.D3LinePlot', {
     initComponent: function () {
 
         /**
+            Container for Flux.model.TimeSeries instances.
+            @private
+         */
+        this._models = [];
+
+        /**
+            Container for scales.
          */
         this.scales = {};
 
         /**
+            Container for axis objects.
          */
         this.axis = {};
 
@@ -55,8 +63,6 @@ Ext.define('Flux.view.D3LinePlot', {
             The Flux.Store.Grids instance associated with this view.
          */
         this.store = Ext.create('Flux.store.TimeSeries');
-
-        this.addEvents(['plotclick']);
 
         this.callParent(arguments);
     },
@@ -112,7 +118,9 @@ Ext.define('Flux.view.D3LinePlot', {
 
         // Retain references to last drawing data and metadata; for instance,
         //  resize events require drawing again with the same (meta)data
-        this._model = model;
+        if (!Ext.Array.contains(this._models, model)) {
+            this._models.push(model);
+        }
 
         this.getEl().unmask();
 
@@ -289,10 +297,15 @@ Ext.define('Flux.view.D3LinePlot', {
         @return {Flux.view.D3LinePlot}
      */
     redraw: function () {
-        if (Ext.isEmpty(this._model)) {
+        if (Ext.isEmpty(this._models)) {
             return this;
         }
-        return this.draw(this._model);
+
+        Ext.each(this._models, function (model) {
+            this.draw(model);
+        }, this);
+
+        return this;
     },
 
     /**

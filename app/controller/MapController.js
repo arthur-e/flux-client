@@ -18,6 +18,7 @@ Ext.define('Flux.controller.MapController', {
 
             'd3geomap': {
                 boxready: this.initialize,
+                plotclick: this.onPlotClick,
                 resize: this.onResize
             },
 
@@ -159,6 +160,11 @@ Ext.define('Flux.controller.MapController', {
         }, this));
 
         this.updateScales();
+    },
+
+    /**TODO
+     */
+    onPlotClick: function (view, coords) {
     },
 
     /**

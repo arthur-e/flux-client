@@ -139,6 +139,8 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return     {Flux.view.D3GeographicMap}
      */
     addListeners: function (sel) {
+        var view = this;
+
         sel = sel || this.panes.overlay.selectAll('.point');
         sel.on('mouseover', Ext.bind(function (d) {
             var c = d3.mouse(this.svg[0][0]);
@@ -161,6 +163,13 @@ Ext.define('Flux.view.D3GeographicMap', {
             }]);
             this.panes.tooltip.selectAll('.tip').text('');
         }, this));
+
+        sel.on('click', function (d) {
+            view.fireEventArgs('plotclick', [view, [
+                this.attributes.x.value,
+                this.attributes.y.value
+            ]]);
+        });
 
         return this;
     },

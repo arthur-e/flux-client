@@ -40,7 +40,7 @@ Ext.define('Flux.view.D3Panel', {
         Initializes the component.
      */
     initComponent: function () {
-        this.addEvents(['beforedraw', 'draw', 'scalechange']);
+        this.addEvents(['beforedraw', 'draw', 'plotclick', 'scalechange']);
 
         /**
             Indicates whether or not attribute transformations should be allowed

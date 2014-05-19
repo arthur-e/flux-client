@@ -24,7 +24,13 @@
 .hidden { display: none; }
 .legend { shape-rendering: crispEdges; }
 .plot .axis path { display: none; }
-.plot .line {
+.plot .series {
+    fill: none;
+    stroke: #333;
+    stroke-width: 2px;
+    cursor: pointer;
+}
+.plot .trend {
     fill: none;
     stroke: #157fcc;
     stroke-width: 3px;

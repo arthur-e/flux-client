@@ -795,7 +795,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 var series = Ext.create('Flux.model.TimeSeries',
                     Ext.JSON.decode(response.responseText));
 
-                this.getLinePlot().draw(series);
+                this.getLinePlot().addSeries(series);
             },
             scope: this
         });

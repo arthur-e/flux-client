@@ -44,12 +44,6 @@ Ext.define('Flux.view.D3LinePlot', {
     initComponent: function () {
 
         /**
-            Container for Flux.model.TimeSeries instances.
-            @private
-         */
-        this._models = [];
-
-        /**
             Container for scales.
          */
         this.scales = {};
@@ -100,6 +94,44 @@ Ext.define('Flux.view.D3LinePlot', {
         return this;
     },
 
+    /**TODO
+     */
+    addSeries: function (series) {
+        var t0, t1;
+        var x = this.scales.x;
+        var y = this.scales.y;
+        var data = d3.zip(series.getInterpolation(1, 'day'),
+            series.get('series'));
+        var path = d3.svg.line()
+            .x(function (d) { return x(d[0]); })
+            .y(function (d) { return y(d[1]); });
+
+        t0 = this.panes.plot.transition().duration(250);
+        t1 = t0.transition().duration(250);
+
+        // Plot line ///////////////////////////////////////////////////////////
+        this.panes.plot.selectAll('.series')
+            .datum(data);
+
+        sel = t0.selectAll('.series').attr('d', path);
+        t0.selectAll('.trend').attr('d', path);
+        this.scales.y.domain(d3.extent(data, function (d) {
+            return d[1];
+        }));
+
+        t1.selectAll('.series').attr('d', path);
+        t1.selectAll('.trend').attr('d', path);
+        t1.selectAll('.y.axis').call(this.axis.y);
+
+        // Grid lines //////////////////////////////////////////////////////////
+        t1.selectAll('.grid').attr('class', 'grid').call(this.axis.y0)
+
+        if (!this.isDrawn) {
+            // Add mouseover and mouseout event listeners
+            this.addListeners(sel);
+        }
+    },
+
     /**
         Draws the visualization features on the map given input data and the
         corresponding metadata.
@@ -118,9 +150,7 @@ Ext.define('Flux.view.D3LinePlot', {
 
         // Retain references to last drawing data and metadata; for instance,
         //  resize events require drawing again with the same (meta)data
-        if (!Ext.Array.contains(this._models, model)) {
-            this._models.push(model);
-        }
+        this._model = model;
 
         this.getEl().unmask();
 
@@ -152,10 +182,10 @@ Ext.define('Flux.view.D3LinePlot', {
                 (this.d3margin.left * 0.5).toString() + ',0)');
 
         // Plot line ///////////////////////////////////////////////////////////
-        sel = this.panes.plot.selectAll('.line')
+        sel = this.panes.plot.selectAll('.trend')
             .datum(data)
             .attr({
-                'class': 'line',
+                'class': 'trend',
                 'd': path
             });
 
@@ -262,12 +292,20 @@ Ext.define('Flux.view.D3LinePlot', {
             .attr('class', 'slice');
 
         // Plot line ///////////////////////////////////////////////////////////
-        this.panes.plot.selectAll('.line')
+        this.panes.plot.selectAll('.series')
             .data([0])
             .enter()
             .append('path')
             .attr({
-                'class': 'line'
+                'class': 'series'
+            });
+
+        this.panes.plot.selectAll('.trend')
+            .data([0])
+            .enter()
+            .append('path')
+            .attr({
+                'class': 'trend'
             });
 
         // Title ///////////////////////////////////////////////////////////////
@@ -297,15 +335,11 @@ Ext.define('Flux.view.D3LinePlot', {
         @return {Flux.view.D3LinePlot}
      */
     redraw: function () {
-        if (Ext.isEmpty(this._models)) {
+        if (Ext.isEmpty(this._model)) {
             return this;
         }
 
-        Ext.each(this._models, function (model) {
-            this.draw(model);
-        }, this);
-
-        return this;
+        return this.draw(this._model);
     },
 
     /**

@@ -5,7 +5,8 @@ Ext.define('Flux.model.Metadata', {
 
     fields: [
         '_id',
-        'bboxmd5', {
+        'bboxmd5',
+        'title', {
 
         name: 'bbox',
         type: 'auto'
@@ -36,6 +37,9 @@ Ext.define('Flux.model.Metadata', {
         type: 'auto'
     }, {
         name: 'uncertainty',
+        type: 'auto'
+    }, {
+        name: 'units',
         type: 'auto'
     }],
 

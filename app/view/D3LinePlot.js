@@ -94,14 +94,17 @@ Ext.define('Flux.view.D3LinePlot', {
         return this;
     },
 
-    /**TODO
+    /**
+        Plots an additional line from a given time series.
+        @param  series  {Array}
      */
-    addSeries: function (series) {
+    addSeries: function (series, displayText) {
         var t0, t1;
         var x = this.scales.x;
         var y = this.scales.y;
         var data = d3.zip(series.getInterpolation(1, 'day'),
             series.get('series'));
+        var meta = this.getMetadata();
         var path = d3.svg.line()
             .x(function (d) { return x(d[0]); })
             .y(function (d) { return y(d[1]); });
@@ -110,10 +113,10 @@ Ext.define('Flux.view.D3LinePlot', {
         t1 = t0.transition().duration(250);
 
         // Plot line ///////////////////////////////////////////////////////////
-        this.panes.plot.selectAll('.series')
+        sel = this.panes.plot.selectAll('.series')
             .datum(data);
 
-        sel = t0.selectAll('.series').attr('d', path);
+        t0.selectAll('.series').attr('d', path);
         t0.selectAll('.trend').attr('d', path);
         this.scales.y.domain(d3.extent(data, function (d) {
             return d[1];
@@ -126,10 +129,20 @@ Ext.define('Flux.view.D3LinePlot', {
         // Grid lines //////////////////////////////////////////////////////////
         t1.selectAll('.grid').attr('class', 'grid').call(this.axis.y0)
 
-        if (!this.isDrawn) {
-            // Add mouseover and mouseout event listeners
-            this.addListeners(sel);
-        }
+        this.panes.title.selectAll('.legend-entry')
+            .text(displayText || '')
+            .attr({
+                'x': Ext.Function.bind(function (d) {
+                    // Estimate the width of the characters
+                    return Number(this.svg.attr('width')) * 0.5;
+                }, this),
+                'y': 0,
+                'text-anchor': 'middle',
+                'class': 'legend-entry'
+            });
+
+        // Add mouseover and mouseout event listeners
+        this.addListeners(sel);
     },
 
     /**
@@ -144,6 +157,7 @@ Ext.define('Flux.view.D3LinePlot', {
         var y = this.scales.y;
         var data = d3.zip(model.getInterpolation(1, 'day'),
             model.get('series'));
+        var meta = this.getMetadata();
         var path = d3.svg.line()
             .x(function (d) { return x(d[0]); })
             .y(function (d) { return y(d[1]); });
@@ -154,13 +168,13 @@ Ext.define('Flux.view.D3LinePlot', {
 
         this.getEl().unmask();
 
-        this.panes.title.selectAll('.title')
-            .text(Ext.String.format('{0}: Daily Mean',
-                this.getMetadata().get('_id')))
+        this.panes.title.selectAll('.legend-title')
+            .text(Ext.String.format('{0} ({1}): Daily Mean',
+                meta.get('title'), meta.get('_id')))
             .attr({
                 'x': 0,
                 'y': 0,
-                'class': 'title'
+                'class': 'legend-title'
             });
 
         this.scales.x.domain(d3.extent(data, function (d) {
@@ -309,12 +323,19 @@ Ext.define('Flux.view.D3LinePlot', {
             });
 
         // Title ///////////////////////////////////////////////////////////////
-        this.panes.title.selectAll('.title')
+        this.panes.title.selectAll('.legend-entry')
             .data([0])
             .enter()
             .append('text')
             .text('')
-            .attr('class', 'title');
+            .attr('class', 'legend-entry');
+
+        this.panes.title.selectAll('.legend-title')
+            .data([0])
+            .enter()
+            .append('text')
+            .text('')
+            .attr('class', 'legend-title');
 
         // Tooltip /////////////////////////////////////////////////////////////
         this.panes.tooltip = this.svg.append('g').attr('class', 'pane tooltip');

@@ -22,6 +22,11 @@ Ext.application({
     autoCreateViewport: true,
 
     launch: function () {
+        Ext.String.addCharacterEntities({
+            '&mu;': 'μ',
+            '&sup2;': '²',
+        });
+
         // Overrides ///////////////////////////////////////////////////////////
         Ext.override(Ext.form.field.ComboBox, {
             stateEvents: ['select']

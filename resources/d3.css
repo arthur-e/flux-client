@@ -23,16 +23,20 @@
 .grid path { stroke-width: 0; }
 .hidden { display: none; }
 .legend { shape-rendering: crispEdges; }
+.legend-entry,
+.legend-title { font-weight: bold; }
+.legend-entry { fill: #157fcc; }
+.legend-title { fill: #333; }
 .plot .axis path { display: none; }
 .plot .series {
     fill: none;
-    stroke: #333;
+    stroke: #157fcc;
     stroke-width: 2px;
     cursor: pointer;
 }
 .plot .trend {
     fill: none;
-    stroke: #157fcc;
+    stroke: #333;
     stroke-width: 3px;
     cursor: pointer;
 }

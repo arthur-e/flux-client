@@ -762,6 +762,29 @@ Ext.define('Flux.view.D3GeographicMap', {
                 'class': 'bin'
             });
 
+        this.panes.legend.selectAll('.units').remove();
+        this.panes.legend.selectAll('.units')
+            .data(Ext.Function.bind(function () {
+                // Add on the measurement units for the data values or nothing
+                if (this.getMetadata().get('units')) {
+                    return [this.getMetadata().get('units').values || ''];
+                }
+
+                return [''];
+            }, this)())
+            .enter()
+            .append('text')
+            .text(function (d) {
+                return Ext.String.htmlDecode(d);
+            })
+            .attr({
+                'x': s * 0.5,
+                'y': function (d, i) {
+                    return yOffset - (h + s + ((i + 1) * 14));
+                },
+                'class': 'units'
+            });
+
         // NOTE: Possible performance hit in removing the axis every time the
         //  legend is updated; could render it in init() ensuring it is last
         //  in the drawing order

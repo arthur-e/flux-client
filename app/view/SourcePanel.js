@@ -33,6 +33,13 @@ Ext.define('Flux.view.SourcePanel', {
         displayField: '_id',
         valueField: '_id',
         queryMode: 'local',
+        tpl: Ext.create('Ext.XTemplate', [
+            '<tpl for=".">',
+                '<div class="x-boundlist-item">',
+                    '{title} ({_id})',
+                '</div>',
+            '</tpl>'
+        ].join('')),
         listeners: {
             render: function () {
                 this.bindStore(Ext.StoreManager.get('scenarios'));

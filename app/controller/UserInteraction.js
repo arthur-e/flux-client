@@ -759,7 +759,12 @@ Ext.define('Flux.controller.UserInteraction', {
         });
     },
 
-    /**TODO
+    /**
+        Handles a click event on the D3GeographicMap instance. Initiaties a time
+        series data request (to t.json endpoint) and plots the mean daily time
+        series for the grid cell or geographic feature that was clicked.
+        @param  view    {Flux.view.D3GeographicMap}
+        @param  coords  {Array}
      */
     onPlotClick: function (view, coords) {
         var meta = view.getMetadata();
@@ -767,10 +772,14 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // Need to add half the grid spacing as this was subtracted to obtain
         //  the upper-left corner of the grid cell
-        geom = [
-            geom[0] + (Number(meta.get('gridres').x) * 0.5),
-            geom[1] + (Number(meta.get('gridres').y) * 0.5)
-        ];
+        geom = (function () {
+            var g = geom;
+            g[0] = (g[0] < 0) ? (g[0] + (Number(meta.get('gridres').x) * 0.5)) : 
+                (g[0] - (Number(meta.get('gridres').x) * 0.5));
+            g[1] = (g[1] < 0) ? (g[1] + (Number(meta.get('gridres').y) * 0.5)) :
+                (g[1] - (Number(meta.get('gridres').y) * 0.5))
+            return g;
+        }());
         geom = Ext.Array.map(geom, function (v) {
             return v.toFixed(5);
         });
@@ -791,11 +800,16 @@ Ext.define('Flux.controller.UserInteraction', {
             callback: function (opts, success, response) {
                 this.getLinePlot().unmask();
             },
+            failure: function (response, opts) {
+                console.log(opts);//FIXME
+                Ext.Msg.alert('Request Error', response.responseText);
+            },
             success: function (response) {
                 var series = Ext.create('Flux.model.TimeSeries',
                     Ext.JSON.decode(response.responseText));
 
-                this.getLinePlot().addSeries(series);
+                this.getLinePlot().addSeries(series,
+                    Ext.String.format('Daily Mean at {0}, {1}', geom[0], geom[1]));
             },
             scope: this
         });

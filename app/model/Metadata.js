@@ -48,6 +48,7 @@ Ext.define('Flux.model.Metadata', {
         outside the range of the data described by this Metadata instance.
      */
     getInvalidDates: function (fmt) {
+        var bkpts;
         var dates = this.get('dates');
         var datesArray = [];
 
@@ -69,7 +70,12 @@ Ext.define('Flux.model.Metadata', {
         // Start with 1st date
         datesArray.push(dates[0].format(fmt));
 
-        Ext.each(this.get('steps'), function (step, i) {
+        bkpts = this.get('steps');
+        if (Ext.isEmpty(this.get('steps'))) {
+            bkpts = this.get('spans');
+        }
+
+        Ext.each(bkpts, function (step, i) {
             var d = dates[i].clone();
 
             // Keep adding dates until the next breakpoint is reached

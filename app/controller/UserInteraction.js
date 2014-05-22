@@ -1098,12 +1098,14 @@ Ext.define('Flux.controller.UserInteraction', {
             Ext.each(datePicks, function (target) {
                 var fmt = 'YYYY-MM-DD';
                 var dates = metadata.get('dates');
-                var firstDate = dates[0].format(fmt);
+                target.initDate = dates[0].format(fmt);
+                target.reset();
+                target.setDisabledDates(['^(?!).*$']);
                 target.setDisabledDates(metadata.getInvalidDates(fmt));
                 target.on('expand', function (f) {
                     if (!f.isDirty()) {
                         f.suspendEvent('change');
-                        f.setValue(firstDate);
+                        f.setValue(this.initDate);
                         f.resumeEvent('change');
                     }
                 });

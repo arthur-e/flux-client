@@ -252,12 +252,13 @@ Ext.define('Flux.view.Symbology', {
         }, {
             xtype: 'enumslider',
             name: 'domain',
+            itemId: 'input-domain',
             disabled: true,
             stateful: true,
             stateId: 'domain',
             width: '90%',
-            itemId: 'input-domain',
             fieldLabel: 'Input domain',
+            forceIntegers: true,
             values: [-1, 1]
         }]
 

@@ -140,6 +140,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
         minValue: -1000,
         maxValue: 1000,
         flex: 1,
+        zeroBasedSnapping: true,
         listeners: {
             changecomplete: function () {
                 var v = this.getValues();
@@ -256,32 +257,39 @@ Ext.define('Flux.field.EnumeratedSlider', {
     /**
         Sets the min/max bounds (minValue and maxValue) of the field without
         changing the field's current value(s).
-        @param  values  {Array}
+        @param  bounds  {Array}
      */
-    setBounds: function (values) {
+    setBounds: function (bounds) {
         var slider = this.down('multislider');
+        var values = slider.getValues();
 
-        values = values || this.getBounds();
+        bounds = bounds || this.getBounds();
 
-        if (values === undefined) {
+        if (bounds === undefined) {
             return;
         }
 
         if (this.forceIntegers) {
-            values = Ext.Array.map(values, function (v) {
+            bounds = Ext.Array.map(bounds, function (v) {
                 return Math.floor(v);
             });
         }
 
-        slider.setMinValue(values[0]);
-        slider.setMaxValue(values[1]);
+        slider.setMinValue(bounds[0]);
+        slider.setMaxValue(bounds[1]);
 
         Ext.each(this.query('numberfield'), function (field, i) {
-            field.setMinValue(values[0]);
-            field.setMaxValue(values[1]);
+            field.setMinValue(bounds[0]);
+            field.setMaxValue(bounds[1]);
+            field.setValue(bounds[i]);
         });
 
-        this._bounds = values;
+        slider.setValue(0, bounds[0], false);
+        if (this.isMulti) {
+            slider.setValue(1, bounds[1], false);
+        }
+
+        this._bounds = bounds;
     },
 
     /**

@@ -143,13 +143,14 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         sel = sel || this.panes.overlay.selectAll('.point');
         sel.on('mouseover', Ext.bind(function (d) {
+            var p = this.getMetadata().get('precision');
             var c = d3.mouse(this.svg[0][0]);
             this.updateDisplay([{
                 id: 'tooltip',
-                text: d.toFixed(2)
+                text: d.toFixed(p)
             }]);
             this.panes.tooltip.selectAll('.tip')
-                .text(d.toFixed(2))
+                .text(d.toFixed(p))
                 .attr({
                     'x': c[0] + 20,
                     'y': c[1] + 30
@@ -728,6 +729,7 @@ Ext.define('Flux.view.D3GeographicMap', {
      */
     updateLegend: function () {
         var bins, h, ordinal;
+        var p = this.getMetadata().get('precision');
         var s = 0.025 * this.svg.attr('width'); // Length on a side of the legend's bins
         var colors = this._scale.range();
 
@@ -760,7 +762,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         this._legend.yAxis
             .tickFormat(function (x, i) {
-                var s = Number(bins[x]).toFixed(1).toString();
+                var s = Number(bins[x]).toFixed(p).toString();
                 return (s === 'NaN') ? '' : s;
             })
             .scale(this._legend.yScale);

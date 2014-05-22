@@ -68,11 +68,12 @@ Ext.define('Flux.view.D3LinePlot', {
      */
     addListeners: function (sel) {
         sel.on('mousemove', Ext.bind(function () {
+            var p = this.getMetadata().get('precision');
             var c = d3.mouse(sel[0][0]);
             var d = this.scales.y.invert(c[1]);
             var t = Ext.String.format('{0}: {1}',
                 moment.utc(this.scales.x.invert(c[0])).format('YYYY-MM-DD'),
-                d.toFixed(2));
+                d.toFixed(p));
 
             this.panes.tooltip.selectAll('.tip')
                 .text(t)
@@ -102,8 +103,7 @@ Ext.define('Flux.view.D3LinePlot', {
         var t0, t1;
         var x = this.scales.x;
         var y = this.scales.y;
-        var data = d3.zip(series.getInterpolation(1, 'day'),
-            series.get('series'));
+        var data = series.getInterpolation();
         var meta = this.getMetadata();
         var path = d3.svg.line()
             .x(function (d) { return x(d[0]); })
@@ -155,8 +155,7 @@ Ext.define('Flux.view.D3LinePlot', {
         var sel;
         var x = this.scales.x;
         var y = this.scales.y;
-        var data = d3.zip(model.getInterpolation(1, 'day'),
-            model.get('series'));
+        var data = model.getInterpolation();
         var meta = this.getMetadata();
         var path = d3.svg.line()
             .x(function (d) { return x(d[0]); })
@@ -169,8 +168,11 @@ Ext.define('Flux.view.D3LinePlot', {
         this.getEl().unmask();
 
         this.panes.title.selectAll('.legend-title')
-            .text(Ext.String.format('{0} ({1}): Daily Mean',
-                meta.get('title'), meta.get('_id')))
+            .text(Ext.String.format('{0} ({1}): {2} {3}',
+                meta.get('title'),
+                meta.get('_id'),
+                model.get('properties').interval || '',
+                model.get('properties').aggregate) || '')
             .attr({
                 'x': 0,
                 'y': 0,

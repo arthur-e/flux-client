@@ -27,6 +27,10 @@ Ext.define('Flux.model.Metadata', {
         name: 'gridres',
         type: 'auto'
     }, {
+        name: 'precision',
+        type: 'int',
+        defaultValue: 2
+    }, {
         name: 'spans',
         type: 'auto'
     }, {
@@ -53,19 +57,6 @@ Ext.define('Flux.model.Metadata', {
         var datesArray = [];
 
         fmt = fmt || 'YYYY-MM-DD';
-
-// Should not be necessary to sort them
-//        dates.sort(function compare (a, b) {
-//            if (a.isBefore(b)) {
-//                return -1;
-//            }
-
-//            if (a.isAfter(b)) {
-//               return 1;
-//            }
-
-//            return 0;
-//        });
 
         // Start with 1st date
         datesArray.push(dates[0].format(fmt));
@@ -119,7 +110,10 @@ Ext.define('Flux.model.Metadata', {
 
     },
 
-    /**TODO
+    /**
+        Returns the Array of time steps or spans, depending on which is used;
+        enforces the policy of preferring steps over spans (checks for steps first).
+        @return {Array}
      */
     getTimeOffsets: function () {
         if (Ext.isEmpty(this.get('steps'))) {

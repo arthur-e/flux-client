@@ -15,17 +15,23 @@ Ext.define('Flux.model.TimeSeries', {
      */
     getInterpolation: function (steps, stepSize) {
         var parser = d3.time.format.utc('%Y-%m-%dT%H:%M:%S.%LZ').parse;
-        var start = moment.utc(this.get('properties').start);
         var end = moment.utc(this.get('properties').end);
-        var t = start.clone();
+        var t = moment.utc(this.get('properties').start).clone();
         var times = [];
+
+        steps = steps || 1;
+        stepSize = stepSize || ({ // Convert e.g. 'hourly' to 'hour'
+            'hourly': 'hour',
+            'daily': 'day',
+            'monthly': 'month'
+        })[this.get('properties').interval];
         
         while (t.isBefore(end)) {
             t.add(steps, stepSize);
             times.push(parser(t.toISOString()));
         }
 
-        return times;
+        return d3.zip(times, this.get('series'));
     }
 
 });

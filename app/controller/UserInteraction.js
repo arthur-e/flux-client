@@ -376,18 +376,29 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     fetchTimeSeries: function (view, metadata) {
         var dates = metadata.get('dates');
+        var step = Ext.Array.min(metadata.getTimeOffsets());
+        var params = {
+            start: dates[0].toISOString(),
+            end: dates[dates.length - 1].toISOString(),
+            //TODO aggregate: this.getGlobalSettings().tendency,
+            aggregate: 'mean'
+        };
+
+        if (step < 3600) { // Less than 1 hour (3600 seconds)?
+            params.interval = 'hourly';
+        } else if (step < 86400) { // Less than 1 day?
+            params.interval = 'daily';
+        } else {
+            params.interval = 'monthly';
+        }
 
         Ext.Ajax.request({
             method: 'GET',
+            params: params,
+
             url: Ext.String.format('/flux/api/scenarios/{0}/t.json',
                 metadata.getId()),
-            params: {
-                start: dates[0].toISOString(),
-                end: dates[dates.length - 1].toISOString(),
-                //TODO aggregate: this.getGlobalSettings().tendency,
-                aggregate: 'mean',
-                interval: 'daily'
-            },
+
             callback: function (o, s, response) {
                 var series = Ext.create('Flux.model.TimeSeries',
                     Ext.JSON.decode(response.responseText));
@@ -397,6 +408,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
                 this.getLinePlot().draw(series);
             },
+
             scope: this
         });
     },

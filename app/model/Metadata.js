@@ -119,6 +119,16 @@ Ext.define('Flux.model.Metadata', {
 
     },
 
+    /**TODO
+     */
+    getTimeOffsets: function () {
+        if (Ext.isEmpty(this.get('steps'))) {
+            return this.get('spans');
+        }
+
+        return this.get('steps');
+    },
+
     /**
         Creates a threshold scale; a hack that acts like a d3.scale.* object.
         The result is a function that returns the specified color value for

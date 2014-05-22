@@ -110,7 +110,7 @@ Ext.define('Flux.controller.Animation', {
 
         // Figure out the default size of step (e.g. an hour) and the number of
         //  steps to take in each frame
-        s0 = metadata.get('steps')[0];
+        s0 = metadata.getTimeOffsets()[0];
         stepSize = this.calcStepOrSize(s0);
         steps = this.calcStepOrSize(s0, stepSize);
 
@@ -123,7 +123,10 @@ Ext.define('Flux.controller.Animation', {
         this.updateStepSelector(steps);
 
         c = this.getSettingsMenu().down('field[name=stepSize]');
-        if (metadata.get('steps').length > 1) {
+
+        // We can't reliably animate a time series that changes its time
+        //  interval, so disable the selection of a different time interval
+        if (metadata.getTimeOffsets().length > 1) {
             d = [[s0, 'steps']];
             c.disable();
         } else {
@@ -227,7 +230,7 @@ Ext.define('Flux.controller.Animation', {
         var steps;
 
         this._stepSize = recs[0].get('stepSize');
-        steps = this.calcStepOrSize(this._metadata.get('steps')[0],
+        steps = this.calcStepOrSize(this._metadata.getTimeOffsets()[0],
             recs[0].get('stepSize'));
 
         this.updateStepSelector((steps === 0) ? 1 : steps);

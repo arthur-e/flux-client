@@ -617,9 +617,14 @@ Ext.define('Flux.controller.UserInteraction', {
             view = this.getMap();
         }
 
-        // Do nothing if not all of these fields are filled out
-        if (Ext.isEmpty(values.source) || Ext.isEmpty(values.date)
-            || Ext.isEmpty(values.time)) {
+        if (Ext.isEmpty(values.source)) {
+            return;
+        }
+
+        // If the data are less than daily in step/span and no time is yet
+        //  specified, do nothing
+        if (Ext.Array.min(view.getMetadata().getTimeOffsets()) < 86400
+            && Ext.isEmpty(values.time)) {
             return;
         }
 
@@ -1105,17 +1110,26 @@ Ext.define('Flux.controller.UserInteraction', {
                 target.on('expand', function (f) {
                     if (!f.isDirty()) {
                         f.suspendEvent('change');
-                        f.setValue(this.initDate);
+                        f.setRawValue(this.initDate);
                         f.resumeEvent('change');
                     }
                 });
             });
         }
 
+        //TODO Use the step/span indicated by the given date (from above)
         if (timePicks) {
             // For every Ext.form.field.Time found...
             Ext.each(timePicks, function (target) {
-                var mins = (Ext.Array.min(metadata.get('steps')) / 60);
+                var mins = (Ext.Array.min(metadata.getTimeOffsets()) / 60);
+
+                // If the number of minutes is greater than or equal to 1 day...
+                if (mins >= 1440) {
+                    return target.disable();
+                }
+
+                target.enable();
+                target.reset();
                 target.bindStore(Ext.create('Ext.data.ArrayStore', {
                     fields: ['time'],
                     data: (function () {

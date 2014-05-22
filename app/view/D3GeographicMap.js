@@ -249,7 +249,14 @@ Ext.define('Flux.view.D3GeographicMap', {
 
             c2 = proj([lng, lat]);
 
-            this.setZoom(2 * (this.svg.attr('width')) / proj([(bbox[2] - bbox[0]), 0])[0], [
+            // Get the pixel coordinates of the longitude maximum and minmum,
+            //  then take the difference to get the pixel width of the scene:
+            //
+            //  (proj([bbox[2], 0])[0] - proj([bbox[0], 0])[0])
+
+            // Then, take the ratio of the SVG width to this scene width to find
+            //  the zoom factor; scale it slightly so we don't zoom in too far
+            this.setZoom(0.8 * (this.svg.attr('width') / (proj([bbox[2], 0])[0] - proj([bbox[0], 0])[0])), [
                 (c1[0] - c2[0]),
                 (c1[1] - c2[1])
             ]);

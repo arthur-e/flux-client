@@ -860,7 +860,10 @@ Ext.define('Flux.controller.UserInteraction', {
         operation = Ext.Function.bind(function (metadata) {
             this.bindMetadata(view, metadata);
             this.propagateMetadata(container, metadata);
-            if (this.getLinePlot() && !this.getLinePlot().isDrawn) {
+
+            // Reload the line plot if the source has actually changed
+            if (this.getLinePlot()
+                && (!this.getLinePlot().isDrawn || source !== last)) {
                 this.bindMetadata(this.getLinePlot(), metadata);
             }
         }, this);
@@ -1140,8 +1143,8 @@ Ext.define('Flux.controller.UserInteraction', {
                     return target.disable();
                 }
 
-                target.enable();
                 target.reset();
+                target.enable();
                 target.bindStore(Ext.create('Ext.data.ArrayStore', {
                     fields: ['time'],
                     data: (function () {

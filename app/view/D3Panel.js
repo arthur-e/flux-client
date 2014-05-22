@@ -81,7 +81,7 @@ Ext.define('Flux.view.D3Panel', {
         Set the metadata; retains a reference to Flux.model.Metadata instance.
         @param  metadata    {Flux.model.Metadata}
         @return             {Flux.view.D3Panel}
-        @return         {Flux.view.D3Panel}
+        @return             {Flux.view.D3Panel}
      */
     setMetadata: function (metadata) {
         this._metadata = metadata;

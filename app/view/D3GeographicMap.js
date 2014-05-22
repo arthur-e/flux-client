@@ -175,6 +175,16 @@ Ext.define('Flux.view.D3GeographicMap', {
     },
 
     /**
+        Removes the drawn elements from the drawing plane.
+        @return {Flux.view.D3GeographicMap}
+     */
+    clear: function () {
+        this.panes.overlay.selectAll('.point').remove();
+        this.isDrawn = false;
+        return this;
+    },
+
+    /**
         Draws the visualization features on the map given input data and the
         corresponding metadata.
         @param  grid    {Flux.model.Grid}
@@ -279,6 +289,9 @@ Ext.define('Flux.view.D3GeographicMap', {
             'x': function (d, i) {
                 // We want to start drawing at the upper left (half the cell
                 //  width, or half a degree)
+                if (grid[i] === undefined) {
+                    return;
+                }
                 return proj(grid[i].map(function (j) {
                     // Subtract half the grid spacing from longitude (farther west)
                     return (j - (gridres.x * 0.5));
@@ -286,6 +299,9 @@ Ext.define('Flux.view.D3GeographicMap', {
             },
 
             'y': function (d, i) {
+                if (grid[i] === undefined) {
+                    return;
+                }
                 return proj(grid[i].map(function (j) {
                     // Add half the grid spacing from latitude (farther north)
                     return (j + (gridres.y * 0.5));
@@ -530,6 +546,7 @@ Ext.define('Flux.view.D3GeographicMap', {
      */
     setGridGeometry: function (geom) {
         this._grid = geom.get('coordinates');
+        this.clear();
         return this;
     },
 

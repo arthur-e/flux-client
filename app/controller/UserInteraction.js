@@ -392,6 +392,8 @@ Ext.define('Flux.controller.UserInteraction', {
             params.interval = 'monthly';
         }
 
+        view.getEl().mask('Loading...');
+
         Ext.Ajax.request({
             method: 'GET',
             params: params,
@@ -399,13 +401,20 @@ Ext.define('Flux.controller.UserInteraction', {
             url: Ext.String.format('/flux/api/scenarios/{0}/t.json',
                 metadata.getId()),
 
-            callback: function (o, s, response) {
+            callback: function () {
+                view.getEl().unmask();
+            },
+
+            failure: function (response) {
+                Ext.Msg.alert('Request Error', response.responseText);
+            },
+
+            success: function (response) {
                 var series = Ext.create('Flux.model.TimeSeries',
                     Ext.JSON.decode(response.responseText));
 
                 series.set('_id', metadata.getId());
                 this.getStore('timeseries').add(series);
-
                 this.getLinePlot().draw(series);
             },
 
@@ -818,7 +827,6 @@ Ext.define('Flux.controller.UserInteraction', {
                 this.getLinePlot().unmask();
             },
             failure: function (response, opts) {
-                console.log(opts);//FIXME
                 Ext.Msg.alert('Request Error', response.responseText);
             },
             success: function (response) {

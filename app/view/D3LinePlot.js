@@ -188,7 +188,7 @@ Ext.define('Flux.view.D3LinePlot', {
 
         this.panes.axis.x.call(this.axis.x);
         this.panes.axis.y.call(this.axis.y)
-            .attr('transform', 'translate(0,-10)');
+            .attr('transform', 'translate(0,-8)');
 
         // Grid lines //////////////////////////////////////////////////////////
         this.panes.plot.selectAll('.grid')
@@ -250,6 +250,7 @@ Ext.define('Flux.view.D3LinePlot', {
             .tickSize(0, 0, 0)
             .tickPadding(10);
 
+        // This one's for the grid lines
         this.axis.y0 = d3.svg.axis()
             .scale(this.scales.y)
             .orient('left')
@@ -372,7 +373,6 @@ Ext.define('Flux.view.D3LinePlot', {
      */
     setMetadata: function (metadata) {
         this._metadata = metadata;
-        this.getEl().mask('Loading...');
         return this.redraw();
     },
 

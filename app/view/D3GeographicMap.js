@@ -147,7 +147,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             var c = d3.mouse(this.svg[0][0]);
             this.updateDisplay([{
                 id: 'tooltip',
-                text: d.toFixed(p)
+                text: d.toFixed(p)//FIXME Cannot read property 'toFixed' of null
             }]);
             this.panes.tooltip.selectAll('.tip')
                 .text(d.toFixed(p))
@@ -483,6 +483,10 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return                 {Flux.view.D3GeographicMap}
      */
     setBasemap: function (basemapUrl, boundaries) {
+        var clearBasemap = Ext.Function.bind(function () {
+            this.panes.basemap.select('#basemap').remove();
+        }, this);
+
         var drawBasemap = Ext.bind(function (json) {
             var sel = this.panes.basemap.append('g')
                 .attr('id', 'basemap')
@@ -525,6 +529,10 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         // Remove the old basemap, if one exists
         this.panes.basemap.select('#basemap').remove()
+
+        if (Ext.isEmpty(basemapUrl)) {
+            return clearBasemap();
+        }
 
         if (this.basemaps.hasOwnProperty(basemapUrl)) {
             // If the requested basemap was loaded before, just re-draw it

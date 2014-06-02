@@ -107,8 +107,7 @@ Ext.define('Flux.controller.UserInteraction', {
             },
 
             'sourcesgridpanel': {
-                beforeedit: this.onSourceGridEntry,
-                canceledit: this.onSourceGridCancel
+                beforeedit: this.onSourceGridEntry
             },
 
             'sourcepanel fieldset checkbox': {
@@ -795,6 +794,8 @@ Ext.define('Flux.controller.UserInteraction', {
     onPlotClick: function (view, coords) {
         var meta = view.getMetadata();
         var geom = view.getProjection().invert(Ext.Array.map(coords, Number));
+        var step = Ext.Array.min(meta.getTimeOffsets());
+        var params;
 
         // Need to add half the grid spacing as this was subtracted to obtain
         //  the upper-left corner of the grid cell
@@ -810,19 +811,26 @@ Ext.define('Flux.controller.UserInteraction', {
             return v.toFixed(5);
         });
 
+        params = {
+            start: meta.get('dates')[0].toISOString(),
+            end: meta.get('dates')[meta.get('dates').length - 1].toISOString(),
+            //TODO aggregate: this.getGlobalSettings().tendency,
+            aggregate: 'mean',
+            coords: Ext.String.format('POINT({0})', geom.join('+'))
+        };
+
+        if (step < 86400) { // Less than 1 day?
+            params.interval = 'daily';
+        } else {
+            params.interval = 'monthly';
+        }
+
         this.getLinePlot().getEl().mask('Loading...');
 
         Ext.Ajax.request({
             method: 'GET',
             url: Ext.String.format('/flux/api/scenarios/{0}/t.json', meta.getId()),
-            params: {
-                start: meta.get('dates')[0].toISOString(),
-                end: meta.get('dates')[meta.get('dates').length - 1].toISOString(),
-                //TODO aggregate: this.getGlobalSettings().tendency,
-                aggregate: 'mean',
-                interval: 'daily',
-                coords: Ext.String.format('POINT({0})', geom.join('+'))
-            },
+            params: params,
             callback: function (opts, success, response) {
                 this.getLinePlot().unmask();
             },
@@ -965,21 +973,6 @@ Ext.define('Flux.controller.UserInteraction', {
 
                 scope: this
             });
-        }
-    },
-
-    /**
-        When the user cancels the editing/addition of a row to the RowEditor,
-        remove the associated view that was created.
-        @param  editor  {Ext.grid.plugin.Editing}
-        @param  context {Object}
-     */
-    onSourceGridCancel: function (editor, context) {
-        var view = context.record.get('view');
-
-        // Remove the view associated with the Flux.model.GridView instance
-        if (view.ownerCt) {
-            view.ownerCt.remove(view);
         }
     },
 

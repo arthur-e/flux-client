@@ -145,9 +145,12 @@ Ext.define('Flux.view.D3GeographicMap', {
         sel.on('mouseover', Ext.bind(function (d) {
             var p = this.getMetadata().get('precision');
             var c = d3.mouse(this.svg[0][0]);
+            if (Ext.isEmpty(d)) {
+                return;
+            }
             this.updateDisplay([{
                 id: 'tooltip',
-                text: d.toFixed(p)//FIXME Cannot read property 'toFixed' of null
+                text: d.toFixed(p)
             }]);
             this.panes.tooltip.selectAll('.tip')
                 .text(d.toFixed(p))
@@ -676,8 +679,8 @@ Ext.define('Flux.view.D3GeographicMap', {
     update: function (selection) {
         if (selection) {
             selection.attr('fill', Ext.bind(function (d, i) {
-                if (d === undefined) {
-                    return undefined;
+                if (Ext.isEmpty(d)) {
+                    return 'transparent';
                 }
                 if (this._showAnomalies) {
                     return this.getScale()(d + this._addOffset);

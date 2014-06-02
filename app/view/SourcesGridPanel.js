@@ -29,15 +29,33 @@ Ext.define('Flux.view.SourcesGridPanel', {
     },
 
     listeners: {
-        itemchange: function () {
-            var vals = Ext.Object.getValues(this.getFieldValues());
-            if (Ext.clean(vals).length === 3) {
-                this.findPlugin('rowediting').completeEdit();
+        edit: function (e, context) {
+            var rec = context.record;
+
+            // Require both of these fields to be filled out
+            if (Ext.isEmpty(rec.get('source')) || Ext.isEmpty(rec.get('date'))) {
+                this.fireEventArgs('canceledit', arguments)
             }
         },
 
         canceledit: function (e, context) {
+            var view = context.record.get('view');
+
+            // Remove the view associated with the Flux.model.GridView instance
+            if (view.ownerCt) {
+                view.ownerCt.remove(view);
+            }
+
             this.getStore().remove(context.record);
+        },
+
+        itemchange: function () {
+            var vals = Ext.Object.getValues(this.getFieldValues());
+
+            // Automatically save the grid entry when all three fields are filled out
+            if (Ext.clean(vals).length === 3) {
+                this.findPlugin('rowediting').completeEdit();
+            }
         }
     },
 
@@ -78,7 +96,6 @@ Ext.define('Flux.view.SourcesGridPanel', {
             xtype: 'combo',
             emptyText: 'Select...',
             matchFieldWidth: false,
-            allowBlank: false,
             listConfig: {
                 width: 200
             },
@@ -120,7 +137,6 @@ Ext.define('Flux.view.SourcesGridPanel', {
             xtype: 'datefield',
             format: 'Y-m-d',
             disabled: true,
-            allowBlank: false,
             listeners: {
                 change: function () {
                     this.up('sourcesgridpanel').fireEventArgs('itemchange', arguments);
@@ -137,7 +153,6 @@ Ext.define('Flux.view.SourcesGridPanel', {
             xtype: 'combo',
             emptyText: 'Select...',
             disabled: true,
-            allowBlank: false,
             matchFieldWidth: false,
             listConfig: {
                 width: 100

@@ -649,8 +649,14 @@ Ext.define('Flux.controller.UserInteraction', {
         }
 
         dates = view.getMetadata().get('dates');
-        theDate = moment.utc(Ext.String.format('{0}T{1}:00.000Z',
-            values.date, values.time));
+
+        // Format the time string accordingly; just a date or with date and time
+        if (values.date && values.time) {
+            theDate = moment.utc(Ext.String.format('{0}T{1}:00.000Z',
+                values.date, values.time));
+        } else {
+            theDate = moment.utc(values.date);
+        }
 
         // Raise an error, do nothing if the requeste date/time is out of range
         if (dates[0].isAfter(theDate) || dates[dates.length - 1].isBefore(theDate)) {

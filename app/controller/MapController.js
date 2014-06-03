@@ -18,6 +18,8 @@ Ext.define('Flux.controller.MapController', {
 
             'd3geomap': {
                 boxready: this.initialize,
+                mouseover: this.onMouseOver,
+                mouseout: this.onMouseOut,
                 plotclick: this.onPlotClick,
                 resize: this.onResize
             },
@@ -140,6 +142,44 @@ Ext.define('Flux.controller.MapController', {
     onLegendDisplayChange: function (c, state) {
         Ext.each(Ext.ComponentQuery.query('d3geomap'), function (view) {
             view.toggleLegend(state);
+        });
+    },
+
+    /**
+        Handles the mouse entering a map selection. Updates the display text of
+        all other maps so that they show the value at the corresponding location
+        given by the pixel coordinates from the mouseover event.
+        @param  focused {D3GeographicMap}   The map with the mouseover selection
+        @param  coords  {Array}             The pixel coordinates of the mouseover selection (not the mouse)
+        @param  value   {Number}            The value of the mouseover selection
+     */
+    onMouseOver: function (focused, coords, value) {
+        var geom = focused.getProjection().invert(Ext.Array.map(coords, Number));
+
+        // Need to add half the grid spacing as this was subtracted to obtain
+        //  the upper-left corner of the grid cell
+        geom = focused.getMetadata().calcHalfOffsetCoordinates(geom);
+
+        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (view) {
+            if (view.getId() !== focused.getId()) {
+                view.highlightMapLocation(geom);
+            }
+        });
+    },
+
+    /**
+        Handles the mouse exiting a map selection. Resets the display text to
+        its stored reference.
+        @param  focused {D3GeographicMap}
+     */
+    onMouseOut: function (focused) {
+        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (view) {
+            if (view.getId() !== focused.getId()) {
+                view.updateDisplay({
+                    id: 'tooltip',
+                    text: view._display
+                });
+            }
         });
     },
 

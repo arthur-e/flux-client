@@ -55,6 +55,8 @@ Ext.define('Flux.view.D3GeographicMap', {
         Initializes the component.
      */
     initComponent: function () {
+        this.addEvents('mouseover', 'mouseout');
+
         /**
             The scale used for coloring map elements.
             @private
@@ -70,10 +72,9 @@ Ext.define('Flux.view.D3GeographicMap', {
         //  title if displays are disabled
         if (!this.enableDisplay) {
             this.updateDisplay = function (data) {  
-                if (Ext.isArray(data)) {
-                    this.setTitle(Ext.String.format('{0}: {1}',
-                        this.getMetadata().get('_id'), data[0].text));
-                }
+                data = data[0] || data;
+                this.setTitle(Ext.String.format('{0}: {1}',
+                    this.getMetadata().get('_id'), data.text));
             };
         }
 
@@ -142,31 +143,36 @@ Ext.define('Flux.view.D3GeographicMap', {
         var view = this;
 
         sel = sel || this.panes.overlay.selectAll('.point');
-        sel.on('mouseover', Ext.bind(function (d) {
-            var p = this.getMetadata().get('precision');
-            var c = d3.mouse(this.svg[0][0]);
+        sel.on('mouseover', function (d) {
+            var p = view.getMetadata().get('precision');
+            var c = d3.mouse(view.svg[0][0]);
             if (Ext.isEmpty(d)) {
                 return;
             }
-            this.updateDisplay([{
+            view.updateDisplay([{
                 id: 'tooltip',
                 text: d.toFixed(p)
             }]);
-            this.panes.tooltip.selectAll('.tip')
+            view.panes.tooltip.selectAll('.tip')
                 .text(d.toFixed(p))
                 .attr({
                     'x': c[0] + 20,
                     'y': c[1] + 30
                 });
-        }, this));
+            view.fireEventArgs('mouseover', [view, [
+                this.attributes.x.value,
+                this.attributes.y.value
+            ], d]);
+        });
 
-        sel.on('mouseout', Ext.bind(function () {
-            this.updateDisplay([{
+        sel.on('mouseout', function () {
+            view.updateDisplay([{
                 id: 'timestamp',
-                text: this._display
+                text: view._display
             }]);
-            this.panes.tooltip.selectAll('.tip').text('');
-        }, this));
+            view.panes.tooltip.selectAll('.tip').text('');
+            view.fireEventArgs('mouseout', [view]);
+        });
 
         sel.on('click', function (d) {
             view.fireEventArgs('plotclick', [view, [
@@ -286,7 +292,7 @@ Ext.define('Flux.view.D3GeographicMap', {
      */
     getOverlayAttrs: function () {
         var attrs, gridres;
-        var grid = this.getGridGeometry();
+        var grid = this.getGridGeometry().get('coordinates');
         var proj = this.getProjection();
         var scaling = this._mercatorFactor;
 
@@ -352,6 +358,26 @@ Ext.define('Flux.view.D3GeographicMap', {
      */
     getScale: function () {
         return this._scale;
+    },
+
+    /**
+        Attempts to display the value at the provided map coordinates; if the
+        coordinates do not exactly match any among the current instance's grid
+        geometry, nothing is done.
+        @param  coords  {Array}
+        @return         {D3GeographicMap}
+     */
+    highlightMapLocation: function (coords) {
+        var i = this.getGridGeometry().getCoordIndex(coords);
+
+        if (i < 0 || i > this._model.get('features').length) {
+            return;
+        }
+
+        return this.updateDisplay([{
+            id: 'tooltip',
+            text: this._model.get('features')[i]
+        }]);
     },
 
     /**
@@ -564,7 +590,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return         {Flux.view.D3GeographicMap}
      */
     setGridGeometry: function (geom) {
-        this._grid = geom.get('coordinates');
+        this._grid = geom;
         this.clear();
         return this;
     },
@@ -698,7 +724,8 @@ Ext.define('Flux.view.D3GeographicMap', {
     },
 
     /**
-        Updates the on-map info text in the heads-up-display.
+        Updates the on-map info text in the heads-up-display; only used when
+        enableDisplay is set to true.
         @param  data    {Array}
         @return         {Flux.view.D3GeographicMap}
      */

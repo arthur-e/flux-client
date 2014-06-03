@@ -799,17 +799,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // Need to add half the grid spacing as this was subtracted to obtain
         //  the upper-left corner of the grid cell
-        geom = (function () {
-            var g = geom;
-            g[0] = (g[0] < 0) ? (g[0] + (Number(meta.get('gridres').x) * 0.5)) : 
-                (g[0] - (Number(meta.get('gridres').x) * 0.5));
-            g[1] = (g[1] < 0) ? (g[1] + (Number(meta.get('gridres').y) * 0.5)) :
-                (g[1] - (Number(meta.get('gridres').y) * 0.5))
-            return g;
-        }());
-        geom = Ext.Array.map(geom, function (v) {
-            return v.toFixed(5);
-        });
+        geom = meta.calcHalfOffsetCoordinates(geom);
 
         params = {
             start: meta.get('dates')[0].toISOString(),

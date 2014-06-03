@@ -48,6 +48,23 @@ Ext.define('Flux.model.Metadata', {
     }],
 
     /**
+        Calculates the true grid cell centroids by adding half the grid spacing;
+        this was subtracted to obtain the upper-left corner of the grid cell, so
+        this calculation basically restores the grid cell centroid from the SVG
+        <rect> element's upper-corner.
+     */
+    calcHalfOffsetCoordinates: function (g) {
+        g[0] = (g[0] < 0) ? (g[0] + (Number(this.get('gridres').x) * 0.5)) : 
+            (g[0] - (Number(this.get('gridres').x) * 0.5));
+        g[1] = (g[1] < 0) ? (g[1] + (Number(this.get('gridres').y) * 0.5)) :
+            (g[1] - (Number(this.get('gridres').y) * 0.5))
+
+        return Ext.Array.map(g, function (v) {
+            return v.toFixed(5);
+        });
+    },
+
+    /**
         Returns an Array of Regular Expressions that describe dates that are
         outside the range of the data described by this Metadata instance.
      */

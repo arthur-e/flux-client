@@ -24,7 +24,7 @@ Ext.application({
     launch: function () {
         Ext.String.addCharacterEntities({
             '&mu;': 'μ',
-            '&sup2;': '²',
+            '&sup2;': '²'
         });
 
         // Overrides ///////////////////////////////////////////////////////////

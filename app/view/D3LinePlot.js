@@ -54,7 +54,7 @@ Ext.define('Flux.view.D3LinePlot', {
         this.axis = {};
 
         /**
-            The Flux.Store.Grids instance associated with this view.
+            The Flux.store.Rasters instance associated with this view.
          */
         this.store = Ext.create('Flux.store.TimeSeries');
 

@@ -1,4 +1,4 @@
-Ext.define('Flux.model.Grid', {
+Ext.define('Flux.model.Raster', {
     extend: 'Ext.data.Model',
 
     requires: [
@@ -43,7 +43,7 @@ Ext.define('Flux.model.Grid', {
         Returns an object which can be used to calculate statistics on the
         the passed numeric Array.
         @param  arr {Array}
-        @return {Stats}
+        @return     {Stats}
      */
     Stats: function (arr) {
         arr = arr || [];

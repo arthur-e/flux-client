@@ -1,4 +1,4 @@
-Ext.define('Flux.model.GridView', {
+Ext.define('Flux.model.RasterView', {
     extend: 'Ext.data.Model',
     requires: [
         'Ext.data.Types',

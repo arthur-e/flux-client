@@ -33,11 +33,11 @@ Ext.define('Flux.controller.UserInteraction', {
     requires: [
         'Ext.data.ArrayStore',
         'Ext.state.CookieProvider',
-        'Flux.model.Geometry',
-        'Flux.model.Grid',
+        'Flux.model.Raster',
+        'Flux.model.RasterGrid',
         'Flux.model.Metadata',
-        'Flux.store.Geometries',
-        'Flux.store.Grids',
+        'Flux.store.Rasters',
+        'Flux.store.RasterGrids',
         'Flux.store.Metadata'
     ],
 
@@ -52,8 +52,8 @@ Ext.define('Flux.controller.UserInteraction', {
             storeId: 'scenarios'
         });
 
-        Ext.create('Flux.store.Geometries', {
-            storeId: 'geometries'
+        Ext.create('Flux.store.RasterGrids', {
+            storeId: 'rastergrids'
         });
 
         Ext.create('Flux.store.Metadata', {
@@ -268,7 +268,7 @@ Ext.define('Flux.controller.UserInteraction', {
         //  request
         grid = view.store.getById(Ext.Object.toQueryString(params));
         if (grid) {
-            this.bindGrid(view, grid);
+            this.bindRaster(view, grid);
             this.onMapLoad(grid);
             return;
         }
@@ -284,13 +284,13 @@ Ext.define('Flux.controller.UserInteraction', {
                     return;
                 }
 
-                grid = Ext.create('Flux.model.Grid',
+                grid = Ext.create('Flux.model.Raster',
                     Ext.JSON.decode(response.responseText));
 
                 // Create a unique ID that can be used to find this grid
                 grid.set('_id', Ext.Object.toQueryString(opts.params));
 
-                this.bindGrid(view, grid);
+                this.bindRaster(view, grid);
                 this.onMapLoad(grid);
             },
             failure: function (response) {
@@ -324,7 +324,7 @@ Ext.define('Flux.controller.UserInteraction', {
                         callback(response.responseText);
                     }
 
-                    grid = Ext.create('Flux.model.Grid',
+                    grid = Ext.create('Flux.model.Raster',
                         Ext.JSON.decode(response.responseText));
 
                     // Create a unique ID that can be used to find this grid
@@ -455,23 +455,23 @@ Ext.define('Flux.controller.UserInteraction', {
     // Event Handlers //////////////////////////////////////////////////////////
 
     /**
-        Binds a Flux.model.Geometry instance to the provided view, a
+        Binds a Flux.model.RasterGrid instance to the provided view, a
         Flux.view.D3GeographicMap instance.
         @param  view    {Flux.view.D3GeographicMap}
-        @param  grid    {Flux.model.Geometry}
+        @param  grid    {Flux.model.RasterGrid}
      */
-    bindGeometry: function (view, geometry) {
-        view.setGridGeometry(geometry);
+    bindRasterGrid: function (view, grid) {
+        view.setRasterGrid(grid);
     },
 
     /**
-        Binds a Flux.model.Grid instance to the provided view, a
+        Binds a Flux.model.Raster instance to the provided view, a
         Flux.view.D3GeographicMap instance. The view's store is updated
-        with the new Grid instance.
+        with the new Raster instance.
         @param  view    {Flux.view.D3Panel}
-        @param  grid    {Flux.model.Grid}
+        @param  grid    {Flux.model.Raster}
      */
-    bindGrid: function (view, grid) {
+    bindRaster: function (view, grid) {
         var opts = this.getGlobalSettings();
 
         if (!Ext.isEmpty(grid.get('_id'))) {
@@ -722,7 +722,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 // Add these model instances to the view's store
                 view.store.add(g1, g2);
 
-                grid = Ext.create('Flux.model.Grid', {
+                grid = Ext.create('Flux.model.Raster', {
                     features: (function () {
                         var i;
                         var g = [];
@@ -737,7 +737,7 @@ Ext.define('Flux.controller.UserInteraction', {
                         g2.get('timestamp').format(view.timeFormat))
                 });
 
-                this.bindGrid(view, grid);
+                this.bindRaster(view, grid);
                 this.onMapLoad(grid);
             }, this));
 
@@ -749,9 +749,9 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
-        Propagates wider changes following the loading of a new Grid instance.
+        Propagates wider changes following the loading of a new Raster instance.
         Specifically, this updates the D3LinePlot instance.
-        @param  grid    {Flux.model.Grid}
+        @param  grid    {Flux.model.Raster}
      */
     onMapLoad: function (grid) {
         var props = grid.get('properties');
@@ -852,7 +852,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  last    {String}
      */
     onSourceChange: function (field, source, last) {
-        var metadata, operation, geometry, view;
+        var metadata, operation, grid, view;
         var container = field.up('panel');
         var editor = field.up('roweditor');
 
@@ -906,22 +906,22 @@ Ext.define('Flux.controller.UserInteraction', {
             });
         }
 
-        // Geometry ////////////////////////////////////////////////////////////
-        geometry = this.getStore('geometries').getById(source);
-        if (geometry) {
-            this.bindGeometry(view, geometry);
+        // RasterGrid //////////////////////////////////////////////////////////
+        grid = this.getStore('rastergrids').getById(source);
+        if (grid) {
+            this.bindRasterGrid(view, grid);
 
         } else {
             Ext.Ajax.request({
                 method: 'GET',
-                url: Ext.String.format('/flux/api/scenarios/{0}/geometry.json', source),
+                url: Ext.String.format('/flux/api/scenarios/{0}/grid.json', source),
                 callback: function (o, s, response) {
-                    var geometry = Ext.create('Flux.model.Geometry',
+                    var grid = Ext.create('Flux.model.RasterGrid',
                         Ext.JSON.decode(response.responseText));
 
-                    this.getStore('geometries').add(geometry);
+                    this.getStore('rastergrids').add(grid);
 
-                    this.bindGeometry(view, geometry);
+                    this.bindRasterGrid(view, grid);
                 },
                 scope: this
             });
@@ -974,7 +974,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
     /**
         When the user adds a new row to the RowEditor, set the "view" property
-        on the associated Flux.model.GridView instance that is created.
+        on the associated Flux.model.RasterView instance that is created.
         @param  editor  {Ext.grid.plugin.Editing}
         @param  context {Object}
      */
@@ -1118,7 +1118,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 target.initDate = dates[0].format(fmt);
                 target.reset();
                 target.setDisabledDates(['^(?!).*$']);
-                target.setDisabledDates(metadata.getInvalidDates(fmt));
+                target.setDisabledDates(metadata.getDisabledDates(fmt));
                 target.on('expand', function (f) {
                     if (!f.isDirty()) {
                         f.suspendEvent('change');

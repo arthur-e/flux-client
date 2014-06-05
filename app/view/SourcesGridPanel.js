@@ -6,14 +6,14 @@ Ext.define('Flux.view.SourcesGridPanel', {
         'Ext.form.field.Date',
         'Ext.grid.column.Date',
         'Ext.grid.plugin.RowEditing',
-        'Flux.model.GridView',
+        'Flux.model.RasterView',
         'Flux.store.Scenarios'
     ],
 
     initComponent: function () {
         this.store = Ext.create('Ext.data.ArrayStore', {
             storeId: 'gridviews',
-            model: 'Flux.model.GridView'
+            model: 'Flux.model.RasterView'
         });
         this.addEvents(['itemchange', 'beforeedit', 'canceledit', 'edit']);
         this.callParent(arguments);
@@ -41,7 +41,7 @@ Ext.define('Flux.view.SourcesGridPanel', {
         canceledit: function (e, context) {
             var view = context.record.get('view');
 
-            // Remove the view associated with the Flux.model.GridView instance
+            // Remove the view associated with the Flux.model.RasterView instance
             if (view.ownerCt) {
                 view.ownerCt.remove(view);
             }
@@ -72,7 +72,7 @@ Ext.define('Flux.view.SourcesGridPanel', {
         iconCls: 'icon-add',
         handler: function () {
             var rowEditor = this.up('panel').findPlugin('rowediting');
-            var r = Ext.create('Flux.model.GridView');
+            var r = Ext.create('Flux.model.RasterView');
             var store = Ext.StoreManager.get('gridviews');
 
             if (store.count() < 9) {

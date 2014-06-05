@@ -68,7 +68,7 @@ Ext.define('Flux.model.Metadata', {
         Returns an Array of Regular Expressions that describe dates that are
         outside the range of the data described by this Metadata instance.
      */
-    getInvalidDates: function (fmt) {
+    getDisabledDates: function (fmt) {
         var bkpts;
         var dates = this.get('dates');
         var datesArray = [];

@@ -5,7 +5,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         'Ext.Function',
         'Ext.tip.QuickTip',
         'Ext.toolbar.Toolbar',
-        'Flux.store.Grids'
+        'Flux.store.Rasters'
     ],
 
     bodyStyle: {
@@ -64,9 +64,9 @@ Ext.define('Flux.view.D3GeographicMap', {
         this._scale = d3.scale.quantile();
 
         /**
-            The Flux.Store.Grids instance associated with this view.
+            The Flux.store.Rasters instance associated with this view.
          */
-        this.store = Ext.create('Flux.store.Grids');
+        this.store = Ext.create('Flux.store.Rasters');
 
         // Rewrite the updateDisplay() function to update the Panel's header
         //  title if displays are disabled
@@ -197,7 +197,7 @@ Ext.define('Flux.view.D3GeographicMap', {
     /**
         Draws the visualization features on the map given input data and the
         corresponding metadata.
-        @param  grid    {Flux.model.Grid}
+        @param  grid    {Flux.model.Raster}
         @param  zoom    {Boolean}
         @return         {Flux.view.D3GeographicMap}
      */
@@ -280,9 +280,9 @@ Ext.define('Flux.view.D3GeographicMap', {
 
     /**
         Returns the retained reference to the underlying grid geometry.
-        @return {Flux.model.Geometry}
+        @return {Flux.model.RasterGrid}
      */
-    getGridGeometry: function () {
+    getRasterGrid: function () {
         return this._grid;
     },
 
@@ -292,7 +292,7 @@ Ext.define('Flux.view.D3GeographicMap', {
      */
     getOverlayAttrs: function () {
         var attrs, gridres;
-        var grid = this.getGridGeometry().get('coordinates');
+        var grid = this.getRasterGrid().get('coordinates');
         var proj = this.getProjection();
         var scaling = this._mercatorFactor;
 
@@ -368,7 +368,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return         {D3GeographicMap}
      */
     highlightMapLocation: function (coords) {
-        var i = this.getGridGeometry().getCoordIndex(coords);
+        var i = this.getRasterGrid().getCoordIndex(coords);
 
         if (i < 0 || i > this._model.get('features').length) {
             return;
@@ -584,13 +584,13 @@ Ext.define('Flux.view.D3GeographicMap', {
     },
 
     /**
-        Sets the grid geometry; retains a reference to the Flux.model.Geometry
+        Sets the grid geometry; retains a reference to the Flux.model.RasterGrid
         instance.
-        @param  geom    {Flux.model.Geometry}
+        @param  grid    {Flux.model.RasterGrid}
         @return         {Flux.view.D3GeographicMap}
      */
-    setGridGeometry: function (geom) {
-        this._grid = geom;
+    setRasterGrid: function (grid) {
+        this._grid = grid;
         this.clear();
         return this;
     },

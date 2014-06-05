@@ -45,8 +45,8 @@ Ext.define('Flux.Application', {
     ],
 
     stores: [
-        'Geometries',
-        'Grids',
+        'Rasters',
+        'RasterGrids',
         'Metadata',
         'Palettes',
         'Scenarios',

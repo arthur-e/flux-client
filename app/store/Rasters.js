@@ -1,6 +1,6 @@
-Ext.define('Flux.store.Grids', {
+Ext.define('Flux.store.Rasters', {
     extend: 'Flux.store.AbstractStore',
     autoLoad: false,
-    model: 'Flux.model.Grid',
+    model: 'Flux.model.Raster',
     resource: 'xy.json'
 });

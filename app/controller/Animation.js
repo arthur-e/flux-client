@@ -15,7 +15,7 @@ Ext.define('Flux.controller.Animation', {
         'Ext.form.field.Number',
         'Ext.resizer.Splitter',
         'Ext.window.Window',
-        'Flux.model.Geometry',
+        'Flux.model.RasterGrid',
         'Flux.store.Metadata'
     ],
 

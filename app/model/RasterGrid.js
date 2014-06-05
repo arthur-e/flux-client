@@ -1,4 +1,4 @@
-Ext.define('Flux.model.Geometry', {
+Ext.define('Flux.model.RasterGrid', {
     extend: 'Ext.data.Model',
     idProperty: '_id',
 

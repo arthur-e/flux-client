@@ -234,7 +234,8 @@ Ext.define('Flux.view.D3GeographicMap', {
         }
 
         // Calculate the position and dimensions attributes of the elements
-        sel.attr(this.getOverlayAttrs());
+        sel.attr(this.getOverlayAttrs())
+            .style('cursor', 'pointer'); // Show link pointer when hovering over
 
         // Applies the color scale to the current selection
         this.update(sel);

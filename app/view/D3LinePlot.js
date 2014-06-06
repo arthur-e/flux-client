@@ -97,7 +97,8 @@ Ext.define('Flux.view.D3LinePlot', {
 
     /**
         Plots an additional line from a given time series.
-        @param  series  {Array}
+        @param  series      {Array}
+        @param  displayText {String}
      */
     addSeries: function (series, displayText) {
         var t0, t1;
@@ -134,10 +135,10 @@ Ext.define('Flux.view.D3LinePlot', {
             .attr({
                 'x': Ext.Function.bind(function (d) {
                     // Estimate the width of the characters
-                    return Number(this.svg.attr('width')) * 0.5;
+                    return Number(this.svg.attr('width')) - (this.d3margin.left + this.d3margin.right);
                 }, this),
                 'y': 0,
-                'text-anchor': 'middle',
+                'text-anchor': 'end', // Display right end of text at right end of plot
                 'class': 'legend-entry'
             });
 
@@ -168,9 +169,8 @@ Ext.define('Flux.view.D3LinePlot', {
         this.getEl().unmask();
 
         this.panes.title.selectAll('.legend-title')
-            .text(Ext.String.format('{0} ({1}): {2} {3}',
-                meta.get('title'),
-                meta.get('_id'),
+            .text(Ext.String.format('{0}all-time {1} {2} of {2}',
+                (Ext.isEmpty(meta.get('title'))) ? '' : (meta.get('title') + ': '),
                 model.get('properties').interval || '',
                 model.get('properties').aggregate) || '')
             .attr({

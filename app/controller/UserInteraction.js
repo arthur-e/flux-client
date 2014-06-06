@@ -821,14 +821,18 @@ Ext.define('Flux.controller.UserInteraction', {
             params.interval = 'monthly';
         }
 
-        this.getLinePlot().getEl().mask('Loading...');
+        if (this.getLinePlot()) {
+            this.getLinePlot().getEl().mask('Loading...');
+        }
 
         Ext.Ajax.request({
             method: 'GET',
             url: Ext.String.format('/flux/api/scenarios/{0}/t.json', meta.getId()),
             params: params,
             callback: function (opts, success, response) {
-                this.getLinePlot().unmask();
+                if (this.getLinePlot()) {
+                    this.getLinePlot().unmask();
+                }
             },
             failure: function (response, opts) {
                 Ext.Msg.alert('Request Error', response.responseText);
@@ -838,7 +842,8 @@ Ext.define('Flux.controller.UserInteraction', {
                     Ext.JSON.decode(response.responseText));
 
                 this.getLinePlot().addSeries(series,
-                    Ext.String.format('Daily Mean at {0}, {1}', geom[0], geom[1]));
+                    Ext.String.format('{0} {1} of {1} at {2}, {3}',
+                        params.interval, params.aggregate, geom[0], geom[1]));
             },
             scope: this
         });

@@ -8,10 +8,6 @@ Ext.define('Flux.view.D3GeographicMap', {
         'Flux.store.Rasters'
     ],
 
-    bodyStyle: {
-        backgroundColor: '#aaa'
-    },
-
     /**
         An internal reference to the legend selection.
         @private

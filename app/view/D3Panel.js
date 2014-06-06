@@ -111,7 +111,7 @@ Ext.define('Flux.view.D3Panel', {
         updateColorScale() is called.
         @param  state       {Boolean}
         @param  metadata    {Flux.model.Metadata}
-        @return         {Flux.view.D3Panel}
+        @return             {Flux.view.D3Panel}
      */
     togglePopulationStats: function (state, metadata) {
         var m;

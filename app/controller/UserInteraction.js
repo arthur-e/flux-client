@@ -484,6 +484,7 @@ Ext.define('Flux.controller.UserInteraction', {
         //  to the view
         if (opts.statsFrom === 'data') {
             view.updateScale(this.getSymbology().getForm().getValues());
+            this.onMetadataAdded(undefined, [view.getMetadata()]);
         }
     },
 
@@ -1045,6 +1046,10 @@ Ext.define('Flux.controller.UserInteraction', {
                     opts.tendency).redraw();
             });
         }
+
+        // For what it's worth, grab the Metadata on the one (first) map and
+        //  use it to propagate the population summary statistics
+        this.onMetadataAdded(undefined, [this.getMap().getMetadata()]);
 
     },
 

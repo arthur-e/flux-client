@@ -46,7 +46,7 @@ Ext.define('Flux.model.Raster', {
         @return     {Stats}
      */
     Stats: function (arr) {
-        arr = arr || [];
+        arr = Ext.Array.clean(arr || []);
 
         this.arithmeticMean = function () {
             var i, sum = 0;
@@ -91,7 +91,7 @@ Ext.define('Flux.model.Raster', {
         var data = this.get('features');
         var s = this.Stats(data);
         return {
-            min: Ext.Array.min(data),
+            min: Ext.Array.min(Ext.Array.clean(data)),
             max: Ext.Array.max(data),
             mean: s.mean(),
             std: s.stdDev(),

@@ -469,16 +469,16 @@ Ext.define('Flux.controller.UserInteraction', {
         Flux.view.D3GeographicMap instance. The view's store is updated
         with the new Raster instance.
         @param  view    {Flux.view.D3Panel}
-        @param  grid    {Flux.model.Raster}
+        @param  raster  {Flux.model.Raster}
      */
-    bindRaster: function (view, grid) {
+    bindRaster: function (view, raster) {
         var opts = this.getGlobalSettings();
 
-        if (!Ext.isEmpty(grid.get('_id'))) {
-            view.store.add(grid);
+        if (!Ext.isEmpty(raster.get('_id'))) {
+            view.store.add(raster);
         }
 
-        view.draw(grid, true);
+        view.draw(raster, true);
 
         // The color scale can only be properly adjusted AFTER data are bound
         //  to the view
@@ -490,8 +490,8 @@ Ext.define('Flux.controller.UserInteraction', {
     /**
         Binds a Flux.model.Metadata instance to the provided view, a
         Flux.view.D3GeographicMap instance.
-        @param  view    {Flux.view.D3Panel}
-        @param  grid    {Flux.model.Metadata}
+        @param  view        {Flux.view.D3Panel}
+        @param  metaadata   {Flux.model.Metadata}
      */
     bindMetadata: function (view, metadata) {
         var opts = this.getGlobalSettings();
@@ -711,7 +711,7 @@ Ext.define('Flux.controller.UserInteraction', {
             }, {
                 time: diffTime.toISOString()
             }], Ext.Function.bind(function (g1, g2) { // Callback function
-                var grid;
+                var rast;
                 var f1 = g1.get('features');
                 var f2 = g2.get('features');
 
@@ -722,7 +722,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 // Add these model instances to the view's store
                 view.store.add(g1, g2);
 
-                grid = Ext.create('Flux.model.Raster', {
+                rast = Ext.create('Flux.model.Raster', {
                     features: (function () {
                         var i;
                         var g = [];
@@ -737,8 +737,8 @@ Ext.define('Flux.controller.UserInteraction', {
                         g2.get('timestamp').format(view.timeFormat))
                 });
 
-                this.bindRaster(view, grid);
-                this.onMapLoad(grid);
+                this.bindRaster(view, rast);
+                this.onMapLoad(rast);
             }, this));
 
         } else {
@@ -751,12 +751,12 @@ Ext.define('Flux.controller.UserInteraction', {
     /**
         Propagates wider changes following the loading of a new Raster instance.
         Specifically, this updates the D3LinePlot instance.
-        @param  grid    {Flux.model.Raster}
+        @param  rast    {Flux.model.Raster}
      */
-    onMapLoad: function (grid) {
-        var props = grid.get('properties');
+    onMapLoad: function (rast) {
+        var props = rast.get('properties');
         var moments = [
-            grid.get('timestamp')
+            rast.get('timestamp')
         ];
 
         if (this.getLinePlot()) {
@@ -1108,17 +1108,17 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  metadata    {Ext.model.Metadata}
      */
     propagateMetadata: function (container, metadata) {
+        var fmt = 'YYYY-MM-DD';
         var datePicks = container.query('datefield');
         var timePicks = container.query('combo[valueField=time]');
+        var dates = metadata.getDisabledDates(fmt);
 
         if (datePicks) {
             Ext.each(datePicks, function (target) {
-                var fmt = 'YYYY-MM-DD';
-                var dates = metadata.get('dates');
-                target.initDate = dates[0].format(fmt);
+                target.initDate = metadata.get('dates')[0].format(fmt);
                 target.reset();
                 target.setDisabledDates(['^(?!).*$']);
-                target.setDisabledDates(metadata.getDisabledDates(fmt));
+                target.setDisabledDates(dates);
                 target.on('expand', function (f) {
                     if (!f.isDirty()) {
                         f.suspendEvent('change');

@@ -65,18 +65,21 @@ Ext.define('Flux.model.Metadata', {
     },
 
     /**
-        Returns an Array of Regular Expressions that describe dates that are
-        outside the range of the data described by this Metadata instance.
+        Constructs an Array of all of the dates for which the data are available.
+        @return {Array}
      */
-    getDisabledDates: function (fmt) {
-        var bkpts;
-        var dates = this.get('dates');
+    getAllDates: function () {
+        var bkpts, dates;
         var datesArray = [];
 
-        fmt = fmt || 'YYYY-MM-DD';
+        if (!Ext.isEmpty(this._dates)) {
+            return this._dates;
+        }
+
+        dates = this.get('dates');
 
         // Start with 1st date
-        datesArray.push(dates[0].format(fmt));
+        datesArray.push(dates[0]);
 
         bkpts = this.get('steps');
         if (Ext.isEmpty(this.get('steps'))) {
@@ -87,13 +90,46 @@ Ext.define('Flux.model.Metadata', {
             var d = dates[i].clone();
 
             // Keep adding dates until the next breakpoint is reached
-            while (d < dates[i + 1]) {
+            while (d.isBefore(dates[i + 1])) {
                 d.add(step, 's'); // Add the specified number of seconds
-                datesArray.push(d.format(fmt));
+                datesArray.push(d.clone());
             }                
         });
 
-        return ["^(?!" + datesArray.join("|") + ").*$"];
+        this._dates = datesArray;
+
+        return datesArray;
+    },
+
+    /**
+        Find the "nearest" date in the dates Array to the given date; date could
+        be before or after the given date.
+        @param  date    {moment|Date}
+        @return         {moment}
+     */
+    getNearestDate: function (date) {
+        var ds = this.getAllDates();
+        var ms = Ext.Array.map(ds, function (d) {
+            return Math.abs(d.valueOf() - date.valueOf());
+        });
+
+        return ds[ms.indexOf(Ext.Array.min(ms))];
+    },
+
+    /**
+        Returns an Array of Regular Expressions that describe dates that are
+        outside the range of the data described by this Metadata instance.
+        @param  fmt {String}    A moment.js format string
+        @return     {Array}
+     */
+    getDisabledDates: function (fmt) {
+        fmt = fmt || 'YYYY-MM-DD';
+
+        var dates = Ext.Array.map(this.getAllDates(), function (d) {
+            return d.format(fmt);
+        });
+
+        return ["^(?!" + dates.join("|") + ").*$"];
     },
 
     /**

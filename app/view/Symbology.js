@@ -231,7 +231,7 @@ Ext.define('Flux.view.Symbology', {
                     var parent = this.up('fieldset');
                     if (parent) {
                         // Selectively enable fields based on checked condition
-                        parent.down('numberfield').setDisabled(checked);
+                        parent.down('renumberfield').setDisabled(!checked);
                         parent.down('enumslider').setDisabled(checked);
                     }
                 }

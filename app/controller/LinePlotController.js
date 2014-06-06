@@ -52,38 +52,18 @@ Ext.define('Flux.controller.LinePlotController', {
         @param  coords  {Array}
      */
     onPlotClick: function (view, coords) {
+        var meta = view.getMetadata();
+        var dates = meta.getAllDates();
         var t = moment.utc(view.scales.x.invert(coords[0]));
-        var s;
+
+        // Find the nearest date actually in the dates Array
+        var d = meta.getNearestDate(t);
 
         // Uncheck the "Show Aggregation" and "Show Difference" checkboxes
         this.getController('UserInteraction').uncheckAggregates();
 
-        if (!Ext.isEmpty(view.getMetadata().get('steps'))) {
-            s = view.getMetadata().get('steps');
-        } else if (!Ext.isEmpty(view.getMetadata().get('spans'))) {
-            //TODO
-        }
-
-        // Fix the "precision" of this timestamp
-        t.milliseconds(0)
-        t.seconds(0);
-        if (s % 3600 === 0) {
-            // Step/span on the order of hours...
-            t.minutes(0);
-            if (t.hours() % (s / 3600) !== 0) {
-                t.hours(0)
-            }
-        }
-        if (s % 86400 === 0) {
-            // Step/span on the order of days...
-            t.hours(0);
-            if (t.days() % (s / 86400) !== 0) {
-                t.hours(0)
-            }
-        }
-
         this.getController('UserInteraction').fetchMap(this.getMap(), {
-            time: t.toISOString()
+            time: d.toISOString()
         });
     },
 

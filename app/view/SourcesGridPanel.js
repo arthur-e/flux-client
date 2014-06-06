@@ -122,7 +122,6 @@ Ext.define('Flux.view.SourcesGridPanel', {
                 },
                 select: function () {
                     this.nextSibling().enable();
-                    this.nextSibling().nextSibling().enable();
                 }
             }
         }

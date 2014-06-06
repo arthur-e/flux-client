@@ -1119,29 +1119,30 @@ Ext.define('Flux.controller.UserInteraction', {
                 target.reset();
                 target.setDisabledDates(['^(?!).*$']);
                 target.setDisabledDates(dates);
-                target.on('expand', function (f) {
-                    if (!f.isDirty()) {
-                        f.suspendEvent('change');
-                        f.setRawValue(this.initDate);
-                        f.resumeEvent('change');
-                    }
-                });
+
+                // When date picker (calendar) is opened, show the first date                
+                target.on('expand', function () {
+                    this.suspendEvent('change');
+                    this.setRawValue(this.initDate);
+                    this.resumeEvent('change');
+                }, target, {single: true});
+
+                if (Ext.Array.min(metadata.getTimeOffsets()) < 86400) {
+                    target.on('change', function () {
+                        this.nextSibling().enable();
+                    }, target, {single: true});
+                }
             });
+
         }
 
-        //TODO Use the step/span indicated by the given date (from above)
+        //TODO Use the step/span indicated by the given date (from above)?
         if (timePicks) {
             // For every Ext.form.field.Time found...
             Ext.each(timePicks, function (target) {
                 var mins = (Ext.Array.min(metadata.getTimeOffsets()) / 60);
 
-                // If the number of minutes is greater than or equal to 1 day...
-                if (mins >= 1440) {
-                    return target.disable();
-                }
-
                 target.reset();
-                target.enable();
                 target.bindStore(Ext.create('Ext.data.ArrayStore', {
                     fields: ['time'],
                     data: (function () {
@@ -1158,6 +1159,8 @@ Ext.define('Flux.controller.UserInteraction', {
                         return times;
                     }())
                 }));
+
+                target.disable();
             });
         }
     },

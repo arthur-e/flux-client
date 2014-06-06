@@ -45,9 +45,7 @@ Ext.define('Flux.view.SourcePanel', {
                 this.bindStore(Ext.StoreManager.get('scenarios'));
             },
             dirtychange: function () {
-                Ext.each(this.up('form').query('field[name=date], field[name=time]'), function (cmp) {
-                    cmp.enable();
-                });
+                this.up('form').down('field[name=date]').enable();
             }
         }
 
@@ -168,9 +166,7 @@ Ext.define('Flux.view.SourcePanel', {
                     this.bindStore(Ext.StoreManager.get('scenarios'));
                 },
                 dirtychange: function () {
-                    Ext.each(this.up('form').query('field[name=date2], field[name=time2]'), function (cmp) {
-                        cmp.enable();
-                    });
+                    this.up('form').down('field[name=date]').enable();
                 }
             }
         }, {

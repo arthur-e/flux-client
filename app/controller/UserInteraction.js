@@ -480,10 +480,12 @@ Ext.define('Flux.controller.UserInteraction', {
 
         view.draw(raster, true);
 
-        // The color scale can only be properly adjusted AFTER data are bound
-        //  to the view
         if (opts.statsFrom === 'data') {
+            // The color scale can only be properly adjusted AFTER data are bound
+            //  to the view
             view.updateScale(this.getSymbology().getForm().getValues());
+
+            // Also update the slider bounds
             this.onMetadataAdded(undefined, [view.getMetadata()]);
         }
     },
@@ -1028,6 +1030,10 @@ Ext.define('Flux.controller.UserInteraction', {
             // Recalculate the additive offset for anomalies
             view.toggleAnomalies((opts.display === 'anomalies'),
                 opts.tendency);
+
+            if (opts.statsFrom === 'data') {
+                view.redraw();//TODO
+            }
         });
 
         this.getController('MapController').updateScales();

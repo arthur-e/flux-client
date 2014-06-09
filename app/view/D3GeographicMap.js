@@ -198,7 +198,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return         {Flux.view.D3GeographicMap}
      */
     draw: function (rast, zoom) {
-        var bbox, lat, lng, c1, c2, sel, target;
+        var bbox, lat, lng, meta, c1, c2, sel, target;
         var proj = this.getProjection();
 
         //TODO This should come after next conditional, remove (rast || this._model)
@@ -208,8 +208,15 @@ Ext.define('Flux.view.D3GeographicMap', {
             return this;
         }
 
+        // If not using population statistics, calculate the new summary stats
+        //  for the incoming raster data
         if (!this._usePopulationStats) {
-            this.updateMetadata(rast);
+            meta = this.getMetadata().copy();
+            meta.set('stats', {
+                values: rast.summarize()
+            });
+
+            this.setMetadata(meta);
         }
 
         // Retain references to last drawing data and metadata; for instance,
@@ -705,14 +712,19 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return             {Flux.view.D3GeographicMap}
      */
     update: function (selection) {
+        var addit = -this.getMetadata().get('stats').values[this._tendency];
+
         if (selection) {
             selection.attr('fill', Ext.bind(function (d, i) {
                 if (Ext.isEmpty(d)) {
                     return 'transparent';
                 }
+
+                // Rescale the data points subtracting the measure of central tendency
                 if (this._showAnomalies) {
-                    return this.getScale()(d + this._addOffset);
+                    return this.getScale()(d + addit);
                 }
+
                 return this.getScale()(d);
             }, this));
 
@@ -864,7 +876,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
-    /**
+    /** TODO This function is called 3 times when global settings are: Mean-Current-Anomalies
         Updates the color scale configuration of a specific view, as provided.
         Creates a new color scale based on changes in the scale configuration
         (measure of central tendency, number of standard deviations, or a switch

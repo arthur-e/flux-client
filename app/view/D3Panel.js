@@ -96,11 +96,7 @@ Ext.define('Flux.view.D3Panel', {
      */
     toggleAnomalies: function (state, tendency) {
         this._showAnomalies = state;
-        if (state && this.getMetadata()) {
-            // Rescale the data points subtracting the measure of central tendency
-            this._addOffset = -this.getMetadata().get('stats').values[tendency];
-        }
-
+        this._tendency = tendency;
         return this;
     },
 
@@ -121,14 +117,6 @@ Ext.define('Flux.view.D3Panel', {
         this._usePopulationStats = state;
 
         if (metadata) {
-            // Current Data Frame //////////////////////////////////////////////
-            if (!this._usePopulationStats && this.getModel()) {
-                metadata = this.getMetadata().copy();
-                metadata.set('stats', {
-                    values: this.getModel().summarize()
-                });
-            }
-
             this.setMetadata(metadata);
         }
 

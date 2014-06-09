@@ -190,6 +190,7 @@ Ext.define('Flux.controller.MapController', {
      */
     onPaletteChange: function (c, recs) {
         var cs = recs[0].get('colors');
+
         Ext.each(Ext.ComponentQuery.query('d3geomap'), Ext.bind(function (view) {
             // For every d3geomap instance, update the scale's output range
             if (view.getScale()) {

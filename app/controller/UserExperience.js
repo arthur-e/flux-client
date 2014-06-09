@@ -223,6 +223,7 @@ Ext.define('Flux.controller.UserExperience', {
                 }, this));
             }
 
+            //TODO Can do away with values
             values[cb.group] = cb.name;
         }
 

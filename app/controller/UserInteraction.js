@@ -163,7 +163,7 @@ Ext.define('Flux.controller.UserInteraction', {
             }
         }
 
-        Ext.each(query, function (view, i) {
+        Ext.each(query, function (view) {
             view.anchor = anchor;
 
             // Add a listener to re-initialize the D3GeographicMap instance
@@ -257,19 +257,20 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  params  {Object}
      */
     fetchMap: function (view, params) {
-        var grid, source;
-        
+        var raster, source;
+
         if (!view.getMetadata()) {
             return;
         }
+
         source = view.getMetadata().getId();
 
         // Check for the unique ID, a hash of the parameters passed in this
         //  request
-        grid = view.store.getById(Ext.Object.toQueryString(params));
-        if (grid) {
-            this.bindRaster(view, grid);
-            this.onMapLoad(grid);
+        raster = view.store.getById(Ext.Object.toQueryString(params));
+        if (raster) {
+            this.bindRaster(view, raster);
+            this.onMapLoad(raster);
             return;
         }
 
@@ -278,20 +279,20 @@ Ext.define('Flux.controller.UserInteraction', {
             url: Ext.String.format('/flux/api/scenarios/{0}/xy.json', source),
             params: params,
             callback: function (opts, success, response) {
-                var grid;
+                var rast;
 
                 if (!success) {
                     return;
                 }
 
-                grid = Ext.create('Flux.model.Raster',
+                rast = Ext.create('Flux.model.Raster',
                     Ext.JSON.decode(response.responseText));
 
                 // Create a unique ID that can be used to find this grid
-                grid.set('_id', Ext.Object.toQueryString(opts.params));
+                rast.set('_id', Ext.Object.toQueryString(opts.params));
 
-                this.bindRaster(view, grid);
-                this.onMapLoad(grid);
+                this.bindRaster(view, rast);
+                this.onMapLoad(rast);
             },
             failure: function (response) {
                 Ext.Msg.alert('Request Error', response.responseText);
@@ -363,7 +364,7 @@ Ext.define('Flux.controller.UserInteraction', {
             if (a && b) {
                 return operation.call(view, a, b);
             }
-            
+
             return operation.call(view, grid1 || grid2, a);
         });
     },
@@ -520,7 +521,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  field   {Ext.form.field.Base}
         @param  value   {Number|String}
      */
-    onAggregationChange: function (field, value) {
+    onAggregationChange: function (field) {
         var args = {};
         var params, vals, view;
         var toggle = field.up('fieldset').down('field[name=showAggregation]');
@@ -553,7 +554,7 @@ Ext.define('Flux.controller.UserInteraction', {
         } else {
             params = {
                 time: view.getMoment().toISOString()
-            }
+            };
         }
 
         this.fetchMap(view, params);
@@ -624,7 +625,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  value   {String}
      */
     onDateTimeSelection: function (field, value) {
-        var cb, dates, theDate, view;
+        var dates, theDate, view;
         var editor = field.up('roweditor');
         var values = field.up('panel').getForm().getValues();
 
@@ -647,7 +648,7 @@ Ext.define('Flux.controller.UserInteraction', {
         // If the data are less than daily in step/span and no time is yet
         //  specified, do nothing
         if (Ext.Array.min(view.getMetadata().getTimeOffsets()) < 86400
-            && Ext.isEmpty(values.time)) {
+                && Ext.isEmpty(values.time)) {
             return;
         }
 
@@ -685,7 +686,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  field   {Ext.form.field.Base}
         @param  value   {Number|String}
      */
-    onDifferenceChange: function (field, value) {
+    onDifferenceChange: function (field) {
         var diffTime;
         var vals = field.up('panel').getForm().getValues();
         var view = this.getMap();
@@ -837,12 +838,12 @@ Ext.define('Flux.controller.UserInteraction', {
             method: 'GET',
             url: Ext.String.format('/flux/api/scenarios/{0}/t.json', meta.getId()),
             params: params,
-            callback: function (opts, success, response) {
+            callback: function () {
                 if (this.getLinePlot()) {
                     this.getLinePlot().unmask();
                 }
             },
-            failure: function (response, opts) {
+            failure: function (response) {
                 Ext.Msg.alert('Request Error', response.responseText);
             },
             success: function (response) {
@@ -888,7 +889,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
             // Reload the line plot if the source has actually changed
             if (this.getLinePlot()
-                && (!this.getLinePlot().isDrawn || source !== last)) {
+                    && (!this.getLinePlot().isDrawn || source !== last)) {
                 this.bindMetadata(this.getLinePlot(), metadata);
             }
         }, this);
@@ -898,7 +899,7 @@ Ext.define('Flux.controller.UserInteraction', {
         metadata = this.getStore('metadata').getById(source);
         if (metadata) {
             operation(metadata);
-            
+
         } else {
             Ext.Ajax.request({
                 method: 'GET',
@@ -907,12 +908,12 @@ Ext.define('Flux.controller.UserInteraction', {
                     scenario: source
                 },
                 callback: function (o, s, response) {
-                    var metadata = Ext.create('Flux.model.Metadata',
+                    var meta = Ext.create('Flux.model.Metadata',
                         Ext.JSON.decode(response.responseText));
 
-                    this.getStore('metadata').add(metadata);
+                    this.getStore('metadata').add(meta);
 
-                    operation(metadata);
+                    operation(meta);
                 },
 
                 scope: this
@@ -963,7 +964,7 @@ Ext.define('Flux.controller.UserInteraction', {
         metadata = this.getStore('metadata').getById(source);
         if (metadata) {
             this.propagateMetadata(field.up('fieldset'), metadata);
-            
+
         } else {
             Ext.Ajax.request({
                 method: 'GET',
@@ -972,12 +973,12 @@ Ext.define('Flux.controller.UserInteraction', {
                     scenario: source
                 },
                 callback: function (o, s, response) {
-                    var metadata = Ext.create('Flux.model.Metadata',
+                    var meta = Ext.create('Flux.model.Metadata',
                         Ext.JSON.decode(response.responseText));
 
-                    this.getStore('metadata').add(metadata);
+                    this.getStore('metadata').add(meta);
 
-                    this.propagateMetadata(field.up('fieldset'), metadata);
+                    this.propagateMetadata(field.up('fieldset'), meta);
                 },
 
                 scope: this
@@ -1032,7 +1033,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 opts.tendency);
 
             if (opts.statsFrom === 'data') {
-                view.redraw();//TODO
+                view.redraw();
             }
         });
 

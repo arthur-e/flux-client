@@ -78,7 +78,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             this._moment = grid.get('timestamp');
 
             if (Ext.isEmpty(grid.get('title'))) {
-                this._display = grid.getTimestampDisplay(this.timeFormat)
+                this._display = grid.getTimestampDisplay(this.timeFormat);
             } else {
                 this._display = grid.get('title');
             }
@@ -170,7 +170,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             view.fireEventArgs('mouseout', [view]);
         });
 
-        sel.on('click', function (d) {
+        sel.on('click', function () {
             view.fireEventArgs('plotclick', [view, [
                 this.attributes.x.value,
                 this.attributes.y.value
@@ -198,15 +198,14 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return         {Flux.view.D3GeographicMap}
      */
     draw: function (rast, zoom) {
-        var bbox, lat, lng, meta, c1, c2, sel, target;
+        var bbox, lat, lng, meta, c1, c2, sel;
         var proj = this.getProjection();
-
-        //TODO This should come after next conditional, remove (rast || this._model)
-        this.fireEventArgs('beforedraw', [this, (rast || this._model), zoom]);
 
         if (!rast) {
             return this;
         }
+
+        this.fireEventArgs('beforedraw', [this, rast, zoom]);
 
         // If not using population statistics, calculate the new summary stats
         //  for the incoming raster data
@@ -346,7 +345,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         if (this._projId === 'mercator') {
             attrs.height = function (d, i) {
                 return scaling(grid[i][1]) * Math.abs(proj([0, gridres.y])[1] - proj([0, 0])[1]);
-            }
+            };
         }
 
         return attrs;
@@ -527,7 +526,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         var drawBasemap = Ext.bind(function (json) {
             var sel = this.panes.basemap.append('g')
-                .attr('id', 'basemap')
+                .attr('id', 'basemap');
 
             sel.append('g')
                 .attr('class', (boundaries === 'outer') ? 'political empty' : 'political region')
@@ -566,7 +565,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         boundaries = boundaries || this.basemaps.boundaries;
 
         // Remove the old basemap, if one exists
-        this.panes.basemap.select('#basemap').remove()
+        this.panes.basemap.select('#basemap').remove();
 
         if (Ext.isEmpty(basemapUrl)) {
             return clearBasemap();
@@ -715,7 +714,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         var addit = -this.getMetadata().get('stats').values[this._tendency];
 
         if (selection) {
-            selection.attr('fill', Ext.bind(function (d, i) {
+            selection.attr('fill', Ext.bind(function (d) {
                 if (Ext.isEmpty(d)) {
                     return 'transparent';
                 }
@@ -813,9 +812,9 @@ Ext.define('Flux.view.D3GeographicMap', {
             .range([h, 0]);
 
         this._legend.yAxis
-            .tickFormat(function (x, i) {
-                var s = Number(bins[x]).toFixed(p).toString();
-                return (s === 'NaN') ? '' : s;
+            .tickFormat(function (x) {
+                var t = Number(bins[x]).toFixed(p).toString();
+                return (t === 'NaN') ? '' : t;
             })
             .scale(this._legend.yScale);
 

@@ -20,7 +20,6 @@ Ext.define('Flux.controller.MapController', {
                 boxready: this.initialize,
                 mouseover: this.onMouseOver,
                 mouseout: this.onMouseOut,
-                plotclick: this.onPlotClick,
                 resize: this.onResize
             },
 
@@ -100,17 +99,17 @@ Ext.define('Flux.controller.MapController', {
         var height = cmp.getHeight();
         var opts = this.getMapSettings().getForm().getValues();
         var kw = (Ext.bind(function () {
-                var kw = 'none';
+                var k = 'none';
                 var basemapOutlines = this.getMapSettings().down('checkbox[name=showBasemapOutlines]').getValue();
                 var politicalBoundaries = this.getMapSettings().down('checkbox[name=showPoliticalBoundaries]').getValue();
 
                 if (basemapOutlines) {
-                    kw = 'outer';
+                    k = 'outer';
                 } else {
-                    kw = (politicalBoundaries) ? 'both' : 'none';
+                    k = (politicalBoundaries) ? 'both' : 'none';
                 }
 
-                return kw;
+                return k;
         }, this)());
 
         cmp.init(width, height)
@@ -153,7 +152,7 @@ Ext.define('Flux.controller.MapController', {
         @param  coords  {Array}             The pixel coordinates of the mouseover selection (not the mouse)
         @param  value   {Number}            The value of the mouseover selection
      */
-    onMouseOver: function (focused, coords, value) {
+    onMouseOver: function (focused, coords) {
         var geom = focused.getProjection().invert(Ext.Array.map(coords, Number));
 
         // Need to add half the grid spacing as this was subtracted to obtain
@@ -201,11 +200,6 @@ Ext.define('Flux.controller.MapController', {
         }, this));
 
         this.updateScales();
-    },
-
-    /**TODO
-     */
-    onPlotClick: function (view, coords) {
     },
 
     /**
@@ -262,8 +256,8 @@ Ext.define('Flux.controller.MapController', {
         @param  c       {Ext.form.field.*}
         @param  value   {Number}
      */
-    onScaleParameterChange: function (c, value)  {
-        var cfg = {}
+    onScaleParameterChange: function (c, value) {
+        var cfg = {};
         cfg[c.getName()] = value;
         this.updateScales(cfg);
     },
@@ -327,7 +321,7 @@ Ext.define('Flux.controller.MapController', {
             view.updateScale(opts);
         }, this));
     }
-    
+
 });
 
 

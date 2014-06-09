@@ -53,7 +53,7 @@ Ext.define('Flux.controller.LinePlotController', {
      */
     onPlotClick: function (view, coords) {
         var meta = view.getMetadata();
-        var dates = meta.getAllDates();
+        //TODO var dates = meta.getAllDates();
         var t = moment.utc(view.scales.x.invert(coords[0]));
 
         // Find the nearest date actually in the dates Array
@@ -81,7 +81,7 @@ Ext.define('Flux.controller.LinePlotController', {
         //  of the initial layout; we want to avoid acting on this firing
         if (oldWidth && oldHeight) {
             if (width !== oldWidth || height !== oldHeight) {
-                view.init(width, height).redraw()
+                view.init(width, height).redraw();
             }
         }
     }

@@ -194,7 +194,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
         return {
             disabled: this.isDisabled(),
             value: this.getValues()
-        }
+        };
     },
 
     /**
@@ -202,7 +202,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
         @return {Array}
      */
     getValue: function () {
-        return this.getValues()
+        return this.getValues();
     },
 
     /**
@@ -261,7 +261,6 @@ Ext.define('Flux.field.EnumeratedSlider', {
      */
     setBounds: function (bounds) {
         var slider = this.down('multislider');
-        var values = slider.getValues();
 
         bounds = bounds || this.getBounds();
 

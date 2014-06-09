@@ -20,7 +20,6 @@ Ext.define('Flux.controller.UserExperience', {
 
     init: function () {
         var params = window.location.href.split('?'); // Get the HTTP GET query parameters, if any
-        var fields = [];
 
         // Create a new state Provider if one doesn't already exist
         if (Ext.state.Manager.getProvider().path === undefined) {
@@ -39,7 +38,7 @@ Ext.define('Flux.controller.UserExperience', {
                 }
 
                 // IMPORTANT: Makes sure that applyState() recalls the correct state
-                Ext.state.Manager.set(key, {value: value})
+                Ext.state.Manager.set(key, {value: value});
 
                 // Initialize global settings (Ext.menu.CheckItem instances)
                 if (Ext.Array.contains(['tendency', 'display', 'statsFrom'], key)) {
@@ -51,12 +50,12 @@ Ext.define('Flux.controller.UserExperience', {
 
             });
 
-            if (params.hasOwnProperty('source') && params.hasOwnProperty('date')
-                && params.hasOwnProperty('time')) {
 //TODO Need to figure out how to automatically load data
+//            if (params.hasOwnProperty('source') && params.hasOwnProperty('date')
+//                    && params.hasOwnProperty('time')) {
 //                Ext.onReady(Ext.bind(function () {
 //                }, this));
-            }
+//            }
 
         }
 
@@ -139,17 +138,15 @@ Ext.define('Flux.controller.UserExperience', {
      */
     getFieldNames: function () {
         var names = Ext.Array.map(Ext.ComponentQuery.query('field[name]'), function (i) {
-            if (i.stateId) return i.stateId;
-            if (i.getName) return i.getName();
-            return name;
+            return i.stateId || i.getName() || name;
         });
+
         names = names.concat(Ext.Array.map(this.getTopToolbar().query('field[name], menuitem[name]'), function (i) {
-            if (i.stateId) return i.stateId;
-            if (i.getName) return i.getName();
-            return name;
+            return i.stateId || i.getName() || name;
         }));
+
         names = Ext.Array.map(names, function (name) {
-            return (Ext.String.endsWith(name, '-inputEl')) ? undefined : name; 
+            return (Ext.String.endsWith(name, '-inputEl')) ? undefined : name;
         });
 
         return Ext.Array.clean(names);
@@ -187,7 +184,7 @@ Ext.define('Flux.controller.UserExperience', {
      */
     initFieldsets: function (fieldset) {
         if (this.getSymbology().down('hiddenfield[name=statsFrom]').getValue() === 'data'
-            && this.getSourcePanel().initialSelectionsMade()) {
+                && this.getSourcePanel().initialSelectionsMade()) {
             fieldset.enable();
         } else {
             fieldset.disable();
@@ -202,7 +199,6 @@ Ext.define('Flux.controller.UserExperience', {
      */
     onStatsChange: function (cb, checked) {
         var targets;
-        var values = {};
 
         if (checked) {
             this.getSymbology().down(Ext.String.format('hiddenfield[name={0}]',
@@ -222,9 +218,6 @@ Ext.define('Flux.controller.UserExperience', {
                         || !this.getSourcePanel().initialSelectionsMade());
                 }, this));
             }
-
-            //TODO Can do away with values
-            values[cb.group] = cb.name;
         }
 
         this.saveFieldState(cb, checked);

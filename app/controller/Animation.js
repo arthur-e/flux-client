@@ -57,6 +57,8 @@ Ext.define('Flux.controller.Animation', {
         @param  stepSize    {String}    The size of the step/span
      */
     calcStepOrSize: function (s0, stepSize) {
+        var steps;
+
         if (stepSize) {
             switch (stepSize) {
                 case 'months':
@@ -76,11 +78,13 @@ Ext.define('Flux.controller.Animation', {
 
         if (s0 / 86400 < 1) { // Less than 1 day (86400 seconds)?
             return 'hours';
-        } else if (s0 / 2678400 < 1) { // Less than 1 month?
-            return 'days';
-        } else {
-            return 'months';
         }
+
+        if (s0 / 2678400 < 1) { // Less than 1 month?
+            return 'days';
+        }
+
+        return 'months';
     },
 
     /**
@@ -228,10 +232,10 @@ Ext.define('Flux.controller.Animation', {
 
     /**
         Handles a change in the step size as set by the user.
-        @param  cmp     {Ext.form.field.ComboBox}
+        @param  c       {Ext.form.field.ComboBox}
         @param  recs    {Array}
      */
-    onStepSizeChange: function (cmp, recs) {
+    onStepSizeChange: function (c, recs) {
         var steps;
 
         this._stepSize = recs[0].get('stepSize');
@@ -243,10 +247,10 @@ Ext.define('Flux.controller.Animation', {
 
     /**
         Handles a change in the number of steps as set by the user.
-        @param  cmp     {Ext.form.field.Number}
+        @param  c       {Ext.form.field.Number}
         @param  value   {Number}
      */
-    onStepsChange: function (cmp, value) {
+    onStepsChange: function (c, value) {
         this._steps = value;
     },
 

@@ -34,7 +34,7 @@ Ext.define('Flux.view.SourcesGridPanel', {
 
             // Require both of these fields to be filled out
             if (Ext.isEmpty(rec.get('source')) || Ext.isEmpty(rec.get('date'))) {
-                this.fireEventArgs('canceledit', arguments)
+                this.fireEventArgs('canceledit', arguments);
             }
         },
 
@@ -60,7 +60,7 @@ Ext.define('Flux.view.SourcesGridPanel', {
     },
 
     getFieldValues: function () {
-        vals = {};
+        var vals = {};
         Ext.each(this.findPlugin('rowediting').editor.query('field'), function (f) {
             vals[f.getName()] = f.getRawValue();
         });

@@ -101,11 +101,10 @@ Ext.define('Flux.view.D3LinePlot', {
         @param  displayText {String}
      */
     addSeries: function (series, displayText) {
-        var t0, t1;
+        var t0, t1, sel;
         var x = this.scales.x;
         var y = this.scales.y;
         var data = series.getInterpolation();
-        var meta = this.getMetadata();
         var path = d3.svg.line()
             .x(function (d) { return x(d[0]); })
             .y(function (d) { return y(d[1]); });
@@ -128,12 +127,12 @@ Ext.define('Flux.view.D3LinePlot', {
         t1.selectAll('.y.axis').call(this.axis.y);
 
         // Grid lines //////////////////////////////////////////////////////////
-        t1.selectAll('.grid').attr('class', 'grid').call(this.axis.y0)
+        t1.selectAll('.grid').attr('class', 'grid').call(this.axis.y0);
 
         this.panes.title.selectAll('.legend-entry')
             .text(displayText || '')
             .attr({
-                'x': Ext.Function.bind(function (d) {
+                'x': Ext.Function.bind(function () {
                     // Estimate the width of the characters
                     return Number(this.svg.attr('width')) - (this.d3margin.left + this.d3margin.right);
                 }, this),
@@ -261,7 +260,7 @@ Ext.define('Flux.view.D3LinePlot', {
 
         // Remove any previously-rendered SVG elements
         if (this.svg !== undefined) {
-            this.svg.remove()
+            this.svg.remove();
         }
 
         // Drawing /////////////////////////////////////////////////////////////
@@ -269,7 +268,7 @@ Ext.define('Flux.view.D3LinePlot', {
             .attr({
                 'width': width,
                 'height': height
-            })
+            });
 
         // Create panes in which to organize content at difference z-index
         //  levels using painter's algorithm (first drawn on bottom; last drawn
@@ -400,7 +399,7 @@ Ext.define('Flux.view.D3LinePlot', {
 
         if (data.length > 1) {
             attr['fill-opacity'] = 0.2;
-            attr['width'] = this.scales.x(data[1]) - this.scales.x(data[0]);
+            attr.width = this.scales.x(data[1]) - this.scales.x(data[0]);
             data = [data[0]];
         }
 
@@ -422,7 +421,7 @@ Ext.define('Flux.view.D3LinePlot', {
         //  the opts argument and makes it optional? That ways the view could
         //  call this method on its own
      */
-    updateScale: function (opts) {
+    updateScale: function () {
         var metadata;
 
         if (!this.getMetadata()) {

@@ -146,6 +146,15 @@ Ext.define('Flux.view.D3LinePlot', {
     },
 
     /**
+        Clears the plot.
+        TODO This implementation has errors.
+     */
+    clear: function () {
+        this.panes.plot.selectAll('.series').attr('d', undefined);
+        return this;
+    },
+
+    /**
         Draws the visualization features on the map given input data and the
         corresponding metadata.
         @param  model   {Flux.model.TimeSeries}
@@ -372,7 +381,9 @@ Ext.define('Flux.view.D3LinePlot', {
      */
     setMetadata: function (metadata) {
         this._metadata = metadata;
-        return this.redraw();
+
+        // Clear the plot before drawing on it again
+        return this.clear().redraw();
     },
 
     /**

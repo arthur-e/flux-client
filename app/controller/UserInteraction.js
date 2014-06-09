@@ -482,12 +482,12 @@ Ext.define('Flux.controller.UserInteraction', {
         view.draw(raster, true);
 
         if (opts.statsFrom === 'data') {
+            // Also update the slider bounds
+            this.onMetadataAdded(undefined, [view.getMetadata()]);
+
             // The color scale can only be properly adjusted AFTER data are bound
             //  to the view
             view.updateScale(this.getSymbology().getForm().getValues());
-
-            // Also update the slider bounds
-            this.onMetadataAdded(undefined, [view.getMetadata()]);
         }
     },
 

@@ -232,9 +232,9 @@ Ext.define('Flux.view.Viewport', {
                 anchor: '100% 80%',
                 enableZoomControls: true,
                 enableTransitions: true
-            }, {
-                xtype: 'd3lineplot',
-                anchor: '100% 20%'
+//            }, {FIXME
+//                xtype: 'd3lineplot',
+//                anchor: '100% 20%'
             }],
             layout: {
                 type: 'anchor',

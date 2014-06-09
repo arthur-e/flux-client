@@ -114,15 +114,21 @@ Ext.define('Flux.view.D3Panel', {
         @return             {Flux.view.D3Panel}
      */
     togglePopulationStats: function (state, metadata) {
-        var m;
-
         if (Ext.isEmpty(this.getMetadata())) {
             return;
         }
 
         this._usePopulationStats = state;
 
-        if (this._usePopulationStats && metadata) {
+        if (metadata) {
+            // Current Data Frame //////////////////////////////////////////////
+            if (!this._usePopulationStats && this.getModel()) {
+                metadata = this.getMetadata().copy();
+                metadata.set('stats', {
+                    values: this.getModel().summarize()
+                });
+            }
+
             this.setMetadata(metadata);
         }
 

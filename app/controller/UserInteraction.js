@@ -780,6 +780,11 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     onMetadataAdded: function (store, recs) {
         var metadata = recs[0];
+
+        if (!metadata) {
+            return;
+        }
+
         this.getController('Animation').enableAnimation(metadata);
 
         // Initialize the values of the domain bounds and threshold sliders
@@ -1000,52 +1005,32 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  checked {Boolean}
      */
     onStatsChange: function (cb, checked) {
-        var change = {};
+        var opts;
         var query = Ext.ComponentQuery.query('d3panel');
-        var opts, store;
+        var store = this.getStore('metadata');
 
         if (!checked) {
             return;
         }
 
-        change[cb.group] = cb.name;
         opts = this.getGlobalSettings();
 
-        // Measure of central tendency /////////////////////////////////////////
-        if (change.tendency !== undefined) {
-            // Update the additive offset for anomalies, in case they're used
-            Ext.each(query, function (view) {
-                view.toggleAnomalies((opts.display === 'anomalies'),
-                    opts.tendency);
-            });
-            this.getController('MapController').updateScales({
-                tendency: change.tendency
-            });
-        }
+        // Update the additive offset for anomalies, in case they're used
+        Ext.each(query, function (view) {
+            if (Ext.isEmpty(view.getMetadata())) {
+                return;
+            }
 
-        // Statistics from... //////////////////////////////////////////////////
-        if (change.statsFrom !== undefined ) {
-            store = this.getStore('metadata');
+            // Update the source of summary statistics
+            view.togglePopulationStats(opts.statsFrom === 'population',
+                store.getById(view.getMetadata().get('_id')));
 
-            Ext.each(query, function (view) {
-                if (Ext.isEmpty(view.getMetadata())) {
-                    return;
-                }
+            // Recalculate the additive offset for anomalies
+            view.toggleAnomalies((opts.display === 'anomalies'),
+                opts.tendency);
+        });
 
-                view.togglePopulationStats(opts.statsFrom === 'population',
-                    store.getById(view.getMetadata().get('_id')));
-            });
-
-            this.getController('MapController').updateScales();
-        }
-
-        // Values displayed as.... /////////////////////////////////////////////
-        if (change.display !== undefined) {
-            Ext.each(query, function (view) {
-                view.toggleAnomalies((opts.display === 'anomalies'),
-                    opts.tendency).redraw();
-            });
-        }
+        this.getController('MapController').updateScales();
 
         // For what it's worth, grab the Metadata on the one (first) map and
         //  use it to propagate the population summary statistics

@@ -193,30 +193,35 @@ Ext.define('Flux.view.D3GeographicMap', {
     /**
         Draws the visualization features on the map given input data and the
         corresponding metadata.
-        @param  grid    {Flux.model.Raster}
+        @param  rast    {Flux.model.Raster}
         @param  zoom    {Boolean}
         @return         {Flux.view.D3GeographicMap}
      */
-    draw: function (grid, zoom) {
+    draw: function (rast, zoom) {
         var bbox, lat, lng, c1, c2, sel, target;
         var proj = this.getProjection();
 
-        this.fireEventArgs('beforedraw', [this, (grid || this._model), zoom]);
+        //TODO This should come after next conditional, remove (rast || this._model)
+        this.fireEventArgs('beforedraw', [this, (rast || this._model), zoom]);
 
-        if (!grid) {
+        if (!rast) {
             return this;
+        }
+
+        if (!this._usePopulationStats) {
+            this.updateMetadata(rast);
         }
 
         // Retain references to last drawing data and metadata; for instance,
         //  resize events require drawing again with the same (meta)data
-        this._model = grid;
+        this._model = rast;
 
         // Disallow zooming by default
         zoom = (zoom === true);
 
         // Sets the enter or update selection's data
         sel = this.panes.overlay.selectAll('.point')
-            .data(grid.get('features'), function (d, i) {
+            .data(rast.get('features'), function (d, i) {
                 return i; // Use the cell index as the key
             });
 
@@ -271,7 +276,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         }
 
         this.isDrawn = true;
-        this.fireEventArgs('draw', [this, (grid || this._model)]);
+        this.fireEventArgs('draw', [this, rast]);
         return this;
     },
 
@@ -877,17 +882,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             return;
         }
 
-        if (!this._usePopulationStats && this.getModel()) {
-            metadata = this.getMetadata().copy();
-            metadata.set('stats', {
-                values: this.getModel().summarize()
-            });
-
-            this.setMetadata(metadata);
-
-        } else {
-            metadata = this.getMetadata();
-        }
+        metadata = this.getMetadata();
 
         // Get the color palette
         palette = Ext.StoreManager.get('palettes').getById(opts.palette);
@@ -898,7 +893,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             scale = metadata.getQuantileScale(opts).range(palette.get('colors'));
         }
 
-        this.setScale(scale);
+        return this.setScale(scale);
     }
 
 });

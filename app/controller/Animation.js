@@ -106,6 +106,11 @@ Ext.define('Flux.controller.Animation', {
      */
     enableAnimation: function (metadata) {
         var c, d, s0, steps, stepSize;
+
+        if (!metadata) {
+            return;
+        }
+
         this._metadata = metadata;
 
         // Figure out the default size of step (e.g. an hour) and the number of

@@ -176,7 +176,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                     'x': m[0] + 20,
                     'y': m[1] + 30
                 })
-            view.fireEventArgs('mouseover', [view, m, d]);
+            view.fireEventArgs('mouseover', [view, c, d]);
         });
 
         sel.on('mouseout', function () {

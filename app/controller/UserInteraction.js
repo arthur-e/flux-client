@@ -89,10 +89,6 @@ Ext.define('Flux.controller.UserInteraction', {
                 plotclick: this.onPlotClick
             },
 
-            'field[name=showLinePlot]': {
-                change: this.toggleLinePlotDisplay
-            },
-
             'field[name=source]': {
                 change: this.onSourceChange
             },
@@ -123,6 +119,16 @@ Ext.define('Flux.controller.UserInteraction', {
             }
 
         });
+
+        // Late event listeners (need to be bound after state is recalled)
+        Ext.onReady(Ext.Function.bind(function () {
+            this.control({
+                'field[name=showLinePlot]': {
+                    change: this.toggleLinePlotDisplay
+                }
+            });
+
+        }, this));
     },
 
     /**
@@ -543,6 +549,9 @@ Ext.define('Flux.controller.UserInteraction', {
         }
 
         if (toggle.getValue()) {
+            // Clear the legend units for aggregate data
+            view.toggleLegendUnits(false);
+
             // NOTE: Only available for the Single Map visualization thus far
             params = {
                 aggregate: args.aggregate,
@@ -552,6 +561,9 @@ Ext.define('Flux.controller.UserInteraction', {
             };
 
         } else {
+            // Return to displaying the measurement units
+            view.toggleLegendUnits(true);
+
             params = {
                 time: view.getMoment().toISOString()
             };

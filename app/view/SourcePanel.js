@@ -68,9 +68,8 @@ Ext.define('Flux.view.SourcePanel', {
         queryMode: 'local'
 
     }, {
-        xtype: 'checkbox',
+        xtype: 'recheckbox',
         name: 'showLinePlot',
-        inputValue: true,
         checked: true,
         stateId: 'showLinePlot',
         boxLabel: 'Show line plot'

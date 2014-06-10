@@ -24,7 +24,7 @@ Ext.define('Flux.model.Metadata', {
         name: 'gridded',
         type: 'boolean'
     }, {
-        name: 'gridres',
+        name: 'grid',
         type: 'auto'
     }, {
         name: 'precision',
@@ -54,10 +54,10 @@ Ext.define('Flux.model.Metadata', {
         <rect> element's upper-corner.
      */
     calcHalfOffsetCoordinates: function (g) {
-        g[0] = (g[0] < 0) ? (g[0] + (Number(this.get('gridres').x) * 0.5)) : 
-            (g[0] - (Number(this.get('gridres').x) * 0.5));
-        g[1] = (g[1] < 0) ? (g[1] + (Number(this.get('gridres').y) * 0.5)) :
-            (g[1] - (Number(this.get('gridres').y) * 0.5))
+        g[0] = (g[0] < 0) ? (g[0] + (Number(this.get('grid').x) * 0.5)) : 
+            (g[0] - (Number(this.get('grid').x) * 0.5));
+        g[1] = (g[1] < 0) ? (g[1] + (Number(this.get('grid').y) * 0.5)) :
+            (g[1] - (Number(this.get('grid').y) * 0.5))
 
         return Ext.Array.map(g, function (v) {
             return v.toFixed(5);

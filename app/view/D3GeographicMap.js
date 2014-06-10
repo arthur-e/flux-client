@@ -23,6 +23,12 @@ Ext.define('Flux.view.D3GeographicMap', {
     },
 
     /**
+        Flag to determine whether or not units should be displayed in the legend.
+        @private
+     */
+    _showLegendUnits: true,
+
+    /**
         Configuration and state for the basemap(s).
      */
     basemaps: {
@@ -299,7 +305,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return {Object}
      */
     getOverlayAttrs: function () {
-        var attrs, gridres;
+        var attrs, gridxy;
         var grid = this.getRasterGrid().get('coordinates');
         var proj = this.getProjection();
         var scaling = this._mercatorFactor;
@@ -309,7 +315,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         }
 
         // Assumes grid spacing given in degrees
-        gridres = this._metadata.get('gridres');
+        gridxy = this._metadata.get('grid');
         attrs = {
             'x': function (d, i) {
                 // We want to start drawing at the upper left (half the cell
@@ -319,7 +325,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                 }
                 return proj(grid[i].map(function (j) {
                     // Subtract half the grid spacing from longitude (farther west)
-                    return (j - (gridres.x * 0.5));
+                    return (j - (gridxy.x * 0.5));
                 }))[0];
             },
 
@@ -329,13 +335,13 @@ Ext.define('Flux.view.D3GeographicMap', {
                 }
                 return proj(grid[i].map(function (j) {
                     // Add half the grid spacing from latitude (farther north)
-                    return (j + (gridres.y * 0.5));
+                    return (j + (gridxy.y * 0.5));
                 }))[1];
             },
 
-            'width': Math.abs(proj([gridres.x, 0])[0] - proj([0, 0])[0]),
+            'width': Math.abs(proj([gridxy.x, 0])[0] - proj([0, 0])[0]),
 
-            'height': Math.abs(proj([0, gridres.y])[1] - proj([0, 0])[1]),
+            'height': Math.abs(proj([0, gridxy.y])[1] - proj([0, 0])[1]),
 
             'class': 'point'
         };
@@ -344,7 +350,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         // http://en.wikipedia.org/wiki/Mercator_projection#Scale_factor
         if (this._projId === 'mercator') {
             attrs.height = function (d, i) {
-                return scaling(grid[i][1]) * Math.abs(proj([0, gridres.y])[1] - proj([0, 0])[1]);
+                return scaling(grid[i][1]) * Math.abs(proj([0, gridxy.y])[1] - proj([0, 0])[1]);
             };
         }
 
@@ -495,6 +501,13 @@ Ext.define('Flux.view.D3GeographicMap', {
         this._legend.yAxis = d3.svg.axis()
             .scale(this._legend.yScale)
             .orient('right');
+
+        // Add the empty legend units text element
+        this.panes.legend.selectAll('.units')
+            .data([''])
+            .enter()
+            .append('text')
+            .attr('class', 'units');
 
         this.isDrawn = false;
 
@@ -705,6 +718,23 @@ Ext.define('Flux.view.D3GeographicMap', {
     },
 
     /**
+        Toggles on/off the display of the legend's measurement units.
+        @param  state   {Boolean}
+        @param  update  {Boolean}
+        @return         {Flux.view.D3GeographicMap}
+     */
+    toggleLegendUnits: function (state, update) {
+        update = (update === true); // Default to false
+        this._showLegendUnits = state;
+
+        if (update) {
+            this.updateLegend();
+        }
+
+        return this;
+    },
+
+    /**
         Draws again the visualization features of the map by updating their
         SVG attributes. Accepts optional D3 selection which it will style.
         @param  selection   {d3.selection}
@@ -784,6 +814,15 @@ Ext.define('Flux.view.D3GeographicMap', {
         var s = 0.025 * this.svg.attr('width'); // Length on a side of the legend's bins
         var colors = this._scale.range();
 
+        // Add on the measurement units for the data values or nothing
+        if (this._showLegendUnits) {
+            if (this.getMetadata().get('units')) {
+                units = this.getMetadata().get('units').values || '';
+            }
+        } else {
+            units = '';
+        }
+
         // Subtract the header width from the legend's y-offset so that it
         //  is displaced relative to the bottom of the Panel's header, not the 
         //  top of the Panel's header
@@ -839,18 +878,8 @@ Ext.define('Flux.view.D3GeographicMap', {
                 'class': 'bin'
             });
 
-        this.panes.legend.selectAll('.units').remove();
         this.panes.legend.selectAll('.units')
-            .data(Ext.Function.bind(function () {
-                // Add on the measurement units for the data values or nothing
-                if (this.getMetadata().get('units')) {
-                    return [this.getMetadata().get('units').values || ''];
-                }
-
-                return [''];
-            }, this)())
-            .enter()
-            .append('text')
+            .data([units])
             .text(function (d) {
                 return Ext.String.htmlDecode(d);
             })

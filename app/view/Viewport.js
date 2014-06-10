@@ -226,16 +226,6 @@ Ext.define('Flux.view.Viewport', {
             id: 'content',
             xtype: 'panel',
             border: false,
-            items: [{
-                xtype: 'd3geomap',
-                title: 'Single Map',
-                anchor: '100% 80%',
-                enableZoomControls: true,
-                enableTransitions: true
-            }, {
-                xtype: 'd3lineplot',
-                anchor: '100% 20%'
-            }],
             layout: {
                 type: 'anchor',
                 reserveScrollbar: false
@@ -251,7 +241,12 @@ Ext.define('Flux.view.Viewport', {
                     xtype: 'tbitem',
                     width: 150,
                     height: 45,
-                    html: '<a href="http://mtu.edu"><img src="/flux-client/resources/MTRI_logo_dark_bg.png" /></a>'
+                    html: '<a href="http://dge.stanford.edu/"><img src="/flux-client/resources/CIS_logo.png" /></a>'
+                }, {
+                    xtype: 'tbitem',
+                    width: 150,
+                    height: 45,
+                    html: '<a href="http://mtri.org"><img src="/flux-client/resources/MTRI_logo_dark_bg.png" /></a>'
                 }]
             }
         }, {

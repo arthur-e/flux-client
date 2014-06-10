@@ -78,6 +78,10 @@ Ext.define('Flux.controller.UserExperience', {
 
             'sourcepanel fieldset': {
                 afterrender: this.initFieldsets
+            },
+
+            'viewport #content': {
+                beforerender: this.initContent
             }
 
         });
@@ -188,6 +192,37 @@ Ext.define('Flux.controller.UserExperience', {
             fieldset.enable();
         } else {
             fieldset.disable();
+        }
+    },
+
+    /**
+        Initializes the #content panel; determines which view(s) are drawn
+        initially.
+        @param  panel   {Ext.panel.Panel}   The #content panel
+     */
+    initContent: function (panel) {
+        var opts = this.getUserSelections();
+
+        if (opts.showLinePlot) {
+            panel.add([{
+                xtype: 'd3geomap',
+                title: 'Single Map',
+                anchor: '100% 80%',
+                enableZoomControls: true,
+                enableTransitions: true
+            }, {
+                xtype: 'd3lineplot',
+                anchor: '100% 20%'
+            }]);
+
+        } else {
+            panel.add([{
+                xtype: 'd3geomap',
+                title: 'Single Map',
+                anchor: '100% 100%',
+                enableZoomControls: true,
+                enableTransitions: true
+            }]);
         }
     },
 

@@ -109,6 +109,14 @@ Ext.define('Flux.view.D3LinePlot', {
             .x(function (d) { return x(d[0]); })
             .y(function (d) { return y(d[1]); });
 
+        this.panes.plot.selectAll('.series')
+            .data([0])
+            .enter()
+            .append('path')
+            .attr({
+                'class': 'series'
+            });
+
         t0 = this.panes.plot.transition().duration(250);
         t1 = t0.transition().duration(250);
 
@@ -150,7 +158,7 @@ Ext.define('Flux.view.D3LinePlot', {
         TODO This implementation has errors.
      */
     clear: function () {
-        this.panes.plot.selectAll('.series').attr('d', undefined);
+        this.panes.plot.selectAll('.series').remove();
         return this;
     },
 
@@ -317,14 +325,6 @@ Ext.define('Flux.view.D3LinePlot', {
             .attr('class', 'slice');
 
         // Plot line ///////////////////////////////////////////////////////////
-        this.panes.plot.selectAll('.series')
-            .data([0])
-            .enter()
-            .append('path')
-            .attr({
-                'class': 'series'
-            });
-
         this.panes.plot.selectAll('.trend')
             .data([0])
             .enter()

@@ -142,29 +142,41 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return     {Flux.view.D3GeographicMap}
      */
     addListeners: function (sel) {
+        var proj = this.getProjection();
         var view = this;
 
         sel = sel || this.panes.overlay.selectAll('.point');
         sel.on('mouseover', function (d) {
             var p = view.getMetadata().get('precision');
-            var c = d3.mouse(view.svg[0][0]);
+            var m = d3.mouse(view.svg[0][0]);
+            var c = [
+                this.attributes.x.value,
+                this.attributes.y.value
+            ];
+
+            // Need to add half the grid spacing as this was subtracted to obtain
+            //  the upper-left corner of the grid cell
+            var ll = view.getMetadata().calcHalfOffsetCoordinates(proj.invert(c));
+
             if (Ext.isEmpty(d)) {
                 return;
             }
+
+            // Heads-up-display
             view.updateDisplay([{
                 id: 'tooltip',
-                text: d.toFixed(p)
+                text: Ext.String.format('{0} @({1},{2})', d.toFixed(p),
+                    ll[0].trim('00'), ll[1].trim('00'))
             }]);
+
+            // Near-cursor tooltip
             view.panes.tooltip.selectAll('.tip')
                 .text(d.toFixed(p))
                 .attr({
-                    'x': c[0] + 20,
-                    'y': c[1] + 30
-                });
-            view.fireEventArgs('mouseover', [view, [
-                this.attributes.x.value,
-                this.attributes.y.value
-            ], d]);
+                    'x': m[0] + 20,
+                    'y': m[1] + 30
+                })
+            view.fireEventArgs('mouseover', [view, m, d]);
         });
 
         sel.on('mouseout', function () {

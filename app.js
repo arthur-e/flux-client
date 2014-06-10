@@ -27,6 +27,13 @@ Ext.application({
             '&sup2;': '²'
         });
 
+        // Polyfills ///////////////////////////////////////////////////////////
+        // A more Pythonic trim that accepts extra characters
+        String.prototype.trim = function (t) {
+            t = t || '';
+            return this.replace(RegExp('^[' + t + '\\s]+|[' + t + '\\s]+$', ['g']), '');
+        };
+
         // Overrides ///////////////////////////////////////////////////////////
         Ext.override(Ext.form.field.ComboBox, {
             stateEvents: ['select']

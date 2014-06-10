@@ -824,6 +824,10 @@ Ext.define('Flux.controller.UserInteraction', {
         var step = Ext.Array.min(meta.getTimeOffsets());
         var params;
 
+        if (!this.getLinePlot()) {
+            return;
+        }
+
         // Need to add half the grid spacing as this was subtracted to obtain
         //  the upper-left corner of the grid cell
         geom = meta.calcHalfOffsetCoordinates(geom);
@@ -842,18 +846,14 @@ Ext.define('Flux.controller.UserInteraction', {
             params.interval = 'monthly';
         }
 
-        if (this.getLinePlot()) {
-            this.getLinePlot().getEl().mask('Loading...');
-        }
+        this.getLinePlot().getEl().mask('Loading...');
 
         Ext.Ajax.request({
             method: 'GET',
             url: Ext.String.format('/flux/api/scenarios/{0}/t.json', meta.getId()),
             params: params,
             callback: function () {
-                if (this.getLinePlot()) {
-                    this.getLinePlot().unmask();
-                }
+                this.getLinePlot().unmask();
             },
             failure: function (response) {
                 Ext.Msg.alert('Request Error', response.responseText);
@@ -864,7 +864,8 @@ Ext.define('Flux.controller.UserInteraction', {
 
                 this.getLinePlot().addSeries(series,
                     Ext.String.format('{0} {1} of {1} at {2}, {3}',
-                        params.interval, params.aggregate, geom[0], geom[1]));
+                        params.interval, params.aggregate,
+                        geom[0].trim('00'), geom[1].trim('00')));
             },
             scope: this
         });

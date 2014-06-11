@@ -215,8 +215,17 @@ Ext.define('Flux.view.Viewport', {
             border: true,
             width: '20%',
             items: [{
-                xtype: 'sourcepanel',
-                itemId: 'single-map'
+                xtype: 'tabbedpanel',
+                itemId: 'single-map',
+                activeTab: 0,
+                items: [{
+                    xtype: 'sourcepanel',
+                    title: 'Raster'
+                }, {
+                    xtype: 'overlayspanel',
+                    title: 'Overlays',
+                    disabled: true//TODO
+                }]
             }, {
                 xtype: 'sourcesgridpanel',
                 itemId: 'coordinated-view'
@@ -258,7 +267,7 @@ Ext.define('Flux.view.Viewport', {
             border: true,
             width: '20%',
             items: {
-                xtype: 'configpanel',
+                xtype: 'tabbedpanel',
                 items: [{
                     xtype: 'symbology',
                     title: 'Symbology'

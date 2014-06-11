@@ -1,4 +1,4 @@
 Ext.define('Flux.model.Scenario', {
     extend: 'Ext.data.Model',
-    fields: ['_id', 'title']
+    fields: ['_id', 'title', 'gridded']
 });

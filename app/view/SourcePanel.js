@@ -41,6 +41,12 @@ Ext.define('Flux.view.SourcePanel', {
             '</tpl>'
         ].join('')),
         listeners: {
+            collapse: function () {
+                this.store.clearFilter(true);
+            },
+            expand: function () {
+                this.store.filter('gridded', true);
+            },
             render: function () {
                 this.bindStore(Ext.StoreManager.get('scenarios'));
             },
@@ -183,12 +189,6 @@ Ext.define('Flux.view.SourcePanel', {
             queryMode: 'local',
             disabled: true
         }]
-
-    }, {
-        xtype: 'displayfield',
-        labelStyle: 'font-weight:normal;color:#444;',
-        labelSeparator: '',
-        fieldLabel: 'Note: Aggregation or differencing requires that the <b>Statistics from...</b> setting be set to <b>Current Data Frame</b>.'
 
     }]
 });

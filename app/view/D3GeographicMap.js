@@ -176,6 +176,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                     'x': m[0] + 20,
                     'y': m[1] + 30
                 })
+
             view.fireEventArgs('mouseover', [view, c, d]);
         });
 
@@ -395,6 +396,8 @@ Ext.define('Flux.view.D3GeographicMap', {
      */
     highlightMapLocation: function (coords) {
         var i = this.getRasterGrid().getCoordIndex(coords);
+
+        console.log('highlightMapLocation()', coords);//FIXME
 
         if (i < 0 || i > this._model.get('features').length) {
             return;

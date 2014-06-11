@@ -21,12 +21,12 @@ Ext.define('Flux.Application', {
     extend: 'Ext.app.Application',
 
     views: [
-        'ConfigurationPanel',
         'D3Panel',
         'D3GeographicMap',
         'D3LinePlot',
         'FormPanel',
         'MapSettings',
+        'OverlaysPanel',
         'SidePanel',
         'SourcePanel',
         'SourcesGridPanel',

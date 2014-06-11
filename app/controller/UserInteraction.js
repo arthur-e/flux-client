@@ -89,6 +89,10 @@ Ext.define('Flux.controller.UserInteraction', {
                 plotclick: this.onPlotClick
             },
 
+            'field[name=overlay]': {
+                change: this.onOverlayChange
+            },
+
             'field[name=source]': {
                 change: this.onSourceChange
             },
@@ -804,10 +808,9 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // Initialize the values of the domain bounds and threshold sliders
         Ext.each(this.getSymbology().query('enumslider'), function (cmp) {
-            cmp.setBounds([
-                metadata.get('stats').values.min,
-                metadata.get('stats').values.max
-            ]);
+            var s = metadata.get('stats');
+            var v = s.values || s.value;
+            cmp.setBounds([v.min, v.max]);
         });
     },
 
@@ -870,6 +873,39 @@ Ext.define('Flux.controller.UserInteraction', {
             scope: this
         });
     },
+
+    /** TODO
+        Handles a change in the data "overlay" from a ComboBox configured for
+        selecting from among sources (e.g. scenarios, model runs, etc.).
+        @param  f       {Ext.form.field.ComboBox}
+        @param  source  {String}
+        @param  last    {String}
+     */
+    onOverlayChange: function (f, source, last) {
+        var container = f.up('panel');
+
+        if (Ext.isEmpty(source) || source === last) {
+            return;
+        }
+
+        // Metadata ////////////////////////////////////////////////////////////
+        Ext.Ajax.request({
+            method: 'GET',
+            url: '/flux/api/scenarios.json',
+            params: {
+                scenario: source
+            },
+            callback: function (o, s, response) {
+                var metadata = Ext.create('Flux.model.Metadata',
+                    Ext.JSON.decode(response.responseText));
+
+                this.propagateMetadata(container, metadata);
+            },
+
+            scope: this
+        });
+    },
+
 
     /**
         Handles a change in the data "source" from a ComboBox configured for

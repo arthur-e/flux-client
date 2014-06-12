@@ -133,45 +133,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                     }, {
                         itemId: 'btn-save-image',
                         iconCls: 'icon-disk',
-                        tooltip: 'Save Image',
-                        listeners: {
-                            click: function () {
-                                var html, w;
-
-                                // Encode as HTML entities the UTF-8 characters
-                                if (view._legend) {
-                                    view.toggleLegendUnitsEncoding(true);
-                                }
-
-                                // Capture SVG data as a String
-                                html = Ext.String.htmlEncode(view.svg
-                                    .attr('version', 1.1)
-                                    .attr('xmlns', 'http://www.w3.org/2000/svg')
-                                    .node().parentNode.innerHTML);
-
-                                w = Ext.create('Ext.window.Window', {
-                                    title: view._display,
-                                    width: Number(view.svg.attr('width')),
-                                    height: Number(view.svg.attr('height')),
-                                    items: {
-                                        xtype: 'component',
-                                        id: 'd3download',
-                                        autoEl: 'img'
-                                    }
-                                }).show();
-
-                                // Encode it as base 64 image data
-                                d3.select('#d3download')
-                                    .attr('src', 'data:image/svg+xml;base64,'
-                                        + window.btoa(html));
-
-                                // Turn back on display of UTF-8 characters
-                                if (view._legend) {
-                                    view.toggleLegendUnitsEncoding(false);
-                                }
-
-                            }
-                        }
+                        tooltip: 'Save Image'
                     }]
                 }), 0);
             }
@@ -490,7 +452,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                 'class': 'filler',
                 'width': width,
                 'height': height,
-                'fill': this.bodyStyle.backgroundColor,
+                'fill': 'none',
                 'x': 0,
                 'y': 0
             })
@@ -792,19 +754,23 @@ Ext.define('Flux.view.D3GeographicMap', {
     },
 
     /**
-        Toggles on/off the display of the legend's measurement units.
+        Toggles on/off the HTML encoding of the legend's units; necessary to
+        encode the characters before serializing to a PNG.
         @param  encode  {Boolean}
         @return         {Flux.view.D3GeographicMap}
      */
     toggleLegendUnitsEncoding: function (encode) {
         this.panes.legend.selectAll('.units')
-            .text(function (d) {
+            .text(Ext.Function.bind(function (d) {
                 if (encode) {
-                    return Ext.String.htmlEncode(d);
+                    return Ext.String.htmlEncode(this._legendUnitsText || d)
+                        .replace(/&mu;/, 'u')
+                        .replace(/&sup2;/, '^2');
                 }
 
+                this._legendUnitsText = d;
                 return Ext.String.htmlDecode(d);
-            });
+            }, this));
 
         return this;
     },

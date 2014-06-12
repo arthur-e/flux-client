@@ -89,6 +89,10 @@ Ext.define('Flux.controller.UserInteraction', {
                 plotclick: this.onPlotClick
             },
 
+            'd3geomap #btn-save-image': {
+                click: this.onSaveImage
+            },
+
             'field[name=overlay]': {
                 change: this.onOverlayChange
             },
@@ -906,6 +910,69 @@ Ext.define('Flux.controller.UserInteraction', {
         });
     },
 
+    /**
+        Saves an image out as an SVG file.
+        @param  btn {Ext.button.Button}
+     */
+    onSaveImage: function (btn) {
+        var view = btn.up('d3geomap');
+        var html, win, svgsrc;
+        var w = Number(view.svg.attr('width'));
+        var h = Number(view.svg.attr('height'));
+
+        // Encode as HTML entities the UTF-8 characters
+        if (view._legend) {
+            view.toggleLegendUnitsEncoding(true);
+        }
+
+        // Capture SVG data as a String
+        html = Ext.String.htmlEncode(view.svg
+            .attr('version', 1.1)
+            .attr('xmlns', 'http://www.w3.org/2000/svg')
+            .node().parentNode.innerHTML);
+
+//        // Add the external CSS; must be on the web (fully-qualified link)
+//        html = '<?xml-stylesheet type="text/css" href="'
+//            + window.location.href + '/resources/d3.css" ?>'
+//            + html;
+
+        svgsrc = 'data:image/svg+xml;base64,' + window.btoa(html);
+
+        var win = Ext.create('Ext.window.Window', {
+            title: view._display,
+            width: w,
+            height: h,
+            items: {
+                xtype: 'component',
+                id: 'canvas',
+                autoEl: 'canvas'
+            },
+            listeners: {
+                afterrender: function () {
+                    var canvas = d3.select('#canvas')[0][0];
+                    canvas.width = w;
+                    canvas.height = h;
+                    var context = canvas.getContext('2d');
+                    var image = new Image;
+                    image.src = svgsrc;
+
+                    image.onload = function () {
+                        context.drawImage(image, 0, 0);
+                        var a = document.createElement('a');
+                        a.download = 'flux.png';
+                        a.href = canvas.toDataURL('image/png');
+                        a.click();
+                    };
+
+                    // Turn back on display of UTF-8 characters
+                    if (view._legend) {
+                        view.toggleLegendUnitsEncoding(false);
+                    }
+                }
+            }
+        }).show();
+
+    },
 
     /**
         Handles a change in the data "source" from a ComboBox configured for

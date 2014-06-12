@@ -87,6 +87,10 @@
 .icon-control-left { background-image: url(bullet_arrow_left_2.png); }
 .icon-control-right,
 .icon-control-left { background-position: -4px -3px; }
+.icon-disk {
+    background-image: url(disk.png);
+    background-position: -3px -3px;
+}
 .icon-link {
     background-image: url(link.png);
     background-size: 25px;

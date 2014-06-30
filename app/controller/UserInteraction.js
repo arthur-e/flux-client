@@ -916,25 +916,67 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     onSaveImage: function (btn) {
         var view = btn.up('d3geomap');
-        var html, win, svgsrc;
+        var html, node, win, svgsrc;
         var w = Number(view.svg.attr('width'));
         var h = Number(view.svg.attr('height'));
+        var i, j;
+        var defsEl = view.svg.select('defs');
+        var styleEl = defsEl.select('style');
+        var styles = '';
+        var styleSheets = document.styleSheets;
+
+        function proc (ss) {
+            if (ss.cssRules) {
+                for (j = 0; j < ss.cssRules.length; j += 1) {
+                    var rule = ss.cssRules[j];
+                    if (rule.type === 3) {
+                        // Import Rule
+                        proc(rule.styleSheet);
+                    } else {
+                        // Hack for Illustrator crashing on descendent selectors
+                        if (rule.selectorText) {
+                            if (rule.selectorText.indexOf(">") === -1) {
+                                styles += "\n" + rule.cssText;
+                            }
+                        }
+                    }
+                }
+            }
+        };
 
         // Encode as HTML entities the UTF-8 characters
         if (view._legend) {
             view.toggleLegendUnitsEncoding(true);
         }
 
-        // Capture SVG data as a String
-        html = Ext.String.htmlEncode(view.svg
+        // Allow for previously defined <defs> and <style> elements to be used
+        if (defsEl.empty()) {
+            defsEl = document.createElement('defs');
+        }
+        if (styleEl.empty()) {
+            styleEl = document.createElement('style');
+        }
+
+        // Get only the rules from d3.css
+        for (i = 0; i < styleSheets.length; i += 1) {
+            if (Ext.String.endsWith(styleSheets[i].href, 'd3.css')) {
+                proc(styleSheets[i]);
+            }
+        }
+
+        node = view.svg
             .attr('version', 1.1)
             .attr('xmlns', 'http://www.w3.org/2000/svg')
-            .node().parentNode.innerHTML);
+            .node();
 
-//        // Add the external CSS; must be on the web (fully-qualified link)
-//        html = '<?xml-stylesheet type="text/css" href="'
-//            + window.location.href + '/resources/d3.css" ?>'
-//            + html;
+        // Inset the <defs> element; set 'type' attribute on <style> element
+        node.insertBefore(defsEl, node.firstChild);
+        defsEl.appendChild(styleEl);
+        styleEl.setAttribute('type', 'text/css');
+
+        // Capture SVG data as a String
+        html = Ext.String.htmlEncode(node.parentNode.innerHTML)
+            .replace('</style>', '<![CDATA[' + styles + ']]></style>');
 
         svgsrc = 'data:image/svg+xml;base64,' + window.btoa(html);
 
@@ -942,6 +984,9 @@ Ext.define('Flux.controller.UserInteraction', {
             title: view._display,
             width: w,
             height: h,
+            bodyStyle: {
+                backgroundColor: '#aaa'
+            },
             items: {
                 xtype: 'component',
                 id: 'canvas',

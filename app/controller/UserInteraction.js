@@ -984,6 +984,9 @@ Ext.define('Flux.controller.UserInteraction', {
             title: view._display,
             width: w,
             height: h,
+            style: {
+                display: 'none' // Don't actually show the Window; just use to render <canvas>
+            },
             bodyStyle: {
                 backgroundColor: '#aaa'
             },
@@ -1013,9 +1016,11 @@ Ext.define('Flux.controller.UserInteraction', {
                     if (view._legend) {
                         view.toggleLegendUnitsEncoding(false);
                     }
+
                 }
             }
-        }).show();
+        // Eliminate the Window instance after the file is saved
+        }).show().close();
 
     },
 

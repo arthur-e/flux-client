@@ -151,7 +151,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         var proj = this.getProjection();
         var view = this;
 
-        sel = sel || this.panes.overlay.selectAll('.point');
+        sel = sel || this.panes.raster.selectAll('.point');
         sel.on('mouseover', function (d) {
             var p = view.getMetadata().get('precision');
             var m = d3.mouse(view.svg[0][0]);
@@ -210,7 +210,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return {Flux.view.D3GeographicMap}
      */
     clear: function () {
-        this.panes.overlay.selectAll('.point').remove();
+        this.panes.raster.selectAll('.point').remove();
         this.isDrawn = false;
         return this;
     },
@@ -251,7 +251,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         zoom = (zoom === true);
 
         // Sets the enter or update selection's data
-        sel = this.panes.overlay.selectAll('.point')
+        sel = this.panes.raster.selectAll('.point')
             .data(rast.get('features'), function (d, i) {
                 return i; // Use the cell index as the key
             });
@@ -466,7 +466,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         this.panes = {
             basemap: this.wrapper.append('g').attr('class', 'pane')
         };
-        this.panes.overlay = this.wrapper.append('g').attr('class', 'pane overlay');
+        this.panes.raster = this.wrapper.append('g').attr('class', 'pane raster');
         this.panes.hud = this.svg.append('g').attr('class', 'pane hud');
         this.panes.legend = this.svg.append('g').attr('class', 'pane legend');
         this.panes.tooltip = this.svg.append('g').attr('class', 'pane tooltip');
@@ -671,8 +671,8 @@ Ext.define('Flux.view.D3GeographicMap', {
     setScale: function (scale) {
         this._scale = scale;
 
-        if (this.panes.overlay) {
-            this.update(this.panes.overlay.selectAll('.point'));
+        if (this.panes.raster) {
+            this.update(this.panes.raster.selectAll('.point'));
             this.updateLegend();
         }
 
@@ -801,7 +801,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             return this;
         }
 
-        this.panes.overlay.selectAll('.point')
+        this.panes.raster.selectAll('.point')
         .attr(this.getOverlayAttrs());
 
         return this;

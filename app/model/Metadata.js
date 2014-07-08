@@ -69,22 +69,22 @@ Ext.define('Flux.model.Metadata', {
         @return {Array}
      */
     getAllDates: function () {
-        var bkpts, dates;
+        var dates;
         var datesArray = [];
+        var bkpts = this.getTimeOffsets();
 
         if (!Ext.isEmpty(this._dates)) {
             return this._dates;
+        }
+
+        if (Ext.isEmpty(bkpts)) {
+            return this.get('dates');
         }
 
         dates = this.get('dates');
 
         // Start with 1st date
         datesArray.push(dates[0]);
-
-        bkpts = this.get('steps');
-        if (Ext.isEmpty(this.get('steps'))) {
-            bkpts = this.get('spans');
-        }
 
         Ext.each(bkpts, function (step, i) {
             var d = dates[i].clone();
@@ -140,12 +140,10 @@ Ext.define('Flux.model.Metadata', {
         @return {d3.scale.quantile}
      */
     getQuantileScale: function (config, parameter) {
-        var stats;
         var sigmas = config.sigmas || 2;
         var tendency = config.tendency || 'mean';
         var domain = config.domain; // Default to defined bounds
-
-        stats = this.get('stats')[parameter || 'values'];
+        var stats = this.getSummaryStats();
 
         if (config.autoscale) { // If no defined bounds...
             domain = [
@@ -163,17 +161,73 @@ Ext.define('Flux.model.Metadata', {
 
     },
 
+    /**TODO
+     */
+    getSummaryStats: function (p) {
+        var stats;
+
+        Ext.each([p, 'values', 'value'], function (k) {
+            // If it can be found, return false to stop iteration
+            stats = this.get('stats')[k];
+            return !stats;
+        }, this);
+
+        return stats;
+    },
+
     /**
         Returns the Array of time steps or spans, depending on which is used;
         enforces the policy of preferring steps over spans (checks for steps first).
         @return {Array}
      */
     getTimeOffsets: function () {
-        if (Ext.isEmpty(this.get('steps'))) {
+        if (!Ext.isEmpty(this.get('steps'))) {
+            return this.get('steps');
+        }
+        if (!Ext.isEmpty(this.get('spans'))) {
             return this.get('spans');
         }
 
-        return this.get('steps');
+        return; // Or return undefined
+    },
+
+    /**TODO
+     */
+    getTimes: function (forDate) {
+        var i, mins;
+        var step = Ext.Array.min(this.getTimeOffsets() || []);
+        var d0 = moment.utc(Ext.Array.min(this.get('dates')));
+        var times = [];
+        var m = 0;
+
+        // If a Date is given, return the times available for that date
+        if (forDate) {
+            forDate = moment.utc(forDate);
+            times = Ext.Array.map(
+                Ext.Array.filter(
+                    Ext.Array.map(this.get('dates'), function (d) {
+                        return moment.utc(d);
+
+                    }), function (d) {
+                    return (forDate.format('YYYYMMDD') === d.format('YYYYMMDD'));
+
+                }), function (d) {
+                return d.format('HH:mm');
+            });
+
+        // Otherwise, we must use the minimum step/span to interpolate times
+        } else if (!Ext.isEmpty(step)) {
+            // Calculate the minutes between each datum
+            mins = (step / 60);
+            for (i = 0; i < (1440 / mins); i += 1) {
+                times.push([
+                    d0.clone().add(m, 'minutes').format('HH:mm')
+                ]);
+                m += mins;
+            }
+        }
+
+        return times;
     },
 
     /**

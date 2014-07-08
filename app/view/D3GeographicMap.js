@@ -782,7 +782,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return             {Flux.view.D3GeographicMap}
      */
     update: function (selection) {
-        var addit = -this.getMetadata().get('stats').values[this._tendency];
+        var addit = -this.getMetadata().getSummaryStats()[this._tendency];
 
         if (selection) {
             selection.attr('fill', Ext.bind(function (d) {

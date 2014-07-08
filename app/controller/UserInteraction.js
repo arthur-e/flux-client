@@ -110,6 +110,10 @@ Ext.define('Flux.controller.UserInteraction', {
                 expand: this.uncheckAggregates
             },
 
+            'overlayspanel datefield': {
+                afterselect: this.onOverlayDateSelection
+            },
+
             'sourcesgridpanel': {
                 beforeedit: this.onSourceGridEntry
             },
@@ -385,6 +389,9 @@ Ext.define('Flux.controller.UserInteraction', {
 
     /**
         Makes a requests for a time series based on the passed Metadata instance.
+        The time series to be returned is an aggregate (coarser) time series
+        than the underlying data may represent, particularly if no "steps" or
+        "spans" are indicated in the Metadata.
         @param  view        {Flux.view.D3LinePlot}
         @param  metadata    {Flux.model.Metadata}
      */
@@ -645,7 +652,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  value   {String}
      */
     onDateTimeSelection: function (field, value) {
-        var dates, theDate, view;
+        var dates, steps, theDate, view;
         var editor = field.up('roweditor');
         var values = field.up('panel').getForm().getValues();
 
@@ -667,9 +674,12 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // If the data are less than daily in step/span and no time is yet
         //  specified, do nothing
-        if (Ext.Array.min(view.getMetadata().getTimeOffsets()) < 86400
-                && Ext.isEmpty(values.time)) {
-            return;
+        steps = view.getMetadata().getTimeOffsets();
+        if (!Ext.isEmpty(steps)) {
+            if (Ext.Array.min(steps) < 86400
+                    && Ext.isEmpty(values.time)) {
+                return;
+            }
         }
 
         dates = view.getMetadata().get('dates');
@@ -878,7 +888,7 @@ Ext.define('Flux.controller.UserInteraction', {
         });
     },
 
-    /** TODO
+    /**
         Handles a change in the data "overlay" from a ComboBox configured for
         selecting from among sources (e.g. scenarios, model runs, etc.).
         @param  f       {Ext.form.field.ComboBox}
@@ -887,9 +897,18 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     onOverlayChange: function (f, source, last) {
         var container = f.up('panel');
+        var editor = f.up('roweditor');
 
         if (Ext.isEmpty(source) || source === last) {
             return;
+        }
+
+        if (editor) {
+            view = editor.editingPlugin.getCmp().getView().getSelectionModel()
+                .getSelection()[0].get('view');
+
+        } else {
+            view = this.getMap();
         }
 
         // Metadata ////////////////////////////////////////////////////////////
@@ -903,10 +922,36 @@ Ext.define('Flux.controller.UserInteraction', {
                 var metadata = Ext.create('Flux.model.Metadata',
                     Ext.JSON.decode(response.responseText));
 
+                this.bindMetadata(view, metadata);
                 this.propagateMetadata(container, metadata);
             },
 
             scope: this
+        });
+    },
+
+    /** TODO
+     */
+    onOverlayDateSelection: function (f) {
+        var editor = f.up('roweditor');
+        var values = f.up('panel').getForm().getValues();
+        var view;
+
+        if (Ext.isEmpty(values.start) || Ext.isEmpty(values.end)) {
+            return;
+        }
+
+        if (editor) {
+            view = editor.editingPlugin.getCmp().getView().getSelectionModel()
+                .getSelection()[0].get('view');
+
+        } else {
+            view = this.getMap();
+        }
+
+        this.fetchMap(view, {
+            start: moment.utc(values.start).toISOString(),
+            end: moment.utc(values.end).toISOString()
         });
     },
 
@@ -1120,6 +1165,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  last    {String}
      */
     onSourceDifferenceChange: function (field, source, last) {
+        var container = field.up('fieldset');
         var metadata;
 
         if (Ext.isEmpty(source) || source === last) {
@@ -1129,7 +1175,7 @@ Ext.define('Flux.controller.UserInteraction', {
         // Metadata ////////////////////////////////////////////////////////////
         metadata = this.getStore('metadata').getById(source);
         if (metadata) {
-            this.propagateMetadata(field.up('fieldset'), metadata);
+            this.propagateMetadata(container, metadata);
 
         } else {
             Ext.Ajax.request({
@@ -1144,7 +1190,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
                     this.getStore('metadata').add(meta);
 
-                    this.propagateMetadata(field.up('fieldset'), meta);
+                    this.propagateMetadata(container, meta);
                 },
 
                 scope: this
@@ -1277,58 +1323,58 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     propagateMetadata: function (container, metadata) {
         var fmt = 'YYYY-MM-DD';
-        var datePicks = container.query('datefield');
-        var timePicks = container.query('combo[valueField=time]');
+        var calendars = container.query('datefield');
+        var clocks = container.query('combo[valueField=time]');
         var dates = metadata.getDisabledDates(fmt);
+        var step = Ext.Array.min(metadata.getTimeOffsets() || []);
 
-        if (datePicks) {
-            Ext.each(datePicks, function (target) {
-                target.initDate = metadata.get('dates')[0].format(fmt);
-                target.reset();
-                target.setDisabledDates(['^(?!).*$']);
-                target.setDisabledDates(dates);
+        if (calendars) {
+            Ext.each(calendars, function (cal) {
+                var clock = cal.nextSibling('combo[valueField=time]');
+
+                cal.initDate = metadata.get('dates')[0].format(fmt);
+                cal.reset();
+                cal.setDisabledDates(['^(?!).*$']);
+                cal.setDisabledDates(dates);
 
                 // When date picker (calendar) is opened, show the first date                
-                target.on('expand', function () {
+                cal.on('expand', function () {
                     this.suspendEvent('change');
                     this.setRawValue(this.initDate);
                     this.resumeEvent('change');
-                }, target, {single: true});
+                }, cal, {single: true});
 
-                if (Ext.Array.min(metadata.getTimeOffsets()) < 86400) {
-                    target.on('change', function () {
-                        this.nextSibling().enable();
-                    }, target, {single: true});
+                // If no information about the interval between data is known...
+                if (!step && clock) {
+                    // Update the available times to choose from with each date chosen
+                    cal.on('change', function (f, date) {
+                        clock.reset();
+                        clock.bindStore(Ext.create('Ext.data.ArrayStore', {
+                            fields: ['time'],
+                            data: metadata.getTimes(date)
+                        }));
+                    });
+
+                // If data are sub-daily enable the TimeField
+                } else if (step < 86400) {
+                    cal.on('change', function () {
+                        clock.enable();
+                    }, cal, {single: true});
                 }
             });
 
         }
 
         //TODO Use the step/span indicated by the given date (from above)?
-        if (timePicks) {
+        if (clocks) {
             // For every Ext.form.field.Time found...
-            Ext.each(timePicks, function (target) {
-                var mins = (Ext.Array.min(metadata.getTimeOffsets()) / 60);
-
-                target.reset();
-                target.bindStore(Ext.create('Ext.data.ArrayStore', {
+            Ext.each(clocks, function (clock) {
+                clock.reset();
+                clock.bindStore(Ext.create('Ext.data.ArrayStore', {
                     fields: ['time'],
-                    data: (function () {
-                        var i;
-                        var d0 = moment.utc(Ext.Array.min(metadata.get('dates')));
-                        var times = [];
-                        var m = 0;
-                        for (i = 0; i < (1440 / mins); i += 1) {
-                            times.push([
-                                d0.clone().add(m, 'minutes').format('HH:mm')
-                            ]);
-                            m += mins;
-                        }
-                        return times;
-                    }())
+                    data: metadata.getTimes()
                 }));
-
-                target.disable();
+                clock.disable();
             });
         }
     },

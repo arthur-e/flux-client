@@ -101,7 +101,7 @@ Ext.define('Flux.controller.Animation', {
         }
     },
 
-    /**
+    /**TODO
         To be executed when the dataset (metadata) changes, this function
         calculates the default step size (e.g. an hour) and the number of steps
         (e.g. 3 steps == 3 hours) between each animation frame. The animation
@@ -109,7 +109,9 @@ Ext.define('Flux.controller.Animation', {
         @param  metadata    {Flux.model.Metadata}
      */
     enableAnimation: function (metadata) {
-        var c, d, s0, steps, stepSize;
+        var d, steps, stepSize;
+        var cmp = this.getSettingsMenu().down('field[name=stepSize]');
+        var offsets = metadata.getTimeOffsets();
 
         if (!metadata) {
             return;
@@ -117,58 +119,64 @@ Ext.define('Flux.controller.Animation', {
 
         this._metadata = metadata;
 
-        // Figure out the default size of step (e.g. an hour) and the number of
-        //  steps to take in each frame
-        s0 = metadata.getTimeOffsets()[0];
-        stepSize = this.calcStepOrSize(s0);
-        steps = this.calcStepOrSize(s0, stepSize);
-
         // Enable all the toolbar buttons related to animation
         Ext.each(this.getTopToolbar().query('button[cls=anim-btn]'), function (btn) {
             btn.enable();
         });
 
-        // Configure the Animation Settings ////////////////////////////////////
-        this.updateStepSelector(steps);
+        // Figure out the default size of step (e.g. an hour) and the number of
+        //  steps to take in each frame
+        if (Ext.isEmpty(offsets)) {
+            stepSize = steps = 1;
+            d = [[1, 'steps']];
+            cmp.disable();
 
-        c = this.getSettingsMenu().down('field[name=stepSize]');
-
-        // We can't reliably animate a time series that changes its time
-        //  interval, so disable the selection of a different time interval
-        if (metadata.getTimeOffsets().length > 1) {
-            d = [[s0, 'steps']];
-            c.disable();
         } else {
-            switch (stepSize) {
-                case 'days':
-                d = [
-                    ['days', 'day(s)']
-                ];
-                break;
+            stepSize = this.calcStepOrSize(offsets[0]);
+            steps = this.calcStepOrSize(offsets[0], stepSize);
 
-                case 'months':
-                d = [
-                    ['days', 'day(s)'],
-                    ['months', 'month(s)']
-                ];
-                break;
+            // We can't reliably animate a time series that changes its time
+            //  interval, so disable the selection of a different time interval
+            if (offsets.length > 1) {
+                d = [[offsets[0], 'steps']];
+                cmp.disable();
 
-                default:
-                d = [
-                    ['hours', 'hour(s)'],
-                    ['days', 'day(s)']
-                ];
+            } else {
+                switch (stepSize) {
+                    case 'days':
+                    d = [
+                        ['days', 'day(s)']
+                    ];
+                    break;
+
+                    case 'months':
+                    d = [
+                        ['days', 'day(s)'],
+                        ['months', 'month(s)']
+                    ];
+                    break;
+
+                    default:
+                    d = [
+                        ['hours', 'hour(s)'],
+                        ['days', 'day(s)']
+                    ];
+                }
             }
         }
 
+        // Removes and inserts the Ext.form.field.Number instance that represents
+        //  the number of steps to be taken in an animation frame
+        this.updateStepSelector(steps, Ext.isEmpty(offsets));
+
         // Create and bind a new store to hold the appropriate step sizes
-        c.bindStore(Ext.create('Ext.data.ArrayStore', {
+        cmp.bindStore(Ext.create('Ext.data.ArrayStore', {
             fields: ['stepSize', 'text'],
             data: d
         }));
 
         // Apply the default settings to the UI
-        c.setValue(stepSize);
+        cmp.setValue(stepSize);
 
         this._steps = steps;
         this._stepSize = stepSize;
@@ -277,15 +285,17 @@ Ext.define('Flux.controller.Animation', {
     /**
         Removes and inserts the Ext.form.field.Number instance that represents
         the number of steps to be taken in an animation frame.
-        @param  steps   {Number}
+        @param  steps       {Number}
+        @param  disabled    {Boolean}
      */
-    updateStepSelector: function (steps) {
+    updateStepSelector: function (steps, disabled) {
         var menu = this.getSettingsMenu();
         if (menu.query('field[name=steps]').length !== 0) {
             menu.remove('steps');
         }
         menu.insert(menu.items.length - 1, Ext.create('Ext.form.field.Number', {
             xtype: 'numberfield',
+            disabled: disabled,
             itemId: 'steps',
             name: 'steps',
             value: steps,

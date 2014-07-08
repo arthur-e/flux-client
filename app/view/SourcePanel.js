@@ -45,7 +45,7 @@ Ext.define('Flux.view.SourcePanel', {
                 this.store.clearFilter(true);
             },
             expand: function () {
-                this.store.filter('gridded', true);
+                //this.store.filter('gridded', true);FIXME
             },
             render: function () {
                 this.bindStore(Ext.StoreManager.get('scenarios'));

@@ -55,6 +55,7 @@ Ext.define('Flux.view.OverlaysPanel', {
             },
             select: function (c, value) {
                 this.setValue(moment(value).hours(0).minutes(0).toDate());
+                this.fireEventArgs('afterselect', [this]);
             }
         }
 
@@ -74,6 +75,7 @@ Ext.define('Flux.view.OverlaysPanel', {
             },
             select: function (c, value) {
                 this.setValue(moment(value).hours(23).minutes(59).toDate());
+                this.fireEventArgs('afterselect', [this]);
             }
         }
 

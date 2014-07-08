@@ -217,14 +217,13 @@ Ext.define('Flux.view.Viewport', {
             items: [{
                 xtype: 'tabbedpanel',
                 itemId: 'single-map',
-                activeTab: 0,
+                activeTab: 1,
                 items: [{
                     xtype: 'sourcepanel',
-                    title: 'Raster'
+                    title: 'Gridded'
                 }, {
                     xtype: 'overlayspanel',
-                    title: 'Overlays',
-                    disabled: true//TODO
+                    title: 'Vector Overlays'
                 }]
             }, {
                 xtype: 'sourcesgridpanel',

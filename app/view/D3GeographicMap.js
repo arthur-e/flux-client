@@ -267,8 +267,9 @@ Ext.define('Flux.view.D3GeographicMap', {
             });
 
         // Append a <rect> for every grid cell so long as the features haven't
-        //  been drawn before
-        if (!this.isDrawn) {
+        //  been drawn before or the layer is non-gridded
+        if (!this.isDrawn || !this.getMetadata().get('gridded')) {
+            sel.exit().remove();
             sel.enter().append('rect');
 
             // Add mouseover and mouseout event listeners
@@ -824,18 +825,32 @@ Ext.define('Flux.view.D3GeographicMap', {
         var addit = -this.getMetadata().getSummaryStats()[this._tendency];
 
         if (selection) {
-            selection.attr('fill', Ext.bind(function (d) {
-                if (Ext.isEmpty(d)) {
-                    return 'transparent';
-                }
 
-                // Rescale the data points subtracting the measure of central tendency
-                if (this._showAnomalies) {
-                    return this.getScale()(d + addit);
-                }
+            if (this.getMetadata().get('gridded')) {
+                selection.attr('fill', Ext.bind(function (d) {
+                    if (Ext.isEmpty(d)) {
+                        return 'transparent';
+                    }
 
-                return this.getScale()(d);
-            }, this));
+                    // Rescale the data points subtracting the measure of central tendency
+                    if (this._showAnomalies) {
+                        return this.getScale()(d + addit);
+                    }
+
+                    return this.getScale()(d);
+                }, this));
+
+            } else {
+                selection.attr('fill', Ext.bind(function (d) {
+                    // Rescale the data points subtracting the measure of central tendency
+                    if (this._showAnomalies) {
+                        return this.getScale()(d.properties.value + addit);
+                    }
+
+                    return this.getScale()(d.properties.value);
+                }, this));
+
+            }
 
             return this;
         }

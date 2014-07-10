@@ -293,9 +293,8 @@ Ext.define('Flux.controller.UserInteraction', {
 
                 ov = Ext.create('Flux.model.Overlay',
                     Ext.JSON.decode(response.responseText));
-                foo = ov;//FIXME
 
-                this.bindFeature(view, ov);
+                this.bindLayer(view, ov);
                 this.onMapLoad(ov);
             },
             failure: function (response) {
@@ -325,7 +324,7 @@ Ext.define('Flux.controller.UserInteraction', {
         //  request
         raster = view.store.getById(Ext.Object.toQueryString(params));
         if (raster) {
-            this.bindFeature(view, raster);
+            this.bindLayer(view, raster);
             this.onMapLoad(raster);
             return;
         }
@@ -347,7 +346,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 // Create a unique ID that can be used to find this grid
                 rast.set('_id', Ext.Object.toQueryString(opts.params));
 
-                this.bindFeature(view, rast);
+                this.bindLayer(view, rast);
                 this.onMapLoad(rast);
             },
             failure: function (response) {
@@ -532,7 +531,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  view    {Flux.view.D3Panel}
         @param  raster  {Flux.model.Raster}
      */
-    bindFeature: function (view, feat) {
+    bindLayer: function (view, feat) {
         var opts = this.getGlobalSettings();
 
         if (!Ext.isEmpty(feat.get('_id'))) {
@@ -810,7 +809,7 @@ Ext.define('Flux.controller.UserInteraction', {
                         g2.get('timestamp').format(view.timeFormat))
                 });
 
-                this.bindFeature(view, rast);
+                this.bindLayer(view, rast);
                 this.onMapLoad(rast);
             }, this));
 
@@ -868,6 +867,82 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
+        Handles a change in the data "overlay" from a ComboBox configured for
+        selecting from among sources (e.g. scenarios, model runs, etc.).
+        @param  f       {Ext.form.field.ComboBox}
+        @param  source  {String}
+        @param  last    {String}
+     */
+    onOverlayChange: function (f, source, last) {
+        var container = f.up('panel');
+        var editor = f.up('roweditor');
+        var metadata;
+
+        if (Ext.isEmpty(source) || source === last) {
+            return;
+        }
+
+        if (editor) {
+            view = editor.editingPlugin.getCmp().getView().getSelectionModel()
+                .getSelection()[0].get('view');
+
+        } else {
+            view = this.getMap();
+        }
+
+        // Metadata ////////////////////////////////////////////////////////////
+        metadata = this.getStore('metadata').getById(source);
+        if (metadata) {
+            this.bindMetadata(view, metadata);
+            this.propagateMetadata(container, metadata);
+
+        } else {
+            Ext.Ajax.request({
+                method: 'GET',
+                url: '/flux/api/scenarios.json',
+                params: {
+                    scenario: source
+                },
+                callback: function (o, s, response) {
+                    var metadata = Ext.create('Flux.model.Metadata',
+                        Ext.JSON.decode(response.responseText));
+
+                    this.bindMetadata(view, metadata);
+                    this.propagateMetadata(container, metadata);
+                    this.getStore('metadata').add(metadata);
+                },
+
+                scope: this
+            });
+        }
+    },
+
+    /** TODO
+     */
+    onOverlayDateSelection: function (f) {
+        var editor = f.up('roweditor');
+        var values = f.up('panel').getForm().getValues();
+        var view;
+
+        if (Ext.isEmpty(values.start) || Ext.isEmpty(values.end)) {
+            return;
+        }
+
+        if (editor) {
+            view = editor.editingPlugin.getCmp().getView().getSelectionModel()
+                .getSelection()[0].get('view');
+
+        } else {
+            view = this.getMap();
+        }
+
+        this.fetchOverlay(view, {
+            start: moment.utc(values.start).toISOString(),
+            end: moment.utc(values.end).toISOString()
+        });
+    },
+
+    /**
         Handles a click event on the D3GeographicMap instance. Initiaties a time
         series data request (to t.json endpoint) and plots the mean daily time
         series for the grid cell or geographic feature that was clicked.
@@ -877,7 +952,7 @@ Ext.define('Flux.controller.UserInteraction', {
     onPlotClick: function (view, coords) {
         var meta = view.getMetadata();
         var geom = view.getProjection().invert(Ext.Array.map(coords, Number));
-        var step = Ext.Array.min(meta.getTimeOffsets());
+        var step = Ext.Array.min(meta.getTimeOffsets());//TODO For overlays
         var params;
 
         if (!this.getLinePlot()) {
@@ -924,73 +999,6 @@ Ext.define('Flux.controller.UserInteraction', {
                         geom[0].trim('00'), geom[1].trim('00')));
             },
             scope: this
-        });
-    },
-
-    /**
-        Handles a change in the data "overlay" from a ComboBox configured for
-        selecting from among sources (e.g. scenarios, model runs, etc.).
-        @param  f       {Ext.form.field.ComboBox}
-        @param  source  {String}
-        @param  last    {String}
-     */
-    onOverlayChange: function (f, source, last) {
-        var container = f.up('panel');
-        var editor = f.up('roweditor');
-
-        if (Ext.isEmpty(source) || source === last) {
-            return;
-        }
-
-        if (editor) {
-            view = editor.editingPlugin.getCmp().getView().getSelectionModel()
-                .getSelection()[0].get('view');
-
-        } else {
-            view = this.getMap();
-        }
-
-        // Metadata ////////////////////////////////////////////////////////////
-        Ext.Ajax.request({
-            method: 'GET',
-            url: '/flux/api/scenarios.json',
-            params: {
-                scenario: source
-            },
-            callback: function (o, s, response) {
-                var metadata = Ext.create('Flux.model.Metadata',
-                    Ext.JSON.decode(response.responseText));
-
-                this.bindMetadata(view, metadata);
-                this.propagateMetadata(container, metadata);
-            },
-
-            scope: this
-        });
-    },
-
-    /** TODO
-     */
-    onOverlayDateSelection: function (f) {
-        var editor = f.up('roweditor');
-        var values = f.up('panel').getForm().getValues();
-        var view;
-
-        if (Ext.isEmpty(values.start) || Ext.isEmpty(values.end)) {
-            return;
-        }
-
-        if (editor) {
-            view = editor.editingPlugin.getCmp().getView().getSelectionModel()
-                .getSelection()[0].get('view');
-
-        } else {
-            view = this.getMap();
-        }
-
-        this.fetchOverlay(view, {
-            start: moment.utc(values.start).toISOString(),
-            end: moment.utc(values.end).toISOString()
         });
     },
 

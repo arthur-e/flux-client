@@ -122,10 +122,12 @@ Ext.define('Flux.view.Viewport', {
                         xtype: 'menuseparator'
                     }, {
                         text: 'Values displayed as:',
+                        disabled: true,//FIXME
                         cls: 'ui-menu-group-text',
                         plain: true
                     }, {
                         xtype: 'recheckitem',
+                        disabled: true,//FIXME
                         name: 'values',
                         checked: true,
                         stateful: true,
@@ -135,6 +137,7 @@ Ext.define('Flux.view.Viewport', {
                         hideOnClick: false
                     }, {
                         xtype: 'recheckitem',
+                        disabled: true,//FIXME
                         name: 'anomalies',
                         stateful: true,
                         stateId: 'displayAnomalies',

@@ -81,7 +81,7 @@ Ext.define('Flux.view.OverlaysPanel', {
 
     }, {
         xtype: 'slider',
-        disabled: true,
+        name: 'markerSize',
         fieldLabel: 'Marker width',
         anchor: '100%',
         value: 5,

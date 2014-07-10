@@ -115,6 +115,10 @@ Ext.define('Flux.controller.UserInteraction', {
                 afterselect: this.onOverlayDateSelection
             },
 
+            'overlayspanel slider[name=markerSize]': {
+                change: this.onOverlayMarkerChange
+            },
+
             'sourcesgridpanel': {
                 beforeedit: this.onSourceGridEntry
             },
@@ -940,6 +944,12 @@ Ext.define('Flux.controller.UserInteraction', {
             start: moment.utc(values.start).toISOString(),
             end: moment.utc(values.end).toISOString()
         });
+    },
+
+    /**TODO
+     */
+    onOverlayMarkerChange: function (s, size) {
+        this.getMap().setMarkerSize(size).redraw();
     },
 
     /**

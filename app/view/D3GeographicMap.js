@@ -15,6 +15,12 @@ Ext.define('Flux.view.D3GeographicMap', {
     _legend: {},
 
     /**
+        The size of the markers to use for displaying vector overlays.
+        @private
+     */
+    _markerSize: 5,
+
+    /**
         The scaling factor for a Mercator projection.
         @private
      */
@@ -43,13 +49,11 @@ Ext.define('Flux.view.D3GeographicMap', {
     /**
         Flag to indicate whether or not the <rect> elements have already
         been added to the map.
-        @private
      */
     isDrawn: false,
 
     /**
         The moment.js time display format to use.
-        @private
      */
     timeFormat: 'YYYY MM-DD HH:ss',
 
@@ -341,6 +345,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         var attrs, grid, gridxy;
         var proj = this.getProjection();
         var scaling = this._mercatorFactor;
+        var sz = this._markerSize;
 
         if (!this._metadata) {
             return;
@@ -353,15 +358,15 @@ Ext.define('Flux.view.D3GeographicMap', {
 
             return attrs = {
                 'x': function (d) {
-                    return proj(d.coordinates)[0];
+                    return proj(d.coordinates)[0] - (0.5 * sz);
                 },
 
                 'y': function (d) {
-                    return proj(d.coordinates)[1];
+                    return proj(d.coordinates)[1] - (0.5 * sz);
                 },
 
-                'width': 5,
-                'height': 5,
+                'width': sz,
+                'height': sz,
                 'class': 'point'
             };
         }
@@ -672,6 +677,13 @@ Ext.define('Flux.view.D3GeographicMap', {
     setRasterGrid: function (grid) {
         this._grid = grid;
         this.clear();
+        return this;
+    },
+
+    /**TODO
+     */
+    setMarkerSize: function (size) {
+        this._markerSize = size;
         return this;
     },
 

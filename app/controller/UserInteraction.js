@@ -33,6 +33,7 @@ Ext.define('Flux.controller.UserInteraction', {
     requires: [
         'Ext.data.ArrayStore',
         'Ext.state.CookieProvider',
+        'Flux.model.Overlay',
         'Flux.model.Raster',
         'Flux.model.RasterGrid',
         'Flux.model.Metadata',
@@ -267,6 +268,43 @@ Ext.define('Flux.controller.UserInteraction', {
         }
     },
 
+    /**TODO
+        @param  view    {Flux.view.D3GeographicMap}
+        @param  params  {Object}
+     */
+    fetchOverlay: function (view, params) {
+        var overlay;
+
+        if (!view.getMetadata()) {
+            return;
+        }
+
+        Ext.Ajax.request({
+            method: 'GET',
+            url: Ext.String.format('/flux/api/scenarios/{0}/xy.json',
+                view.getMetadata().getId()),
+            params: params,
+            callback: function (opts, success, response) {
+                var ov;
+
+                if (!success) {
+                    return;
+                }
+
+                ov = Ext.create('Flux.model.Overlay',
+                    Ext.JSON.decode(response.responseText));
+                foo = ov;//FIXME
+
+                this.bindFeature(view, ov);
+                this.onMapLoad(ov);
+            },
+            failure: function (response) {
+                Ext.Msg.alert('Request Error', response.responseText);
+            },
+            scope: this
+        });
+    },
+
     /**
         Makes a requests for a map based on the given parameters, first checking
         to see if the map has already been loaded by the view; requests it from
@@ -274,7 +312,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  view    {Flux.view.D3GeographicMap}
         @param  params  {Object}
      */
-    fetchMap: function (view, params) {
+    fetchRaster: function (view, params) {
         var raster, source;
 
         if (!view.getMetadata()) {
@@ -287,7 +325,7 @@ Ext.define('Flux.controller.UserInteraction', {
         //  request
         raster = view.store.getById(Ext.Object.toQueryString(params));
         if (raster) {
-            this.bindRaster(view, raster);
+            this.bindFeature(view, raster);
             this.onMapLoad(raster);
             return;
         }
@@ -309,7 +347,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 // Create a unique ID that can be used to find this grid
                 rast.set('_id', Ext.Object.toQueryString(opts.params));
 
-                this.bindRaster(view, rast);
+                this.bindFeature(view, rast);
                 this.onMapLoad(rast);
             },
             failure: function (response) {
@@ -328,7 +366,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  params      {Array}
         @param  operation   {Function}
      */
-    fetchMaps: function (view, params, operation) {
+    fetchRasters: function (view, params, operation) {
         var grid1, grid2, mapQueue;
         var source = view.getMetadata().getId();
         var fetch = function (params, callback) {
@@ -487,20 +525,21 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
-        Binds a Flux.model.Raster instance to the provided view, a
-        Flux.view.D3GeographicMap instance. The view's store is updated
-        with the new Raster instance.
+        Binds a Flux.model.Raster or Flux.model.Overlay instance to the
+        provided view, a Flux.view.D3GeographicMap instance. If an _id is
+        provided (on Raster instances), the view's store is updated with that
+        instance.
         @param  view    {Flux.view.D3Panel}
         @param  raster  {Flux.model.Raster}
      */
-    bindRaster: function (view, raster) {
+    bindFeature: function (view, feat) {
         var opts = this.getGlobalSettings();
 
-        if (!Ext.isEmpty(raster.get('_id'))) {
-            view.store.add(raster);
+        if (!Ext.isEmpty(feat.get('_id'))) {
+            view.store.add(feat);
         }
 
-        view.draw(raster, true);
+        view.draw(feat, true);
 
         if (opts.statsFrom === 'data') {
             // Also update the slider bounds
@@ -584,7 +623,7 @@ Ext.define('Flux.controller.UserInteraction', {
             };
         }
 
-        this.fetchMap(view, params);
+        this.fetchRaster(view, params);
     },
 
     /**
@@ -705,7 +744,7 @@ Ext.define('Flux.controller.UserInteraction', {
             });
         }
 
-        this.fetchMap(view, {
+        this.fetchRaster(view, {
             time: theDate.toISOString()
         });
     },
@@ -740,7 +779,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 return;
             }
 
-            this.fetchMaps(view, [{
+            this.fetchRasters(view, [{
                 time: view.getMoment().toISOString()
             }, {
                 time: diffTime.toISOString()
@@ -771,12 +810,12 @@ Ext.define('Flux.controller.UserInteraction', {
                         g2.get('timestamp').format(view.timeFormat))
                 });
 
-                this.bindRaster(view, rast);
+                this.bindFeature(view, rast);
                 this.onMapLoad(rast);
             }, this));
 
         } else {
-            this.fetchMap(view, {
+            this.fetchRaster(view, {
                 time: view.getMoment().toISOString()
             });
         }
@@ -949,7 +988,7 @@ Ext.define('Flux.controller.UserInteraction', {
             view = this.getMap();
         }
 
-        this.fetchMap(view, {
+        this.fetchOverlay(view, {
             start: moment.utc(values.start).toISOString(),
             end: moment.utc(values.end).toISOString()
         });

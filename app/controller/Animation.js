@@ -101,7 +101,7 @@ Ext.define('Flux.controller.Animation', {
         }
     },
 
-    /**TODO
+    /**
         To be executed when the dataset (metadata) changes, this function
         calculates the default step size (e.g. an hour) and the number of steps
         (e.g. 3 steps == 3 hours) between each animation frame. The animation
@@ -183,7 +183,7 @@ Ext.define('Flux.controller.Animation', {
         this._delay = this.getTopToolbar().down('#animate-delay').getValue();
     },
 
-    /**
+    /**TODO fetchRaster()
         Causes the corresponding view to "step" forwards or backwards in time
         with the animation according to a specified number of steps.
         @param  steps   {Number}    Negative steps are steps taken backwards
@@ -198,7 +198,7 @@ Ext.define('Flux.controller.Animation', {
                 return;
             }
 
-            this.getController('UserInteraction').fetchMap(view, {
+            this.getController('UserInteraction').fetchRaster(view, {
                 time: ts.clone()
                     .add(steps, this._stepSize)
                     .toISOString()

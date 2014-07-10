@@ -1,4 +1,4 @@
-Ext.define('Flux.model.Raster', {
+Ext.define('Flux.model.Overlay', {
     extend: 'Flux.model.AbstractFeature',
 
     fields: ['_id', {
@@ -6,9 +6,6 @@ Ext.define('Flux.model.Raster', {
         type: Ext.data.Types.Moment
     }, {
         name: 'features',
-        type: 'auto'
-    }, {
-        name: 'properties',
         type: 'auto'
     }]
 

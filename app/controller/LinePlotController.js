@@ -45,7 +45,7 @@ Ext.define('Flux.controller.LinePlotController', {
         cmp.up('d3lineplot').init(width, height);
     },
 
-    /**
+    /**TODO fetchRaster()
         Handles a mouse click event on the plot area, effectively firing off
         a new map load request for the time represented by that point on the plot.
         @param  view    {D3LinePlot}
@@ -62,7 +62,7 @@ Ext.define('Flux.controller.LinePlotController', {
         // Uncheck the "Show Aggregation" and "Show Difference" checkboxes
         this.getController('UserInteraction').uncheckAggregates();
 
-        this.getController('UserInteraction').fetchMap(this.getMap(), {
+        this.getController('UserInteraction').fetchRaster(this.getMap(), {
             time: d.toISOString()
         });
     },

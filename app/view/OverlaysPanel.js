@@ -80,11 +80,14 @@ Ext.define('Flux.view.OverlaysPanel', {
         }
 
     }, {
-        xtype: 'textfield',
+        xtype: 'slider',
         disabled: true,
+        fieldLabel: 'Marker width',
         anchor: '100%',
-        fieldLabel: 'Or, enter the URL of a GeoJSON overlay',
-        height: 120
+        value: 5,
+        increment: 1,
+        minValue: 0,
+        maxValue: 10
     }]
 });
 

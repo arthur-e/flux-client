@@ -74,21 +74,17 @@ Ext.define('Flux.view.D3GeographicMap', {
         //  title if displays are disabled
         if (!this.enableDisplay) {
             this.updateDisplay = function (data) {  
-                data = data[0] || data;
-                this.setTitle(Ext.String.format('{0}: {1}',
-                    this.getMetadata().get('_id'), data.text));
+                if (this.isDrawn) {
+                    data = data[0] || data;
+                    this.setTitle(Ext.String.format('{0}: {1}',
+                        this.getMetadata().get('_id'), data.text));
+                }
             };
         }
 
         this.on('draw', function (v, grid) {
-            this._moment = grid.get('timestamp');
-
-            if (Ext.isEmpty(grid.get('title'))) {
-                this._display = grid.getTimestampDisplay(this.timeFormat);
-            } else {
-                this._display = grid.get('title');
-            }
-
+            // Figure out what timestamp description to display at the top
+            this._display = grid.getTimestampDisplay(this.timeFormat);
             this.updateDisplay([{
                 id: 'timestamp',
                 text: this._display
@@ -153,31 +149,42 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         sel = sel || this.panes.raster.selectAll('.point');
         sel.on('mouseover', function (d) {
-            var p = view.getMetadata().get('precision');
-            var m = d3.mouse(view.svg[0][0]);
-            var c = [
-                this.attributes.x.value,
-                this.attributes.y.value
-            ];
-
-            // Need to add half the grid spacing as this was subtracted to obtain
-            //  the upper-left corner of the grid cell
-            var ll = view.getMetadata().calcHalfOffsetCoordinates(proj.invert(c));
+            var c, m, p, ll, v;
 
             if (Ext.isEmpty(d)) {
                 return;
             }
 
+            p = view.getMetadata().get('precision');
+            m = d3.mouse(view.svg[0][0]);
+            c = [
+                this.attributes.x.value,
+                this.attributes.y.value
+            ];
+
+            if (view.getMetadata().get('gridded')) {
+                // Need to add half the grid spacing as this was subtracted to obtain
+                //  the upper-left corner of the grid cell
+                ll = view.getMetadata().calcHalfOffsetCoordinates(proj.invert(c));
+                v = d;
+
+            } else {
+                ll = Ext.Array.map(proj.invert(c), function (l) {
+                    return l.toFixed(5);
+                });
+                v = d.properties.value; // For non-gridded data, choose the value property 
+            }
+
             // Heads-up-display
             view.updateDisplay([{
                 id: 'tooltip',
-                text: Ext.String.format('{0} @({1},{2})', d.toFixed(p),
+                text: Ext.String.format('{0} @({1},{2})', v.toFixed(p),
                     ll[0].trim('00'), ll[1].trim('00'))
             }]);
 
             // Near-cursor tooltip
             view.panes.tooltip.selectAll('.tip')
-                .text(d.toFixed(p))
+                .text(v.toFixed(p))
                 .attr({
                     'x': m[0] + 20,
                     'y': m[1] + 30
@@ -218,26 +225,26 @@ Ext.define('Flux.view.D3GeographicMap', {
     /**
         Draws the visualization features on the map given input data and the
         corresponding metadata.
-        @param  rast    {Flux.model.Raster}
+        @param  data    {Flux.model.Raster}
         @param  zoom    {Boolean}
         @return         {Flux.view.D3GeographicMap}
      */
-    draw: function (rast, zoom) {
+    draw: function (data, zoom) {
         var bbox, lat, lng, meta, c1, c2, sel;
         var proj = this.getProjection();
 
-        if (!rast) {
+        if (!data) {
             return this;
         }
 
-        this.fireEventArgs('beforedraw', [this, rast, zoom]);
+        this.fireEventArgs('beforedraw', [this, data, zoom]);
 
         // If not using population statistics, calculate the new summary stats
-        //  for the incoming raster data
+        //  for the incoming data
         if (!this._usePopulationStats) {
             meta = this.getMetadata().copy();
             meta.set('stats', {
-                values: rast.summarize()
+                values: data.summarize()
             });
 
             this.setMetadata(meta);
@@ -245,14 +252,17 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         // Retain references to last drawing data and metadata; for instance,
         //  resize events require drawing again with the same (meta)data
-        this._model = rast;
+        this._model = data;
 
         // Disallow zooming by default
         zoom = (zoom === true);
 
+        ////////////////////////////////////////////////////////////////////////
+        // Selection and Attributes ////////////////////////////////////////////
+
         // Sets the enter or update selection's data
         sel = this.panes.raster.selectAll('.point')
-            .data(rast.get('features'), function (d, i) {
+            .data(data.get('features'), function (d, i) {
                 return i; // Use the cell index as the key
             });
 
@@ -266,11 +276,14 @@ Ext.define('Flux.view.D3GeographicMap', {
         }
 
         // Calculate the position and dimensions attributes of the elements
-        sel.attr(this.getOverlayAttrs())
+        sel.attr(this.getDrawingAttrs())
             .style('cursor', 'pointer'); // Show link pointer when hovering over
 
         // Applies the color scale to the current selection
         this.update(sel);
+
+        ////////////////////////////////////////////////////////////////////////
+        // Zoom to Feature /////////////////////////////////////////////////////
 
         // Skip zooming to the data if they've been drawn or if map is already zoomed
         if (!this.isDrawn && this.zoom.scale() === 1) {
@@ -307,7 +320,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         }
 
         this.isDrawn = true;
-        this.fireEventArgs('draw', [this, rast]);
+        this.fireEventArgs('draw', [this, data]);
         return this;
     },
 
@@ -323,9 +336,8 @@ Ext.define('Flux.view.D3GeographicMap', {
         Creates an Object of attributes for the drawing features.
         @return {Object}
      */
-    getOverlayAttrs: function () {
-        var attrs, gridxy;
-        var grid = this.getRasterGrid().get('coordinates');
+    getDrawingAttrs: function () {
+        var attrs, grid, gridxy;
         var proj = this.getProjection();
         var scaling = this._mercatorFactor;
 
@@ -333,8 +345,31 @@ Ext.define('Flux.view.D3GeographicMap', {
             return;
         }
 
-        // Assumes grid spacing given in degrees
-        gridxy = this._metadata.get('grid');
+        ////////////////////////////////////////////////////////////////////////
+        // Non-gridded Overlay /////////////////////////////////////////////////
+
+        if (!this._metadata.get('gridded')) {
+
+            return attrs = {
+                'x': function (d) {
+                    return proj(d.coordinates)[0];
+                },
+
+                'y': function (d) {
+                    return proj(d.coordinates)[1];
+                },
+
+                'width': 5,
+                'height': 5,
+                'class': 'point'
+            };
+        }
+
+        ////////////////////////////////////////////////////////////////////////
+        // Gridded Raster //////////////////////////////////////////////////////
+
+        grid = this.getRasterGrid().get('coordinates');
+        gridxy = this._metadata.get('grid'); // Assumes grid spacing in degrees
         attrs = {
             'x': function (d, i) {
                 // We want to start drawing at the upper left (half the cell
@@ -374,7 +409,6 @@ Ext.define('Flux.view.D3GeographicMap', {
         }
 
         return attrs;
-
     },
 
     /**
@@ -401,8 +435,13 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return         {D3GeographicMap}
      */
     highlightMapLocation: function (coords) {
-        var i = this.getRasterGrid().getCoordIndex(coords);
+        var i;
 
+        if (!this.isDrawn) {
+            return;
+        }
+
+        i = this.getRasterGrid().getCoordIndex(coords);
         if (i < 0 || i > this._model.get('features').length) {
             return;
         }
@@ -802,7 +841,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         }
 
         this.panes.raster.selectAll('.point')
-        .attr(this.getOverlayAttrs());
+        .attr(this.getDrawingAttrs());
 
         return this;
     },
@@ -822,11 +861,6 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         if (!data) {
             data = this.panes.hud.selectAll('.info').data();
-            // Recall the timestamp text (if this function was called after
-            //  the window is resized and this panel is re-rendered)
-            if (data[0].id === 'timestamp') {
-                data[0].text = this._moment.format(this.timeFormat);
-            }
         }
 
         this.panes.hud.selectAll('.backdrop')

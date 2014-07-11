@@ -147,6 +147,19 @@ Ext.define('Flux.view.Viewport', {
                     }, {
                         xtype: 'menuseparator'
                     }, {
+                        text: 'Marker symbol width:',
+                        cls: 'ui-menu-group-text',
+                        plain: true
+                    }, {
+                        xtype: 'slider',
+                        name: 'markerSize',
+                        value: 5,
+                        increment: 1,
+                        minValue: 3,
+                        maxValue: 10
+                    }, {
+                        xtype: 'menuseparator'
+                    }, {
                         text: 'Steps each animation frame:',
                         cls: 'ui-menu-group-text',
                         name: 'steps',
@@ -220,13 +233,13 @@ Ext.define('Flux.view.Viewport', {
             items: [{
                 xtype: 'tabbedpanel',
                 itemId: 'single-map',
-                activeTab: 1,
+                activeTab: 0,
                 items: [{
                     xtype: 'sourcepanel',
                     title: 'Gridded'
                 }, {
                     xtype: 'overlayspanel',
-                    title: 'Vector Overlays'
+                    title: 'Non-gridded'
                 }]
             }, {
                 xtype: 'sourcesgridpanel',

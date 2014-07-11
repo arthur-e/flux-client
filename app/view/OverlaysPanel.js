@@ -8,7 +8,7 @@ Ext.define('Flux.view.OverlaysPanel', {
 
     items: [{
         xtype: 'combo',
-        fieldLabel: 'Select data source as overlay',
+        fieldLabel: 'Select non-gridded data source',
         name: 'overlay',
         anchor: '100%',
         emptyText: 'Select...',
@@ -79,15 +79,6 @@ Ext.define('Flux.view.OverlaysPanel', {
             }
         }
 
-    }, {
-        xtype: 'slider',
-        name: 'markerSize',
-        fieldLabel: 'Marker width',
-        anchor: '100%',
-        value: 5,
-        increment: 1,
-        minValue: 0,
-        maxValue: 10
     }]
 });
 

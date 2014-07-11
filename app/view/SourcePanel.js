@@ -78,7 +78,10 @@ Ext.define('Flux.view.SourcePanel', {
         name: 'showLinePlot',
         checked: true,
         stateId: 'showLinePlot',
-        boxLabel: 'Show line plot'
+        boxLabel: 'Show line plot',
+        reset: function () {
+            // Empty function so as to disable resets
+        }
 
     }, {
         xtype: 'fieldset',

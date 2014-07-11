@@ -82,6 +82,14 @@ Ext.define('Flux.controller.UserInteraction', {
                 checkchange: this.onStatsChange
             },
 
+            '#settings-menu slider[name=markerSize]': {
+                change: this.onOverlayMarkerChange
+            },
+
+            '#single-map': {
+                tabchange: this.onSingleMapTabChange
+            },
+
             '#visual-menu': {
                 click: this.onVisualChange
             },
@@ -113,10 +121,6 @@ Ext.define('Flux.controller.UserInteraction', {
 
             'overlayspanel datefield': {
                 afterselect: this.onOverlayDateSelection
-            },
-
-            'overlayspanel slider[name=markerSize]': {
-                change: this.onOverlayMarkerChange
             },
 
             'sourcesgridpanel': {
@@ -272,7 +276,9 @@ Ext.define('Flux.controller.UserInteraction', {
         }
     },
 
-    /**TODO
+    /**
+        Makes a request for a map based on the given parameters, where the map
+        is a non-gridded xy.json response (an overlay).
         @param  view    {Flux.view.D3GeographicMap}
         @param  params  {Object}
      */
@@ -835,7 +841,7 @@ Ext.define('Flux.controller.UserInteraction', {
             rast.get('timestamp')
         ];
 
-        if (this.getLinePlot()) {
+        if (this.getLinePlot()) {//TODO For overlays
             if (props.start && props.end) {
                 moments = [
                     moment.utc(props.start),
@@ -897,6 +903,8 @@ Ext.define('Flux.controller.UserInteraction', {
         // Metadata ////////////////////////////////////////////////////////////
         metadata = this.getStore('metadata').getById(source);
         if (metadata) {
+            // Clear any currently drawn features
+            view.clear();
             this.bindMetadata(view, metadata);
             this.propagateMetadata(container, metadata);
 
@@ -911,6 +919,8 @@ Ext.define('Flux.controller.UserInteraction', {
                     var metadata = Ext.create('Flux.model.Metadata',
                         Ext.JSON.decode(response.responseText));
 
+                    // Clear any currently drawn features
+                    view.clear();
                     this.bindMetadata(view, metadata);
                     this.propagateMetadata(container, metadata);
                     this.getStore('metadata').add(metadata);
@@ -1127,6 +1137,18 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
+        Resets the form and clears the map when the Single Map active tab is
+        changed.
+        @param  panel   {Ext.panel.TabPanel}
+     */
+    onSingleMapTabChange: function (panel) {
+        panel.getActiveTab().getForm().reset();
+
+        // Clear any currently drawn features
+        this.getMap().clear();
+    },
+
+    /**
         Handles a change in the data "source" from a ComboBox configured for
         selecting from among sources (e.g. scenarios, model runs, etc.).
         @param  field   {Ext.form.field.ComboBox}
@@ -1152,6 +1174,9 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // Callback ////////////////////////////////////////////////////////////
         operation = Ext.Function.bind(function (metadata) {
+            // Clear the currently drawn features
+            view.clear();
+
             this.bindMetadata(view, metadata);
             this.propagateMetadata(container, metadata);
 

@@ -74,7 +74,7 @@ Ext.define('Flux.view.D3Panel', {
         @return {moment}
      */
     getMoment: function () {
-        return this._moment;
+        return this._model.get('timestamp');
     },
 
     /**

@@ -151,7 +151,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         var proj = this.getProjection();
         var view = this;
 
-        sel = sel || this.panes.raster.selectAll('.point');
+        sel = sel || this.panes.raster.selectAll('.cell');
         sel.on('mouseover', function (d) {
             var c, m, p, ll, v;
 
@@ -221,7 +221,9 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return {Flux.view.D3GeographicMap}
      */
     clear: function () {
-        this.panes.raster.selectAll('.point').remove();
+        this.panes.hud.selectAll('.info').text('');
+        this.panes.hud.selectAll('.backdrop').attr('fill-opacity', 0.0);
+        this.panes.raster.selectAll('.cell').remove();
         this.isDrawn = false;
         return this;
     },
@@ -265,7 +267,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         // Selection and Attributes ////////////////////////////////////////////
 
         // Sets the enter or update selection's data
-        sel = this.panes.raster.selectAll('.point')
+        sel = this.panes.raster.selectAll('.cell')
             .data(data.get('features'), function (d, i) {
                 return i; // Use the cell index as the key
             });
@@ -367,7 +369,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 
                 'width': sz,
                 'height': sz,
-                'class': 'point'
+                'class': 'cell'
             };
         }
 
@@ -403,7 +405,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 
             'height': Math.abs(proj([0, gridxy.y])[1] - proj([0, 0])[1]),
 
-            'class': 'point'
+            'class': 'cell'
         };
 
         // Use a scaling factor for non-equirectangular projections
@@ -668,18 +670,6 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
-    /**
-        Sets the grid geometry; retains a reference to the Flux.model.RasterGrid
-        instance.
-        @param  grid    {Flux.model.RasterGrid}
-        @return         {Flux.view.D3GeographicMap}
-     */
-    setRasterGrid: function (grid) {
-        this._grid = grid;
-        this.clear();
-        return this;
-    },
-
     /**TODO
      */
     setMarkerSize: function (size) {
@@ -716,6 +706,18 @@ Ext.define('Flux.view.D3GeographicMap', {
     },
 
     /**
+        Sets the grid geometry; retains a reference to the Flux.model.RasterGrid
+        instance.
+        @param  grid    {Flux.model.RasterGrid}
+        @return         {Flux.view.D3GeographicMap}
+     */
+    setRasterGrid: function (grid) {
+        this._grid = grid;
+        this.clear();
+        return this;
+    },
+
+    /**
         Sets the color scale used by the map.
         @param  scale   {d3.scale.*}
         @return         {Flux.view.D3GeographicMap}
@@ -724,7 +726,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         this._scale = scale;
 
         if (this.panes.raster) {
-            this.update(this.panes.raster.selectAll('.point'));
+            this.update(this.panes.raster.selectAll('.cell'));
             this.updateLegend();
         }
 
@@ -867,7 +869,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             return this;
         }
 
-        this.panes.raster.selectAll('.point')
+        this.panes.raster.selectAll('.cell')
         .attr(this.getDrawingAttrs());
 
         return this;
@@ -886,12 +888,12 @@ Ext.define('Flux.view.D3GeographicMap', {
             return this;
         }
 
-        if (!data) {
+        if (Ext.isEmpty(data)) {
             data = this.panes.hud.selectAll('.info').data();
         }
 
         this.panes.hud.selectAll('.backdrop')
-            .attr('fill-opacity', (data === []) ? 0.0 : 0.6);
+            .attr('fill-opacity', (Ext.isEmpty(data)) ? 0.0 : 0.6);
         this.panes.hud.selectAll('.info')
             .data(data)
             .text(function (d) { return d.text; })

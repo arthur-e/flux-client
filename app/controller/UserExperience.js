@@ -142,11 +142,11 @@ Ext.define('Flux.controller.UserExperience', {
      */
     getFieldNames: function () {
         var names = Ext.Array.map(Ext.ComponentQuery.query('field[name]'), function (i) {
-            return i.stateId || i.getName() || name;
+            return i.stateId || ((typeof i.getName === 'function') ? i.getName() : i.name);
         });
 
         names = names.concat(Ext.Array.map(this.getTopToolbar().query('field[name], menuitem[name]'), function (i) {
-            return i.stateId || i.getName() || name;
+            return i.stateId || ((typeof i.getName === 'function') ? i.getName() : i.name);
         }));
 
         names = Ext.Array.map(names, function (name) {

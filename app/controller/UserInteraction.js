@@ -102,10 +102,6 @@ Ext.define('Flux.controller.UserInteraction', {
                 click: this.onSaveImage
             },
 
-            'field[name=overlay]': {
-                change: this.onOverlayChange
-            },
-
             'field[name=source]': {
                 change: this.onSourceChange
             },
@@ -877,61 +873,9 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
-        Handles a change in the data "overlay" from a ComboBox configured for
-        selecting from among sources (e.g. scenarios, model runs, etc.).
-        @param  f       {Ext.form.field.ComboBox}
-        @param  source  {String}
-        @param  last    {String}
-     */
-    onOverlayChange: function (f, source, last) {
-        var container = f.up('panel');
-        var editor = f.up('roweditor');
-        var metadata;
-
-        if (Ext.isEmpty(source) || source === last) {
-            return;
-        }
-
-        if (editor) {
-            view = editor.editingPlugin.getCmp().getView().getSelectionModel()
-                .getSelection()[0].get('view');
-
-        } else {
-            view = this.getMap();
-        }
-
-        // Metadata ////////////////////////////////////////////////////////////
-        metadata = this.getStore('metadata').getById(source);
-        if (metadata) {
-            // Clear any currently drawn features
-            view.clear();
-            this.bindMetadata(view, metadata);
-            this.propagateMetadata(container, metadata);
-
-        } else {
-            Ext.Ajax.request({
-                method: 'GET',
-                url: '/flux/api/scenarios.json',
-                params: {
-                    scenario: source
-                },
-                callback: function (o, s, response) {
-                    var metadata = Ext.create('Flux.model.Metadata',
-                        Ext.JSON.decode(response.responseText));
-
-                    // Clear any currently drawn features
-                    view.clear();
-                    this.bindMetadata(view, metadata);
-                    this.propagateMetadata(container, metadata);
-                    this.getStore('metadata').add(metadata);
-                },
-
-                scope: this
-            });
-        }
-    },
-
-    /** TODO
+        Handles a change in the start/end date selection for (non-gridded)
+        overlays.
+        @param  f   {Ext.form.Field}
      */
     onOverlayDateSelection: function (f) {
         var editor = f.up('roweditor');
@@ -956,7 +900,10 @@ Ext.define('Flux.controller.UserInteraction', {
         });
     },
 
-    /**TODO
+    /**
+        Handles a change in the vector overlay marker symbol size.
+        @param  s       {Ext.slider.Single}
+        @param  size    {Number}
      */
     onOverlayMarkerChange: function (s, size) {
         this.getMap().setMarkerSize(size).redraw();
@@ -1174,19 +1121,15 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // Callback ////////////////////////////////////////////////////////////
         operation = Ext.Function.bind(function (metadata) {
-            // Clear the currently drawn features
-            view.clear();
-
             this.bindMetadata(view, metadata);
             this.propagateMetadata(container, metadata);
 
-            // Reload the line plot if the source has actually changed
+            // (Re)load the line plot if the source has actually changed
             if (this.getLinePlot()
                     && (!this.getLinePlot().isDrawn || source !== last)) {
                 this.bindMetadata(this.getLinePlot(), metadata);
             }
         }, this);
-
 
         // Metadata ////////////////////////////////////////////////////////////
         metadata = this.getStore('metadata').getById(source);
@@ -1211,6 +1154,11 @@ Ext.define('Flux.controller.UserInteraction', {
 
                 scope: this
             });
+        }
+
+        // Do not continue if the source is non-gridded
+        if (!field.getStore().getById(source).get('gridded')) {
+            return;
         }
 
         // RasterGrid //////////////////////////////////////////////////////////

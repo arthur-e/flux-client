@@ -9,7 +9,7 @@ Ext.define('Flux.view.OverlaysPanel', {
     items: [{
         xtype: 'combo',
         fieldLabel: 'Select non-gridded data source',
-        name: 'overlay',
+        name: 'source',
         anchor: '100%',
         emptyText: 'Select...',
         style: {maxWidth: '200px'},

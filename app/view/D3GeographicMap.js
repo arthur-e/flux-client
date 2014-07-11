@@ -206,12 +206,14 @@ Ext.define('Flux.view.D3GeographicMap', {
             view.fireEventArgs('mouseout', [view]);
         });
 
-        sel.on('click', function () {
-            view.fireEventArgs('plotclick', [view, [
-                this.attributes.x.value,
-                this.attributes.y.value
-            ]]);
-        });
+        if (this.getMetadata().get('gridded')) {
+            sel.on('click', function () {
+                view.fireEventArgs('plotclick', [view, [
+                    this.attributes.x.value,
+                    this.attributes.y.value
+                ]]);
+            });
+        }
 
         return this;
     },
@@ -221,9 +223,12 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return {Flux.view.D3GeographicMap}
      */
     clear: function () {
-        this.panes.hud.selectAll('.info').text('');
-        this.panes.hud.selectAll('.backdrop').attr('fill-opacity', 0.0);
-        this.panes.raster.selectAll('.cell').remove();
+        this.svg.selectAll('.info').text('');
+        this.svg.selectAll('.backdrop').attr('fill-opacity', 0.0);
+        this.svg.selectAll('.bin').remove();
+        this.svg.selectAll('.axis').remove();
+        this.svg.selectAll('.units').text('');
+        this.svg.selectAll('.cell').remove();
         this.isDrawn = false;
         return this;
     },
@@ -713,7 +718,8 @@ Ext.define('Flux.view.D3GeographicMap', {
      */
     setRasterGrid: function (grid) {
         this._grid = grid;
-        this.clear();
+        this.svg.selectAll('.cell').remove();
+        this.isDrawn = false;
         return this;
     },
 
@@ -913,18 +919,19 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return         {Flux.view.D3GeographicMap}
      */
     updateLegend: function () {
-        var bins, h, ordinal;
+        var bins, h, ordinal, unitsLabel;
         var p = this.getMetadata().get('precision');
         var s = 0.025 * this.svg.attr('width'); // Length on a side of the legend's bins
         var colors = this._scale.range();
+        var units = this.getMetadata().get('units');
 
         // Add on the measurement units for the data values or nothing
         if (this._showLegendUnits) {
-            if (this.getMetadata().get('units')) {
-                units = this.getMetadata().get('units').values || '';
+            if (units) {
+                unitsLabel = units.values || units.value ||  '';
             }
         } else {
-            units = '';
+            unitsLabel = '';
         }
 
         // Subtract the header width from the legend's y-offset so that it
@@ -983,7 +990,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             });
 
         this.panes.legend.selectAll('.units')
-            .data([units])
+            .data([unitsLabel])
             .text(function (d) {
                 return Ext.String.htmlDecode(d);
             })

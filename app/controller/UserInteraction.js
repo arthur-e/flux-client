@@ -858,7 +858,7 @@ Ext.define('Flux.controller.UserInteraction', {
             rast.get('timestamp')
         ];
 
-        if (this.getLinePlot()) {//TODO For overlays
+        if (this.getLinePlot()) {
             if (props.start && props.end) {
                 moments = [
                     moment.utc(props.start),
@@ -883,7 +883,9 @@ Ext.define('Flux.controller.UserInteraction', {
             return;
         }
 
-        this.getController('Animation').enableAnimation(metadata);
+        if (metadata.get('gridded')) {
+            this.getController('Animation').enableAnimation(metadata);
+        }
 
         // Initialize the values of the domain bounds and threshold sliders
         Ext.each(this.getSymbology().query('enumslider'), function (cmp) {
@@ -942,7 +944,7 @@ Ext.define('Flux.controller.UserInteraction', {
     onPlotClick: function (view, coords) {
         var meta = view.getMetadata();
         var geom = view.getProjection().invert(Ext.Array.map(coords, Number));
-        var step = Ext.Array.min(meta.getTimeOffsets());//TODO For overlays
+        var step = Ext.Array.min(meta.getTimeOffsets());
         var params;
 
         if (!this.getLinePlot()) {

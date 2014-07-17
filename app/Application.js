@@ -11,6 +11,7 @@ Ext.require([
     'Flux.field.StatefulHiddenField',
     'Flux.field.StatefulNumberField',
     'Flux.field.StatefulRadioGroup',
+    'Flux.field.StatefulSlider',
     'Flux.store.Scenarios',
     'Flux.type.Moment'
 ]);

@@ -675,7 +675,9 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
-    /**TODO
+    /**
+        Changes the marker size for overlays.
+        @param  size    {Integer}
      */
     setMarkerSize: function (size) {
         this._markerSize = size;

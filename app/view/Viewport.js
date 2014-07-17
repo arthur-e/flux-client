@@ -151,8 +151,9 @@ Ext.define('Flux.view.Viewport', {
                         cls: 'ui-menu-group-text',
                         plain: true
                     }, {
-                        xtype: 'slider',
+                        xtype: 'reslider',
                         name: 'markerSize',
+                        stateId: 'markerSize',
                         value: 5,
                         increment: 1,
                         minValue: 3,
@@ -182,9 +183,8 @@ Ext.define('Flux.view.Viewport', {
                 tooltip: 'Animate the visualization with time',
                 disabled: true
             }, {
-                xtype: 'slider',
+                xtype: 'reslider',
                 itemId: 'animate-delay',
-                stateful: true,
                 stateId: 'animateDelay',
                 width: '10%',
                 maxWidth: 150,
@@ -193,15 +193,6 @@ Ext.define('Flux.view.Viewport', {
                 maxValue: 5,
                 tipText: function (thumb) {
                     return '<b>Animation Speed: </b>' + String(thumb.slider.getValue()) + ' seconds';
-                },
-                stateEvents: ['dragend'],
-                applyState: function (state) {
-                    this.setValue(state.value);
-                },
-                getState: function () {
-                    return {
-                        value: this.getValue()
-                    }
                 }
             }, {
                 xtype: 'button',

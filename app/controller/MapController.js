@@ -5,6 +5,9 @@ Ext.define('Flux.controller.MapController', {
         ref: 'mapSettings',
         selector: 'mapsettings'
     }, {
+        ref: 'settingsMenu',
+        selector: '#settings-menu'
+    }, {
         ref: 'symbology',
         selector: 'symbology'
     }],
@@ -115,6 +118,8 @@ Ext.define('Flux.controller.MapController', {
         cmp.init(width, height)
             .setProjection(opts.projection, width, height)
             .setBasemap(opts.basemap, kw);
+
+        cmp.setMarkerSize(this.getSettingsMenu().down('field[name=markerSize]').getValue());
 
     },
 

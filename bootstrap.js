@@ -858,27 +858,30 @@ Ext.ClassManager.addNameAlternateMappings({
   "Flux.field.StatefulHiddenField": [],
   "Flux.field.StatefulNumberField": [],
   "Flux.field.StatefulRadioGroup": [],
-  "Flux.model.Geometry": [],
-  "Flux.model.Grid": [],
-  "Flux.model.GridView": [],
+  "Flux.field.StatefulSlider": [],
+  "Flux.model.AbstractFeature": [],
+  "Flux.model.CoordView": [],
   "Flux.model.Metadata": [],
+  "Flux.model.Overlay": [],
   "Flux.model.Palette": [],
+  "Flux.model.Raster": [],
+  "Flux.model.RasterGrid": [],
   "Flux.model.Scenario": [],
   "Flux.model.TimeSeries": [],
   "Flux.store.AbstractStore": [],
-  "Flux.store.Geometries": [],
-  "Flux.store.Grids": [],
   "Flux.store.Metadata": [],
   "Flux.store.Palettes": [],
+  "Flux.store.RasterGrids": [],
+  "Flux.store.Rasters": [],
   "Flux.store.Scenarios": [],
   "Flux.store.TimeSeries": [],
   "Flux.type.Moment": [],
-  "Flux.view.ConfigurationPanel": [],
   "Flux.view.D3GeographicMap": [],
   "Flux.view.D3LinePlot": [],
   "Flux.view.D3Panel": [],
   "Flux.view.FormPanel": [],
   "Flux.view.MapSettings": [],
+  "Flux.view.OverlaysPanel": [],
   "Flux.view.SidePanel": [],
   "Flux.view.SourcePanel": [],
   "Flux.view.SourceSelectionCarousel": [],
@@ -1918,24 +1921,26 @@ Ext.ClassManager.addNameAliasMappings({
   "Flux.field.StatefulRadioGroup": [
     "widget.reradiogroup"
   ],
-  "Flux.model.Geometry": [],
-  "Flux.model.Grid": [],
-  "Flux.model.GridView": [],
+  "Flux.field.StatefulSlider": [
+    "widget.reslider"
+  ],
+  "Flux.model.AbstractFeature": [],
+  "Flux.model.CoordView": [],
   "Flux.model.Metadata": [],
+  "Flux.model.Overlay": [],
   "Flux.model.Palette": [],
+  "Flux.model.Raster": [],
+  "Flux.model.RasterGrid": [],
   "Flux.model.Scenario": [],
   "Flux.model.TimeSeries": [],
   "Flux.store.AbstractStore": [],
-  "Flux.store.Geometries": [],
-  "Flux.store.Grids": [],
   "Flux.store.Metadata": [],
   "Flux.store.Palettes": [],
+  "Flux.store.RasterGrids": [],
+  "Flux.store.Rasters": [],
   "Flux.store.Scenarios": [],
   "Flux.store.TimeSeries": [],
   "Flux.type.Moment": [],
-  "Flux.view.ConfigurationPanel": [
-    "widget.configpanel"
-  ],
   "Flux.view.D3GeographicMap": [
     "widget.d3geomap"
   ],
@@ -1950,6 +1955,9 @@ Ext.ClassManager.addNameAliasMappings({
   ],
   "Flux.view.MapSettings": [
     "widget.mapsettings"
+  ],
+  "Flux.view.OverlaysPanel": [
+    "widget.overlayspanel"
   ],
   "Flux.view.SidePanel": [
     "widget.sidepanel"

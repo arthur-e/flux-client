@@ -1467,8 +1467,12 @@ Ext.define('Flux.controller.UserInteraction', {
                 linePlot.setMetadata(map.getMetadata());
             }
 
+            // Draw the previous series or load a new one
             if (series) {
                 linePlot.draw(series);
+
+            } else {
+                this.bindMetadata(this.getLinePlot(), map.getMetadata());
             }
 
         } else {

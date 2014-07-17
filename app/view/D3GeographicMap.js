@@ -223,6 +223,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return {Flux.view.D3GeographicMap}
      */
     clear: function () {
+        this._model = undefined;
         this.svg.selectAll('.info').text('');
         this.svg.selectAll('.backdrop').attr('fill-opacity', 0.0);
         this.svg.selectAll('.bin').remove();

@@ -41,6 +41,11 @@
 .x-form-cb-label { font-size: 14px !important; }
 .x-fieldset-header-text { font-weight: bold !important; }
 
+/* Grid ***********************************************************************/
+
+.x-column-header-inner { padding: 7px !important; }
+.x-grid-cell-inner { padding: 5px 7px !important; }
+
 /* Menus **********************************************************************/
 .ui-app-menu-item { margin-bottom: 5px; }
 .ui-app-menu-item .x-menu-item-icon {

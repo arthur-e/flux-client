@@ -14,7 +14,7 @@ Ext.define('Flux.view.SidePanel', {
     },
 
     minWidth: 150,
-    maxWidth: 300,
+    maxWidth: 350,
     stateful: true,
 
     getState: function () {

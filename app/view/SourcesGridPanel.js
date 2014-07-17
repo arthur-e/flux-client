@@ -6,14 +6,14 @@ Ext.define('Flux.view.SourcesGridPanel', {
         'Ext.form.field.Date',
         'Ext.grid.column.Date',
         'Ext.grid.plugin.RowEditing',
-        'Flux.model.RasterView',
+        'Flux.model.CoordView',
         'Flux.store.Scenarios'
     ],
 
     initComponent: function () {
         this.store = Ext.create('Ext.data.ArrayStore', {
             storeId: 'gridviews',
-            model: 'Flux.model.RasterView'
+            model: 'Flux.model.CoordView'
         });
         this.addEvents(['itemchange', 'beforeedit', 'canceledit', 'edit']);
         this.callParent(arguments);
@@ -41,7 +41,7 @@ Ext.define('Flux.view.SourcesGridPanel', {
         canceledit: function (e, context) {
             var view = context.record.get('view');
 
-            // Remove the view associated with the Flux.model.RasterView instance
+            // Remove the view associated with the Flux.model.CoordView instance
             if (view.ownerCt) {
                 view.ownerCt.remove(view);
             }
@@ -72,7 +72,7 @@ Ext.define('Flux.view.SourcesGridPanel', {
         iconCls: 'icon-add',
         handler: function () {
             var rowEditor = this.up('panel').findPlugin('rowediting');
-            var r = Ext.create('Flux.model.RasterView');
+            var r = Ext.create('Flux.model.CoordView');
             var store = Ext.StoreManager.get('gridviews');
 
             if (store.count() < 9) {
@@ -116,19 +116,46 @@ Ext.define('Flux.view.SourcesGridPanel', {
                     //  determined by comparing the total number of records to
                     //  the length of an Array of data for one field
                     if (store.count() > Ext.Array.clean(data).length) {
-                        this.nextSibling().disable();
-                        this.nextSibling().nextSibling().disable();
+                        this.next('field[name=date]').disable();
+                        this.next('field[name=end]').disable();
+                        this.next('combo').disable(); // time
                     }
                 },
-                select: function () {
-                    this.nextSibling().enable();
+                select: function (c, r) {
+                    var gridded = r[0].get('gridded');
+
+                    // Enable the "date" column
+                    this.next('field[name=date]').enable();
+
+                    // Disable (enable) "end" for gridded (non-gridded)
+                    this.next('field[name=end]').setDisabled(gridded);
+
+                    // Disable (enable) "time" for non-gridded (gridded)
+                    this.next('combo').setDisabled(!gridded);
                 }
             }
         }
     }, {
         xtype: 'datecolumn',
-        header: 'Date',
+        header: 'Start',
         dataIndex: 'date',
+        name: 'date',
+        flex: 1,
+        format: 'Y-m-d',
+        editor: {
+            xtype: 'datefield',
+            format: 'Y-m-d',
+            disabled: true,
+            listeners: {
+                change: function () {
+                    this.up('sourcesgridpanel').fireEventArgs('itemchange', arguments);
+                }
+            }
+        }
+    }, {
+        xtype: 'datecolumn',
+        header: 'End',
+        dataIndex: 'end',
         name: 'date',
         flex: 1,
         format: 'Y-m-d',

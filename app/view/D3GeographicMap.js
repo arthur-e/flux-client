@@ -450,7 +450,7 @@ Ext.define('Flux.view.D3GeographicMap', {
     highlightMapLocation: function (coords) {
         var i;
 
-        if (!this.isDrawn) {
+        if (!this.isDrawn || Ext.isEmpty(this.getRasterGrid())) {
             return;
         }
 

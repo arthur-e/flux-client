@@ -110,7 +110,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 change: this.onSourceDifferenceChange
             },
 
-            'field[name=date], field[name=time]': {
+            'field[name=date], field[name=time], field[name=end]': {
                 change: this.onDateTimeSelection,
                 expand: this.uncheckAggregates
             },
@@ -440,7 +440,6 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     fetchTimeSeries: function (view, metadata) {
         var dates = metadata.get('dates');
-        var step = Ext.Array.min(metadata.getTimeOffsets());
         var params = {
             start: dates[0].toISOString(),
             end: dates[dates.length - 1].toISOString(),
@@ -448,12 +447,20 @@ Ext.define('Flux.controller.UserInteraction', {
             aggregate: 'mean'
         };
 
-        if (step < 3600) { // Less than 1 hour (3600 seconds)?
-            params.interval = 'hourly';
-        } else if (step < 86400) { // Less than 1 day?
-            params.interval = 'daily';
-        } else {
-            params.interval = 'monthly';
+        if (metadata.get('gridded')) {
+            params.interval = (function () {
+                var step = Ext.Array.min(metadata.getTimeOffsets());
+
+                if (step < 3600) { // Less than 1 hour (3600 seconds)?
+                    return 'hourly';
+                }
+
+                if (step < 86400) { // Less than 1 day?
+                    return 'daily';
+                }
+
+                return  'monthly';
+            }());
         }
 
         view.getEl().mask('Loading...');
@@ -696,7 +703,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  value   {String}
      */
     onDateTimeSelection: function (field, value) {
-        var dates, steps, theDate, view;
+        var d, dates, steps, view;
         var editor = field.up('roweditor');
         var values = field.up('panel').getForm().getValues();
 
@@ -728,18 +735,35 @@ Ext.define('Flux.controller.UserInteraction', {
 
         dates = view.getMetadata().get('dates');
 
-        // Format the time string accordingly; just a date or with date and time
-        if (values.date && values.time) {
-            theDate = moment.utc(Ext.String.format('{0}T{1}:00.000Z',
-                values.date, values.time));
-        } else {
-            theDate = moment.utc(values.date);
-        }
+        // Gridded /////////////////////////////////////////////////////////////
+        if (view.getMetadata().get('gridded')) {
+            // Format the time string accordingly; just a date or with date and time
+            if (values.date && values.time) {
+                d = moment.utc(Ext.String.format('{0}T{1}:00.000Z',
+                    values.date, values.time));
 
-        // Raise an error, do nothing if the requeste date/time is out of range
-        if (dates[0].isAfter(theDate) || dates[dates.length - 1].isBefore(theDate)) {
-            return this.raiseInvalidDateTime(theDate, dates[0],
-                dates[dates.length - 1]);
+            } else {
+                d = moment.utc(values.date);
+            }
+
+            // Raise an error, do nothing if the requeste date/time is out of range
+            if (dates[0].isAfter(d) || dates[dates.length - 1].isBefore(d)) {
+                return this.raiseInvalidDateTime(d, dates[0],
+                    dates[dates.length - 1]);
+            }
+
+            this.fetchRaster(view, {
+                time: d.toISOString()
+            });
+
+        // Non-gridded /////////////////////////////////////////////////////////
+        } else {
+            if (values.date && values.end) {
+                this.fetchOverlay(view, {
+                    start: Ext.String.format('{0}T00:00Z', values.date),
+                    end: Ext.String.format('{0}T23:59Z', values.end)
+                });
+            }
         }
 
         // Enable the FieldSets in this form
@@ -749,9 +773,6 @@ Ext.define('Flux.controller.UserInteraction', {
             });
         }
 
-        this.fetchRaster(view, {
-            time: theDate.toISOString()
-        });
     },
 
     /**
@@ -906,7 +927,9 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  size    {Number}
      */
     onOverlayMarkerChange: function (s, size) {
-        this.getMap().setMarkerSize(size).redraw();
+        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (v) {
+            v.setMarkerSize(size).redraw();
+        });
     },
 
     /**
@@ -1091,6 +1114,10 @@ Ext.define('Flux.controller.UserInteraction', {
     onSingleMapTabChange: function (panel) {
         panel.getActiveTab().getForm().reset();
 
+        if (panel.getActiveTab.title !== 'gridded-map') {
+            panel.down('field[name=showLinePlot]').setValue(false);
+        }
+
         // Clear any currently drawn features
         this.getMap().clear();
     },
@@ -1230,7 +1257,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
     /**
         When the user adds a new row to the RowEditor, set the "view" property
-        on the associated Flux.model.RasterView instance that is created.
+        on the associated Flux.model.CoordView instance that is created.
         @param  editor  {Ext.grid.plugin.Editing}
         @param  context {Object}
      */
@@ -1336,7 +1363,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
             // Coordinated View ////////////////////////////////////////////////
             case 'coordinated-view':
-                w = 300;
+                w = 350;
                 this.getSymbology().up('sidepanel').collapse();
                 this.getSourcesGrid().getStore().removeAll();
                 break;

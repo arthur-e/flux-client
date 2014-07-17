@@ -127,9 +127,9 @@ Ext.define('Flux.controller.MapController', {
         @param  recs    {Array}
      */
     onBasemapChange: function (c, recs) {
-        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (view) {
+        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (v) {
             // For every d3geomap instance, update the basemap
-            view.setBasemap(recs[0].get('id'));
+            v.setBasemap(recs[0].get('id'));
         });
     },
 
@@ -139,8 +139,8 @@ Ext.define('Flux.controller.MapController', {
         @param  state   {Boolean}
      */
     onLegendDisplayChange: function (c, state) {
-        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (view) {
-            view.toggleLegend(state);
+        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (v) {
+            v.toggleLegend(state);
         });
     },
 
@@ -159,9 +159,9 @@ Ext.define('Flux.controller.MapController', {
         //  the upper-left corner of the grid cell
         geom = focused.getMetadata().calcHalfOffsetCoordinates(geom);
 
-        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (view) {
-            if (view.getId() !== focused.getId()) {
-                view.highlightMapLocation(geom);
+        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (v) {
+            if (v.getId() !== focused.getId()) {
+                v.highlightMapLocation(geom);
             }
         });
     },
@@ -172,11 +172,11 @@ Ext.define('Flux.controller.MapController', {
         @param  focused {D3GeographicMap}
      */
     onMouseOut: function (focused) {
-        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (view) {
-            if (view.getId() !== focused.getId()) {
-                view.updateDisplay({
+        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (v) {
+            if (v.getId() !== focused.getId()) {
+                v.updateDisplay({
                     id: 'tooltip',
-                    text: view._display
+                    text: v._display
                 });
             }
         });
@@ -190,11 +190,11 @@ Ext.define('Flux.controller.MapController', {
     onPaletteChange: function (c, recs) {
         var cs = recs[0].get('colors');
 
-        Ext.each(Ext.ComponentQuery.query('d3geomap'), Ext.bind(function (view) {
+        Ext.each(Ext.ComponentQuery.query('d3geomap'), Ext.bind(function (v) {
             // For every d3geomap instance, update the scale's output range
-            if (view.getScale()) {
-                if (typeof view.getScale().quantiles === 'function') {
-                    view.setScale(view.getScale().range(cs));
+            if (v.getScale()) {
+                if (typeof v.getScale().quantiles === 'function') {
+                    v.setScale(v.getScale().range(cs));
                 }
             }
         }, this));
@@ -208,13 +208,13 @@ Ext.define('Flux.controller.MapController', {
         @param  recs    {Array}
      */
     onProjectionChange: function (c, recs) {
-        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (view) {
-            if (view.getProjection().id === recs[0].get('id')) {
+        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (v) {
+            if (v.getProjection().id === recs[0].get('id')) {
                 return;
             }
 
             // For every d3geomap instance, update the projection
-            view.setProjection(recs[0].get('id')).update();
+            v.setProjection(recs[0].get('id')).update();
         });
     },
 
@@ -299,8 +299,8 @@ Ext.define('Flux.controller.MapController', {
         }
 
         // For every d3geomap instance, update the basemap
-        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (view) {
-            view.setBasemap(basemap, keyword);
+        Ext.each(Ext.ComponentQuery.query('d3geomap'), function (v) {
+            v.setBasemap(basemap, keyword);
         });
     },
 
@@ -317,8 +317,8 @@ Ext.define('Flux.controller.MapController', {
         opts = Ext.merge(opts, config || {});
 
         // Update the scale of every map
-        Ext.each(Ext.ComponentQuery.query('d3geomap'), Ext.bind(function (view) {
-            view.updateScale(opts);
+        Ext.each(Ext.ComponentQuery.query('d3geomap'), Ext.bind(function (v) {
+            v.updateScale(opts);
         }, this));
     }
 

@@ -17,9 +17,12 @@ Ext.define('Flux.model.AbstractFeature', {
     getTimestampDisplay: function (fmt) {
         var d0, d1, ts;
         var p = this.get('properties');
+        var t = this.get('timestamp');
 
-        if (this.get('timestamp')) {
-            return this.get('timestamp').format(fmt);
+        if (t) {
+            if (t.isValid()) {
+                return t.format(fmt);
+            }
         }
 
         // Infer timestamp range

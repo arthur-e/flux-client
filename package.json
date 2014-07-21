@@ -1,19 +1,21 @@
 {
   "name": "flux-client",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "preferGlobal": false,
   "devDependencies": {
     "d3": "latest",
     "topojson": "1.1.3",
     "moment": "latest",
-    "queue-async": "1.0.7"
+    "queue-async": "1.0.7",
+    "uglify-js": "latest"
   },
   "repository": {
     "type": "git",
     "url": "git@github.com:arthur-e/flux-client.git"
   },
   "scripts": {
-    "preinstall": "wget http://cdn.sencha.com/ext/gpl/ext-4.2.1-gpl.zip;unzip ext-4.2.1-gpl.zip;mv ext-4.2.1.883 ext"
+    "preinstall": "wget http://cdn.sencha.com/ext/gpl/ext-4.2.1-gpl.zip;unzip ext-4.2.1-gpl.zip;mv ext-4.2.1.883 ext",
+    "postinstall": "node_modules/uglify-js/bin/uglifyjs node_modules/topojson/topojson.js -o node_modules/topojson/topojson.min.js;node_modules/uglify-js/bin/uglifyjs node_modules/moment/moment.js -o node_modules/moment/moment.min.js"
   }
 }

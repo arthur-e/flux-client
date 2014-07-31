@@ -111,6 +111,17 @@ a proxy for the `/flux/` address; here is an example proxy with Apache.
         Allow from all
     </Location>
 
+#################
+## Documentation
+
+Documentation can be generated with docco. To install docco:
+
+    sudo npm install docco -g
+
+To generate the documentation:
+
+    docco -l classic app/*.js app/controller/*.js app/field/*.js app/model/*.js app/store/*.js app/type/*.js app/view/*.js
+
 #######################
 # Repository Contents #
 #######################

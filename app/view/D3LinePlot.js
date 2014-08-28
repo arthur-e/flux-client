@@ -135,7 +135,9 @@ Ext.define('Flux.view.D3LinePlot', {
         t1.selectAll('.y.axis').call(this.axis.y);
 
         // Grid lines //////////////////////////////////////////////////////////
-        t1.selectAll('.grid').attr('class', 'grid').call(this.axis.y0);
+	
+        t1.selectAll('.gridy').attr('class', 'gridy').call(this.axis.y0);
+	t1.selectAll('.gridx').attr('class', 'gridx').call(this.axis.x0);
 
         this.panes.title.selectAll('.legend-entry')
             .text(displayText || '')
@@ -202,16 +204,27 @@ Ext.define('Flux.view.D3LinePlot', {
             return d[1];
         }));
 
-        this.panes.axis.x.call(this.axis.x);
-        this.panes.axis.y.call(this.axis.y)
-            .attr('transform', 'translate(0,-8)');
+        this.panes.axis.x.call(this.axis.x)
+	    .selectAll("text")
+		.attr('transform', function(d) {
+		    return 'translate(10, 0),rotate(-45)'
+		});
+		//.attr('transform', 'translate(0, 10)');
+        this.panes.axis.y.call(this.axis.y);
+            //.attr('transform', 'translate(0,-8)');
 
         // Grid lines //////////////////////////////////////////////////////////
-        this.panes.plot.selectAll('.grid')
-            .attr('class', 'grid')
-            .call(this.axis.y0)
-            .attr('transform', 'translate(-' +
-                (this.d3margin.left * 0.5).toString() + ',0)');
+	this.panes.plot.selectAll('.gridx')
+	    .attr('class','gridx')
+	    .call(this.axis.x0);
+		//.attr('transform','translate(0,' +
+		//(this.d3margin.top).toString() + ')');
+	
+        this.panes.plot.selectAll('.gridy')
+            .attr('class', 'gridy')
+            .call(this.axis.y0);
+            //.attr('transform', 'translate(-' +
+            //    (this.d3margin.left * 0.5).toString() + ',0)');
 
         // Plot line ///////////////////////////////////////////////////////////
         sel = this.panes.plot.selectAll('.trend')
@@ -257,7 +270,9 @@ Ext.define('Flux.view.D3LinePlot', {
         this.axis.x = d3.svg.axis()
             .scale(this.scales.x)
             .orient('top')
-            .tickPadding(6);
+            .tickPadding(14)
+	    .tickSize(0, 0, 0)
+	    .tickFormat(d3.time.format("%b"));
 
         this.axis.y = d3.svg.axis()
             .scale(this.scales.y)
@@ -267,11 +282,19 @@ Ext.define('Flux.view.D3LinePlot', {
             .tickPadding(10);
 
         // This one's for the grid lines
+	this.axis.x0 = d3.svg.axis()
+	    .scale(this.scales.x)
+	    .orient('top')
+	    .tickSize(-(height - yPadding - 30), 0, 0)
+	    .tickPadding(2)
+	    .tickFormat('');
+	    
         this.axis.y0 = d3.svg.axis()
             .scale(this.scales.y)
             .orient('left')
             .ticks(5)
-            .tickSize(-(width - xPadding + (this.d3margin.left * 0.5)), 0, 0)
+            //.tickSize(-(width - xPadding + (this.d3margin.left * 0.5)), 0, 0)
+	    .tickSize(-(width - xPadding), 0, 0)
             .tickPadding(0)
             .tickFormat('');
 
@@ -313,7 +336,10 @@ Ext.define('Flux.view.D3LinePlot', {
 
         // Grid lines //////////////////////////////////////////////////////////
         this.panes.plot.append('g')
-            .attr('class', 'grid');
+            .attr('class', 'gridx');
+
+	this.panes.plot.append('g')
+            .attr('class', 'gridy');
 
         // Overlays ////////////////////////////////////////////////////////////
         this.panes.overlay = this.panes.plot.append('g')

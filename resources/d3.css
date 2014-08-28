@@ -15,12 +15,12 @@
 .boundary.inside { stroke: #aaa; }
 .boundary.outside { stroke: #fff; }
 .empty { fill: transparent !important; }
-.grid .tick {
+.grid .tick, .gridx .tick, .gridy .tick {
     shape-rendering: crispEdges;
-    stroke: #888;
+    stroke: #999;
     stroke-width: 1px;
 }
-.grid path { stroke-width: 0; }
+.grid path, .gridx path, .gridy path { stroke-width: 0; }
 .hidden { display: none; }
 .legend { shape-rendering: crispEdges; }
 .legend-entry,

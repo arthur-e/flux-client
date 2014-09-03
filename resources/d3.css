@@ -20,7 +20,7 @@
     stroke: #999;
     stroke-width: 1px;
 }
-.grid path, .gridx path, .gridy path { stroke-width: 0; }
+.grid path, .gridx path, .gridy path { stroke-width: 0; pointer-events: none;}
 .hidden { display: none; }
 .legend { shape-rendering: crispEdges; }
 .legend-entry,
@@ -56,4 +56,8 @@ text.info.tip {
     font-size: 16px;
 }
 .region { fill: #fff; }
+.overlay {
+    fill: none;
+    pointer-events: all;
+}
 

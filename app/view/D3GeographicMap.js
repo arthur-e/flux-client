@@ -845,8 +845,13 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return             {Flux.view.D3GeographicMap}
      */
     update: function (selection) {
-        var addit = -this.getMetadata().getSummaryStats()[this._tendency];
 
+        if (['mean','median'].indexOf(this._tendency) > -1) {
+	    var addit = -this.getMetadata().getSummaryStats()[this._tendency];
+	} else {
+	    var addit = -parseFloat(this._tendency);
+	}
+	
         if (selection) {
 
             if (this.getMetadata().get('gridded')) {
@@ -1038,6 +1043,9 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         metadata = this.getMetadata();
 
+	// Resets tendency to custom value if selected
+	opts.tendency = this._tendency;
+	
         // Get the color palette
         palette = Ext.StoreManager.get('palettes').getById(opts.palette);
 
@@ -1046,7 +1054,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         } else {
             scale = metadata.getQuantileScale(opts).range(palette.get('colors'));
         }
-
+        
         return this.setScale(scale);
     }
 

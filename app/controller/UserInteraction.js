@@ -81,6 +81,10 @@ Ext.define('Flux.controller.UserInteraction', {
             '#settings-menu menucheckitem': {
                 checkchange: this.onStatsChange
             },
+	    // triggers a change if the custom central tendency field is modifeid
+	    '#settings-menu numberfield': { 
+		change: this.onStatsChange
+	    },
 
             '#settings-menu slider[name=markerSize]': {
                 change: this.onOverlayMarkerChange
@@ -507,7 +511,9 @@ Ext.define('Flux.controller.UserInteraction', {
                 opts[item.group] = item.name;
             }
         });
-
+	if (opts['tendency'] === 'custom') {
+	    opts['tendency'] = this.getSettingsMenu().down('field[name=tendencyCustomValue]').getValue();
+	}
         return opts;
     },
 
@@ -572,6 +578,7 @@ Ext.define('Flux.controller.UserInteraction', {
     bindMetadata: function (view, metadata) {
         var opts = this.getGlobalSettings();
 
+	//ert(opts.tendency);
         view.setMetadata(metadata)
             .togglePopulationStats(opts.statsFrom === 'population', metadata)
             .toggleAnomalies(opts.display === 'anomalies', opts.tendency);
@@ -1288,6 +1295,8 @@ Ext.define('Flux.controller.UserInteraction', {
         }
 
         opts = this.getGlobalSettings();
+	
+	
 
         // Update the additive offset for anomalies, in case they're used
         Ext.each(query, function (view) {

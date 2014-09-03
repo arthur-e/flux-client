@@ -44,9 +44,21 @@ Ext.define('Flux.controller.UserExperience', {
                 if (Ext.Array.contains(['tendency', 'display', 'statsFrom'], key)) {
                     Ext.onReady(function () {
                         var cmp = Ext.ComponentQuery.query(Ext.String.format('menucheckitem[name={0}]', value))[0];
-                        cmp.setChecked(true);
+			if (cmp) {
+			    cmp.setChecked(true);
+			}
                     });
                 }
+                
+                // If a custom central tendency is selected, enable the numberfield
+                // (it is disabled by default) and set the provided value
+                if (key === 'tendency' && ['mean','median'].indexOf(value) === -1) {
+		    Ext.onReady(function () {
+			var cmp = Ext.ComponentQuery.query('field[name=tendencyCustomValue]')[0];
+			cmp.setDisabled(false);
+			cmp.setValue(value);
+		    });
+		}
 
             });
 
@@ -75,6 +87,10 @@ Ext.define('Flux.controller.UserExperience', {
             '#settings-menu menucheckitem': {
                 checkchange: this.onStatsChange
             },
+	    
+	    '#settings-menu numberfield': {
+		change: this.onStatsChange
+	    },
 
             'sourcepanel fieldset': {
                 afterrender: this.initFieldsets
@@ -236,23 +252,27 @@ Ext.define('Flux.controller.UserExperience', {
         var targets;
 
         if (checked) {
-            this.getSymbology().down(Ext.String.format('hiddenfield[name={0}]',
-                cb.group)).setValue(cb.name);
+	    if (cb.name === 'tendencyCustomValue') {
+	      this.getSymbology().down('hiddenfield[name=tendency]').setValue(cb.value);
+	    } else {
+	      this.getSymbology().down(Ext.String.format('hiddenfield[name={0}]',
+		  cb.group)).setValue(cb.name);
 
-            if (cb.name === 'population' || cb.name === 'data') {
-                targets = this.getSourcePanel().query('fieldset checkbox');
+	      if (cb.name === 'population' || cb.name === 'data') {
+		  targets = this.getSourcePanel().query('fieldset checkbox');
 
-                Ext.each(targets, Ext.Function.bind(function (target) {
-                    if (cb.name === 'population') {
-                        target.setValue(false);
-                    }
+		  Ext.each(targets, Ext.Function.bind(function (target) {
+		      if (cb.name === 'population') {
+			  target.setValue(false);
+		      }
 
-                    // Enable the FieldSet only if the initial selections at
-                    //  the top of the form have been made
-                    target.up('fieldset').setDisabled(cb.name === 'population'
-                        || !this.getSourcePanel().initialSelectionsMade());
-                }, this));
-            }
+		      // Enable the FieldSet only if the initial selections at
+		      //  the top of the form have been made
+		      target.up('fieldset').setDisabled(cb.name === 'population'
+			  || !this.getSourcePanel().initialSelectionsMade());
+		  }, this));
+	      }
+	   }
         }
 
         this.saveFieldState(cb, checked);

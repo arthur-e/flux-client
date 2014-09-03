@@ -96,6 +96,30 @@ Ext.define('Flux.view.Viewport', {
                         group: 'tendency',
                         hideOnClick: false
                     }, {
+			xtype: 'recheckitem',
+			name: 'custom',
+			stateful: true,
+			stateId: 'tendencyCustom',
+			text: 'Custom',
+			group: 'tendency',
+			hideOnClick: false,
+			listeners: {
+			    checkchange: function (cb, checked) {
+				 var target = Ext.getCmp('tendencyCustomValue');
+				 if (target) {
+				    target.setDisabled(!checked);
+				 }
+			    }
+			}
+		    }, {
+			xtype: 'numberfield',
+			name: 'tendencyCustomValue',
+			id: 'tendencyCustomValue',
+			allowDecimals: true,
+			value: 0.0,
+			step: 0.1,
+			disabled: true, // disabled on default; TODO: if local setting use custom designation, ENABLE
+                    }, {
                         xtype: 'menuseparator'
                     }, {
                         text: 'Get statistics from:',

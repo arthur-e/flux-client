@@ -141,20 +141,27 @@ Ext.define('Flux.model.Metadata', {
      */
     getQuantileScale: function (config, parameter) {
         var sigmas = config.sigmas || 2;
-        var tendency = config.tendency || 'mean';
         var domain = config.domain; // Default to defined bounds
         var stats = this.getSummaryStats();
-
+        var tendency = config.tendency || 'mean';
+	
+	// if mean/median is the selected central tendency, get from stats
+	if (['mean','median'].indexOf(tendency) > -1) {
+	    var central_tendency = stats[tendency];
+	} else { // otherwise set to the user-provided value
+	    var central_tendency = tendency;
+	}
+	
         if (config.autoscale) { // If no defined bounds...
             domain = [
-                (stats[tendency] - (sigmas * stats.std)), // Lower bound
-                (stats[tendency] + (sigmas * stats.std))  // Upper bound
+                (central_tendency - (sigmas * stats.std)), // Lower bound
+                (central_tendency + (sigmas * stats.std))  // Upper bound
             ]
         }
 
         if (config.paletteType === 'diverging') {
             // Diverging scales are symmetric about the measure of central tendency
-            domain.splice(1, 0, stats[tendency]);
+            domain.splice(1, 0, central_tendency);
         }
 
         return d3.scale.quantile().domain(domain);

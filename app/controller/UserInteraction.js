@@ -594,21 +594,38 @@ Ext.define('Flux.controller.UserInteraction', {
         }
     },
 
+     /**
+        Retrieves aggregation parameters.
+	@return {Object}
+     */
+    getAggregationArgs: function () {
+	var args = {};
+	var cmps = Ext.ComponentQuery.query('#aggregation-fields')[0]
+		.query('trigger');
+	Ext.each(cmps, function (t) {
+	      args[t.getName()] = t.getValue();
+	  });
+	return args;
+    },
+    
     /**
         Handles a change in the aggregation parameters; fires a new map
         request depending on whether aggregation is requested.
         @param  field   {Ext.form.field.Base}
         @param  value   {Number|String}
      */
+
     onAggregationChange: function (field) {
         var args = {};
         var params, vals, view;
         var toggle = field.up('fieldset').down('field[name=showAggregation]');
 
-        Ext.each(field.up('fieldset').query('trigger'), function (t) {
-            args[t.getName()] = t.getValue();
-        });
+//         Ext.each(field.up('fieldset').query('trigger'), function (t) {
+//             args[t.getName()] = t.getValue();
+//         });
 
+	args = this.getAggregationArgs();
+	
         vals = Ext.Object.getValues(args);
         if (Ext.Array.clean(vals).length !== vals.length) {
             // Do nothing if not all of the fields are filled out
@@ -1510,6 +1527,19 @@ Ext.define('Flux.controller.UserInteraction', {
         Ext.each(this.getSourcePanel().query('fieldset checkbox'), function (cb) {
             cb.setValue(false);
         });
+    },
+    /**
+        Disables/enables the aggregation checkbox and parameter fields
+        @param disable {Boolean}
+     */
+    toggleAggregateParams: function (disable) {
+	Ext.each(['#aggregation-fields','#difference-fields'], function (id) {
+	    var cmps = Ext.ComponentQuery.query(id)[0]
+	    Ext.each(cmps.query('trigger'), function (field) {
+		field.setDisabled(disable);
+	    });
+	    cmps.query('checkbox')[0].setDisabled(disable);
+	});
     }
 
 });

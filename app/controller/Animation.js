@@ -192,17 +192,33 @@ Ext.define('Flux.controller.Animation', {
         var query = Ext.ComponentQuery.query('d3geomap');
 
         Ext.each(query, Ext.Function.bind(function (view) {
-            var ts = view.getMoment();
+          var params;  
+	  var ts = view.getMoment();
 
             if (Ext.isEmpty(ts)) {
                 return;
             }
-
-            this.getController('UserInteraction').fetchRaster(view, {
-                time: ts.clone()
-                    .add(steps, this._stepSize)
-                    .toISOString()
-            });
+            var agg_toggle = Ext.ComponentQuery.query('field[name=showAggregation]')[0].getValue();
+            if (agg_toggle) {
+		args = this.getController('UserInteraction').getAggregationArgs();
+		params = {
+		    aggregate: args.aggregate,
+		    start: ts.clone()
+			  .add(steps, this._stepSize)
+			  .toISOString(),
+		    end: ts.clone()
+			  .add(args.intervals,args.intervalGrouping)
+			  .add(steps, this._stepSize)
+			  .toISOString()
+		};
+	    } else {
+		params = {
+		    time: ts.clone()
+			.add(steps, this._stepSize)
+			.toISOString()
+		};
+	    }
+            this.getController('UserInteraction').fetchRaster(view, params);
         }, this));
     },
 
@@ -226,7 +242,7 @@ Ext.define('Flux.controller.Animation', {
      */
     onStepButton: function (btn) {
         // Uncheck the "Show Aggregation" and "Show Difference" checkboxes
-        this.getController('UserInteraction').uncheckAggregates();
+        //this.getController('UserInteraction').uncheckAggregates();
 
         switch (btn.getItemId()) {
             case 'backward-btn':
@@ -269,8 +285,9 @@ Ext.define('Flux.controller.Animation', {
      */
     toggleAnimation: function (btn, pressed) {
         // Uncheck the "Show Aggregation" and "Show Difference" checkboxes
-        this.getController('UserInteraction').uncheckAggregates();
-
+        //this.getController('UserInteraction').uncheckAggregates();
+	this.getController('UserInteraction').toggleAggregateParams(pressed);
+	
         if (pressed) {
             btn.setText('Pause');
             btn.setIconCls('icon-control-pause');

@@ -192,7 +192,7 @@ Ext.define('Flux.controller.Animation', {
         var query = Ext.ComponentQuery.query('d3geomap');
 
         Ext.each(query, Ext.Function.bind(function (view) {
-          var params;  
+          var params, args, vals;  
 	  var ts = view.getMoment();
 
             if (Ext.isEmpty(ts)) {
@@ -201,6 +201,13 @@ Ext.define('Flux.controller.Animation', {
             var agg_toggle = Ext.ComponentQuery.query('field[name=showAggregation]')[0].getValue();
             if (agg_toggle) {
 		args = this.getController('UserInteraction').getAggregationArgs();
+		vals = Ext.Object.getValues(args);
+		if (Ext.Array.clean(vals).length !== vals.length) {
+		    // Throw an alert and to animation if not all of the aggregation fields are filled out
+		    Ext.Msg.alert('Request Error', 'All aggregation fields must be filled out before animating');
+		    this.getTopToolbar().down('#animate-btn').toggle(false);
+		    return;
+		}
 		params = {
 		    aggregate: args.aggregate,
 		    start: ts.clone()

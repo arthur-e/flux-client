@@ -325,8 +325,7 @@ Ext.define('Flux.controller.Animation', {
             itemId: 'steps',
             name: 'steps',
             value: steps,
-            minValue: 0,
-	    group: 'blah',
+            minValue: steps,
             step: steps,
             listeners: {
                 change: Ext.bind(this.onStepsChange, this)

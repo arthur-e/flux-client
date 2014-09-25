@@ -17,13 +17,6 @@ Ext.define('Flux.model.AbstractFeature', {
     getTimestampDisplay: function (fmt) {
         var d0, d1, ts;
         var p = this.get('properties');
-        var t = this.get('timestamp');
-
-        if (t) {
-            if (t.isValid()) {
-                return t.format(fmt);
-            }
-        }
 
         // Infer timestamp range
         if (p) { // From the properties
@@ -39,7 +32,15 @@ Ext.define('Flux.model.AbstractFeature', {
         }
 
         // Template for a timestamp range display
-        return Ext.String.format('{0} >>> {1}', d0, d1);
+        if (d0 === d1) {
+	    // for some reason it does not work to just return d0,
+	    // perhaps because p.start is not set unless aggregating
+	    var t = this.get('timestamp');
+	    return t.format(fmt);
+	}
+	else {
+	    return Ext.String.format('{0} >>> {1}', d0, d1);
+	}
     },
 
     /**

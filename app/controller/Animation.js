@@ -109,6 +109,7 @@ Ext.define('Flux.controller.Animation', {
         @param  metadata    {Flux.model.Metadata}
      */
     enableAnimation: function (metadata) {
+	//alert('enableAnimation called');
         var d, steps, stepSize;
         var cmp = this.getSettingsMenu().down('field[name=stepSize]');
         var offsets = metadata.getTimeOffsets();
@@ -192,8 +193,8 @@ Ext.define('Flux.controller.Animation', {
         var query = Ext.ComponentQuery.query('d3geomap');
 
         Ext.each(query, Ext.Function.bind(function (view) {
-          var params, args, vals;  
-	  var ts = view.getMoment();
+	    var params, args, vals;  
+	    var ts = view.getMoment();
 
             if (Ext.isEmpty(ts)) {
                 return;
@@ -203,7 +204,7 @@ Ext.define('Flux.controller.Animation', {
 		args = this.getController('UserInteraction').getAggregationArgs();
 		vals = Ext.Object.getValues(args);
 		if (Ext.Array.clean(vals).length !== vals.length) {
-		    // Throw an alert and to animation if not all of the aggregation fields are filled out
+		    // Throw an alert and turn off animation if not all of the aggregation fields are filled out
 		    Ext.Msg.alert('Request Error', 'All aggregation fields must be filled out before animating');
 		    this.getTopToolbar().down('#animate-btn').toggle(false);
 		    return;
@@ -225,6 +226,7 @@ Ext.define('Flux.controller.Animation', {
 			.toISOString()
 		};
 	    }
+	    params['dontResetSteps'] = true;
             this.getController('UserInteraction').fetchRaster(view, params);
         }, this));
     },
@@ -323,7 +325,8 @@ Ext.define('Flux.controller.Animation', {
             itemId: 'steps',
             name: 'steps',
             value: steps,
-            minValue: steps,
+            minValue: 0,
+	    group: 'blah',
             step: steps,
             listeners: {
                 change: Ext.bind(this.onStepsChange, this)

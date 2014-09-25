@@ -82,7 +82,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 checkchange: this.onStatsChange
             },
 	    // triggers a change if the custom central tendency field is modifeid
-	    '#settings-menu numberfield': { 
+	    '#settings-menu numberfield[name=tendencyCustomValue]': { 
 		change: this.onStatsChange
 	    },
 
@@ -334,7 +334,7 @@ Ext.define('Flux.controller.UserInteraction', {
         //  request
         raster = view.store.getById(Ext.Object.toQueryString(params));
         if (raster) {
-            this.bindLayer(view, raster);
+            this.bindLayer(view, raster, params.dontResetSteps);
             this.onMapLoad(raster);
             return;
         }
@@ -355,8 +355,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
                 // Create a unique ID that can be used to find this grid
                 rast.set('_id', Ext.Object.toQueryString(opts.params));
-
-                this.bindLayer(view, rast);
+                this.bindLayer(view, rast, params.dontResetSteps);
                 this.onMapLoad(rast);
             },
             failure: function (response) {
@@ -550,7 +549,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  view    {Flux.view.D3Panel}
         @param  raster  {Flux.model.Raster}
      */
-    bindLayer: function (view, feat) {
+    bindLayer: function (view, feat, dontResetSteps) {
         var opts = this.getGlobalSettings();
 
         if (!Ext.isEmpty(feat.get('_id'))) {
@@ -561,7 +560,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
         if (opts.statsFrom === 'data') {
             // Also update the slider bounds
-            this.onMetadataAdded(undefined, [view.getMetadata()]);
+            this.onMetadataAdded(undefined, [view.getMetadata()], dontResetSteps);
 
             // The color scale can only be properly adjusted AFTER data are bound
             //  to the view
@@ -900,14 +899,14 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  store   {Flux.store.Metadata}
         @param  recs    {Array}
      */
-    onMetadataAdded: function (store, recs) {
+    onMetadataAdded: function (store, recs, dontResetSteps) {
         var metadata = recs[0];
 
         if (!metadata) {
             return;
         }
-
-        if (metadata.get('gridded')) {
+	//alert(dontResetSteps);
+        if (metadata.get('gridded') && !dontResetSteps) {
             this.getController('Animation').enableAnimation(metadata);
         }
 

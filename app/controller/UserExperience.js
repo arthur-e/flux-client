@@ -88,7 +88,7 @@ Ext.define('Flux.controller.UserExperience', {
                 checkchange: this.onStatsChange
             },
 	    
-	    '#settings-menu numberfield': {
+	    '#settings-menu numberfield[name=tendencyCustomValue]': {
 		change: this.onStatsChange
 	    },
 

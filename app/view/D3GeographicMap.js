@@ -150,6 +150,8 @@ Ext.define('Flux.view.D3GeographicMap', {
     addListeners: function (sel) {
         var proj = this.getProjection();
         var view = this;
+	var showAnomalies = this._showAnomalies;
+	var offset = this.getTendencyOffset();
 
         sel = sel || this.panes.raster.selectAll('.cell');
         sel.on('mouseover', function (d) {
@@ -178,7 +180,12 @@ Ext.define('Flux.view.D3GeographicMap', {
                 });
                 v = d.properties.value; // For non-gridded data, choose the value property 
             }
-
+            
+            // modify v if anomalies selected
+            if (showAnomalies) {
+		v = v - offset;
+	    }
+               
             // Heads-up-display
             view.updateDisplay([{
                 id: 'tooltip',
@@ -441,6 +448,19 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this._scale;
     },
 
+    /**
+        Returns the appropriate offset for the selected central tendency.
+        @return {Number}
+     */
+    getTendencyOffset: function() {
+	if (['mean','median'].indexOf(this._tendency) > -1) {
+	    var offset = -this.getMetadata().getSummaryStats()[this._tendency];
+	} else {
+	    var offset = -parseFloat(this._tendency);
+	}
+	return offset;
+    },
+    
     /**
         Attempts to display the value at the provided map coordinates; if the
         coordinates do not exactly match any among the current instance's grid
@@ -733,7 +753,7 @@ Ext.define('Flux.view.D3GeographicMap', {
      */
     setScale: function (scale) {
         this._scale = scale;
-
+	
         if (this.panes.raster) {
             this.update(this.panes.raster.selectAll('.cell'));
             this.updateLegend();
@@ -846,14 +866,11 @@ Ext.define('Flux.view.D3GeographicMap', {
      */
     update: function (selection) {
 
-        if (['mean','median'].indexOf(this._tendency) > -1) {
-	    var addit = -this.getMetadata().getSummaryStats()[this._tendency];
-	} else {
-	    var addit = -parseFloat(this._tendency);
-	}
+	// offset used if 'anomalies' are selected
+        offset = this.getTendencyOffset();
 	
         if (selection) {
-
+	  
             if (this.getMetadata().get('gridded')) {
                 selection.attr('fill', Ext.bind(function (d) {
                     if (Ext.isEmpty(d)) {
@@ -862,7 +879,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 
                     // Rescale the data points subtracting the measure of central tendency
                     if (this._showAnomalies) {
-                        return this.getScale()(d + addit);
+                        return this.getScale()(d - offset);
                     }
 
                     return this.getScale()(d);
@@ -872,7 +889,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                 selection.attr('fill', Ext.bind(function (d) {
                     // Rescale the data points subtracting the measure of central tendency
                     if (this._showAnomalies) {
-                        return this.getScale()(d.properties.value + addit);
+                        return this.getScale()(d.properties.value - offset);
                     }
 
                     return this.getScale()(d.properties.value);

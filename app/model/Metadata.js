@@ -153,15 +153,31 @@ Ext.define('Flux.model.Metadata', {
 	}
 	
         if (config.autoscale) { // If no defined bounds...
-            domain = [
-                (central_tendency - (sigmas * stats.std)), // Lower bound
-                (central_tendency + (sigmas * stats.std))  // Upper bound
-            ]
+	    if (config.display === 'anomalies') {
+		// if anomalies are selected, domain will just be
+		// negative std to postive std
+		domain = [
+		    (-sigmas * stats.std), // Lower bound
+		    (sigmas * stats.std)  // Upper bound
+		]
+	    }
+	    else {
+		domain = [
+		    (central_tendency - (sigmas * stats.std)), // Lower bound
+		    (central_tendency + (sigmas * stats.std))  // Upper bound
+		]
+	    }
         }
 
         if (config.paletteType === 'diverging') {
-            // Diverging scales are symmetric about the measure of central tendency
-            domain.splice(1, 0, central_tendency);
+	    if (config.display === 'anomalies') {
+		// For anomalies, diverging scales are symmetric about 0
+		domain.splice(1, 0, 0);
+	    }
+	    else { 
+		// Diverging scales are symmetric about the measure of central tendency
+		domain.splice(1, 0, central_tendency);
+	    }
         }
 
         return d3.scale.quantile().domain(domain);

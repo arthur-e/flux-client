@@ -869,7 +869,7 @@ Ext.define('Flux.controller.UserInteraction', {
             });
         }
     },
-
+    
     /**
         Propagates wider changes following the loading of a new Raster instance.
         Specifically, this updates the D3LinePlot instance.
@@ -1309,30 +1309,36 @@ Ext.define('Flux.controller.UserInteraction', {
         if (!checked) {
             return;
         }
-
+        
         opts = this.getGlobalSettings();
 	
-	
-
-        // Update the additive offset for anomalies, in case they're used
         Ext.each(query, function (view) {
             if (Ext.isEmpty(view.getMetadata())) {
                 return;
             }
-
+            
             // Update the source of summary statistics
             view.togglePopulationStats(opts.statsFrom === 'population',
                 store.getById(view.getMetadata().get('_id')));
 
-            // Recalculate the additive offset for anomalies
-            view.toggleAnomalies((opts.display === 'anomalies'),
+	    // Recalculate the additive offset for anomalies
+	    view.toggleAnomalies((opts.display === 'anomalies'),
                 opts.tendency);
-
-            if (opts.statsFrom === 'data') {
-                view.redraw();
-            }
+	    
+	    // redraw should NOT be needed here because updateScales()
+	    // called below cascades to a redraw...
+            //if (opts.statsFrom === 'data') {
+            //    view.redraw();
+            //}
         });
-
+	
+	// mouseover listeners (for displaying pixel value)
+	// need to be updated whenever anomalies is checked
+	// OR if we've just switched to Raw Values
+	if (opts.display === 'anomalies' || cb.name === 'values') {
+	    this.getMap().addListeners();
+	}
+	
         this.getController('MapController').updateScales();
 
         // For what it's worth, grab the Metadata on the one (first) map and

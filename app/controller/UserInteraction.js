@@ -150,6 +150,8 @@ Ext.define('Flux.controller.UserInteraction', {
             });
 
         }, this));
+	
+	this._suppressUpdate = false;
     },
 
     /**
@@ -275,7 +277,7 @@ Ext.define('Flux.controller.UserInteraction', {
             });
         }
     },
-
+    
     /**
         Makes a request for a map based on the given parameters, where the map
         is a non-gridded xy.json response (an overlay).
@@ -285,6 +287,8 @@ Ext.define('Flux.controller.UserInteraction', {
     fetchOverlay: function (view, params) {
         var overlay;
 
+	window.mostRecentOverlayParams = params;
+	
         if (!view.getMetadata()) {
             return;
         }
@@ -321,19 +325,21 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  view    {Flux.view.D3GeographicMap}
         @param  params  {Object}
      */
-    fetchRaster: function (view, params) {
-        var raster, source;
-
-        if (!view.getMetadata()) {
+    fetchRaster: function (view, params, forceFetch) {
+        var raster, source, opts;
+        
+	window.mostRecentRasterParams = params;
+	
+	if (!view.getMetadata()) {
             return;
         }
-
-        source = view.getMetadata().getId();
+        
+	source = view.getMetadata().getId();
 
         // Check for the unique ID, a hash of the parameters passed in this
         //  request
         raster = view.store.getById(Ext.Object.toQueryString(params));
-        if (raster) {
+        if (raster && !forceFetch) { 
             this.bindLayer(view, raster, params.dontResetSteps);
             this.onMapLoad(raster);
             return;
@@ -345,7 +351,6 @@ Ext.define('Flux.controller.UserInteraction', {
             params: params,
             callback: function (opts, success, response) {
                 var rast;
-
                 if (!success) {
                     return;
                 }
@@ -355,6 +360,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
                 // Create a unique ID that can be used to find this grid
                 rast.set('_id', Ext.Object.toQueryString(opts.params));
+	
                 this.bindLayer(view, rast, params.dontResetSteps);
                 this.onMapLoad(rast);
             },
@@ -555,6 +561,21 @@ Ext.define('Flux.controller.UserInteraction', {
         if (!Ext.isEmpty(feat.get('_id'))) {
             view.store.add(feat);
         }
+	
+// 	// modify here if anomalies view selected
+	// Set anomalies offset if selected;
+	
+	if (opts.display === 'anomalies') {
+	    f1 = feat.get('features');
+	    feat.set('features', (function () {
+			var i;
+			var g = [];
+			for (i = 0; i < f1.length; i += 1) {
+			    g.push(f1[i] - view.getTendencyOffset());
+			}
+			return g;
+		    }()));
+	}	
 
         view.draw(feat, true);
 
@@ -577,7 +598,6 @@ Ext.define('Flux.controller.UserInteraction', {
     bindMetadata: function (view, metadata) {
         var opts = this.getGlobalSettings();
 
-	//ert(opts.tendency);
         view.setMetadata(metadata)
             .togglePopulationStats(opts.statsFrom === 'population', metadata)
             .toggleAnomalies(opts.display === 'anomalies', opts.tendency);
@@ -896,25 +916,33 @@ Ext.define('Flux.controller.UserInteraction', {
     /**
         Follows the addition of Metadata to a view's metadata store; enables
         the Animation controls.
-        @param  store   {Flux.store.Metadata}
-        @param  recs    {Array}
+        @param  store		{Flux.store.Metadata}
+        @param  recs    	{Array}
+        @param	dontResetSTeps 	{Boolean}
      */
     onMetadataAdded: function (store, recs, dontResetSteps) {
         var metadata = recs[0];
 
         if (!metadata) {
             return;
-        }
-	//alert(dontResetSteps);
+        } 
+         
         if (metadata.get('gridded') && !dontResetSteps) {
             this.getController('Animation').enableAnimation(metadata);
         }
 
         // Initialize the values of the domain bounds and threshold sliders
+        // Applying the anomaly offset may be better implemented earlier in the
+        // metadata get/set/bind process...
+        var offset = 0
+        if (this.getGlobalSettings().display === 'anomalies') {
+	    offset = this.getMap().getTendencyOffset();
+	}
+	
         Ext.each(this.getSymbology().query('enumslider'), function (cmp) {
             var s = metadata.get('stats');
             var v = s.values || s.value;
-            cmp.setBounds([v.min, v.max]);
+            cmp.setBounds([v.min-offset, v.max-offset]);
         });
     },
 
@@ -1007,11 +1035,13 @@ Ext.define('Flux.controller.UserInteraction', {
             success: function (response) {
                 var series = Ext.create('Flux.model.TimeSeries',
                     Ext.JSON.decode(response.responseText));
-
+	
                 this.getLinePlot().addSeries(series,
                     Ext.String.format('{0} {1} of {1} at {2}, {3}',
                         params.interval, params.aggregate,
-                        geom[0].trim('00'), geom[1].trim('00')));
+                        geom[0].trim('00'), geom[1].trim('00')),
+			this.getGlobalSettings().display === 'anomalies'
+					    );
             },
             scope: this
         });
@@ -1305,13 +1335,21 @@ Ext.define('Flux.controller.UserInteraction', {
         var opts;
         var query = Ext.ComponentQuery.query('d3panel');
         var store = this.getStore('metadata');
-
+	var map = this.getMap();
+	var suppressUpdate = false;
+	
         if (!checked) {
             return;
         }
-        
+
         opts = this.getGlobalSettings();
-	
+
+	// do nothing if tendency custom value is modified but custom is not checked
+	if (cb.name === 'tendencyCustomValue' &&
+	    ['mean','median'].indexOf(opts.tendency) > -1) {
+	    return;
+	}
+
         Ext.each(query, function (view) {
             if (Ext.isEmpty(view.getMetadata())) {
                 return;
@@ -1327,24 +1365,34 @@ Ext.define('Flux.controller.UserInteraction', {
 	    
 	    // redraw should NOT be needed here because updateScales()
 	    // called below cascades to a redraw...
-            //if (opts.statsFrom === 'data') {
-            //    view.redraw();
-            //}
+            if (opts.statsFrom === 'data') {
+		suppressUpdate = true;
+                view.redraw();
+            }
         });
 	
-	// mouseover listeners (for displaying pixel value)
-	// need to be updated whenever anomalies is checked
-	// OR if we've just switched to Raw Values
-	if (opts.display === 'anomalies' || cb.name === 'values') {
-	    this.getMap().addListeners();
+	if (opts.display === 'anomalies') {
+	    this.uncheckAggregates();
+	    this.toggleAggregateParams(true);
+	} else if (opts.display === 'values') {
+	    this.toggleAggregateParams(false);
 	}
-	
-        this.getController('MapController').updateScales();
+    
+
+	if (opts.display === 'anomalies' || cb.name === 'values') {
+	    suppressUpdate = true; // 
+	    if (map.getMetadata().get('gridded')) {
+		this.fetchRaster(map,window.mostRecentRasterParams,true);
+	    } else {
+		this.fetchOverlay(map, window.mostRecentOverlayParams);
+	    }
+	}
+
+        this.getController('MapController').updateScales({'suppressUpdate':suppressUpdate});
 
         // For what it's worth, grab the Metadata on the one (first) map and
         //  use it to propagate the population summary statistics
-        this.onMetadataAdded(undefined, [this.getMap().getMetadata()]);
-
+        this.onMetadataAdded(undefined, [map.getMetadata()]);
     },
 
     /**
@@ -1533,6 +1581,7 @@ Ext.define('Flux.controller.UserInteraction', {
             cb.setValue(false);
         });
     },
+    
     /**
         Disables/enables the aggregation checkbox and parameter fields
         @param disable {Boolean}

@@ -102,15 +102,7 @@ Ext.define('Flux.view.Viewport', {
 			stateId: 'tendencyCustom',
 			text: 'Custom',
 			group: 'tendency',
-			hideOnClick: false,
-			listeners: {
-			    checkchange: function (cb, checked) {
-				 var target = Ext.getCmp('tendencyCustomValue');
-				 if (target) {
-				    target.setDisabled(!checked);
-				 }
-			    }
-			}
+			hideOnClick: false
 		    }, {
 			xtype: 'numberfield',
 			name: 'tendencyCustomValue',
@@ -118,7 +110,7 @@ Ext.define('Flux.view.Viewport', {
 			allowDecimals: true,
 			value: 0.0,
 			step: 0.1,
-			disabled: true, // disabled on default; TODO: if local setting use custom designation, ENABLE
+			disabled: false, // disabled on default; TODO: if local setting use custom designation, ENABLE
                     }, {
                         xtype: 'menuseparator'
                     }, {
@@ -167,7 +159,15 @@ Ext.define('Flux.view.Viewport', {
                         stateId: 'displayAnomalies',
                         text: 'Anomalies',
                         group: 'display',
-                        hideOnClick: false
+                        hideOnClick: false,
+// 	   		listeners: {
+// 			    checkchange: function (cb, checked) {
+// 				 var target = Ext.getCmp('tendencyCustomValue');
+// 				 if (target) {
+// 				    target.setDisabled(!checked);
+// 				 }
+// 			    }
+// 			}
                     }, {
                         xtype: 'menuseparator'
                     }, {

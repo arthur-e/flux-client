@@ -203,7 +203,7 @@ Ext.define('Flux.controller.MapController', {
                 }
             }
         }, this));
-
+	
         this.updateScales();
     },
 

@@ -78,6 +78,20 @@ Ext.define('Flux.view.D3Panel', {
     },
 
     /**
+        Returns the appropriate offset for the selected central tendency.
+        Needed for displaying anomalies data
+        @return {Number}
+    */
+    getTendencyOffset: function() {
+	if (['mean','median'].indexOf(this._tendency) > -1) {
+	    var offset = this.getMetadata().getSummaryStats()[this._tendency];
+	} else {
+	    var offset = parseFloat(this._tendency);
+	}
+	return offset;
+    },
+    
+    /**
         Set the metadata; retains a reference to Flux.model.Metadata instance.
         @param  metadata    {Flux.model.Metadata}
         @return             {Flux.view.D3Panel}

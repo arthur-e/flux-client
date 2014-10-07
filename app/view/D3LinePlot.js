@@ -100,14 +100,20 @@ Ext.define('Flux.view.D3LinePlot', {
         @param  series      {Array}
         @param  displayText {String}
      */
-    addSeries: function (series, displayText) {
+    addSeries: function (series, displayText, showAnomalies) {
         var t0, t1, sel;
         var x = this.scales.x;
         var y = this.scales.y;
         var data = series.getInterpolation();
+	
+	var offset = 0;
+	if (showAnomalies) {
+	    offset = this.getTendencyOffset();
+	}
+	
         var path = d3.svg.line()
             .x(function (d) { return x(d[0]); })
-            .y(function (d) { return y(d[1]); });
+            .y(function (d) { return y(d[1] - offset); });
 
         this.panes.plot.selectAll('.series')
             .data([0])
@@ -127,7 +133,7 @@ Ext.define('Flux.view.D3LinePlot', {
         t0.selectAll('.series').attr('d', path);
         t0.selectAll('.trend').attr('d', path);
         this.scales.y.domain(d3.extent(data, function (d) {
-            return d[1];
+            return d[1] - offset;
         }));
 
         t1.selectAll('.series').attr('d', path);
@@ -179,7 +185,7 @@ Ext.define('Flux.view.D3LinePlot', {
         var path = d3.svg.line()
             .x(function (d) { return x(d[0]); })
             .y(function (d) { return y(d[1]); });
-
+	
         // Retain references to last drawing data and metadata; for instance,
         //  resize events require drawing again with the same (meta)data
         this._model = model;

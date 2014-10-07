@@ -132,18 +132,22 @@ Ext.define('Flux.model.Metadata', {
         return ["^(?!" + dates.join("|") + ").*$"];
     },
 
-    /**
+    /** TODO: add offset
         Returns a new quantile scale (d3.scale.quantile instance) that fits the
         data according to the summary statistics and any specified configuration
         options.
         @param  config  {Object}
         @return {d3.scale.quantile}
      */
-    getQuantileScale: function (config, parameter) {
+    getQuantileScale: function (config, offset) {
         var sigmas = config.sigmas || 2;
         var domain = config.domain; // Default to defined bounds
         var stats = this.getSummaryStats();
-        var tendency = config.tendency || 'mean';
+        var tendency = config.tendency;
+	
+	if (typeof tendency === 'undefined') {
+	    tendency = 'mean';
+	}
 	
 	// if mean/median is the selected central tendency, get from stats
 	if (['mean','median'].indexOf(tendency) > -1) {
@@ -153,31 +157,16 @@ Ext.define('Flux.model.Metadata', {
 	}
 	
         if (config.autoscale) { // If no defined bounds...
-	    if (config.display === 'anomalies') {
-		// if anomalies are selected, domain will just be
-		// negative std to postive std
-		domain = [
-		    (-sigmas * stats.std), // Lower bound
-		    (sigmas * stats.std)  // Upper bound
-		]
-	    }
-	    else {
-		domain = [
-		    (central_tendency - (sigmas * stats.std)), // Lower bound
-		    (central_tendency + (sigmas * stats.std))  // Upper bound
-		]
-	    }
+	    domain = [
+		(central_tendency - offset - (sigmas * stats.std)), // Lower bound
+		(central_tendency - offset + (sigmas * stats.std))  // Upper bound
+	    ]
         }
-
+        
+	// Diverging scales are symmetric about the measure of central tendency
+	// For anomalies, diverging scales are symmetric about 0 (what offset is for);
         if (config.paletteType === 'diverging') {
-	    if (config.display === 'anomalies') {
-		// For anomalies, diverging scales are symmetric about 0
-		domain.splice(1, 0, 0);
-	    }
-	    else { 
-		// Diverging scales are symmetric about the measure of central tendency
-		domain.splice(1, 0, central_tendency);
-	    }
+	    domain.splice(1, 0, central_tendency - offset);
         }
 
         return d3.scale.quantile().domain(domain);
@@ -262,7 +251,7 @@ Ext.define('Flux.model.Metadata', {
         @param  colors  {String}    The color to use for the binary mask
         @return         {Function}
      */
-    getThresholdScale: function (bkpts, color) {
+    getThresholdScale: function (bkpts, color, offset) {
         var scale;
 
         if (!Ext.isArray(bkpts)) {

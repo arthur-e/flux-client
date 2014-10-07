@@ -150,8 +150,6 @@ Ext.define('Flux.view.D3GeographicMap', {
     addListeners: function (sel) {
         var proj = this.getProjection();
         var view = this;
-	var showAnomalies = this._showAnomalies;
-	var offset = this.getTendencyOffset();
 
         sel = sel || this.panes.raster.selectAll('.cell');
         sel.on('mouseover', function (d) {
@@ -180,12 +178,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                 });
                 v = d.properties.value; // For non-gridded data, choose the value property 
             }
-            
-            // modify v if anomalies selected
-            if (showAnomalies) {
-		v = v - offset;
-	    }
-               
+     
             // Heads-up-display
             view.updateDisplay([{
                 id: 'tooltip',
@@ -448,18 +441,18 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this._scale;
     },
 
-    /**
-        Returns the appropriate offset for the selected central tendency.
-        @return {Number}
-     */
-    getTendencyOffset: function() {
-	if (['mean','median'].indexOf(this._tendency) > -1) {
-	    var offset = -this.getMetadata().getSummaryStats()[this._tendency];
-	} else {
-	    var offset = -parseFloat(this._tendency);
-	}
-	return offset;
-    },
+//     /**
+//         Returns the appropriate offset for the selected central tendency.
+//         @return {Number}
+//      */
+//     getTendencyOffset: function() {
+// 	if (['mean','median'].indexOf(this._tendency) > -1) {
+// 	    var offset = this.getMetadata().getSummaryStats()[this._tendency];
+// 	} else {
+// 	    var offset = parseFloat(this._tendency);
+// 	}
+// 	return offset;
+//     },
     
     /**
         Attempts to display the value at the provided map coordinates; if the
@@ -749,13 +742,16 @@ Ext.define('Flux.view.D3GeographicMap', {
     /**
         Sets the color scale used by the map.
         @param  scale   {d3.scale.*}
-        @return         {Flux.view.D3GeographicMap}
+        @return         {Flux.fview.D3GeographicMap}
      */
-    setScale: function (scale) {
+    setScale: function (scale, opts) {
         this._scale = scale;
 	
         if (this.panes.raster) {
-            this.update(this.panes.raster.selectAll('.cell'));
+	    if (!opts.suppressUpdate) {
+		this.update(this.panes.raster.selectAll('.cell'));
+	    }
+	    
             this.updateLegend();
         }
 
@@ -865,10 +861,6 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return             {Flux.view.D3GeographicMap}
      */
     update: function (selection) {
-
-	// offset used if 'anomalies' are selected
-        offset = this.getTendencyOffset();
-	
         if (selection) {
 	  
             if (this.getMetadata().get('gridded')) {
@@ -877,21 +869,11 @@ Ext.define('Flux.view.D3GeographicMap', {
                         return 'transparent';
                     }
 
-                    // Rescale the data points subtracting the measure of central tendency
-                    if (this._showAnomalies) {
-                        return this.getScale()(d - offset);
-                    }
-
                     return this.getScale()(d);
                 }, this));
 
             } else {
                 selection.attr('fill', Ext.bind(function (d) {
-                    // Rescale the data points subtracting the measure of central tendency
-                    if (this._showAnomalies) {
-                        return this.getScale()(d.properties.value - offset);
-                    }
-
                     return this.getScale()(d.properties.value);
                 }, this));
 
@@ -1066,13 +1048,22 @@ Ext.define('Flux.view.D3GeographicMap', {
         // Get the color palette
         palette = Ext.StoreManager.get('palettes').getById(opts.palette);
 
+	// Get offset values to use if anmomalies are selected
+	var offset = 0;
+	if (this._showAnomalies) {
+	    offset = this.getTendencyOffset();
+	}
+
         if (opts.threshold) {
-            scale = metadata.getThresholdScale(opts.thresholdValues, palette.get('colors')[0]);
+            scale = metadata.getThresholdScale(opts.thresholdValues,
+					       palette.get('colors')[0],
+					       offset
+					      );
         } else {
-            scale = metadata.getQuantileScale(opts).range(palette.get('colors'));
+            scale = metadata.getQuantileScale(opts,offset).range(palette.get('colors'));
         }
-        
-        return this.setScale(scale);
+
+        return this.setScale(scale, opts);
     }
 
 });

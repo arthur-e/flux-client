@@ -101,7 +101,19 @@ Ext.define('Flux.controller.UserInteraction', {
             'd3geomap': {
                 plotclick: this.onPlotClick
             },
+	    'd3geomap #btn-draw-polygon': {
+		click: this.onDrawPolygon
+	    },
 
+	    'd3geomap #btn-erase-polygon': {
+		click: this.onErasePolygon
+	    },
+
+	    'd3geomap #btn-cancel-polygon': {
+		click: this.onCancelPolygon
+	    },
+
+	    
             'd3geomap #btn-save-image': {
                 click: this.onSaveImage
             },
@@ -150,8 +162,7 @@ Ext.define('Flux.controller.UserInteraction', {
             });
 
         }, this));
-	
-	this._suppressUpdate = false;
+
     },
 
     /**
@@ -215,7 +226,7 @@ Ext.define('Flux.controller.UserInteraction', {
             xtype: 'd3geomap',
             title: title,
             anchor: anchor,
-            enableDisplay: false,
+            enableDisplay: true,
             timeFormat: 'YYYY-MM-DD [at] HH:ss',
             closable: true
         });
@@ -891,6 +902,105 @@ Ext.define('Flux.controller.UserInteraction', {
     },
     
     /**
+	Activates polygon draw functionality
+	@param  btn {Ext.button.Button}
+    */
+    	
+    onDrawPolygon: function (btn) {
+	var view = btn.up('d3geomap'); // maybe this is needed?
+	var tbar = btn.up('toolbar');
+
+	// this also works BUT styling is already all tangled up in the widget properties
+	// that it might literally be impossible to restyle correctly.
+	// better alternative is hiding this button and showing a new one with a different class
+	//btn.getEl().set({style:'box-shadow: 0 0 20px #ffffcc; outline: none;'});
+	
+	// this does something, but it ain't right.
+	//btn.getEl().set({iconCls: 'icon-erase'});
+	//btn.getEl().set({'data-qtip': 'sdfgsdfgsdfgsdfgsdfg'});
+	
+	
+	btn.hide();
+	tbar.down('button[itemId="btn-cancel-polygon"]').show();
+
+
+	    
+	// TODO: disable EVERYTHING if button newly pressed? necessary?
+// 	var panels = Ext.ComponentQuery.query('panel');
+// 	if (panels.length) {
+// 	    for (var i = 0, l = panels.length; i < 1; i++) {
+// 		panels[i].getEl().disable();
+// 	    }
+// 	}
+	   
+	// TODO: maybe toggle the header or add some text somewhere indicating to press Draw again to finish drawing
+
+	if (!view.panes.polygonCanvas) {
+	    view.panes.polygonCanvas = view.svg.append('rect')
+				      .attr({
+					  'class': 'polygonCanvas',
+					  'width': view.svg.attr('width'),
+					  'height': view.svg.attr('height'),
+					  'fill': 'none',
+					  'x': 0,
+					  'y': 0,
+				      })
+				      .style({
+					  'pointer-events': 'all',
+				      });
+	}
+	
+	// Add listeners to drawing element
+	sel = d3.selectAll('.polygonCanvas');
+	view.addListenersForDrawing(sel,tbar);
+    },
+    
+     /** Handles click of the 'actively drawing polygon' button
+         (btn-cancel-polygon); removes polygon elements and
+         handles UI implications
+	@param btn	{Ext button}
+     */
+    onCancelPolygon: function (btn) {
+    	var tbar = btn.up('toolbar');
+	
+	this.removePolygonDrawing(btn);
+	
+	btn.hide();
+	tbar.down('button[itemId="btn-draw-polygon"]').show();
+    },
+    
+    /** Removes polygon elements and handles UI implications
+	@param btn	{Ext button}
+     */ 
+    onErasePolygon: function (btn) {
+	 this.removePolygonDrawing(btn);
+	 
+	 // disabled yourself since no polygon exists to erase anymore
+	 btn.setDisabled(true);
+	 
+	 // and reenable draw button
+	 btn.up('toolbar').down('button[itemId="btn-draw-polygon"]').setDisabled(false);
+    },
+    
+    /** Removes all polygon drawing element including drawing pane
+        and any stored coordinates and shapes
+	@param btn	{Ext button}
+    */ 
+    removePolygonDrawing: function (btn) {
+	 var view = btn.up('d3geomap'); 
+      
+	  // remove the rectangular drawing overlay that blocks pointer-events
+	  // from reaching other elements
+	 delete view.panes.polygonCanvas;
+	 d3.selectAll('.polygonCanvas').remove();
+	 
+	 d3.selectAll('polygon').remove(); // this removes the drawn polygon
+	 d3.selectAll('.vertex').remove(); // remove vertices
+	 
+	 delete view.polygon; // 
+	 delete view._drawingCoords; // remove memory of previous drawing coords
+    },
+    /**
         Propagates wider changes following the loading of a new Raster instance.
         Specifically, this updates the D3LinePlot instance.
         @param  rast    {Flux.model.Raster}
@@ -1366,7 +1476,6 @@ Ext.define('Flux.controller.UserInteraction', {
 	    // redraw should NOT be needed here because updateScales()
 	    // called below cascades to a redraw...
             if (opts.statsFrom === 'data') {
-		suppressUpdate = true;
                 view.redraw();
             }
         });
@@ -1380,7 +1489,7 @@ Ext.define('Flux.controller.UserInteraction', {
     
 
 	if (opts.display === 'anomalies' || cb.name === 'values') {
-	    suppressUpdate = true; // 
+	    suppressUpdate = true; // this disables redundant map update trigger
 	    if (map.getMetadata().get('gridded')) {
 		this.fetchRaster(map,window.mostRecentRasterParams,true);
 	    } else {
@@ -1544,14 +1653,14 @@ Ext.define('Flux.controller.UserInteraction', {
                 series = this.getStore('timeseries')
                     .getById(map.getMetadata().getId());
                 linePlot.setMetadata(map.getMetadata());
-            }
+		
+		// Draw the previous series or load a new one
+		if (series) {
+		    linePlot.draw(series);
 
-            // Draw the previous series or load a new one
-            if (series) {
-                linePlot.draw(series);
-
-            } else {
-                this.bindMetadata(this.getLinePlot(), map.getMetadata());
+		} else {
+		    this.bindMetadata(this.getLinePlot(), map.getMetadata());
+		}
             }
 
         } else {

@@ -30,37 +30,7 @@ Ext.define('Flux.controller.UserExperience', {
         //  application state
         if (params.length > 1) {
             params = Ext.Object.fromQueryString(params.pop());
-
-            Ext.Object.each(params, function (key, value) {
-                // Replace "true" or "false" (String) with Boolean
-                if (value === 'true' || value === 'false') {
-                    params[key] = value = (value === 'true');
-                }
-
-                // IMPORTANT: Makes sure that applyState() recalls the correct state
-                Ext.state.Manager.set(key, {value: value});
-
-                // Initialize global settings (Ext.menu.CheckItem instances)
-                if (Ext.Array.contains(['tendency', 'display', 'statsFrom'], key)) {
-                    Ext.onReady(function () {
-                        var cmp = Ext.ComponentQuery.query(Ext.String.format('menucheckitem[name={0}]', value))[0];
-			if (cmp) {
-			    cmp.setChecked(true);
-			}
-                    });
-                }
-                
-                // If a custom central tendency is selected, enable the numberfield
-                // (it is disabled by default) and set the provided value
-                if (key === 'tendency' && ['mean','median'].indexOf(value) === -1) {
-		    Ext.onReady(function () {
-			var cmp = Ext.ComponentQuery.query('field[name=tendencyCustomValue]')[0];
-			cmp.setDisabled(false);
-			cmp.setValue(value);
-		    });
-		}
-
-            });
+            this.setStateFromParams(params);
 
 //TODO Need to figure out how to automatically load data
 //            if (params.hasOwnProperty('source') && params.hasOwnProperty('date')
@@ -286,6 +256,44 @@ Ext.define('Flux.controller.UserExperience', {
      */
     saveFieldState: function (field, value) {
         Ext.state.Manager.set(field.stateId, value);
+    },
+    
+     /**
+        Sets UI state based on params object
+        'params' can be either interpreted by fromQueryString or passed directly
+        from the getUserSelections() method
+        @param 	{Object}
+     */    
+    setStateFromParams: function (params) {
+	Ext.Object.each(params, function (key, value) {
+	    // Replace "true" or "false" (String) with Boolean
+	    if (value === 'true' || value === 'false') {
+		params[key] = value = (value === 'true');
+	    }
+
+	    // IMPORTANT: Makes sure that applyState() recalls the correct state
+	    Ext.state.Manager.set(key, {value: value});
+
+	    // Initialize global settings (Ext.menu.CheckItem instances)
+	    if (Ext.Array.contains(['tendency', 'display', 'statsFrom'], key)) {
+		Ext.onReady(function () {
+		    var cmp = Ext.ComponentQuery.query(Ext.String.format('menucheckitem[name={0}]', value))[0];
+		    if (cmp) {
+			cmp.setChecked(true);
+		    }
+		});
+	    }
+	    
+	    // If a custom central tendency is selected, enable the numberfield
+	    // (it is disabled by default) and set the provided value
+	    if (key === 'tendency' && ['mean','median'].indexOf(value) === -1) {
+		Ext.onReady(function () {
+		    var cmp = Ext.ComponentQuery.query('field[name=tendencyCustomValue]')[0];
+		    cmp.setDisabled(false);
+		    cmp.setValue(value);
+		});
+	    }
+	});
     }
 
 });

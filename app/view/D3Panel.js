@@ -79,7 +79,7 @@ Ext.define('Flux.view.D3Panel', {
 
     /**
         Returns the appropriate offset for the selected central tendency.
-        Needed for displaying anomalies data
+        Needed for displaying anomalies data.
         @return {Number}
     */
     getTendencyOffset: function() {

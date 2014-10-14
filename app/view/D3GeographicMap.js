@@ -131,6 +131,21 @@ Ext.define('Flux.view.D3GeographicMap', {
                             click: Ext.bind(this.setZoom, this, [0.1])
                         }
                     }, {
+                        itemId: 'btn-draw-polygon',
+                        iconCls: 'icon-draw',
+                        tooltip: 'Draw Polygon to Get ROI Summary Stats',
+                    }, {
+		        itemId: 'btn-cancel-polygon',
+                        iconCls: 'icon-draw',
+                        tooltip: 'Cancel drawing',
+			style: 'background: #ffcc00;',
+			hidden: true
+                    }, {
+			itemId: 'btn-erase-polygon',
+			iconCls: 'icon-erase',
+			tooltip: 'Erase Polygon',
+			disabled: true      
+		    }, {
                         itemId: 'btn-save-image',
                         iconCls: 'icon-disk',
                         tooltip: 'Save Image'
@@ -155,9 +170,9 @@ Ext.define('Flux.view.D3GeographicMap', {
         sel.on('mouseover', function (d) {
             var c, m, p, ll, v;
 
-            if (Ext.isEmpty(d)) {
-                return;
-            }
+            //if (Ext.isEmpty(d)) {
+            //    return;
+            //}
 
             p = view.getMetadata().get('precision');
             m = d3.mouse(view.svg[0][0]);
@@ -206,7 +221,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             view.fireEventArgs('mouseout', [view]);
         });
 
-        if (this.getMetadata().get('gridded')) {
+        if (this.getMetadata() && this.getMetadata().get('gridded')) {
             sel.on('click', function () {
                 view.fireEventArgs('plotclick', [view, [
                     this.attributes.x.value,
@@ -218,6 +233,221 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
+    /**
+        Add event listeners related to drawing polygons
+        @param  sel  {d3.selection}
+        @param	tbar {Ext.Toolbar}
+        @return      {Flux.view.D3GeographicMap}
+    */
+    addListenersForDrawing: function (sel, tbar) {
+        var proj = this.getProjection();
+        var view = this;
+	var line, polygon, c, vindex;
+
+        sel = sel || this.selectAll('.drawing');
+	
+	// separate mousemove listeners depending on whether
+	// drawing has started or not
+        sel.on('mousemove', mousemove);
+
+	// add coordinate on click
+	sel.on('click', function () {
+	    var m = d3.mouse(view.svg[0][0]);
+
+	    // store the current representation of the polygon in screen coords
+	    if (!view._drawingCoords) {
+		view._drawingCoords = [];
+	    }
+
+	    c = [m[0],m[1]];
+	    view._drawingCoords.push(c);
+	    //this._drawingCoords.ll.push(Ext.Array.map(proj.invert(c), function (l) {
+		//	return l.toFixed(5);}));
+
+	    // add polygon if it doesn't yet exist
+	    if (!polygon) {
+		polygon = view.svg.append('polygon').attr({
+			    'points': getSVGPolyPoints(view._drawingCoords.slice(0)),
+			    'pointer-events': 'none'
+			})
+			.style({
+			    'fill': '#B10000',
+			    'fill-opacity': 0.1,
+			    'stroke-width': 1,
+			    'stroke': '#9A6666',
+			    'stroke-linejoin':'round'
+			});
+		vindex = 0;
+	    }
+	    
+	    // add vertex
+	    view.svg.append('circle').attr({
+		    'class': 'vertex',
+		    'vindex': vindex,
+		    'fill': '#800000',
+		    'stroke': 'black',
+		    'stroke-width': '30', // a large transparent stroke make it easier to grab
+		    'stroke-opacity': 0,
+		    'cx': m[0],
+		    'cy': m[1],
+		    'r': 4,
+		    'cursor': 'pointer',
+		    'pointer-events': 'none', // beware dblclick won't register if this is set to something other than 'none'
+	    });
+	    vindex += 1;
+	    
+	    // once clicked, activate a different mousemove function
+	    sel.on('mousemove', mousemoveDraw);
+        });
+	
+	sel.on('dblclick', finishPolygon);
+	
+	sel.on('mouseout', function () {
+            view.updateDisplay([{
+                id: 'timestamp',
+                text: view._display
+            }]);
+            view.panes.tooltip.selectAll('.tip').text('');
+            view.fireEventArgs('mouseout', [view]);
+        });
+	
+	function finishPolygon() {
+	    // Registers drawing on double-click
+	  
+	    // an extra vertex is add on the second click of a double-click. Remove it.
+	    view.svg.selectAll('circle[vindex="' + (vindex-1) + '"]').remove();
+
+	    view._drawingCoords.pop();
+	    var cs = view._drawingCoords.slice(0);
+	    polygon.attr('points', getSVGPolyPoints(cs));
+	  
+	    // now finish the polygon by adding the first element at the end
+	    //view._drawingCoords.push(view._drawingCoords[0]); // TODO: necessary?
+	    //this._drawingCoords.ll.push(this._drawingCoords.ll[0]);
+
+// 	    // create GeoJSON version (needed?)
+// 	    var drawingGJ = {
+// 		"type": "FeatureCollection",
+// 		"features": [
+// 		    {
+// 			"type":"Feature",
+// 			"geometry":{
+// 			    "type": "Polygon",
+// 			    "coordinates": lls
+// 			},
+// 		    }]
+// 	    };
+
+	    // reset listeners
+	    sel.on('mousemove', null);
+	    sel.on('click', null);
+	    sel.on('dblclick', null);
+	    
+	    // create listeners for vertices to enable dragging
+	    // TODO: add dblclick listener for deleting vertices?
+	    var vertices = view.svg.selectAll('.vertex');
+	    
+	    vertices.attr('pointer-events','all');
+	    
+	    vertices.on('mouseover', function () {
+		d3.select(this).transition()
+		    .duration(40)
+		    .ease('linear')
+		    .attr({
+			'fill':'#CC0000',
+			'r':8
+		    });
+		});
+
+	    vertices.on('mouseout', function () {
+		d3.select(this).transition()
+		    .duration(80)
+		    .ease('linear')
+		    .attr({
+			'fill':'#800000',
+			'r':4
+		    });
+		});
+	    
+	    var drag = d3.behavior.drag()
+		.on('drag', function () {
+		    m = d3.mouse(view.svg[0][0]);
+		    
+		    // update polygon
+		    view._drawingCoords[d3.select(this).attr('vindex')] = [m[0],m[1]];
+		    polygon.attr('points', getSVGPolyPoints(view._drawingCoords.slice(0)));
+		    
+		    // update vertex
+		    d3.select(this)
+			.attr('cx', m[0])
+			.attr('cy', m[1]);
+		  }
+		);
+	    
+	    vertices.call(drag);
+	    
+	    // this doesn't do anything, but I want to figure
+	    // out a way to ignore the canvas and reinstate
+	    // map zoom/pan listeners without completely destroying the polygon...
+	    sel.attr('pointer-events', 'none');
+	    
+	    // enable the btn-erase-polygon button
+	    tbar.down('button[itemId="btn-erase-polygon"]').setDisabled(false);
+	    tbar.down('button[itemId="btn-cancel-polygon"]').hide()
+	    tbar.down('button[itemId="btn-draw-polygon"]').setDisabled(true);
+	    tbar.down('button[itemId="btn-draw-polygon"]').show();
+	    //view._activelyDrawing = false;
+	};
+	
+	function getSVGPolyPoints(coords) {
+	    var poly = '';
+	    
+	    coords.push(coords[0]);
+	    
+	    coords.forEach(function(c) {
+		poly += c.join() + ' ';
+	    });
+	    
+	    return poly;
+	}
+	
+	function mousemove() {
+	    var c, m, ll, t;
+
+            m = d3.mouse(view.svg[0][0]);
+            c = [m[0], m[1]];
+	    
+	   // creates lat/long from mouse location
+           ll = Ext.Array.map(proj.invert(c), function (l) {
+                    return l.toFixed(5);
+                });
+	    
+	   t = Ext.String.format('@({0},{1})',
+                      parseFloat(ll[0]).toFixed(2),
+		      parseFloat(ll[1]).toFixed(2))
+	   
+            // Heads-up-display
+            view.updateDisplay([{
+                id: 'tooltip',
+                text: t
+            }]);
+	}
+	
+	function mousemoveDraw() {
+	    var m = d3.mouse(view.svg[0][0]);
+	    var cs = view._drawingCoords.slice(0);
+	    
+	    cs.push([m[0],m[1]]);
+	    
+	    polygon.attr('points', getSVGPolyPoints(cs));
+	    
+	    // also preserve the original mousemove functionality (tooltip and header)
+	    mousemove(); 
+	}
+	
+        return this;
+    },
+    
     /**
         Removes the drawn elements from the drawing plane.
         @return {Flux.view.D3GeographicMap}
@@ -440,19 +670,6 @@ Ext.define('Flux.view.D3GeographicMap', {
     getScale: function () {
         return this._scale;
     },
-
-//     /**
-//         Returns the appropriate offset for the selected central tendency.
-//         @return {Number}
-//      */
-//     getTendencyOffset: function() {
-// 	if (['mean','median'].indexOf(this._tendency) > -1) {
-// 	    var offset = this.getMetadata().getSummaryStats()[this._tendency];
-// 	} else {
-// 	    var offset = parseFloat(this._tendency);
-// 	}
-// 	return offset;
-//     },
     
     /**
         Attempts to display the value at the provided map coordinates; if the
@@ -597,8 +814,8 @@ Ext.define('Flux.view.D3GeographicMap', {
         this.isDrawn = false;
 
         return this;
-    },
-
+    },    
+    
     /**
         Draws the view again with the same data it already has bound to it.
         @param  zoom    {Boolean}
@@ -748,7 +965,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         this._scale = scale;
 	
         if (this.panes.raster) {
-	    if (!opts.suppressUpdate) {
+	    if (opts && !opts.suppressUpdate) {
 		this.update(this.panes.raster.selectAll('.cell'));
 	    }
 	    

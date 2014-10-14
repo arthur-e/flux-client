@@ -29,7 +29,7 @@
 .x-btn-default-toolbar-large { border-color: #d0d0d0 !important; }
 .map-tbar .x-btn-default-toolbar-small,
 .map-tbar .x-btn-default-toolbar-medium,
-.map-tbar .x-btn-default-toolbar-large { border-color: #888 !important; }
+.map-tbar .x-btn-default-toolbar-large { border-color: #888 !important;}
 .x-btn-default-toolbar-medium .x-btn-inner {
     font-size: 16px !important; /* Larger toolbar button font size */
 }
@@ -96,6 +96,15 @@
     background-image: url(disk.png);
     background-position: -3px -3px;
 }
+.icon-draw {
+    background-image: url(draw.png);
+    background-size: 25px;
+}
+.icon-erase {
+    background-image: url(erase.png);
+    background-size: 24px;
+    background-position: 1px 1px;
+}
 .icon-link {
     background-image: url(link.png);
     background-size: 25px;
@@ -111,4 +120,4 @@
 .x-tab-default .x-tab-inner { font-size: 14px !important; }
 
 /* Toolbars *******************************************************************/
-.x-toolbar-default.map-tbar { background-color: #aaa; }
+.x-toolbar-default.map-tbar { background-color: transparent !important; }

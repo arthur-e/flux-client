@@ -245,6 +245,11 @@ Ext.define('Flux.controller.MapController', {
                     return;
                 }
             }
+            
+            // Deactivate drawing button if it was active at the time of resize since all
+            // drawing listeners will have been destroyed.
+            view.down('toolbar[cls="map-tbar"]').down('button[itemId="btn-cancel-polygon"]').hide();
+            view.down('toolbar[cls=map-tbar]').down('button[itemId="btn-draw-polygon"]').show();
 
             // Update the projections ComboBox; rescale each projection contained
             view.init(width, height)

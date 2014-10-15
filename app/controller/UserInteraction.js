@@ -112,7 +112,6 @@ Ext.define('Flux.controller.UserInteraction', {
 	    'd3geomap #btn-cancel-polygon': {
 		click: this.onCancelPolygon
 	    },
-
 	    
             'd3geomap #btn-save-image': {
                 click: this.onSaveImage
@@ -933,21 +932,37 @@ Ext.define('Flux.controller.UserInteraction', {
 // 	    }
 // 	}
 	   
-	// TODO: maybe toggle the header or add some text somewhere indicating to press Draw again to finish drawing
+	// this toggles header text
+	view.panes.hud.selectAll('.info').style('font-size',(0.03 * view._width).toString() + 'px')
+	view.updateDisplay([{
+                id: 'tooltip',
+                text: 'Click to place vertices; Double-click to finish'
+            }]);
+	
 
-	if (!view.panes.polygonCanvas) {
-	    view.panes.polygonCanvas = view.svg.append('rect')
-				      .attr({
-					  'class': 'polygonCanvas',
-					  'width': view.svg.attr('width'),
-					  'height': view.svg.attr('height'),
-					  'fill': 'none',
-					  'x': 0,
-					  'y': 0,
-				      })
-				      .style({
-					  'pointer-events': 'all',
-				      });
+            //.style('font-size', (0.04 * height).toString() + 'px')
+	
+	// an alternate way of doing things
+	//if (view.panes.polygonCanvas.selectAll('rect')[0].length === 0) {
+	//    view.panes.polygonCanvas.append('rect')
+	
+		    //polygonCanvas: this.wrapper.append('g').attr('class', 'pane polygonCanvas')
+	if (d3.selectAll('.polygonCanvas')[0].length === 0) {
+	    view.panes.polygonCanvas = view.wrapper.append('g').attr('class', 'pane');
+	  
+	    view.panes.polygonCanvas.append('rect')
+				    .attr({
+					'class': 'polygonCanvas',
+					'width': view.svg.attr('width'),
+					'height': view.svg.attr('height'),
+					'fill': 'none',
+					'x': 0,
+					'y': 0,
+				    })
+				    .style({
+					'cursor': 'crosshair',
+					'pointer-events': 'all',
+				    });
 	}
 	
 	// Add listeners to drawing element
@@ -962,7 +977,6 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     onCancelPolygon: function (btn) {
     	var tbar = btn.up('toolbar');
-	
 	this.removePolygonDrawing(btn);
 	
 	btn.hide();
@@ -994,11 +1008,21 @@ Ext.define('Flux.controller.UserInteraction', {
 	 delete view.panes.polygonCanvas;
 	 d3.selectAll('.polygonCanvas').remove();
 	 
-	 d3.selectAll('polygon').remove(); // this removes the drawn polygon
-	 d3.selectAll('.vertex').remove(); // remove vertices
+	 d3.selectAll('.roi-polygon').remove(); // this removes the drawn polygon
+	 d3.selectAll('.roi-vertex').remove(); // remove vertices
 	 
 	 delete view.polygon; // 
 	 delete view._drawingCoords; // remove memory of previous drawing coords
+	 
+	 // restore default HUD font-size and clear text
+	 view.panes.hud.selectAll('.info').style('font-size',view._hudFontSize.toString() + 'px')
+	 view.updateDisplay([{
+                id: 'tooltip',
+                text: ''
+            }]);
+	 
+	 // re-enable zoom
+	 view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
     },
     /**
         Propagates wider changes following the loading of a new Raster instance.

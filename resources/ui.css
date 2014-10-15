@@ -121,3 +121,17 @@
 
 /* Toolbars *******************************************************************/
 .x-toolbar-default.map-tbar { background-color: transparent !important; }
+
+/* Polygon ROI Drawing Elements ***********************************************/
+.roi-polygon {
+    fill: #B10000;
+    fill-opacity: 0.1;
+    stroke-width: 1;
+    stroke: #9A6666;
+    stroke-linejoin: round;
+}
+.roi-vertex {
+     stroke: black;
+     stroke-opacity: 0;
+     cursor: pointer;
+}

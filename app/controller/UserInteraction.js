@@ -976,11 +976,10 @@ Ext.define('Flux.controller.UserInteraction', {
 	@param btn	{Ext button}
      */
     onCancelPolygon: function (btn) {
-    	var tbar = btn.up('toolbar');
 	this.removePolygonDrawing(btn);
 	
 	btn.hide();
-	tbar.down('button[itemId="btn-draw-polygon"]').show();
+	btn.up('toolbar').down('button[itemId="btn-draw-polygon"]').show();
     },
     
     /** Removes polygon elements and handles UI implications
@@ -1010,7 +1009,9 @@ Ext.define('Flux.controller.UserInteraction', {
 	 
 	 d3.selectAll('.roi-polygon').remove(); // this removes the drawn polygon
 	 d3.selectAll('.roi-vertex').remove(); // remove vertices
-	 
+	 d3.selectAll('.roi-stats-backdrop').remove(); // remove summary stats display
+         d3.selectAll('.roi-stats-text').remove(); // remove summary stats display
+         
 	 delete view.polygon; // 
 	 delete view._drawingCoords; // remove memory of previous drawing coords
 	 

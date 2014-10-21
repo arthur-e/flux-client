@@ -135,3 +135,8 @@
      stroke-opacity: 0;
      cursor: pointer;
 }
+.roi-stats-backdrop {
+    fill: '#fff';
+    fill-opacity: 0.1;
+}
+.roi-stats-text {font-size: 13px;}

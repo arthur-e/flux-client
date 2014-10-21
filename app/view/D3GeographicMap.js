@@ -307,21 +307,11 @@ Ext.define('Flux.view.D3GeographicMap', {
 	
 	sel.on('dblclick', finishPolygon);
 	
-	// TODO: is this needed?
-// 	sel.on('mouseout', function () {
-//             view.updateDisplay([{
-//                 id: 'timestamp',
-//                 text: view._display
-//             }]);
-//             view.panes.tooltip.selectAll('.tip').text('');
-//             view.fireEventArgs('mouseout', [view]);
-//         });
-	
 	// Functions specific to polygon drawing listeners
 	function finishPolygon() {
 	    // Registers drawing on double-click
 	  
-	    // an extra vertex is add on the second click of a double-click
+	    // An extra vertex is add on the second click of a double-click
 	    // Remove the vertex as well as the coordinate from the poly def.
 	    view.wrapper.selectAll('circle[vindex="' + (vindex-1) + '"]').remove();
 	    view._drawingCoords.pop();
@@ -334,63 +324,32 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    sel.on('mousemove', null);
 	    sel.on('click', null);
 	    sel.on('dblclick', null);
+            
+            // reset summary stats
+            delete view._currentSummaryStats;
 	    
 	    // grow/shrink/drag listeners to vertices
 	    view.addListenersForVertices();
 	    
+            // Return summary stats
+            view.requestRoiSummaryStats();
+		
 	    // Make UI changes
 	    tbar.down('button[itemId="btn-erase-polygon"]').setDisabled(false);
 	    tbar.down('button[itemId="btn-cancel-polygon"]').hide()
 	    tbar.down('button[itemId="btn-draw-polygon"]').setDisabled(true);
 	    tbar.down('button[itemId="btn-draw-polygon"]').show();
 	    
+            // Reenable zoom
+            view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
+            
             view.updateDisplay([{
                 id: 'timestamp',
                 text: view._display
             }]);
-	    
-	    
-	    // now finish the polygon by adding the first element at the end
-	    //view._drawingCoords.push(view._drawingCoords[0]); // TODO: necessary?
-	    //this._drawingCoords.ll.push(this._drawingCoords.ll[0]);
-
-// 	    // create GeoJSON version and send to server? (needed?)
-// 	    var drawingGJ = {
-// 		"type": "FeatureCollection",
-// 		"features": [
-// 		    {
-// 			"type":"Feature",
-// 			"geometry":{
-// 			    "type": "Polygon",
-// 			    "coordinates": lls
-// 			},
-// 		    }]
-// 	    };
-	    
-	};
+        }
 	
-// 	function mousemove() {
-// 	    var c, m, ll, t;
-// 
-//             m = d3.mouse(view.wrapper[0][0]);
-//             c = [m[0], m[1]];
-// 	    
-// 	   // creates lat/long from mouse location
-//            ll = Ext.Array.map(proj.invert(c), function (l) {
-//                     return l.toFixed(5);
-//                 });
-// 	    
-// 	   t = Ext.String.format('@({0},{1})',
-//                       parseFloat(ll[0]).toFixed(2),
-// 		      parseFloat(ll[1]).toFixed(2))
-// 	   
-// //             // Heads-up-display
-// //             view.updateDisplay([{
-// //                 id: 'tooltip',
-// //                 text: t
-// //             }]);
-// 	}
-	
+	// When drawing, update polygon as mouse moves
 	function mousemoveDraw() {
 	    var m = d3.mouse(view.wrapper[0][0]);
 	    var cs = view._drawingCoords.slice(0);
@@ -398,9 +357,6 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    cs.push([m[0],m[1]]);
 	    
 	    polygon.attr('points', view.getSVGPolyPoints(cs));
-	    
-	    // also preserve the original mousemove functionality (tooltip and header)
-	    //mousemove(); 
 	}
 	
         return this;
@@ -413,6 +369,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 	var view = this;
 	var vertices = this.wrapper.selectAll('.roi-vertex');
 	var polygon = this.wrapper.selectAll('polygon');
+        var proj = this.getProjection();
 
 	vertices.attr('pointer-events','all');
 	
@@ -421,7 +378,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    // NOTE: if you drag quick enough to "outrun" the vertex being dragged,
 	    //       it will trigger 'mouseout' below and therefore briefly re-enable panning.
 	    //       Minor bug, but might be worth looking into fixing
-	    view.zoom.on('zoom',null);
+	    
 	    
 	    d3.select(this).transition()
 		.duration(40)
@@ -434,7 +391,6 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    });
 
 	vertices.on('mouseout', function () {
-	    view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
 	    d3.select(this).transition()
 		.duration(80)
 		.ease('linear')
@@ -447,18 +403,42 @@ Ext.define('Flux.view.D3GeographicMap', {
 
 	var drag = d3.behavior.drag()
 	    .on('drag', function () {
+                view.zoom.on('zoom',null);
+                
 		m = d3.mouse(view.wrapper[0][0]);
+                var x = m[0]
+                var y = m[1];
+                
+                dragged = true;
+                
+                // Constrain vertices so that they don't exceed bounds of lat/long
+                // (otherwise will throw a MongoDB error)
+                ll = Ext.Array.map(proj.invert([m[0],m[1]]), function(l) {return l;});
+                
+                if (ll[1] > 90 || ll[1] < -90) {
+                    y = d3.select(this).attr('cy');
+                }
+                
+                if (ll[0] > 180 || ll[0] < -180) {
+                    x = d3.select(this).attr('cx'); 
+                }
 		
 		// update polygon
-		view._drawingCoords[d3.select(this).attr('vindex')] = [m[0],m[1]];
+		view._drawingCoords[d3.select(this).attr('vindex')] = [x,y];
 		polygon.attr('points', view.getSVGPolyPoints(view._drawingCoords.slice(0)));
 		
 		// update vertex
 		d3.select(this)
-		    .attr('cx', m[0])
-		    .attr('cy', m[1]);
-	      }
-	    );
+		    .attr('cx', x)
+		    .attr('cy', y);
+                    
+                // since polygon is being modified,
+                // delete current summaryStats so that it will trigger a database ping
+                delete view._currentSummaryStats;
+	      }).on('dragend', function() {
+                view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
+                if (dragged) { view.requestRoiSummaryStats();}
+              });
 	
 	vertices.call(drag);
       
@@ -607,6 +587,9 @@ Ext.define('Flux.view.D3GeographicMap', {
 	
 	// add grow/shrink and drag listeners for vertices
 	this.addListenersForVertices();
+        
+        // get summary stats
+        this.requestRoiSummaryStats();
     },
     
     getVertexAttrs: function(vindex, coords) {
@@ -839,6 +822,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         this.panes.hud = this.svg.append('g').attr('class', 'pane hud');
         this.panes.legend = this.svg.append('g').attr('class', 'pane legend');
         this.panes.tooltip = this.svg.append('g').attr('class', 'pane tooltip');
+        this.panes.roistats = this.svg.append('g').attr('class', 'pane roistats');
 
         // Tooltip /////////////////////////////////////////////////////////////
         this.panes.tooltip.selectAll('.tip')
@@ -922,7 +906,95 @@ Ext.define('Flux.view.D3GeographicMap', {
 	}
         return this;
     },
+    
+    /** Requests and handles return of ROI summary stats
+    */
+    requestRoiSummaryStats: function () {
+        var polygon = this.wrapper.selectAll('polygon');
+        var view = this;
+        var proj = this.getProjection();
 
+        var meta = view.getMetadata();
+        
+        if (meta && !view._currentSummaryStats) {
+            var params;
+            
+            var cs = view._drawingCoords.slice(0);
+            cs.push(cs[0]);
+            
+            var wkt = [];
+            cs.forEach(function(c) {
+                wkt.push(Ext.Array.map(proj.invert(c), function (l) {
+                        return l.toFixed(4);
+                    }).join('+'))
+                });
+            
+            params = {
+                start: meta.get('dates')[0].toISOString(),
+                end: meta.get('dates')[0].toISOString(),//meta.get('dates')[meta.get('dates').length - 1].toISOString(),
+                //TODO aggregate: this.getGlobalSettings().tendency,
+                // aggregate: 'mean',
+                geom: Ext.String.format('POLYGON(({0}))', wkt.join(','))
+            };
+            
+            Ext.Ajax.request({
+                method: 'GET',
+                url: Ext.String.format('/flux/api/scenarios/{0}/roi.json', meta.getId()),
+                params: params,
+                callback: function () {},
+                failure: function (response) {
+                    Ext.Msg.alert('Request Error', response.responseText);
+                },
+                success: function (response) {
+                    view._currentSummaryStats = Ext.JSON.decode(response.responseText);
+                    var rs = {'Mean': 2,
+                              'Min': 2,
+                              'Max': 2,
+                              'STD': 2,
+                              'N': 0}
+                    
+                    // Summary stats display
+                    if (view.panes.roistats.selectAll('.roi-stats-text')[0].length === 0) {
+                        var x = 10;
+                        var y_init = view._height - (0.92 * view._height);
+                        
+                        view.panes.roistats.append('rect')
+                            .attr({
+                                'class': 'roi-stats-backdrop',
+                                'width': 100,
+                                'height': 76,
+                                'x': 0,
+                                'y': view._height - (0.95 * view._height), // this places it just underneath the HUD
+                            });
+
+                        Object.keys(rs).forEach(function (s, i) {
+                            view.panes.roistats.append('text').text(s + ':').attr({
+                                'class': 'roi-stats-text',
+                                'text-anchor': 'left',
+                                'x': x,
+                                'y': y_init + (i*14)
+                            });
+                            view.panes.roistats.append('text').text('').attr({
+                                'class': 'roi-stats-text ' + s,
+                                'text-anchor': 'end',
+                                'x': x + 80,
+                                'y': y_init + (i*14)
+                            });
+                        });
+                    }
+                    
+                    Object.keys(rs).forEach(function (s, i) {
+                        view.panes.roistats.selectAll('.' + s)
+                            .text(view._currentSummaryStats['series' + s][0].toFixed(rs[s]));
+                    });
+                    
+                },
+                scope: this
+            });
+        }
+        
+    },
+    
     /**
         Draws or redraws the basemap given the URL of a new TopoJSON file.
         @param  basemapUrl      {String}

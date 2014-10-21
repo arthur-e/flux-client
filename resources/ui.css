@@ -139,4 +139,5 @@
     fill: '#fff';
     fill-opacity: 0.1;
 }
-.roi-stats-text {font-size: 13px;}
+.roi-stats-text-labels {font-size: 12px;color: #999999;}
+.roi-stats-text-data {font-size: 13px;}

@@ -372,7 +372,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 rast.set('_id', Ext.Object.toQueryString(opts.params));
 	
                 this.bindLayer(view, rast, params.dontResetSteps);
-                this.onMapLoad(rast);
+                this.onMapLoad(rast, params);
             },
             failure: function (response) {
                 Ext.Msg.alert('Request Error', response.responseText);
@@ -909,44 +909,16 @@ Ext.define('Flux.controller.UserInteraction', {
 	var view = btn.up('d3geomap'); // maybe this is needed?
 	var tbar = btn.up('toolbar');
 
-	// this also works BUT styling is already all tangled up in the widget properties
-	// that it might literally be impossible to restyle correctly.
-	// better alternative is hiding this button and showing a new one with a different class
-	//btn.getEl().set({style:'box-shadow: 0 0 20px #ffffcc; outline: none;'});
-	
-	// this does something, but it ain't right.
-	//btn.getEl().set({iconCls: 'icon-erase'});
-	//btn.getEl().set({'data-qtip': 'sdfgsdfgsdfgsdfgsdfg'});
-	
-	
 	btn.hide();
 	tbar.down('button[itemId="btn-cancel-polygon"]').show();
 
-
-	    
-	// TODO: disable EVERYTHING if button newly pressed? necessary?
-// 	var panels = Ext.ComponentQuery.query('panel');
-// 	if (panels.length) {
-// 	    for (var i = 0, l = panels.length; i < 1; i++) {
-// 		panels[i].getEl().disable();
-// 	    }
-// 	}
-	   
 	// this toggles header text
 	view.panes.hud.selectAll('.info').style('font-size',(0.03 * view._width).toString() + 'px')
 	view.updateDisplay([{
                 id: 'tooltip',
                 text: 'Click to place vertices; Double-click to finish'
             }]);
-	
 
-            //.style('font-size', (0.04 * height).toString() + 'px')
-	
-	// an alternate way of doing things
-	//if (view.panes.polygonCanvas.selectAll('rect')[0].length === 0) {
-	//    view.panes.polygonCanvas.append('rect')
-	
-		    //polygonCanvas: this.wrapper.append('g').attr('class', 'pane polygonCanvas')
 	if (d3.selectAll('.polygonCanvas')[0].length === 0) {
 	    view.panes.polygonCanvas = view.wrapper.append('g').attr('class', 'pane');
 	  
@@ -1010,7 +982,8 @@ Ext.define('Flux.controller.UserInteraction', {
 	 d3.selectAll('.roi-polygon').remove(); // this removes the drawn polygon
 	 d3.selectAll('.roi-vertex').remove(); // remove vertices
 	 d3.selectAll('.roi-stats-backdrop').remove(); // remove summary stats display
-         d3.selectAll('.roi-stats-text').remove(); // remove summary stats display
+         d3.selectAll('.roi-stats-text-labels').remove(); // remove summary stats display
+         d3.selectAll('.roi-stats-text-data').remove(); // remove summary stats display
          
 	 delete view.polygon; // 
 	 delete view._drawingCoords; // remove memory of previous drawing coords
@@ -1030,12 +1003,17 @@ Ext.define('Flux.controller.UserInteraction', {
         Specifically, this updates the D3LinePlot instance.
         @param  rast    {Flux.model.Raster}
      */
-    onMapLoad: function (rast) {
+    onMapLoad: function (rast, params) {
         var props = rast.get('properties');
         var moments = [
             rast.get('timestamp')
         ];
 
+        if (this.getMap()._drawingCoords) {
+            delete this.getMap()._currentSummaryStats;
+            this.getMap().requestRoiSummaryStats(params);
+        }
+        
         if (this.getLinePlot()) {
             if (props.start && props.end) {
                 moments = [
@@ -1479,12 +1457,13 @@ Ext.define('Flux.controller.UserInteraction', {
 
         opts = this.getGlobalSettings();
 
+
 	// do nothing if tendency custom value is modified but custom is not checked
 	if (cb.name === 'tendencyCustomValue' &&
 	    ['mean','median'].indexOf(opts.tendency) > -1) {
 	    return;
 	}
-
+        
         Ext.each(query, function (view) {
             if (Ext.isEmpty(view.getMetadata())) {
                 return;
@@ -1497,9 +1476,9 @@ Ext.define('Flux.controller.UserInteraction', {
 	    // Recalculate the additive offset for anomalies
 	    view.toggleAnomalies((opts.display === 'anomalies'),
                 opts.tendency);
-	    
+            
 	    // redraw should NOT be needed here because updateScales()
-	    // called below cascades to a redraw...
+	    // called below cascades to a redraw...but turns out in some instances it is needed.
             if (opts.statsFrom === 'data') {
                 view.redraw();
             }

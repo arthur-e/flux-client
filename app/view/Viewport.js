@@ -110,7 +110,7 @@ Ext.define('Flux.view.Viewport', {
 			allowDecimals: true,
 			value: 0.0,
 			step: 0.1,
-			disabled: false, // disabled on default; TODO: if local setting use custom designation, ENABLE
+			disabled: false,
                     }, {
                         xtype: 'menuseparator'
                     }, {

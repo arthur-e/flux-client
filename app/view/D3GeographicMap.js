@@ -267,20 +267,19 @@ Ext.define('Flux.view.D3GeographicMap', {
 	// temporarily disabled zooming while drawing is active
 	view.zoom.on('zoom',null);
 	
-	// there are separate mousemove listeners depending
-	// on whether drawing is active or not
-        //sel.on('mousemove', mousemove); // this doesn't do anything helpful
+        sel.on('mousemove', mousemove);
 
 	// add vertex on click
 	sel.on('click', function () {
 	    var m = d3.mouse(view.wrapper[0][0]);
-	    
+            
+            c = view.constrainLatLong(m);
+            
 	    // store the current representation of the polygon in screen coords
 	    if (!view._drawingCoords) {
 		view._drawingCoords = [];
 	    }
 
-	    c = [m[0],m[1]];
 	    view._drawingCoords.push(c);
 
 	    // add polygon if it doesn't yet exist
@@ -295,7 +294,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    }
 	    
 	    // add vertex
-	    view.wrapper.append('circle').attr(view.getVertexAttrs(vindex,m));
+	    view.wrapper.append('circle').attr(view.getVertexAttrs(vindex,c));
 	    
 	    // vindex is used to track the order vertices are placed
 	    //  which is essential for implementing drag functionality
@@ -311,6 +310,9 @@ Ext.define('Flux.view.D3GeographicMap', {
 	function finishPolygon() {
 	    // Registers drawing on double-click
 	  
+            // Remove tracker vertex
+            view.wrapper.selectAll('.tracker').remove();
+            
 	    // An extra vertex is add on the second click of a double-click
 	    // Remove the vertex as well as the coordinate from the poly def.
 	    view.wrapper.selectAll('circle[vindex="' + (vindex-1) + '"]').remove();
@@ -324,6 +326,9 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    sel.on('mousemove', null);
 	    sel.on('click', null);
 	    sel.on('dblclick', null);
+            
+            // remove canvas to awaken sleeping listeners underneath
+            d3.selectAll('.polygonCanvas').remove();
             
             // reset summary stats
             delete view._currentSummaryStats;
@@ -340,6 +345,8 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    tbar.down('button[itemId="btn-draw-polygon"]').setDisabled(true);
 	    tbar.down('button[itemId="btn-draw-polygon"]').show();
 	    
+            view.panes.polygonCanvas.selectAll('rect').style('cursor','auto');
+            
             // Reenable zoom
             view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
             
@@ -349,14 +356,39 @@ Ext.define('Flux.view.D3GeographicMap', {
             }]);
         }
 	
+	// Add a floating vertex under the mouse pointer when drawing
+        function mousemove() {
+            var m = d3.mouse(view.wrapper[0][0]);
+            var c = view.constrainLatLong(m);
+            
+            if (view.wrapper.selectAll('.tracker')[0].length === 0) {
+                view.wrapper.append('circle').attr({
+                    'class': 'tracker',
+                    'cx': m[0],
+                    'cy': m[1],
+                    'r': 2,
+                    'fill': '#800000',
+                    'pointer-events': 'none' // otherwise double-click won't register);
+                });
+            }
+            // Update tracker vertex
+            view.wrapper.selectAll('.tracker').attr({'cx':c[0],'cy':c[1]});
+            
+        }
+	
+	
 	// When drawing, update polygon as mouse moves
 	function mousemoveDraw() {
 	    var m = d3.mouse(view.wrapper[0][0]);
+            var c = view.constrainLatLong(m);
+            
 	    var cs = view._drawingCoords.slice(0);
 	    
-	    cs.push([m[0],m[1]]);
+	    cs.push([c[0],c[1]]);
 	    
 	    polygon.attr('points', view.getSVGPolyPoints(cs));
+            
+            mousemove();
 	}
 	
         return this;
@@ -461,6 +493,39 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
+        
+    /**
+        Constrains a set of mouse coordinates to valid lat/long values
+        e.g. lat values > 90 will be set to 90
+        @param
+    */
+    constrainLatLong: function (m) {
+        var proj = this.getProjection();
+        
+        ll = Ext.Array.map(proj.invert([m[0],m[1]]), function(l) {return l;});
+        
+        var x = ll[0];
+        var y = ll[1];
+        
+        if (ll[1] > 90) {
+            y = 90;
+        }
+        
+        if (ll[1] < -90) {
+            y = -90;
+        }
+        
+        if (ll[0] > 180) {
+            x = 180;
+        }
+        
+        if (ll[0] < -180) {
+            x = -180;
+        }
+        
+        return proj([x,y]);
+    },
+    
     /**
         Draws the visualization features on the map given input data and the
         corresponding metadata.
@@ -592,6 +657,10 @@ Ext.define('Flux.view.D3GeographicMap', {
         this.requestRoiSummaryStats();
     },
     
+    /**
+        Returns attributes for SVG circle element of
+        the ROI polygon vertex class
+     */
     getVertexAttrs: function(vindex, coords) {
 	var attrs = {
 	    'class': 'roi-vertex',
@@ -898,8 +967,8 @@ Ext.define('Flux.view.D3GeographicMap', {
             this.draw(this._model, zoom).updateLegend();
         }
 	
-	// If a drawn polygon exists, it needs to be redrawn too
-        if (this._drawingCoords) {
+	// If a drawn polygon existed and has not been destroyed, it needs to be redrawn too
+        if (this._drawingCoords && this.wrapper.selectAll('.roi-polygon')[0].length === 0) {
 	    // reset zoom scale so that polygon vertices show up at the right size
 	    this._currentZoomScale = 1;
 	    this.redrawPolygon();
@@ -909,13 +978,13 @@ Ext.define('Flux.view.D3GeographicMap', {
     
     /** Requests and handles return of ROI summary stats
     */
-    requestRoiSummaryStats: function () {
+    requestRoiSummaryStats: function (opts) {
         var polygon = this.wrapper.selectAll('polygon');
         var view = this;
         var proj = this.getProjection();
 
         var meta = view.getMetadata();
-        
+
         if (meta && !view._currentSummaryStats) {
             var params;
             
@@ -929,9 +998,17 @@ Ext.define('Flux.view.D3GeographicMap', {
                     }).join('+'))
                 });
             
+            // If animation is active, pull time from the opts
+            // parameter, otherwise get from metadata
+            // TODO: Adjust to account for aggregate views
+            var time = meta.get('dates')[0].toISOString();
+            if (opts) {
+                time = opts.time;
+            }
+            
             params = {
-                start: meta.get('dates')[0].toISOString(),
-                end: meta.get('dates')[0].toISOString(),//meta.get('dates')[meta.get('dates').length - 1].toISOString(),
+                start: time,
+                end: time,//meta.get('dates')[meta.get('dates').length - 1].toISOString(),
                 //TODO aggregate: this.getGlobalSettings().tendency,
                 // aggregate: 'mean',
                 geom: Ext.String.format('POLYGON(({0}))', wkt.join(','))
@@ -954,7 +1031,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                               'N': 0}
                     
                     // Summary stats display
-                    if (view.panes.roistats.selectAll('.roi-stats-text')[0].length === 0) {
+                    if (view.panes.roistats.selectAll('.roi-stats-backdrop')[0].length === 0) {
                         var x = 10;
                         var y_init = view._height - (0.92 * view._height);
                         
@@ -969,13 +1046,15 @@ Ext.define('Flux.view.D3GeographicMap', {
 
                         Object.keys(rs).forEach(function (s, i) {
                             view.panes.roistats.append('text').text(s + ':').attr({
-                                'class': 'roi-stats-text',
+                                'class': 'roi-stats-text-labels',
+                                'fill': '#444',
                                 'text-anchor': 'left',
                                 'x': x,
                                 'y': y_init + (i*14)
                             });
+                            
                             view.panes.roistats.append('text').text('').attr({
-                                'class': 'roi-stats-text ' + s,
+                                'class': 'roi-stats-text-data ' + s,
                                 'text-anchor': 'end',
                                 'x': x + 80,
                                 'y': y_init + (i*14)
@@ -984,8 +1063,32 @@ Ext.define('Flux.view.D3GeographicMap', {
                     }
                     
                     Object.keys(rs).forEach(function (s, i) {
+                        var val = view._currentSummaryStats['series' + s][0]
+                        
                         view.panes.roistats.selectAll('.' + s)
-                            .text(view._currentSummaryStats['series' + s][0].toFixed(rs[s]));
+                            .transition()
+                            .duration(400)
+                            .each('start', function () {
+                                if (val > this.textContent) {
+                                    d3.select(this).attr('fill','#006600');
+                                }
+                                if (val < this.textContent) {
+                                    d3.select(this).attr('fill','#800000');
+                                }
+                             })
+                            .each('end', function () {
+                                d3.select(this).attr('fill', '#111');
+                            })
+                            .tween('text', function() {
+                                var i = d3.interpolate(this.textContent, val),
+                                    prec = (val + "").split("."),
+                                    round = (prec.length > 1) ? Math.pow(10, prec[1].length) : 1;
+
+                                return function(t) {
+                                    this.textContent = (Math.round(i(t) * round) / round).toFixed(rs[s]);
+                                
+                            };
+                        });
                     });
                     
                 },

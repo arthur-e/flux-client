@@ -34,6 +34,14 @@
     stroke-width: 2px;
     cursor: pointer;
 }
+.plot .series-std-u,
+.plot .series-std-d {
+    fill: none;
+    stroke: #157fcc;
+    stroke-width: 1px;
+    stroke-dasharray: 1, 1;
+    cursor: pointer;
+}
 .plot .trend {
     fill: none;
     stroke: #333;

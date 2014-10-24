@@ -99,7 +99,8 @@ Ext.define('Flux.controller.UserInteraction', {
             },
 
             'd3geomap': {
-                plotclick: this.onPlotClick
+                plotclick: this.onPlotClick,
+                roiclick: this.onRoiClick
             },
 	    'd3geomap #btn-draw-polygon': {
 		click: this.onDrawPolygon
@@ -343,7 +344,7 @@ Ext.define('Flux.controller.UserInteraction', {
 	if (!view.getMetadata()) {
             return;
         }
-        
+
 	source = view.getMetadata().getId();
 
         // Check for the unique ID, a hash of the parameters passed in this
@@ -979,11 +980,10 @@ Ext.define('Flux.controller.UserInteraction', {
 	 delete view.panes.polygonCanvas;
 	 d3.selectAll('.polygonCanvas').remove();
 	 
+	 d3.selectAll('.roi-stats').remove();
 	 d3.selectAll('.roi-polygon').remove(); // this removes the drawn polygon
 	 d3.selectAll('.roi-vertex').remove(); // remove vertices
-	 d3.selectAll('.roi-stats-backdrop').remove(); // remove summary stats display
-         d3.selectAll('.roi-stats-text-labels').remove(); // remove summary stats display
-         d3.selectAll('.roi-stats-text-data').remove(); // remove summary stats display
+	 d3.selectAll('.roi-tracker').remove();
          
 	 delete view.polygon; // 
 	 delete view._drawingCoords; // remove memory of previous drawing coords
@@ -1011,7 +1011,8 @@ Ext.define('Flux.controller.UserInteraction', {
 
         if (this.getMap()._drawingCoords) {
             delete this.getMap()._currentSummaryStats;
-            this.getMap().requestRoiSummaryStats(params);
+
+            this.getMap().fetchRoiSummaryStats(params.time, params.time);
         }
         
         if (this.getLinePlot()) {
@@ -1158,6 +1159,31 @@ Ext.define('Flux.controller.UserInteraction', {
             },
             scope: this
         });
+    },
+    
+    onRoiClick: function (response) {
+        var meta = this.getMap().getMetadata();
+        var step = Ext.Array.min(meta.getTimeOffsets());
+        var params, interval, series;
+
+        if (!this.getLinePlot()) {
+            return;
+        }
+
+        if (step < 86400) { // Less than 1 day?
+            interval = 'daily';
+        } else {
+            interval = 'monthly';
+        }
+        
+        series = Ext.JSON.decode(response.responseText);
+        series['properties']['interval'] = interval;
+        
+        this.getLinePlot().addSeriesRoi(series,
+                            'mean +/- std of user-defined region-of-interest',
+                            this.getGlobalSettings().display === 'anomalies'
+        );
+        
     },
 
     /**

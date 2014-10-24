@@ -105,7 +105,7 @@ Ext.define('Flux.view.D3LinePlot', {
         var x = this.scales.x;
         var y = this.scales.y;
         var data = series.getInterpolation();
-	
+        
 	var offset = 0;
 	if (showAnomalies) {
 	    offset = this.getTendencyOffset();
@@ -161,6 +161,115 @@ Ext.define('Flux.view.D3LinePlot', {
         this.addListeners(sel);
     },
 
+    /**
+        Plots ROI summary stats data
+        @param  series      {Array}
+        @param  displayText {String}
+     */
+    addSeriesRoi: function (seriesStats, displayText, showAnomalies) {
+        var t0, t1, sel;
+        var x = this.scales.x;
+        var y = this.scales.y;
+        var view = this;
+        
+        seriesStats['series'] = seriesStats['seriesMean'];
+        var series = Ext.create('Flux.model.TimeSeries',seriesStats);   
+        var data = series.getInterpolation();
+        
+        seriesStats['series'] = seriesStats['seriesMax'];
+        var seriesMax = Ext.create('Flux.model.TimeSeries',seriesStats);   
+        var dataMax = seriesMax.getInterpolation();
+        
+        // Get STD upper
+        seriesStats['series'] = seriesStats['seriesMean'].map( function (x, i) {
+            return seriesStats['seriesSTD'][i] + x;
+        });
+        var seriesSTD_u = Ext.create('Flux.model.TimeSeries',seriesStats);   
+        var dataSTD_u = seriesSTD_u.getInterpolation();
+        
+        // Get STD lower
+        seriesStats['series'] = seriesStats['seriesMean'].map( function (x, i) {
+            return x - seriesStats['seriesSTD'][i];
+        });
+        var seriesSTD_d = Ext.create('Flux.model.TimeSeries',seriesStats);   
+        var dataSTD_d = seriesSTD_d.getInterpolation();
+        
+        
+        var offset = 0;
+        if (showAnomalies) {
+            offset = this.getTendencyOffset();
+        }
+        
+        var path = d3.svg.line()
+            .x(function (d) { return x(d[0]); })
+            .y(function (d) { return y(d[1] - offset); });
+
+        this.panes.plot.selectAll('.series')
+            .data([0])
+            .enter()
+            .append('path')
+            .attr({
+                'class': 'series'
+            });
+        
+        ['d','u'].forEach( function (x) {
+            view.panes.plot.selectAll('.series-std-' + x)
+                .data([0])
+                .enter()
+                .append('path')
+                .attr({
+                    'class': 'series-std-' + x
+                });
+        });
+
+        t0 = this.panes.plot.transition().duration(250);
+        t1 = t0.transition().duration(250);
+
+        // Plot line ///////////////////////////////////////////////////////////
+        sel = this.panes.plot.selectAll('.series')
+            .datum(data);
+            
+        selSTD_d = this.panes.plot.selectAll('.series-std-d')
+            .datum(dataSTD_d);
+        
+        selSTD_u = this.panes.plot.selectAll('.series-std-u')
+            .datum(dataSTD_u);
+
+        ['.series','.trend','.series-std-d','.series-std-u'].forEach( function (s) {
+            t0.selectAll(s).attr('d', path);
+        });
+        
+        this.scales.y.domain(d3.extent(data.concat(dataSTD_d).concat(dataSTD_u), function (d) {
+            return d[1] - offset;
+        }));
+
+        ['.series','.trend','.series-std-d','.series-std-u'].forEach( function (s) {
+            t1.selectAll(s).attr('d', path);
+        });
+        
+        t1.selectAll('.y.axis').call(this.axis.y);
+
+        // Grid lines //////////////////////////////////////////////////////////
+        
+        t1.selectAll('.gridy').attr('class', 'gridy').call(this.axis.y0);
+        t1.selectAll('.gridx').attr('class', 'gridx').call(this.axis.x0);
+
+        this.panes.title.selectAll('.legend-entry')
+            .text(displayText || '')
+            .attr({
+                'x': Ext.Function.bind(function () {
+                    // Estimate the width of the characters
+                    return Number(this.svg.attr('width')) - (this.d3margin.left + this.d3margin.right);
+                }, this),
+                'y': 0,
+                'text-anchor': 'end', // Display right end of text at right end of plot
+                'class': 'legend-entry'
+            });
+
+        // Add mouseover and mouseout event listeners
+        this.addListeners(sel);
+    },
+    
     /**
         Clears the plot.
         TODO This implementation has errors.
@@ -445,7 +554,7 @@ Ext.define('Flux.view.D3LinePlot', {
             attr.width = this.scales.x(data[1]) - this.scales.x(data[0]);
             data = [data[0]];
         }
-
+        
         this.panes.overlay.selectAll('.slice')
             .data(data)
             .attr(attr);

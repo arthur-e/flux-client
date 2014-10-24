@@ -311,7 +311,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    // Registers drawing on double-click
 	  
             // Remove tracker vertex
-            view.wrapper.selectAll('.tracker').remove();
+            view.wrapper.selectAll('.roi-tracker').remove();
             
 	    // An extra vertex is add on the second click of a double-click
 	    // Remove the vertex as well as the coordinate from the poly def.
@@ -322,22 +322,19 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    
 	    polygon.attr('points', view.getSVGPolyPoints(cs));
 
-	    // reset listeners
+	    // Reset listeners
 	    sel.on('mousemove', null);
 	    sel.on('click', null);
 	    sel.on('dblclick', null);
             
-            // remove canvas to awaken sleeping listeners underneath
-            d3.selectAll('.polygonCanvas').remove();
-            
-            // reset summary stats
+            // Reset summary stats
             delete view._currentSummaryStats;
 	    
-	    // grow/shrink/drag listeners to vertices
+	    // Grow/shrink/drag listeners to vertices
 	    view.addListenersForVertices();
 	    
             // Return summary stats
-            view.requestRoiSummaryStats();
+            view.fetchRoiSummaryStats();
 		
 	    // Make UI changes
 	    tbar.down('button[itemId="btn-erase-polygon"]').setDisabled(false);
@@ -345,11 +342,15 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    tbar.down('button[itemId="btn-draw-polygon"]').setDisabled(true);
 	    tbar.down('button[itemId="btn-draw-polygon"]').show();
 	    
+	    // Reset cursor (turn off crosshairs)
             view.panes.polygonCanvas.selectAll('rect').style('cursor','auto');
             
             // Reenable zoom
             view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
             
+	    // Remove canvas to awaken sleeping listeners underneath
+            d3.selectAll('.polygonCanvas').remove();
+	    
             view.updateDisplay([{
                 id: 'timestamp',
                 text: view._display
@@ -361,9 +362,9 @@ Ext.define('Flux.view.D3GeographicMap', {
             var m = d3.mouse(view.wrapper[0][0]);
             var c = view.constrainLatLong(m);
             
-            if (view.wrapper.selectAll('.tracker')[0].length === 0) {
+            if (view.wrapper.selectAll('.roi-tracker')[0].length === 0) {
                 view.wrapper.append('circle').attr({
-                    'class': 'tracker',
+                    'class': 'roi-tracker',
                     'cx': m[0],
                     'cy': m[1],
                     'r': 2,
@@ -372,7 +373,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                 });
             }
             // Update tracker vertex
-            view.wrapper.selectAll('.tracker').attr({'cx':c[0],'cy':c[1]});
+            view.wrapper.selectAll('.roi-tracker').attr({'cx':c[0],'cy':c[1]});
             
         }
 	
@@ -469,7 +470,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                 delete view._currentSummaryStats;
 	      }).on('dragend', function() {
                 view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
-                if (dragged) { view.requestRoiSummaryStats();}
+                if (dragged) { view.fetchRoiSummaryStats();}
               });
 	
 	vertices.call(drag);
@@ -524,6 +525,98 @@ Ext.define('Flux.view.D3GeographicMap', {
         }
         
         return proj([x,y]);
+    },
+    
+    displaySummaryStats: function (response, view) {
+        //var view = this;
+        
+        view._currentSummaryStats = Ext.JSON.decode(response.responseText);
+        
+        // Object w/ attribute representing desired precision
+        var rs = {  'Mean': 2,
+                    'Min': 2,
+                    'Max': 2,
+                    'STD': 2,
+                    'N': 0}
+        
+        // Summary stats display
+        if (d3.selectAll('.roi-stats')[0].length === 0) {
+            view.panes.roistats = view.svg.append('g').attr('class', 'pane roi-stats');
+            
+            var x = 10;
+            var y_init = view._height - (0.95 * view._height);
+            var x_init = view._width - 154;
+            
+            view.panes.roistats.append('rect')
+                .attr({
+                    'class': 'roi-stats-backdrop',
+                    'width': 100,
+                    'height': 82,
+                    'x': x_init,
+                    'y': y_init + 4, // this places it just underneath the HUD
+                    'pointer-events': 'all',
+                }).on('click', function () {
+                    var dates = view.getMetadata().get('dates');
+
+                    view.fetchRoiSummaryStats(dates[0].toISOString(),
+                                              dates[dates.length - 1].toISOString(),
+                                              view.triggerRoiTimeSeries);
+                });
+//                      view.panes.roistats.append('text').text('ROI Stats').attr({
+//                              'font-size': '14px',
+//                              'font-weight': 900,
+//                                 'fill': '#222',
+//                                 'text-anchor': 'middle',
+//                                 'x': x_init + 48,
+//                                 'y': y_init + 2
+//                             });
+            Object.keys(rs).forEach(function (s, i) {
+                view.panes.roistats.append('text').text(s + ':').attr({
+                    'class': 'roi-stats-text-labels',
+                    'fill': '#444',
+                    'text-anchor': 'left',
+                    'x': x_init + 10,
+                    'y': y_init + 20 +(i*15)
+                });
+                
+                view.panes.roistats.append('text').text('').attr({
+                    'class': 'roi-stats-text-data ' + s,
+                    'text-anchor': 'end',
+                    'x': x_init + 90,
+                    'y': y_init + 20 +(i*15)
+                });
+            });
+        }
+        
+        Object.keys(rs).forEach(function (s, i) {
+            var val = view._currentSummaryStats['series' + s][0]
+            
+            view.panes.roistats.selectAll('.' + s)
+                .transition()
+                .duration(400)
+                .each('start', function () {
+                    if (val > this.textContent) {
+                        d3.select(this).attr('fill','#006600');
+                    }
+                    if (val < this.textContent) {
+                        d3.select(this).attr('fill','#800000');
+                    }
+                    })
+                .each('end', function () {
+                    d3.select(this).attr('fill', '#111');
+                })
+                .tween('text', function() {
+                    var i = d3.interpolate(this.textContent, val),
+                        prec = (val + "").split("."),
+                        round = (prec.length > 1) ? Math.pow(10, prec[1].length) : 1;
+
+                    return function(t) {
+                        this.textContent = (Math.round(i(t) * round) / round).toFixed(rs[s]);
+                    
+                };
+            });
+        });
+        
     },
     
     /**
@@ -654,7 +747,15 @@ Ext.define('Flux.view.D3GeographicMap', {
 	this.addListenersForVertices();
         
         // get summary stats
-        this.requestRoiSummaryStats();
+	delete view._currentSummaryStats; // TODO: this is suboptimal b/c triggers another request when it could reuse existing stats
+	d3.selectAll('.roi-stats').remove();
+        
+//         // If animation is active, pull time from the opts
+//         // parameter, otherwise get from metadata
+//         if (opts) {
+//             time = opts.time;
+//         }
+        this.fetchRoiSummaryStats();
     },
     
     /**
@@ -891,7 +992,6 @@ Ext.define('Flux.view.D3GeographicMap', {
         this.panes.hud = this.svg.append('g').attr('class', 'pane hud');
         this.panes.legend = this.svg.append('g').attr('class', 'pane legend');
         this.panes.tooltip = this.svg.append('g').attr('class', 'pane tooltip');
-        this.panes.roistats = this.svg.append('g').attr('class', 'pane roistats');
 
         // Tooltip /////////////////////////////////////////////////////////////
         this.panes.tooltip.selectAll('.tip')
@@ -978,14 +1078,18 @@ Ext.define('Flux.view.D3GeographicMap', {
     
     /** Requests and handles return of ROI summary stats
     */
-    requestRoiSummaryStats: function (opts) {
-        var polygon = this.wrapper.selectAll('polygon');
+    fetchRoiSummaryStats: function (start, end, onSuccess) {
         var view = this;
-        var proj = this.getProjection();
-
+        var polygon = view.wrapper.selectAll('polygon');
+        var proj = view.getProjection();
         var meta = view.getMetadata();
+        
+        start = start || meta.get('dates')[0].toISOString();
+        end = end || meta.get('dates')[0].toISOString();;
+        onSuccess = onSuccess || this.displaySummaryStats;
 
-        if (meta && !view._currentSummaryStats) {
+        if ((meta && !view._currentSummaryStats) ||
+            (meta && (start != end)) && !view._currentRoiTimeSeries) {
             var params;
             
             var cs = view._drawingCoords.slice(0);
@@ -998,17 +1102,9 @@ Ext.define('Flux.view.D3GeographicMap', {
                     }).join('+'))
                 });
             
-            // If animation is active, pull time from the opts
-            // parameter, otherwise get from metadata
-            // TODO: Adjust to account for aggregate views
-            var time = meta.get('dates')[0].toISOString();
-            if (opts) {
-                time = opts.time;
-            }
-            
             params = {
-                start: time,
-                end: time,//meta.get('dates')[meta.get('dates').length - 1].toISOString(),
+                start: start,
+                end: end,//meta.get('dates')[meta.get('dates').length - 1].toISOString(),
                 //TODO aggregate: this.getGlobalSettings().tendency,
                 // aggregate: 'mean',
                 geom: Ext.String.format('POLYGON(({0}))', wkt.join(','))
@@ -1023,81 +1119,14 @@ Ext.define('Flux.view.D3GeographicMap', {
                     Ext.Msg.alert('Request Error', response.responseText);
                 },
                 success: function (response) {
-                    view._currentSummaryStats = Ext.JSON.decode(response.responseText);
-                    var rs = {'Mean': 2,
-                              'Min': 2,
-                              'Max': 2,
-                              'STD': 2,
-                              'N': 0}
-                    
-                    // Summary stats display
-                    if (view.panes.roistats.selectAll('.roi-stats-backdrop')[0].length === 0) {
-                        var x = 10;
-                        var y_init = view._height - (0.92 * view._height);
-                        
-                        view.panes.roistats.append('rect')
-                            .attr({
-                                'class': 'roi-stats-backdrop',
-                                'width': 100,
-                                'height': 76,
-                                'x': 0,
-                                'y': view._height - (0.95 * view._height), // this places it just underneath the HUD
-                            });
-
-                        Object.keys(rs).forEach(function (s, i) {
-                            view.panes.roistats.append('text').text(s + ':').attr({
-                                'class': 'roi-stats-text-labels',
-                                'fill': '#444',
-                                'text-anchor': 'left',
-                                'x': x,
-                                'y': y_init + (i*14)
-                            });
-                            
-                            view.panes.roistats.append('text').text('').attr({
-                                'class': 'roi-stats-text-data ' + s,
-                                'text-anchor': 'end',
-                                'x': x + 80,
-                                'y': y_init + (i*14)
-                            });
-                        });
-                    }
-                    
-                    Object.keys(rs).forEach(function (s, i) {
-                        var val = view._currentSummaryStats['series' + s][0]
-                        
-                        view.panes.roistats.selectAll('.' + s)
-                            .transition()
-                            .duration(400)
-                            .each('start', function () {
-                                if (val > this.textContent) {
-                                    d3.select(this).attr('fill','#006600');
-                                }
-                                if (val < this.textContent) {
-                                    d3.select(this).attr('fill','#800000');
-                                }
-                             })
-                            .each('end', function () {
-                                d3.select(this).attr('fill', '#111');
-                            })
-                            .tween('text', function() {
-                                var i = d3.interpolate(this.textContent, val),
-                                    prec = (val + "").split("."),
-                                    round = (prec.length > 1) ? Math.pow(10, prec[1].length) : 1;
-
-                                return function(t) {
-                                    this.textContent = (Math.round(i(t) * round) / round).toFixed(rs[s]);
-                                
-                            };
-                        });
-                    });
-                    
+                    onSuccess(response, view);
                 },
                 scope: this
             });
         }
         
     },
-    
+
     /**
         Draws or redraws the basemap given the URL of a new TopoJSON file.
         @param  basemapUrl      {String}
@@ -1341,6 +1370,11 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
+    triggerRoiTimeSeries: function (response, view) {
+        view.fireEventArgs('roiclick', [response]);
+        
+    },
+    
     /**
         Draws again the visualization features of the map by updating their
         SVG attributes. Accepts optional D3 selection which it will style.

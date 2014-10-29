@@ -1296,6 +1296,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 }
             }
         // Eliminate the Window instance after the file is saved
+        // so that Window never actually shows
         }).show().close();
 
     },

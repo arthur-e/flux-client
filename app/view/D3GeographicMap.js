@@ -345,11 +345,12 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    // Reset cursor (turn off crosshairs)
             view.panes.polygonCanvas.selectAll('rect').style('cursor','auto');
             
-            // Reenable zoom
-            view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
-            
 	    // Remove canvas to awaken sleeping listeners underneath
             d3.selectAll('.polygonCanvas').remove();
+            
+                        
+            // Reenable zoom
+            view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
 	    
             view.updateDisplay([{
                 id: 'timestamp',
@@ -543,15 +544,16 @@ Ext.define('Flux.view.D3GeographicMap', {
         if (d3.selectAll('.roi-stats')[0].length === 0) {
             view.panes.roistats = view.svg.append('g').attr('class', 'pane roi-stats');
             
-            var x = 10;
-            var y_init = view._height - (0.95 * view._height);
-            var x_init = view._width - 154;
+            var backdrop_w = 100;
+            var backdrop_h = 110;
+            var y_init = view._height - backdrop_h - 30;//- (0.05 * view._height);
+            var x_init = view._width - backdrop_w - 50;
             
             view.panes.roistats.append('rect')
                 .attr({
                     'class': 'roi-stats-backdrop',
-                    'width': 100,
-                    'height': 82,
+                    'width': backdrop_w,
+                    'height': backdrop_h,
                     'x': x_init,
                     'y': y_init + 4, // this places it just underneath the HUD
                     'pointer-events': 'all',
@@ -562,49 +564,52 @@ Ext.define('Flux.view.D3GeographicMap', {
                                               dates[dates.length - 1].toISOString(),
                                               view.triggerRoiTimeSeries);
                 });
-//                      view.panes.roistats.append('text').text('ROI Stats').attr({
-//                              'font-size': '14px',
-//                              'font-weight': 900,
-//                                 'fill': '#222',
-//                                 'text-anchor': 'middle',
-//                                 'x': x_init + 48,
-//                                 'y': y_init + 2
-//                             });
+
             Object.keys(rs).forEach(function (s, i) {
-                view.panes.roistats.append('text').text(s + ':').attr({
+                view.panes.roistats.append('text').text(s).attr({
                     'class': 'roi-stats-text-labels',
-                    'fill': '#444',
                     'text-anchor': 'left',
-                    'x': x_init + 10,
-                    'y': y_init + 20 +(i*15)
+                    'x': x_init + 6,
+                    'y': y_init + 22 +(i*19)
                 });
                 
                 view.panes.roistats.append('text').text('').attr({
                     'class': 'roi-stats-text-data ' + s,
                     'text-anchor': 'end',
-                    'x': x_init + 90,
-                    'y': y_init + 20 +(i*15)
+                    'x': x_init + 94,
+                    'y': y_init + 22 +(i*19)
                 });
             });
         }
         
         Object.keys(rs).forEach(function (s, i) {
             var val = view._currentSummaryStats['series' + s][0]
+            var fs = '16px';
             
+            // Set some silly D3 transition animation for when number change
+            // -attempted to make font color change depending on whether number is rising or
+            //  lowering but for some reason this makes the font-size also change which
+            //  doesn't look nearly as slick.
             view.panes.roistats.selectAll('.' + s)
                 .transition()
                 .duration(400)
-                .each('start', function () {
-                    if (val > this.textContent) {
-                        d3.select(this).attr('fill','#006600');
-                    }
-                    if (val < this.textContent) {
-                        d3.select(this).attr('fill','#800000');
-                    }
-                    })
-                .each('end', function () {
-                    d3.select(this).attr('fill', '#111');
-                })
+//                 .each('start', function () {
+//                     if (val > this.textContent) {
+//                         d3.select(this).style({'fill': '#80B280',
+//                                                'font-size': fs}
+//                         );
+//                     }
+//                     if (val < this.textContent) {
+//                         d3.select(this).style({'fill': '#C08080',
+//                                                'font-size': fs}
+//                         );
+//                     }
+//                     })
+//                 .each('end', function () {
+//                     d3.select(this).style({'fill': '#F5F5F5',
+//                                            'font-size': fs}
+//                     );
+//                 })
                 .tween('text', function() {
                     var i = d3.interpolate(this.textContent, val),
                         prec = (val + "").split("."),
@@ -1083,15 +1088,18 @@ Ext.define('Flux.view.D3GeographicMap', {
         var polygon = view.wrapper.selectAll('polygon');
         var proj = view.getProjection();
         var meta = view.getMetadata();
-        
-        start = start || meta.get('dates')[0].toISOString();
-        end = end || meta.get('dates')[0].toISOString();;
-        onSuccess = onSuccess || this.displaySummaryStats;
+
 
         if ((meta && !view._currentSummaryStats) ||
             (meta && (start != end)) && !view._currentRoiTimeSeries) {
             var params;
             
+                
+            start = start || meta.get('dates')[0].toISOString();
+            end = end || meta.get('dates')[0].toISOString();;
+            onSuccess = onSuccess || this.displaySummaryStats;
+        
+        
             var cs = view._drawingCoords.slice(0);
             cs.push(cs[0]);
             

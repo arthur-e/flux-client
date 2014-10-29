@@ -194,7 +194,8 @@ Ext.define('Flux.view.Viewport', {
                         name: 'stepSize',
                         valueField: 'stepSize',
                         queryMode: 'local',
-                        hideOnClick: false
+                        hideOnClick: false,
+                        editable: false,
                     }]
                 }
             }, {

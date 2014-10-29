@@ -68,4 +68,24 @@ text.info.tip {
     fill: none;
     pointer-events: all;
 }
-
+.roi-polygon {
+    fill: #B10000;
+    fill-opacity: 0.1;
+    stroke-width: 1;
+    stroke: #9A6666;
+    stroke-linejoin: round;
+}
+.roi-vertex {
+     stroke: black;
+     stroke-opacity: 0;
+     cursor: pointer;
+}
+.roi-stats-backdrop {
+    fill: #000;
+    fill-opacity: 0.6;
+    stroke-width: 0;
+    stroke: #246BB2;
+    stroke-linejoin: round;
+}
+.roi-stats-text-labels {font-size: 13px;fill: #C4C4C4;}
+.roi-stats-text-data {font-size: 17px;fill: #F5F5F5;font-weight: 700;}

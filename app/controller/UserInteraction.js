@@ -100,7 +100,8 @@ Ext.define('Flux.controller.UserInteraction', {
 
             'd3geomap': {
                 plotclick: this.onPlotClick,
-                roiclick: this.onRoiClick
+                fetchstats: this.fetchRoiSummaryStats,
+                removeTimeSeries: this.removeRoiTimeSeries
             },
 	    'd3geomap #btn-draw-polygon': {
 		click: this.onDrawPolygon
@@ -113,6 +114,9 @@ Ext.define('Flux.controller.UserInteraction', {
 	    'd3geomap #btn-cancel-polygon': {
 		click: this.onCancelPolygon
 	    },
+            'd3geomap #btn-fetch-roi-time-series': {
+                click: this.onFetchRoiTimeSeriesClick
+            },
 	    
             'd3geomap #btn-save-image': {
                 click: this.onSaveImage
@@ -449,7 +453,69 @@ Ext.define('Flux.controller.UserInteraction', {
             return operation.call(view, grid1 || grid2, a);
         });
     },
+    
+    /**
+        Submits request to server to retrieve ROI summary stats
+        
+        @param start    
+        @param end
+        @param onSuccess        {Function} callback function if request is successful
+    */
+    fetchRoiSummaryStats: function (start, end, onSuccess) {
+        var view = this.getMap();
+        var polygon = view.wrapper.selectAll('polygon');
+        var proj = view.getProjection();
+        var meta = view.getMetadata();
 
+        if ((meta && !view._currentSummaryStats) ||
+            (meta && (start != end))) {
+            var params;
+            
+                
+            start = start || meta.get('dates')[0].toISOString();
+            end = end || meta.get('dates')[0].toISOString();;
+            onSuccess = onSuccess || view.displaySummaryStats;
+        
+        
+            var cs = view._drawingCoords.slice(0);
+            cs.push(cs[0]);
+            
+            var wkt = [];
+            cs.forEach(function(c) {
+                wkt.push(Ext.Array.map(proj.invert(c), function (l) {
+                        return l.toFixed(4);
+                    }).join('+'))
+                });
+            
+            params = {
+                start: start,
+                end: end,//meta.get('dates')[meta.get('dates').length - 1].toISOString(),
+                //TODO aggregate: this.getGlobalSettings().tendency,
+                // aggregate: 'mean',
+                geom: Ext.String.format('POLYGON(({0}))', wkt.join(','))
+            };
+            
+            if (start != end) {
+                this.getLinePlot().getEl().mask('Loading...');
+            }
+            
+            Ext.Ajax.request({
+                method: 'GET',
+                url: Ext.String.format('/flux/api/scenarios/{0}/roi.json', meta.getId()),
+                params: params,
+                callback: function () {},
+                failure: function (response) {
+                    Ext.Msg.alert('Request Error', response.responseText);
+                },
+                success: function (response) {
+                    onSuccess(Ext.JSON.decode(response.responseText), view, this);
+                },
+                scope: this
+            });
+        }
+        
+    },
+    
     /**
         Makes a requests for a time series based on the passed Metadata instance.
         The time series to be returned is an aggregate (coarser) time series
@@ -513,6 +579,8 @@ Ext.define('Flux.controller.UserInteraction', {
         });
     },
 
+    
+    
     /**
         Convenience function for determining the currently selected global
         statistics settings; measure of central tendency, raw values versus
@@ -961,11 +1029,15 @@ Ext.define('Flux.controller.UserInteraction', {
     onErasePolygon: function (btn) {
 	 this.removePolygonDrawing(btn);
 	 
-	 // disabled yourself since no polygon exists to erase anymore
-	 btn.setDisabled(true);
+	 // hide yourself since no polygon exists to erase anymore
+	 btn.hide();
+         
+         // hide time-series fetcher for same reason
+         btn.up('toolbar').down('button[itemId="btn-fetch-roi-time-series"]').hide();
 	 
 	 // and reenable draw button
-	 btn.up('toolbar').down('button[itemId="btn-draw-polygon"]').setDisabled(false);
+	 btn.up('toolbar').down('button[itemId="btn-draw-polygon"]').show();
+
     },
     
     /** Removes all polygon drawing element including drawing pane
@@ -1012,7 +1084,7 @@ Ext.define('Flux.controller.UserInteraction', {
         if (this.getMap()._drawingCoords) {
             delete this.getMap()._currentSummaryStats;
 
-            this.getMap().fetchRoiSummaryStats(params.time, params.time);
+            this.fetchRoiSummaryStats(params.time, params.time);
         }
         
         if (this.getLinePlot()) {
@@ -1147,43 +1219,66 @@ Ext.define('Flux.controller.UserInteraction', {
                 Ext.Msg.alert('Request Error', response.responseText);
             },
             success: function (response) {
+                var linePlot = this.getLinePlot();
                 var series = Ext.create('Flux.model.TimeSeries',
                     Ext.JSON.decode(response.responseText));
-	
-                this.getLinePlot().addSeries(series,
-                    Ext.String.format('{0} {1} of {1} at {2}, {3}',
-                        params.interval, params.aggregate,
-                        geom[0].trim('00'), geom[1].trim('00')),
-			this.getGlobalSettings().display === 'anomalies'
-					    );
+                
+                linePlot._currentTimeSeries = series;
+                linePlot._currentTimeSeriesLegendEntry = Ext.String.format(
+                        '{0} {1} of {1} at {2}, {3}',
+                        params.interval,
+                        params.aggregate,
+                        geom[0].trim('00'), geom[1].trim('00'));
+                linePlot.addSeries(series,
+                                   linePlot._currentTimeSeriesLegendEntry);
             },
             scope: this
         });
     },
     
-    onRoiClick: function (response) {
-        var meta = this.getMap().getMetadata();
-        var step = Ext.Array.min(meta.getTimeOffsets());
-        var params, interval, series;
+    //onRoiClick: function (response) 
+    onFetchRoiTimeSeriesClick: function () {
+        var dates = this.getMap().getMetadata().get('dates');
 
-        if (!this.getLinePlot()) {
+        this.fetchRoiSummaryStats(dates[0].toISOString(),
+                                  dates[dates.length - 1].toISOString(),
+                                  this.onFetchRoiTimeSeriesSuccess);
+        
+    },
+    
+    /**
+        Takes the response of a successful time-series
+        request and passes it along to be drawn on the
+        line plot.
+        
+        @param series
+        @param view     {D3GeographicMap view}
+        @param parent   {UserInteraction controller} 
+    */
+    onFetchRoiTimeSeriesSuccess: function (series, view, parent) {
+        var meta = view.getMetadata();
+        var step = Ext.Array.min(meta.getTimeOffsets());
+        var linePlot = parent.getLinePlot();
+        var params, interval, series;
+        
+        if (!linePlot) {
             return;
         }
 
+        linePlot.unmask();
+        
         if (step < 86400) { // Less than 1 day?
             interval = 'daily';
         } else {
             interval = 'monthly';
         }
-        
-        series = Ext.JSON.decode(response.responseText);
+
         series['properties']['interval'] = interval;
         
-        this.getLinePlot().addSeriesRoi(series,
-                            'mean +/- std of user-defined region-of-interest',
-                            this.getGlobalSettings().display === 'anomalies'
-        );
+        linePlot._currentTimeSeries = series;
         
+        linePlot.addSeriesRoi(series);
+
     },
 
     /**
@@ -1657,6 +1752,25 @@ Ext.define('Flux.controller.UserInteraction', {
         }
     },
 
+    // Deletes ROI time-series if drawn on D3LinePlot
+    removeRoiTimeSeries: function () {
+        var linePlot = this.getLinePlot();
+        
+        if (!linePlot) {
+            return;
+        }
+    
+        if (linePlot.panes.plot.selectAll('.series-std-d')[0].length > 0) {
+            ['.series','.series-std-u','.series-std-d'].forEach( function (s) {
+                linePlot.panes.plot.selectAll(s).remove();
+            });
+            linePlot.panes.title.selectAll('.legend-entry').text('');
+            delete linePlot._currentTimeSeries;
+        }
+        
+    },
+    
+    
     /**
         Toggles on/off the Time Series display below the map in the Single Map
         visualization.

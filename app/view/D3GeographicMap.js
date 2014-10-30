@@ -162,7 +162,12 @@ Ext.define('Flux.view.D3GeographicMap', {
 			itemId: 'btn-erase-polygon',
 			iconCls: 'icon-erase',
 			tooltip: 'Erase Polygon',
-			disabled: true      
+			hidden: true,
+                    }, {
+                        itemId: 'btn-fetch-roi-time-series',
+                        iconCls: 'icon-draw',
+                        tooltip: 'Fetch Time-Series for Drawn Polygon',
+                        hidden: true
 		    }, {
                         itemId: 'btn-save-image',
                         iconCls: 'icon-disk',
@@ -334,13 +339,14 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    view.addListenersForVertices();
 	    
             // Return summary stats
-            view.fetchRoiSummaryStats();
+            view.fireEvent('fetchstats');
 		
 	    // Make UI changes
-	    tbar.down('button[itemId="btn-erase-polygon"]').setDisabled(false);
-	    tbar.down('button[itemId="btn-cancel-polygon"]').hide()
-	    tbar.down('button[itemId="btn-draw-polygon"]').setDisabled(true);
-	    tbar.down('button[itemId="btn-draw-polygon"]').show();
+	    tbar.down('button[itemId="btn-erase-polygon"]').show();
+	    tbar.down('button[itemId="btn-cancel-polygon"]').hide();
+            tbar.down('button[itemId="btn-fetch-roi-time-series"]').show();
+	    //tbar.down('button[itemId="btn-draw-polygon"]').hide();
+	    //tbar.down('button[itemId="btn-draw-polygon"]').show();
 	    
 	    // Reset cursor (turn off crosshairs)
             view.panes.polygonCanvas.selectAll('rect').style('cursor','auto');
@@ -471,7 +477,10 @@ Ext.define('Flux.view.D3GeographicMap', {
                 delete view._currentSummaryStats;
 	      }).on('dragend', function() {
                 view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
-                if (dragged) { view.fetchRoiSummaryStats();}
+                if (dragged) { 
+                    view.fireEvent('fetchstats');
+                    view.fireEvent('removeTimeSeries');
+                }
               });
 	
 	vertices.call(drag);
@@ -528,10 +537,10 @@ Ext.define('Flux.view.D3GeographicMap', {
         return proj([x,y]);
     },
     
-    displaySummaryStats: function (response, view) {
+    displaySummaryStats: function (series, view) {
         //var view = this;
         
-        view._currentSummaryStats = Ext.JSON.decode(response.responseText);
+        view._currentSummaryStats = series;
         
         // Object w/ attribute representing desired precision
         var rs = {  'Mean': 2,
@@ -557,12 +566,6 @@ Ext.define('Flux.view.D3GeographicMap', {
                     'x': x_init,
                     'y': y_init + 4, // this places it just underneath the HUD
                     'pointer-events': 'all',
-                }).on('click', function () {
-                    var dates = view.getMetadata().get('dates');
-
-                    view.fetchRoiSummaryStats(dates[0].toISOString(),
-                                              dates[dates.length - 1].toISOString(),
-                                              view.triggerRoiTimeSeries);
                 });
 
             Object.keys(rs).forEach(function (s, i) {
@@ -589,7 +592,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             // Set some silly D3 transition animation for when number change
             // -attempted to make font color change depending on whether number is rising or
             //  lowering but for some reason this makes the font-size also change which
-            //  doesn't look nearly as slick.
+            //  doesn't look nearly as slick, so commented out for now
             view.panes.roistats.selectAll('.' + s)
                 .transition()
                 .duration(400)
@@ -725,42 +728,6 @@ Ext.define('Flux.view.D3GeographicMap', {
         this.isDrawn = true;
         this.fireEventArgs('draw', [this, data]);
         return this;
-    },
-    
-    /** Redraws a polygon after a map reset caused by dimensions of 
-	the parent map component changing
-    */
-    
-    redrawPolygon: function () {
-	var view = this;
-      
-	// add the polygon
-	this.wrapper.append('polygon').attr({
-			    'class': 'roi-polygon',
-			    'points': this.getSVGPolyPoints(this._drawingCoords.slice(0)),
-			    'pointer-events': 'none'
-			});
-	
-	// add vertices
-	var vindex = 0;
-	this._drawingCoords.forEach( function (c) {
-	    view.wrapper.append('circle').attr(view.getVertexAttrs(vindex, c));
-	    vindex += 1;
-	});
-	
-	// add grow/shrink and drag listeners for vertices
-	this.addListenersForVertices();
-        
-        // get summary stats
-	delete view._currentSummaryStats; // TODO: this is suboptimal b/c triggers another request when it could reuse existing stats
-	d3.selectAll('.roi-stats').remove();
-        
-//         // If animation is active, pull time from the opts
-//         // parameter, otherwise get from metadata
-//         if (opts) {
-//             time = opts.time;
-//         }
-        this.fetchRoiSummaryStats();
     },
     
     /**
@@ -1081,58 +1048,40 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
     
-    /** Requests and handles return of ROI summary stats
+    /** Redraws a polygon after a map reset caused by dimensions of 
+        the parent map component changing
     */
-    fetchRoiSummaryStats: function (start, end, onSuccess) {
+    
+    redrawPolygon: function () {
         var view = this;
-        var polygon = view.wrapper.selectAll('polygon');
-        var proj = view.getProjection();
-        var meta = view.getMetadata();
-
-
-        if ((meta && !view._currentSummaryStats) ||
-            (meta && (start != end)) && !view._currentRoiTimeSeries) {
-            var params;
-            
-                
-            start = start || meta.get('dates')[0].toISOString();
-            end = end || meta.get('dates')[0].toISOString();;
-            onSuccess = onSuccess || this.displaySummaryStats;
+      
+        // add the polygon
+        this.wrapper.append('polygon').attr({
+                            'class': 'roi-polygon',
+                            'points': this.getSVGPolyPoints(this._drawingCoords.slice(0)),
+                            'pointer-events': 'none'
+                        });
         
+        // add vertices
+        var vindex = 0;
+        this._drawingCoords.forEach( function (c) {
+            view.wrapper.append('circle').attr(view.getVertexAttrs(vindex, c));
+            vindex += 1;
+        });
         
-            var cs = view._drawingCoords.slice(0);
-            cs.push(cs[0]);
-            
-            var wkt = [];
-            cs.forEach(function(c) {
-                wkt.push(Ext.Array.map(proj.invert(c), function (l) {
-                        return l.toFixed(4);
-                    }).join('+'))
-                });
-            
-            params = {
-                start: start,
-                end: end,//meta.get('dates')[meta.get('dates').length - 1].toISOString(),
-                //TODO aggregate: this.getGlobalSettings().tendency,
-                // aggregate: 'mean',
-                geom: Ext.String.format('POLYGON(({0}))', wkt.join(','))
-            };
-            
-            Ext.Ajax.request({
-                method: 'GET',
-                url: Ext.String.format('/flux/api/scenarios/{0}/roi.json', meta.getId()),
-                params: params,
-                callback: function () {},
-                failure: function (response) {
-                    Ext.Msg.alert('Request Error', response.responseText);
-                },
-                success: function (response) {
-                    onSuccess(response, view);
-                },
-                scope: this
-            });
-        }
+        // add grow/shrink and drag listeners for vertices
+        this.addListenersForVertices();
         
+        // get summary stats
+        delete view._currentSummaryStats; // TODO: this is suboptimal b/c triggers another request when it could reuse existing stats
+        d3.selectAll('.roi-stats').remove();
+        
+//         // If animation is active, pull time from the opts
+//         // parameter, otherwise get from metadata
+//         if (opts) {
+//             time = opts.time;
+//         }
+        view.fireEvent('fetchstats');
     },
 
     /**
@@ -1378,10 +1327,10 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
-    triggerRoiTimeSeries: function (response, view) {
-        view.fireEventArgs('roiclick', [response]);
-        
-    },
+//     triggerRoiTimeSeries: function (response, view) {
+//         view.fireEventArgs('roiclick', [response]);
+//         
+//     },
     
     /**
         Draws again the visualization features of the map by updating their

@@ -100,14 +100,15 @@ Ext.define('Flux.view.D3LinePlot', {
         @param  series      {Array}
         @param  displayText {String}
      */
-    addSeries: function (series, displayText, showAnomalies) {
+    addSeries: function (series, displayText) {
+        var view = this;
         var t0, t1, sel;
         var x = this.scales.x;
         var y = this.scales.y;
         var data = series.getInterpolation();
         
 	var offset = 0;
-	if (showAnomalies) {
+	if (this._showAnomalies) {
 	    offset = this.getTendencyOffset();
 	}
 	
@@ -115,6 +116,11 @@ Ext.define('Flux.view.D3LinePlot', {
             .x(function (d) { return x(d[0]); })
             .y(function (d) { return y(d[1] - offset); });
 
+        // Remove any old standard deviation paths from an ROI time-series
+        ['.series-std-u','.series-std-d'].forEach( function (s) {
+            view.panes.plot.selectAll(s).remove();
+        });
+            
         this.panes.plot.selectAll('.series')
             .data([0])
             .enter()
@@ -162,23 +168,26 @@ Ext.define('Flux.view.D3LinePlot', {
     },
 
     /**
-        Plots ROI summary stats data
+        Plots ROI summary stats data. Different than addSeries() because
+        standard deviation paths are also drawn.
         @param  series      {Array}
         @param  displayText {String}
      */
-    addSeriesRoi: function (seriesStats, displayText, showAnomalies) {
+    addSeriesRoi: function (seriesStats, displayText) {
         var t0, t1, sel;
         var x = this.scales.x;
         var y = this.scales.y;
         var view = this;
         
+        displayText = displayText || 'mean +/- std of user-defined region-of-interest';
+        
         seriesStats['series'] = seriesStats['seriesMean'];
         var series = Ext.create('Flux.model.TimeSeries',seriesStats);   
         var data = series.getInterpolation();
         
-        seriesStats['series'] = seriesStats['seriesMax'];
-        var seriesMax = Ext.create('Flux.model.TimeSeries',seriesStats);   
-        var dataMax = seriesMax.getInterpolation();
+//         seriesStats['series'] = seriesStats['seriesMax'];
+//         var seriesMax = Ext.create('Flux.model.TimeSeries',seriesStats);   
+//         var dataMax = seriesMax.getInterpolation();
         
         // Get STD upper
         seriesStats['series'] = seriesStats['seriesMean'].map( function (x, i) {
@@ -196,7 +205,7 @@ Ext.define('Flux.view.D3LinePlot', {
         
         
         var offset = 0;
-        if (showAnomalies) {
+        if (this._showAnomalies) {
             offset = this.getTendencyOffset();
         }
         
@@ -235,7 +244,7 @@ Ext.define('Flux.view.D3LinePlot', {
         selSTD_u = this.panes.plot.selectAll('.series-std-u')
             .datum(dataSTD_u);
 
-        ['.series','.trend','.series-std-d','.series-std-u'].forEach( function (s) {
+        ['.trend','.series','.series-std-d','.series-std-u'].forEach( function (s) {
             t0.selectAll(s).attr('d', path);
         });
         
@@ -243,7 +252,7 @@ Ext.define('Flux.view.D3LinePlot', {
             return d[1] - offset;
         }));
 
-        ['.series','.trend','.series-std-d','.series-std-u'].forEach( function (s) {
+        ['.trend','.series','.series-std-d','.series-std-u'].forEach( function (s) {
             t1.selectAll(s).attr('d', path);
         });
         
@@ -504,15 +513,28 @@ Ext.define('Flux.view.D3LinePlot', {
     },
 
     /**
-        Redraws the current plot using a reference to the existing data model.
+        Redraws the current plot using a reference to the existing data model
+        and any existing series.
         @return {Flux.view.D3LinePlot}
      */
     redraw: function () {
         if (Ext.isEmpty(this._model)) {
             return this;
         }
-
-        return this.draw(this._model);
+        
+        this.draw(this._model);
+        
+        // Draw time-series if exists
+        if (this._currentTimeSeries) {
+            if ('seriesMean' in this._currentTimeSeries) {
+                this.addSeriesRoi(this._currentTimeSeries);
+            } else {
+                this.addSeries(this._currentTimeSeries,
+                               this._currentTimeSeriesLegendEntry);
+            }
+        }
+        
+        return this;
     },
 
     /**

@@ -165,7 +165,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 			hidden: true,
                     }, {
                         itemId: 'btn-fetch-roi-time-series',
-                        iconCls: 'icon-draw',
+                        iconCls: 'icon-draw-time-series',
                         tooltip: 'Fetch Time-Series for Drawn Polygon',
                         hidden: true
 		    }, {

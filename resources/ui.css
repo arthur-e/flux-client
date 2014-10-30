@@ -101,9 +101,13 @@
     background-size: 25px;
 }
 .icon-erase {
-    background-image: url(erase.png);
+    background-image: url(draw-delete.png);
     background-size: 24px;
     background-position: 1px 1px;
+}
+.icon-draw-time-series {
+    background-image: url(draw-time-series.png);
+    background-size: 25px;
 }
 .icon-link {
     background-image: url(link.png);

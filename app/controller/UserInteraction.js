@@ -1238,6 +1238,12 @@ Ext.define('Flux.controller.UserInteraction', {
     
     //onRoiClick: function (response) 
     onFetchRoiTimeSeriesClick: function () {
+        var meta = this.getMap().getMetadata();
+        
+        if (!meta) {
+            return;
+        }
+        
         var dates = this.getMap().getMetadata().get('dates');
 
         this.fetchRoiSummaryStats(dates[0].toISOString(),

@@ -302,7 +302,11 @@ Ext.define('Flux.controller.UserInteraction', {
     fetchOverlay: function (view, params) {
         var overlay;
 
-	window.mostRecentOverlayParams = params;
+        if (view.mostRecentOverlayParams != params) {
+            delete view._storedTendencyOffset;
+        }
+        
+	view.mostRecentOverlayParams = params;
 	
         if (!view.getMetadata()) {
             return;
@@ -343,7 +347,12 @@ Ext.define('Flux.controller.UserInteraction', {
     fetchRaster: function (view, params, forceFetch) {
         var raster, source, opts;
         
-	window.mostRecentRasterParams = params;
+        if (view.mostRecentRasterParams != params) {
+            delete view._storedTendencyOffset;
+        }
+        
+        
+	view.mostRecentRasterParams = params;
 	
 	if (!view.getMetadata()) {
             return;
@@ -641,16 +650,17 @@ Ext.define('Flux.controller.UserInteraction', {
             view.store.add(feat);
         }
 	
-// 	// modify here if anomalies view selected
-	// Set anomalies offset if selected;
-	
+
+        // Adjust data if anomalies view selected
 	if (opts.display === 'anomalies') {
+            var offset = view.getTendencyOffset();
+            
 	    f1 = feat.get('features');
 	    feat.set('features', (function () {
 			var i;
 			var g = [];
 			for (i = 0; i < f1.length; i += 1) {
-			    g.push(f1[i] - view.getTendencyOffset());
+			    g.push(f1[i] - offset);
 			}
 			return g;
 		    }()));
@@ -1585,7 +1595,6 @@ Ext.define('Flux.controller.UserInteraction', {
 
         opts = this.getGlobalSettings();
 
-
 	// do nothing if tendency custom value is modified but custom is not checked
 	if (cb.name === 'tendencyCustomValue' &&
 	    ['mean','median'].indexOf(opts.tendency) > -1) {
@@ -1623,9 +1632,9 @@ Ext.define('Flux.controller.UserInteraction', {
 	if (opts.display === 'anomalies' || cb.name === 'values') {
 	    suppressUpdate = true; // this disables redundant map update trigger
 	    if (map.getMetadata().get('gridded')) {
-		this.fetchRaster(map,window.mostRecentRasterParams,true);
+		this.fetchRaster(map,map.mostRecentRasterParams,true);
 	    } else {
-		this.fetchOverlay(map, window.mostRecentOverlayParams);
+		this.fetchOverlay(map, map.mostRecentOverlayParams);
 	    }
 	}
 

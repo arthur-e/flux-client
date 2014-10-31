@@ -538,17 +538,36 @@ Ext.define('Flux.view.D3GeographicMap', {
     },
     
     displaySummaryStats: function (series, view) {
-        //var view = this;
-        
         view._currentSummaryStats = series;
+
+        // Object w/ display attributes indicating
+        // display precision and whether or not to apply offset
+        // if anomalies view is selected
+        var display_attrs = {
+            'Mean': {
+                    'precision': 2,
+                    'offset': true,
+            },
+            'Min': {
+                    'precision': 2,
+                    'offset': true,
+            },
+            'Max': {
+                    'precision': 2,
+                    'offset': true,
+            },        
+            'STD': {
+                    'precision': 2,
+                    'offset': false
+            },
+            'N': {
+                    'precision': 0,
+                    'offset': false
+            }
+        }
         
-        // Object w/ attribute representing desired precision
-        var rs = {  'Mean': 2,
-                    'Min': 2,
-                    'Max': 2,
-                    'STD': 2,
-                    'N': 0}
-        
+        var offset = view.getTendencyOffset();
+
         // Summary stats display
         if (d3.selectAll('.roi-stats')[0].length === 0) {
             view.panes.roistats = view.svg.append('g').attr('class', 'pane roi-stats');
@@ -568,7 +587,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                     'pointer-events': 'all',
                 });
 
-            Object.keys(rs).forEach(function (s, i) {
+            Object.keys(display_attrs).forEach(function (s, i) {
                 view.panes.roistats.append('text').text(s).attr({
                     'class': 'roi-stats-text-labels',
                     'text-anchor': 'left',
@@ -585,9 +604,14 @@ Ext.define('Flux.view.D3GeographicMap', {
             });
         }
         
-        Object.keys(rs).forEach(function (s, i) {
-            var val = view._currentSummaryStats['series' + s][0]
+        Object.keys(display_attrs).forEach(function (s, i) { 
             var fs = '16px';
+            var val = view._currentSummaryStats['series' + s][0]
+            
+            if (view._showAnomalies && display_attrs[s]['offset']) {
+                val = val - offset;
+            }
+
             
             // Set some silly D3 transition animation for when number change
             // -attempted to make font color change depending on whether number is rising or
@@ -619,7 +643,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                         round = (prec.length > 1) ? Math.pow(10, prec[1].length) : 1;
 
                     return function(t) {
-                        this.textContent = (Math.round(i(t) * round) / round).toFixed(rs[s]);
+                        this.textContent = (Math.round(i(t) * round) / round).toFixed(display_attrs[s]['precision']);
                     
                 };
             });

@@ -480,9 +480,8 @@ Ext.define('Flux.controller.UserInteraction', {
             (meta && (start != end))) {
             var params;
             
-                
-            start = start || meta.get('dates')[0].toISOString();
-            end = end || meta.get('dates')[0].toISOString();;
+            start = start || view.mostRecentRasterParams.time || meta.get('dates')[0].toISOString();
+            end = end || view.mostRecentRasterParams.time || meta.get('dates')[0].toISOString();;
             onSuccess = onSuccess || view.displaySummaryStats;
         
         

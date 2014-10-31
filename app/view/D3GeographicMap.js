@@ -279,6 +279,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    var m = d3.mouse(view.wrapper[0][0]);
             
             c = view.constrainLatLong(m);
+            c = view.constrainOneHemisphere(c);
             
 	    // store the current representation of the polygon in screen coords
 	    if (!view._drawingCoords) {
@@ -315,6 +316,9 @@ Ext.define('Flux.view.D3GeographicMap', {
 	function finishPolygon() {
 	    // Registers drawing on double-click
 	  
+            // Remove any remaining tool tip text
+            view.panes.tooltip.selectAll('.tip').text('');
+            
             // Remove tracker vertex
             view.wrapper.selectAll('.roi-tracker').remove();
             
@@ -354,7 +358,6 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    // Remove canvas to awaken sleeping listeners underneath
             d3.selectAll('.polygonCanvas').remove();
             
-                        
             // Reenable zoom
             view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
 	    
@@ -368,6 +371,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         function mousemove() {
             var m = d3.mouse(view.wrapper[0][0]);
             var c = view.constrainLatLong(m);
+            c = view.constrainOneHemisphere(c);
             
             if (view.wrapper.selectAll('.roi-tracker')[0].length === 0) {
                 view.wrapper.append('circle').attr({
@@ -389,6 +393,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 	function mousemoveDraw() {
 	    var m = d3.mouse(view.wrapper[0][0]);
             var c = view.constrainLatLong(m);
+            c = view.constrainOneHemisphere(c);
             
 	    var cs = view._drawingCoords.slice(0);
 	    
@@ -451,17 +456,11 @@ Ext.define('Flux.view.D3GeographicMap', {
                 
                 dragged = true;
                 
-                // Constrain vertices so that they don't exceed bounds of lat/long
-                // (otherwise will throw a MongoDB error)
-                ll = Ext.Array.map(proj.invert([m[0],m[1]]), function(l) {return l;});
-                
-                if (ll[1] > 90 || ll[1] < -90) {
-                    y = d3.select(this).attr('cy');
-                }
-                
-                if (ll[0] > 180 || ll[0] < -180) {
-                    x = d3.select(this).attr('cx'); 
-                }
+                c = view.constrainLatLong(m);
+                c = view.constrainOneHemisphere(c)//, [d3.select(this).attr('cx'),d3.select(this).attr('cy')]);
+            
+                x = c[0];
+                y = c[1];
 		
 		// update polygon
 		view._drawingCoords[d3.select(this).attr('vindex')] = [x,y];
@@ -476,6 +475,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                 // delete current summaryStats so that it will trigger a database ping
                 delete view._currentSummaryStats;
 	      }).on('dragend', function() {
+                view.panes.tooltip.selectAll('.tip').text('');
                 view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
                 if (dragged) { 
                     view.fireEvent('fetchstats');
@@ -518,23 +518,77 @@ Ext.define('Flux.view.D3GeographicMap', {
         var x = ll[0];
         var y = ll[1];
         
-        if (ll[1] > 90) {
-            y = 90;
+        if (ll[1] >= 90) {
+            y = 89.9;
         }
         
-        if (ll[1] < -90) {
-            y = -90;
+        if (ll[1] <= -89.9) {
+            y = -89.9;
         }
         
-        if (ll[0] > 180) {
-            x = 180;
+        if (ll[0] >= 180) {
+            x = 179.9;
         }
         
-        if (ll[0] < -180) {
-            x = -180;
+        if (ll[0] <= -180) {
+            x = -179.9;
         }
-        
+
         return proj([x,y]);
+    },
+    
+    // We also need to apply constraint to vertices so that polygon does not span multiple
+    // hemispheres because MongoDB cannot handle spatial queries larger than that.
+    // See here:
+    // http://stackoverflow.com/questions/18773482/geointersect-seems-to-limit-polygon-query-to-180%C2%B0-width-why
+    constrainOneHemisphere: function (c) {
+        var view = this;
+        var proj = this.getProjection();
+        var ll = Ext.Array.map(proj.invert([c[0],c[1]]), function(l) {return l;});
+        var x = ll[0];
+        
+        
+        if (view._drawingCoords) {
+            var xs = view._drawingCoords.map(function (q) {
+                return Ext.Array.map(proj.invert(q), function(l) {return l;});
+            }).map(function (z) {return z[0];});
+            
+            
+            var min_x = Math.min.apply(Math, xs);
+            var max_x = Math.max.apply(Math, xs); 
+            
+            var exceeds = false;
+            
+            [min_x, max_x].forEach( function (extreme) {
+                
+                if (Math.abs(ll[0] - extreme) > 180) {
+                    exceeds = true;
+                    if (x >= extreme) {
+                        x = extreme + 179;
+                    } else {
+                        x = extreme - 179;
+                    }
+                    ;
+                }
+                        
+            });
+            
+            if (exceeds) {
+                // Near-cursor tooltip
+                view.panes.tooltip.selectAll('.tip')
+                    .text("ROI width cannot exceed one hemisphere")
+                    .attr({
+                        'x': proj([x, ll[1]])[0] + 20,
+                        'y': c[1] + 30,
+                        'font-size': '8px',
+                    });
+            } else {
+                view.panes.tooltip.selectAll('.tip').text('');
+            }
+        }  
+        
+        return proj([x, ll[1]]);
+        
     },
     
     displaySummaryStats: function (series, view) {

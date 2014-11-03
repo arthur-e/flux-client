@@ -386,7 +386,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 rast.set('_id', Ext.Object.toQueryString(opts.params));
 	
                 this.bindLayer(view, rast, params.dontResetSteps);
-                this.onMapLoad(rast, params);
+                this.onMapLoad(rast);
             },
             failure: function (response) {
                 Ext.Msg.alert('Request Error', response.responseText);
@@ -997,12 +997,12 @@ Ext.define('Flux.controller.UserInteraction', {
                 text: 'Click to place vertices; Double-click to finish'
             }]);
 
-	if (d3.selectAll('.polygonCanvas')[0].length === 0) {
-	    view.panes.polygonCanvas = view.wrapper.append('g').attr('class', 'pane');
+	if (d3.selectAll('.roiCanvas')[0].length === 0) {
+	    view.panes.roiCanvas = view.wrapper.append('g').attr('class', 'pane');
 	  
-	    view.panes.polygonCanvas.append('rect')
+	    view.panes.roiCanvas.append('rect')
 				    .attr({
-					'class': 'polygonCanvas',
+					'class': 'roiCanvas',
 					'width': view.svg.attr('width'),
 					'height': view.svg.attr('height'),
 					'fill': 'none',
@@ -1015,9 +1015,12 @@ Ext.define('Flux.controller.UserInteraction', {
 				    });
 	}
 	
+	// Remove any lingering drawing coordinates from
+	// a drawing that may have been interrupted on map resizing
+        delete view._tmpDrawingCoords;
+	
 	// Add listeners to drawing element
-	sel = d3.selectAll('.polygonCanvas');
-	view.addListenersForDrawing(sel,tbar);
+	view.addListenersForDrawing(d3.selectAll('.roiCanvas'),tbar);
     },
     
      /** Handles click of the 'actively drawing polygon' button
@@ -1058,8 +1061,8 @@ Ext.define('Flux.controller.UserInteraction', {
       
 	  // remove the rectangular drawing overlay that blocks pointer-events
 	  // from reaching other elements
-	 delete view.panes.polygonCanvas;
-	 d3.selectAll('.polygonCanvas').remove();
+	 delete view.panes.roiCanvas;
+	 d3.selectAll('.roiCanvas').remove();
 	 
 	 d3.selectAll('.roi-stats').remove();
 	 d3.selectAll('.roi-polygon').remove(); // this removes the drawn polygon
@@ -1084,7 +1087,7 @@ Ext.define('Flux.controller.UserInteraction', {
         Specifically, this updates the D3LinePlot instance.
         @param  rast    {Flux.model.Raster}
      */
-    onMapLoad: function (rast, params) {
+    onMapLoad: function (rast) {
         var props = rast.get('properties');
         var moments = [
             rast.get('timestamp')
@@ -1093,7 +1096,7 @@ Ext.define('Flux.controller.UserInteraction', {
         if (this.getMap()._drawingCoords) {
             delete this.getMap()._currentSummaryStats;
 
-            this.fetchRoiSummaryStats(params.time, params.time);
+            this.fetchRoiSummaryStats();
         }
         
         if (this.getLinePlot()) {

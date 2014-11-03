@@ -267,7 +267,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         var view = this;
 	var line, polygon, c, vindex;
 
-        sel = sel || this.selectAll('.polygonCanvas');
+        sel = sel || this.selectAll('.roiCanvas');
 	
 	// temporarily disabled zooming while drawing is active
 	view.zoom.on('zoom',null);
@@ -282,17 +282,17 @@ Ext.define('Flux.view.D3GeographicMap', {
             c = view.constrainOneHemisphere(c);
             
 	    // store the current representation of the polygon in screen coords
-	    if (!view._drawingCoords) {
-		view._drawingCoords = [];
+	    if (!view._tmpDrawingCoords) {
+		view._tmpDrawingCoords = [];
 	    }
 
-	    view._drawingCoords.push(c);
+	    view._tmpDrawingCoords.push(c);
 
 	    // add polygon if it doesn't yet exist
 	    if (!polygon) {
 		polygon = view.wrapper.append('polygon').attr({
 			    'class': 'roi-polygon',
-			    'points': view.getSVGPolyPoints(view._drawingCoords.slice(0)),
+			    'points': view.getSVGPolyPoints(view._tmpDrawingCoords.slice(0)),
 			    'pointer-events': 'none'
 			});
 
@@ -316,6 +316,10 @@ Ext.define('Flux.view.D3GeographicMap', {
 	function finishPolygon() {
 	    // Registers drawing on double-click
 	  
+            // Set temporary drawing coords to official drawing coords
+            view._drawingCoords = view._tmpDrawingCoords.slice(0);
+            delete view._tmpDrawingCoords;
+            
             // Remove any remaining tool tip text
             view.panes.tooltip.selectAll('.tip').text('');
             
@@ -349,14 +353,12 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    tbar.down('button[itemId="btn-erase-polygon"]').show();
 	    tbar.down('button[itemId="btn-cancel-polygon"]').hide();
             tbar.down('button[itemId="btn-fetch-roi-time-series"]').show();
-	    //tbar.down('button[itemId="btn-draw-polygon"]').hide();
-	    //tbar.down('button[itemId="btn-draw-polygon"]').show();
 	    
 	    // Reset cursor (turn off crosshairs)
-            view.panes.polygonCanvas.selectAll('rect').style('cursor','auto');
+            view.panes.roiCanvas.selectAll('rect').style('cursor','auto');
             
 	    // Remove canvas to awaken sleeping listeners underneath
-            d3.selectAll('.polygonCanvas').remove();
+            d3.selectAll('.roiCanvas').remove();
             
             // Reenable zoom
             view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
@@ -395,7 +397,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             var c = view.constrainLatLong(m);
             c = view.constrainOneHemisphere(c);
             
-	    var cs = view._drawingCoords.slice(0);
+	    var cs = view._tmpDrawingCoords.slice(0);
 	    
 	    cs.push([c[0],c[1]]);
 	    
@@ -1153,12 +1155,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         // get summary stats
         delete view._currentSummaryStats; // TODO: this is suboptimal b/c triggers another request when it could reuse existing stats
         d3.selectAll('.roi-stats').remove();
-        
-//         // If animation is active, pull time from the opts
-//         // parameter, otherwise get from metadata
-//         if (opts) {
-//             time = opts.time;
-//         }
+
         view.fireEvent('fetchstats');
     },
 

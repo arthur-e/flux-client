@@ -872,7 +872,9 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         ////////////////////////////////////////////////////////////////////////
         // Gridded Raster //////////////////////////////////////////////////////
-
+        if (!this.getRasterGrid()) {
+            return;
+        }
         grid = this.getRasterGrid().get('coordinates');
         gridxy = this._metadata.get('grid'); // Assumes grid spacing in degrees
         attrs = {
@@ -1114,7 +1116,6 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return         {Flux.view.D3GeographicMap}
      */
     redraw: function (zoom) {
-
         if (this._model) {
             this.draw(this._model, zoom).updateLegend();
         }

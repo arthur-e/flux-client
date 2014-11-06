@@ -42,6 +42,8 @@ Ext.define('Flux.controller.UserInteraction', {
         'Flux.store.Metadata'
     ],
 
+    _initLoad: false,
+    
     init: function () {
         // Create a new state Provider if one doesn't already exist
         if (Ext.state.Manager.getProvider().path === undefined) {
@@ -166,7 +168,7 @@ Ext.define('Flux.controller.UserInteraction', {
             });
 
         }, this));
-
+        
     },
 
     /**
@@ -833,10 +835,11 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  field   {Ext.form.field.*}
         @param  value   {String}
      */
-    onDateTimeSelection: function (field, value) {
+    onDateTimeSelection: function (field, value, date) {
         var d, dates, steps, view;
         var editor = field.up('roweditor');
         var values = field.up('panel').getForm().getValues();
+        values.date = values.date || date;
 
         if (!value) {
             return; // Ignore undefined, null values
@@ -850,7 +853,7 @@ Ext.define('Flux.controller.UserInteraction', {
             view = this.getMap();
         }
 
-        if (Ext.isEmpty(values.source)) {
+        if (Ext.isEmpty(values.source) || Ext.isEmpty(values.date)) {
             return;
         }
 
@@ -1458,7 +1461,7 @@ Ext.define('Flux.controller.UserInteraction', {
         operation = Ext.Function.bind(function (metadata) {
             this.bindMetadata(view, metadata);
             this.propagateMetadata(container, metadata);
-
+            
             // (Re)load the line plot if the source has actually changed
             if (this.getLinePlot()
                     && (!this.getLinePlot().isDrawn || source !== last)) {
@@ -1484,7 +1487,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
                     this.getStore('metadata').add(meta);
 
-                    operation(meta);
+                    operation(meta, field);
                 },
 
                 scope: this
@@ -1492,12 +1495,21 @@ Ext.define('Flux.controller.UserInteraction', {
         }
 
         // Do not continue if the source is non-gridded
+        //console.log(field.getStore().getById(source).get('gridded'));
+//         var store = field.getStore().getById(source);
+//         var store = Ext.StoreManager.get('scenarios');//.getById(source);
+// 
+//         if (!store) {
+//             return;
+//         }
+//         
         if (!field.getStore().getById(source).get('gridded')) {
             return;
         }
 
         // RasterGrid //////////////////////////////////////////////////////////
         grid = this.getStore('rastergrids').getById(source);
+        
         if (grid) {
             this.bindRasterGrid(view, grid);
 
@@ -1712,17 +1724,31 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  metadata    {Ext.model.Metadata}
      */
     propagateMetadata: function (container, metadata) {
+        var ui = this;
         var fmt = 'YYYY-MM-DD';
+        var initDate = metadata.get('dates')[0].format(fmt);
         var calendars = container.query('datefield');
         var clocks = container.query('combo[valueField=time]');
         var dates = metadata.getDisabledDates(fmt);
         var step = Ext.Array.min(metadata.getTimeOffsets() || []);
-
+        var params = window.location.href.split('?');
+        params = Ext.Object.fromQueryString(params.pop());
+        
+        // Boolean to determine if application is first being loaded and source is specified, 
+        // used to determine whether or not to automatically load date/time values to
+        // calendar/time fields.
+        var loadParams = (ui._initLoad && params.hasOwnProperty('source') && params.source.length > 1);
+                
+        // Reset initial date if initially loading and 'date' parameter is specified
+        if  (loadParams && params.hasOwnProperty('date') && params.date.length > 0) {
+            initDate = params.date;
+        }
+        
+        // Create date picker calendar
         if (calendars) {
             Ext.each(calendars, function (cal) {
                 var clock = cal.nextSibling('combo[valueField=time]');
-
-                cal.initDate = metadata.get('dates')[0].format(fmt);
+                cal.initDate = initDate;
                 cal.reset();
                 cal.setDisabledDates(['^(?!).*$']);
                 cal.setDisabledDates(dates);
@@ -1766,6 +1792,26 @@ Ext.define('Flux.controller.UserInteraction', {
                 }));
                 clock.disable();
             });
+        }
+        
+        // After calendars/clocks are set up, load parameters pulled from URL query string
+        // if application is first loading according to URL parameters
+        if (loadParams) {
+            Ext.ComponentQuery.query('field[name=date]')[0].setValue(initDate)
+            
+            var time = metadata.getTimes()[0];
+            if (params.hasOwnProperty('time') && params.time.length > 0) {
+                time = params.time;
+            }
+                
+            var cmp = Ext.ComponentQuery.query('field[name=time]')[0];
+            cmp.setValue(time);
+            cmp.enable();
+            
+            ui.onDateTimeSelection(cmp, time, initDate);
+            
+            // reset global indicator that map has been loaded
+            ui._initLoad = false;
         }
     },
 

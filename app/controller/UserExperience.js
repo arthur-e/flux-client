@@ -31,125 +31,19 @@ Ext.define('Flux.controller.UserExperience', {
         if (params.length > 1) {
             params = Ext.Object.fromQueryString(params.pop());
             this.setStateFromParams(params);
-
-            // Ensure that ALL of source/date/time are set
-            // TODO: OR if just source is specified, could we just load the first date/time?
             
+            // Automatically load data if "source" is specified
+            if (params.hasOwnProperty('source') && params.source.length > 0) {
+                Ext.onReady(function () {
+                    this.preloadDataFromGetParams(params);
+                }, this);
+            }
+            
+            // Send notice that date/time are ignored unless "source" is specified
             if (((params.hasOwnProperty('date') && params.date.length > 0) || 
                  (params.hasOwnProperty('time') && params.time.length > 0)) &&
-                 !params.hasOwnProperty('source') || !params.source.length)
-            {
+                 !params.hasOwnProperty('source') || !params.source.length) {
                 Ext.Msg.alert('Alert','"date" and "time" URL parameters are ignored unless "source" is specified');
-                
-            } else {
-                // Automatically load data if specified
-                if (params.hasOwnProperty('source') && params.source.length > 0) {
-                    // TODO: validate parameter values? Or just rely on request errors?
-                    Ext.onReady(function () {
-                        Ext.Ajax.request({
-                            method: 'GET',
-                            url: '/flux/api/scenarios.json',
-                            params: {
-                                scenario: params.source
-                            },
-                            failure: function (response) {
-                                Ext.Msg.alert('Request Error: scenarios.json', 
-                                    Ext.String.format('{0}: Ensure that source "{1}" exists',
-                                                    response.responseText,
-                                                    params.source
-                                                )
-                                );
-                            },
-                            success: function (response) {
-                                var source, time;
-                                var ui = this.getController('UserInteraction');
-                                var view = ui.getMap();
-                                var meta = Ext.create('Flux.model.Metadata',
-                                    Ext.JSON.decode(response.responseText));
-                                
-                                ui._initLoad = true;
-                                this.getStore('metadata').add(meta);
-
-                                ui.bindMetadata(view, meta);
-                                
-                                var date = meta.get('dates')[0].format('YYYY-MM-DD');
-                                if (params.hasOwnProperty('date') && params.date.length > 0) {
-                                    date = params.date;
-                                }
-                                
-                                var time = meta.getTimes()[0];
-                                if (params.hasOwnProperty('time') && params.time.length > 0) {
-                                    time = params.time;
-                                }
-                                
-                                
-                                datetime = Ext.String.format('{0}T{1}:00.000Z',date, time);
-
-                                Ext.Ajax.request({
-                                    method: 'GET',
-                                    url: Ext.String.format('/flux/api/scenarios/{0}/xy.json', params.source),
-                                    params: {
-                                        time: datetime,
-                                    },
-                                    failure: function (response) {
-                                        Ext.Msg.alert('Request Error: xy.json', 
-                                            Ext.String.format('{0}: "{2}" may not be a valid date/time for source "{1}"',
-                                                response.responseText,
-                                                params.source,
-                                                datetime
-                                                )
-                                            );
-                                    },
-                                    success: function (response, opts) {
-                                        var rast;
-
-                                        rast = Ext.create('Flux.model.Raster',
-                                            Ext.JSON.decode(response.responseText));
-
-                                        // Create a unique ID that can be used to find this grid
-                                        rast.set('_id', Ext.Object.toQueryString(opts.params));
-
-                                        ui.bindLayer(view, rast);
-                                        ui.onMapLoad(rast);
-                                        
-                                        Ext.Ajax.request({
-                                            method: 'GET',
-                                            url: Ext.String.format('/flux/api/scenarios/{0}/grid.json', params.source),
-                                            failure: function (response) {
-                                                Ext.Msg.alert('Request Error: xy.json', 
-                                                Ext.String.format('{0}: Ensure that source "{1}" exists',
-                                                                response.responseText,
-                                                                params.source
-                                                            )
-                                                );
-                                                
-                                            },
-                                            success: function (response) {
-                                                var grid = Ext.create('Flux.model.RasterGrid',
-                                                    Ext.JSON.decode(response.responseText));
-
-                                                ui.getStore('rastergrids').add(grid);
-
-                                                ui.bindRasterGrid(view, grid);
-                                                
-                                                // Now that all the data has been successfully retrieved, set the
-                                                // source drop-down field name to the parameter name.
-                                                // The date/time fields are set w/in propagateMetadata
-                                                Ext.ComponentQuery.query('field[name=source]')[0].setValue(params.source);
-                                                
-                                                // Finally, trigger redraw() to draw the data on the map
-                                                view.redraw();
-                                            },
-                                            scope: this
-                                        });
-                                    },
-                                    scope: this
-                                });
-                            },
-                            scope: this
-                        });
-                    }, this);
-                }
             }
         }
 
@@ -226,7 +120,7 @@ Ext.define('Flux.controller.UserExperience', {
                 height: 150,
                 readOnly: true,
                 fieldStyle: 'font-family:monospace;',
-                value: Ext.String.format('{0}?{1}', window.location.href,
+                value: Ext.String.format('{0}?{1}', window.location.href.split('?')[0],
                     this.getStateHash())
             }]
         });
@@ -274,7 +168,6 @@ Ext.define('Flux.controller.UserExperience', {
         Ext.each(query, function (form) {
             Ext.merge(params, form.getValues());
         });
-
         return params;
     },
 
@@ -323,7 +216,122 @@ Ext.define('Flux.controller.UserExperience', {
             }]);
         }
     },
+    
+    /**
+        Chains server requests so as to preload data
+        according to GET parameters specified in URL
+        
+        @param  params  {Ext.Object.fromQueryString}
+     */
+    preloadDataFromGetParams: function (params) {
+        
+        // First get metadata
+        Ext.Ajax.request({
+            method: 'GET',
+            url: '/flux/api/scenarios.json',
+            params: {
+                scenario: params.source
+            },
+            failure: function (response) {
+                Ext.Msg.alert('Request Error: scenarios.json', 
+                    Ext.String.format('{0}: Ensure that source "{1}" exists',
+                                      response.responseText,
+                                      params.source
+                                     )
+                );
+            },
+            // If successful, bindMetadata and get xy data
+            success: function (response) {
+                var ui = this.getController('UserInteraction');
+                var view = ui.getMap();
+                var meta = Ext.create('Flux.model.Metadata',
+                    Ext.JSON.decode(response.responseText));
+                
+                ui._initLoad = true;
+                this.getStore('metadata').add(meta);
 
+                ui.bindMetadata(view, meta);
+                
+                // Set date/time to first value in metadata unless specified
+                // in the GET request
+                var date = meta.get('dates')[0].format('YYYY-MM-DD');
+                if (params.hasOwnProperty('date') && params.date.length > 0) {
+                    date = params.date;
+                }
+                
+                var time = meta.getTimes()[0];
+                if (params.hasOwnProperty('time') && params.time.length > 0) {
+                    time = params.time;
+                }
+                
+                datetime = Ext.String.format('{0}T{1}:00.000Z', date, time);
+
+                Ext.Ajax.request({
+                    method: 'GET',
+                    url: Ext.String.format('/flux/api/scenarios/{0}/xy.json', params.source),
+                    params: {
+                        time: datetime,
+                    },
+                    failure: function (response) {
+                        Ext.Msg.alert('Request Error: xy.json', 
+                            Ext.String.format('{0}: "{2}" may not be a valid date/time for source "{1}"',
+                                response.responseText,
+                                params.source,
+                                datetime
+                                )
+                            );
+                    },
+                    // If successful, bind layer and get raster grid
+                    success: function (response, opts) {
+                        var rast;
+
+                        rast = Ext.create('Flux.model.Raster',
+                            Ext.JSON.decode(response.responseText));
+
+                        // Create a unique ID that can be used to find this grid
+                        rast.set('_id', Ext.Object.toQueryString(opts.params));
+
+                        ui.bindLayer(view, rast);
+                        ui.onMapLoad(rast);
+                        
+                        Ext.Ajax.request({
+                            method: 'GET',
+                            url: Ext.String.format('/flux/api/scenarios/{0}/grid.json', params.source),
+                            failure: function (response) {
+                                Ext.Msg.alert('Request Error: xy.json', 
+                                Ext.String.format('{0}: Ensure that source "{1}" exists',
+                                                response.responseText,
+                                                params.source
+                                            )
+                                ); 
+                            },
+                            // Now that everything is loaded, set the source field and redraw the map
+                            success: function (response) {
+                                var grid = Ext.create('Flux.model.RasterGrid',
+                                    Ext.JSON.decode(response.responseText));
+
+                                ui.getStore('rastergrids').add(grid);
+                                ui.bindRasterGrid(view, grid);
+                                
+                                // Now that all the data has been successfully retrieved, set the
+                                // source drop-down field name to the parameter name.
+                                // The date/time fields are set w/in propagateMetadata
+                                Ext.ComponentQuery.query('field[name=source]')[0].setValue(params.source);
+                                
+                                // Finally, trigger redraw() to draw the data on the map
+                                view.redraw();
+                            },
+                            scope: this
+                        });
+                    },
+                    scope: this
+                });
+            },
+            scope: this
+        })
+        
+    },
+    
     /**
         If checked, update all hidden "tendency" fields with the measure of
         central tendency chosen.

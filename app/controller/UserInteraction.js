@@ -718,6 +718,48 @@ Ext.define('Flux.controller.UserInteraction', {
     },
     
     /**
+        Populates date/time fields with parameter values
+        from GET request (or to default values if not specified)
+        Called only when application first loads.
+        
+        @param  params          {Ext.Object.fromQueryString}
+        @param  metadata        {Ext.model.Metadata}
+     */
+    loadDateTimeParams: function (params, metadata) {
+        var fmt = 'YYYY-MM-DD';
+        
+        // Set date to specified 'date' parameter if specified
+        var date = metadata.get('dates')[0].format(fmt);
+        if  (params.hasOwnProperty('date') && params.date.length > 0) {
+            date = params.date;
+        }
+        
+        var cmp = Ext.ComponentQuery.query('field[name=date]')[0];
+        cmp.setValue(date);
+        cmp.setRawValue(date);
+        
+        // Set time to specified 'time' parameter if specified
+        var time = metadata.getTimes()[0];
+        if (params.hasOwnProperty('time') && params.time.length > 0) {
+            time = params.time;
+        }
+            
+        var cmp = Ext.ComponentQuery.query('field[name=time]')[0];
+        cmp.setValue(time);
+        cmp.enable();
+        
+        // Hard trigger the date/time selection method to propagate changes
+        this.onDateTimeSelection(cmp, time, date);
+        
+        // Reset global indicator that map has been loaded
+        // (this prevents loading from URL parameters again once
+        //  application is already loaded, e.g. when source changes
+        //  and new metadata is propagated)
+        this._initLoad = false;
+        
+    },
+    
+    /**
         Handles a change in the aggregation parameters; fires a new map
         request depending on whether aggregation is requested.
         @param  field   {Ext.form.field.Base}
@@ -1724,9 +1766,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  metadata    {Ext.model.Metadata}
      */
     propagateMetadata: function (container, metadata) {
-        var ui = this;
         var fmt = 'YYYY-MM-DD';
-        var initDate = metadata.get('dates')[0].format(fmt);
         var calendars = container.query('datefield');
         var clocks = container.query('combo[valueField=time]');
         var dates = metadata.getDisabledDates(fmt);
@@ -1734,21 +1774,11 @@ Ext.define('Flux.controller.UserInteraction', {
         var params = window.location.href.split('?');
         params = Ext.Object.fromQueryString(params.pop());
         
-        // Boolean to determine if application is first being loaded and source is specified, 
-        // used to determine whether or not to automatically load date/time values to
-        // calendar/time fields.
-        var loadParams = (ui._initLoad && params.hasOwnProperty('source') && params.source.length > 1);
-                
-        // Reset initial date if initially loading and 'date' parameter is specified
-        if  (loadParams && params.hasOwnProperty('date') && params.date.length > 0) {
-            initDate = params.date;
-        }
-        
         // Create date picker calendar
         if (calendars) {
             Ext.each(calendars, function (cal) {
                 var clock = cal.nextSibling('combo[valueField=time]');
-                cal.initDate = initDate;
+                cal.initDate = metadata.get('dates')[0].format(fmt);
                 cal.reset();
                 cal.setDisabledDates(['^(?!).*$']);
                 cal.setDisabledDates(dates);
@@ -1794,24 +1824,13 @@ Ext.define('Flux.controller.UserInteraction', {
             });
         }
         
-        // After calendars/clocks are set up, load parameters pulled from URL query string
-        // if application is first loading according to URL parameters
-        if (loadParams) {
-            Ext.ComponentQuery.query('field[name=date]')[0].setValue(initDate)
-            
-            var time = metadata.getTimes()[0];
-            if (params.hasOwnProperty('time') && params.time.length > 0) {
-                time = params.time;
-            }
-                
-            var cmp = Ext.ComponentQuery.query('field[name=time]')[0];
-            cmp.setValue(time);
-            cmp.enable();
-            
-            ui.onDateTimeSelection(cmp, time, initDate);
-            
-            // reset global indicator that map has been loaded
-            ui._initLoad = false;
+        // After calendars/clocks are set up, load parameters from URL query
+        // string if application is first loading according to URL parameters.
+        //
+        // This gets triggered here b/c calendars/clocks need to be set up before
+        // field values are changed.
+        if (this._initLoad && params.hasOwnProperty('source') && params.source.length > 1) {
+            this.loadDateTimeParams(params, metadata);
         }
     },
 

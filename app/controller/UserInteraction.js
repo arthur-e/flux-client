@@ -734,28 +734,44 @@ Ext.define('Flux.controller.UserInteraction', {
     loadDateTimeParams: function (params, metadata) {
         var fmt = 'YYYY-MM-DD';
         
-        // Set date to specified 'date' parameter if specified
-        var date = metadata.get('dates')[0].format(fmt);
-        if  (params.hasOwnProperty('date') && params.date.length > 0) {
-            date = params.date;
-        }
-        
-        var cmp = Ext.ComponentQuery.query('field[name=date]')[0];
-        cmp.setValue(date);
-        cmp.setRawValue(date);
-        
-        // Set time to specified 'time' parameter if specified
-        var time = metadata.getTimes()[0];
-        if (params.hasOwnProperty('time') && params.time.length > 0) {
-            time = params.time;
-        }
+        // This conditional indicates a non-gridded dataset was requested
+        if (params.hasOwnProperty('start') && params.start.length > 0 &&
+            params.hasOwnProperty('end') && params.end.length > 0) {
             
-        var cmp = Ext.ComponentQuery.query('field[name=time]')[0];
-        cmp.setValue(time);
-        cmp.enable();
+            ['start','end'].forEach(function (x) {
+                var cmp = Ext.ComponentQuery.query(Ext.String.format('field[name={0}]',x))[0];
+                cmp.setValue(params[x]);
+                cmp.setRawValue(params[x]);
+                cmp.enable();
+            });
+            
+            this.onOverlayDateSelection(Ext.ComponentQuery.query('field[name=end]')[0]);
         
-        // Hard trigger the date/time selection method to propagate changes
-        this.onDateTimeSelection(cmp, time, date);
+        } else {
+        
+            // Set date to specified 'date' parameter if specified
+            var date = metadata.get('dates')[0].format(fmt);
+            if  (params.hasOwnProperty('date') && params.date.length > 0) {
+                date = params.date;
+            }
+            
+            var cmp = Ext.ComponentQuery.query('field[name=date]')[0];
+            cmp.setValue(date);
+            cmp.setRawValue(date);
+            
+            // Set time to specified 'time' parameter if specified
+            var time = metadata.getTimes()[0];
+            if (params.hasOwnProperty('time') && params.time.length > 0) {
+                time = params.time;
+            }
+                
+            var cmp = Ext.ComponentQuery.query('field[name=time]')[0];
+            cmp.setValue(time);
+            cmp.enable();
+            
+            // Hard trigger the date/time selection method to propagate changes
+            this.onDateTimeSelection(cmp, time, date);
+        }
         
         // Reset global indicator that map has been loaded
         // (this prevents loading from URL parameters again once

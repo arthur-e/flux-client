@@ -603,7 +603,7 @@ Ext.define('Flux.view.D3GeographicMap', {
     
     displaySummaryStats: function (series, view) {
         view._currentSummaryStats = series;
-        console.log(series);
+
         // Object w/ display attributes indicating
         // display precision and whether or not to apply offset
         // if anomalies view is selected
@@ -670,11 +670,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         
         Object.keys(display_attrs).forEach(function (s, i) { 
             var fs = '16px';
-            var val = view._currentSummaryStats['series' + s][0];
-            
-            if (s === 'N') {
-                val = view._currentSummaryStats.properties.totalN;
-            }
+            var val = view._currentSummaryStats.properties['all' + s];
             
             if (view._showAnomalies && display_attrs[s]['offset']) {
                 val = val - offset;

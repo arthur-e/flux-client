@@ -165,8 +165,17 @@ Ext.define('Flux.controller.UserExperience', {
         var query = Ext.ComponentQuery.query('form');
         var params = {};
 
+        var cmp = Ext.ComponentQuery.query('tabbedpanel[itemId=single-map]')[0];
+        
         Ext.each(query, function (form) {
-            Ext.merge(params, form.getValues());
+            // This conditional basically just says to ignore the inactive Data Sources tab
+            // ...otherwise, a value in the inactive tab may overwrite the same-named value
+            // in the active tab
+            if (!(['gridded-map','non-gridded-map'].indexOf(form.itemId) > -1 &&
+                  cmp.getActiveTab().itemId != form.itemId)) { 
+                Ext.merge(params, form.getValues());
+            }
+
         });
         return params;
     },
@@ -224,6 +233,14 @@ Ext.define('Flux.controller.UserExperience', {
         @param  params  {Ext.Object.fromQueryString}
      */
     preloadDataFromGetParams: function (params) {
+        var gridded = true;
+        var tabPanel = Ext.ComponentQuery.query('tabbedpanel[itemId=single-map]')[0]
+        
+        if (params.hasOwnProperty('start') && params.start.length > 0 &&
+            params.hasOwnProperty('end') && params.end.length > 0) {
+            gridded = false;
+            tabPanel.setActiveTab('non-gridded-map');
+        }
         
         // First get metadata
         Ext.Ajax.request({
@@ -254,30 +271,43 @@ Ext.define('Flux.controller.UserExperience', {
                 
                 // Set date/time to first value in metadata unless specified
                 // in the GET request
-                var date = meta.get('dates')[0].format('YYYY-MM-DD');
-                if (params.hasOwnProperty('date') && params.date.length > 0) {
-                    date = params.date;
-                }
+                var request_params = {};
                 
-                var time = meta.getTimes()[0];
-                if (params.hasOwnProperty('time') && params.time.length > 0) {
-                    time = params.time;
-                }
+                if (!gridded) {
+                    request_params = {
+                        start: params.start,
+                        end: params.end
+                    }
+                    
+                } else {
                 
-                datetime = Ext.String.format('{0}T{1}:00.000Z', date, time);
+                    var date = meta.get('dates')[0].format('YYYY-MM-DD');
+                    if (params.hasOwnProperty('date') && params.date.length > 0) {
+                        date = params.date;
+                    }
+                    
+                    var time = meta.getTimes()[0];
+                    if (params.hasOwnProperty('time') && params.time.length > 0) {
+                        time = params.time;
+                    }
+                    
+                    datetime = Ext.String.format('{0}T{1}:00.000Z', date, time);
+                    
+                    request_params = {
+                        time: datetime
+                    }
+                }
 
                 Ext.Ajax.request({
                     method: 'GET',
                     url: Ext.String.format('/flux/api/scenarios/{0}/xy.json', params.source),
-                    params: {
-                        time: datetime,
-                    },
+                    params: request_params,
                     failure: function (response) {
                         Ext.Msg.alert('Request Error: xy.json', 
-                            Ext.String.format('{0}: "{2}" may not be a valid date/time for source "{1}"',
+                            Ext.String.format('{0}: Source="{1}"; Params="{2}',
                                 response.responseText,
                                 params.source,
-                                datetime
+                                request_params
                                 )
                             );
                     },
@@ -316,7 +346,7 @@ Ext.define('Flux.controller.UserExperience', {
                                 // Now that all the data has been successfully retrieved, set the
                                 // source drop-down field name to the parameter name.
                                 // The date/time fields are set w/in propagateMetadata
-                                Ext.ComponentQuery.query('field[name=source]')[0].setValue(params.source);
+                                tabPanel.getActiveTab().down('field[name=source]').setValue(params.source);
                                 
                                 // Finally, trigger redraw() to draw the data on the map
                                 view.redraw();

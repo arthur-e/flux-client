@@ -480,12 +480,19 @@ Ext.define('Flux.controller.UserInteraction', {
 
         if ((meta && !view._currentSummaryStats) ||
             (meta && (start != end))) {
-            var params;
+            var params, interval;
             
-            start = start || view.mostRecentRasterParams.time || meta.get('dates')[0].toISOString();
-            end = end || view.mostRecentRasterParams.time || meta.get('dates')[0].toISOString();;
+            if (meta.get('gridded')) {
+                start = start || view.mostRecentRasterParams.time || meta.get('dates')[0].toISOString();
+                end = end || view.mostRecentRasterParams.time || meta.get('dates')[0].toISOString();
+                interval = this.getInterval(meta);
+            } else {
+                start = start || view.mostRecentOverlayParams.start;
+                end = end || view.mostRecentOverlayParams.end;
+                interval = undefined;
+            }
+            
             onSuccess = onSuccess || view.displaySummaryStats;
-        
         
             var cs = view._drawingCoords.slice(0);
             cs.push(cs[0]);
@@ -496,18 +503,15 @@ Ext.define('Flux.controller.UserInteraction', {
                         return l.toFixed(4);
                     }).join('+'))
                 });
-            
+
             params = {
                 start: start,
                 end: end,//meta.get('dates')[meta.get('dates').length - 1].toISOString(),
+                interval:  interval,
                 //TODO aggregate: this.getGlobalSettings().tendency,
                 // aggregate: 'mean',
                 geom: Ext.String.format('POLYGON(({0}))', wkt.join(','))
             };
-            
-            if (start != end) {
-                this.getLinePlot().getEl().mask('Loading...');
-            }
             
             Ext.Ajax.request({
                 method: 'GET',
@@ -544,19 +548,7 @@ Ext.define('Flux.controller.UserInteraction', {
         };
 
         if (metadata.get('gridded')) {
-            params.interval = (function () {
-                var step = Ext.Array.min(metadata.getTimeOffsets());
-
-                if (step < 3600) { // Less than 1 hour (3600 seconds)?
-                    return 'hourly';
-                }
-
-                if (step < 86400) { // Less than 1 day?
-                    return 'daily';
-                }
-
-                return  'monthly';
-            }());
+            params.interval = this.getInterval(metadata);
         }
 
         view.getEl().mask('Loading...');
@@ -590,6 +582,20 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     
+    getInterval: function (metadata) {
+        var step = Ext.Array.min(metadata.getTimeOffsets());
+
+        if (step < 3600) { // Less than 1 hour (3600 seconds)?
+            return 'hourly';
+        }
+
+        if (step < 86400) { // Less than 1 day?
+            return 'daily';
+        }
+
+        return  'monthly';
+        
+    },
     
     /**
         Convenience function for determining the currently selected global
@@ -931,16 +937,17 @@ Ext.define('Flux.controller.UserInteraction', {
             this.fetchRaster(view, {
                 time: d.toISOString()
             });
-
-        // Non-gridded /////////////////////////////////////////////////////////
-        } else {
-            if (values.date && values.end) {
-                this.fetchOverlay(view, {
-                    start: Ext.String.format('{0}T00:00Z', values.date),
-                    end: Ext.String.format('{0}T23:59Z', values.end)
-                });
-            }
         }
+//         // Non-gridded /////////////////////////////////////////////////////////
+//         // ***THIS is not needed b/c non-gridded date-time selection has it's own listener***
+//         } else {
+//             if (values.date && values.end) {
+//                 this.fetchOverlay(view, {
+//                     start: Ext.String.format('{0}T00:00Z', values.date),
+//                     end: Ext.String.format('{0}T23:59Z', values.end)
+//                 });
+//             }
+//         }
 
         // Enable the FieldSets in this form
         if (this.getGlobalSettings().statsFrom === 'data') {
@@ -1293,7 +1300,7 @@ Ext.define('Flux.controller.UserInteraction', {
         });
     },
     
-    //onRoiClick: function (response) 
+
     onFetchRoiTimeSeriesClick: function () {
         var meta = this.getMap().getMetadata();
         
@@ -1302,6 +1309,9 @@ Ext.define('Flux.controller.UserInteraction', {
         }
         
         var dates = this.getMap().getMetadata().get('dates');
+
+        // Temporarily mask out the line plot...
+        this.getLinePlot().getEl().mask('Loading...');
 
         this.fetchRoiSummaryStats(dates[0].toISOString(),
                                   dates[dates.length - 1].toISOString(),
@@ -1867,6 +1877,15 @@ Ext.define('Flux.controller.UserInteraction', {
         var container = map.ownerCt;
         var series;
 
+        // Toggle visibility of the ROI fetch time series button
+        var cmp = map.down('toolbar').down('button[itemId="btn-fetch-roi-time-series"]');
+        cmp.setDisabled(!checked);
+
+        if (map._drawingCoords) {
+            cmp.setVisible(checked);
+        }
+        
+        
         if (checked) {
             // Resize the anchor(s) and add a D3LinePlot instance
             map.anchor = '100% 80%';

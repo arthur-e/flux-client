@@ -414,17 +414,12 @@ Ext.define('Flux.controller.UserExperience', {
 		});
 	    }
 	    
-// 	    if (key === 'source') {
+// 	    // Enable the ROI time series fetch if "Show line plot" is checked
+//             if (key === 'showLinePlot') {
 //                 Ext.onReady(function () {
-//                     Ext.ComponentQuery.query('field[name=source]')[0].setValue(value);
-//                     Ext.ComponentQuery.query('field[name=date]')[0].setValue(params.date);
-//                     Ext.ComponentQuery.query('field[name=time]')[0].setValue(params.time);
-//                 });
-//             }
-// 	    // Set 'source', 'date', and 'time' values after rendered
-// 	    if (Ext.Array.contains(['source', 'date', 'time'], key)) {
-//                 Ext.onReady(function (){
-//                     Ext.ComponentQuery.query(Ext.String.format('field[name={0}]', key))[0].setValue(value);
+//                     var cmp = Ext.ComponentQuery.query('button[itemId="btn-fetch-roi-time-series"]')[0];
+//                     cmp.setDisabled(!params[key]);
+//                     
 //                 });
 //             }
 	});

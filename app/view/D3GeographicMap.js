@@ -112,7 +112,9 @@ Ext.define('Flux.view.D3GeographicMap', {
                 text: this._display
             }]);
         });
-
+        
+        
+        
         this.on('render', function () {
             var view = this;
 
@@ -166,7 +168,8 @@ Ext.define('Flux.view.D3GeographicMap', {
                     }, {
                         itemId: 'btn-fetch-roi-time-series',
                         iconCls: 'icon-draw-time-series',
-                        tooltip: 'Fetch Time-Series for Drawn Polygon',
+                        tooltip: 'Fetch Time-Series for Drawn Polygon (enabled only if "Show line plot" is checked)',
+                        disabled: false,
                         hidden: true
 		    }, {
                         itemId: 'btn-save-image',
@@ -352,7 +355,12 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    // Make UI changes
 	    tbar.down('button[itemId="btn-erase-polygon"]').show();
 	    tbar.down('button[itemId="btn-cancel-polygon"]').hide();
-            tbar.down('button[itemId="btn-fetch-roi-time-series"]').show();
+            
+            var cmp = tbar.down('button[itemId="btn-fetch-roi-time-series"]')
+            if (view.getMetadata().get('gridded')) {
+                cmp.show();
+            }
+            cmp.setDisabled(!Ext.ComponentQuery.query('checkbox[name="showLinePlot"]')[0].checked);
 	    
 	    // Reset cursor (turn off crosshairs)
             view.panes.roiCanvas.selectAll('rect').style('cursor','auto');
@@ -595,7 +603,7 @@ Ext.define('Flux.view.D3GeographicMap', {
     
     displaySummaryStats: function (series, view) {
         view._currentSummaryStats = series;
-
+        console.log(series);
         // Object w/ display attributes indicating
         // display precision and whether or not to apply offset
         // if anomalies view is selected
@@ -624,7 +632,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         
         var offset = view.getTendencyOffset();
 
-        // Summary stats display
+        // Summary stats display - create if it doesn't already exist
         if (d3.selectAll('.roi-stats')[0].length === 0) {
             view.panes.roistats = view.svg.append('g').attr('class', 'pane roi-stats');
             
@@ -662,7 +670,11 @@ Ext.define('Flux.view.D3GeographicMap', {
         
         Object.keys(display_attrs).forEach(function (s, i) { 
             var fs = '16px';
-            var val = view._currentSummaryStats['series' + s][0]
+            var val = view._currentSummaryStats['series' + s][0];
+            
+            if (s === 'N') {
+                val = view._currentSummaryStats.properties.totalN;
+            }
             
             if (view._showAnomalies && display_attrs[s]['offset']) {
                 val = val - offset;
@@ -694,7 +706,11 @@ Ext.define('Flux.view.D3GeographicMap', {
 //                     );
 //                 })
                 .tween('text', function() {
-                    var i = d3.interpolate(this.textContent, val),
+                    var start_num = 0;
+                    if (this.textContent != 'NaN') {
+                        start_num = this.textContent;
+                    }
+                    var i = d3.interpolate(start_num, val),
                         prec = (val + "").split("."),
                         round = (prec.length > 1) ? Math.pow(10, prec[1].length) : 1;
 

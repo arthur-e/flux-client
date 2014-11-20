@@ -326,6 +326,9 @@ Ext.define('Flux.view.D3GeographicMap', {
             // Remove any remaining tool tip text
             view.panes.tooltip.selectAll('.tip').text('');
             
+            // Reset HUD font size
+            view.panes.hud.selectAll('.info').style('font-size',view.setHudFontSize().toString() + 'px');
+            
             // Remove tracker vertex
             view.wrapper.selectAll('.roi-tracker').remove();
             
@@ -638,8 +641,8 @@ Ext.define('Flux.view.D3GeographicMap', {
             
             var backdrop_w = 100;
             var backdrop_h = 110;
-            var y_init = view._height - backdrop_h - 30;//- (0.05 * view._height);
-            var x_init = view._width - backdrop_w - 50;
+            var y_init = view.svg.attr('height') - backdrop_h - 30;//- (0.05 * view._height);
+            var x_init = view.svg.attr('width') - backdrop_w - 50;
             
             view.panes.roistats.append('rect')
                 .attr({
@@ -739,6 +742,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         // If not using population statistics, calculate the new summary stats
         //  for the incoming data
         if (!this._usePopulationStats) {
+            console.log('summarizing');
             meta = this.getMetadata().copy();
             meta.set('stats', {
                 values: data.summarize()
@@ -989,6 +993,20 @@ Ext.define('Flux.view.D3GeographicMap', {
             text: this._model.get('features')[i]
         }]);
     },
+    
+    /**
+        Sets font size for HUD text according to height/width
+        of the map component.
+        
+        @return         {Number}
+     */
+    setHudFontSize: function () {
+        var fs = this.svg.attr('height') * 0.04;
+        if (this.svg.attr('height') / this.svg.attr('width') > 1) {
+            fs = this.svg.attr('width') * 0.04;
+        }
+        return fs;
+    },
 
     /**
         Initializes drawing; defines and appends the SVG element(s). The drawing
@@ -1000,9 +1018,6 @@ Ext.define('Flux.view.D3GeographicMap', {
      */
     init: function (width, height) {
         var elementId = '#' + this.items.getAt(0).id;
-
-	this._width = width;
-	this._height = height;
 	
         // Remove any previously-rendered SVG elements
         if (this.svg !== undefined) {
@@ -1084,7 +1099,6 @@ Ext.define('Flux.view.D3GeographicMap', {
                 });
         }
 
-	this._hudFontSize = 0.04 * height;
         this.panes.hud.selectAll('.info')
             .data([
                 { text: '', id: 'timestamp' }
@@ -1096,7 +1110,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             .text(function (d) {
                 return d.text;
             })
-            .style('font-size', this._hudFontSize.toString() + 'px')
+            .style('font-size', this.setHudFontSize().toString() + 'px')
             .attr({
                 'class': function (d) {
                     return 'info ' + d.id;
@@ -1466,9 +1480,17 @@ Ext.define('Flux.view.D3GeographicMap', {
 //         if (!this._model) {
 //             return this;
 //         }
-
+        
         if (Ext.isEmpty(data)) {
             data = this.panes.hud.selectAll('.info').data();
+        }
+        
+        // Font-size is partially dependent on length of
+        // text to display (to avoid cutting off particularly
+        // long text, e.g. aggregate views showing [t1] >>> [t2])
+        var fs = this.setHudFontSize();
+        if (data[0].text && data[0].text.length > 28) {
+            fs = fs * (28 / data[0].text.length);
         }
 
         this.panes.hud.selectAll('.backdrop')
@@ -1481,6 +1503,9 @@ Ext.define('Flux.view.D3GeographicMap', {
                 'y': function (d, i) {
                     return (i + 1) * scale;
                 }
+            })
+            .style({
+                'font-size' : fs.toString() + 'px',
             });
 
         return this;

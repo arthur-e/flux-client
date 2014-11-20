@@ -663,14 +663,31 @@ Ext.define('Flux.controller.UserInteraction', {
             var offset = view.getTendencyOffset();
             
 	    f1 = feat.get('features');
-	    feat.set('features', (function () {
-			var i;
-			var g = [];
-			for (i = 0; i < f1.length; i += 1) {
-			    g.push(f1[i] - offset);
-			}
-			return g;
-		    }()));
+            
+            // Gridded data
+            if (view.getMetadata().get('gridded')) {
+                feat.set('features', (function () {
+                            var i;
+                            var g = [];
+                            for (i = 0; i < f1.length; i += 1) {
+                                g.push(f1[i] - offset);
+                            }
+                            return g;
+                        }()));
+            // Non-gridded data
+            } else {
+                feat.set('features', (function () {
+                var i;
+                var g = [];
+                for (i = 0; i < f1.length; i += 1) {
+                    f1[i].properties.value = f1[i].properties.value - offset;
+                    g.push(f1[i]);
+                }
+                return g;
+            }()));
+            }
+
+            
 	}	
 
         view.draw(feat, true);
@@ -1059,7 +1076,7 @@ Ext.define('Flux.controller.UserInteraction', {
 	tbar.down('button[itemId="btn-cancel-polygon"]').show();
 
 	// this toggles header text
-	view.panes.hud.selectAll('.info').style('font-size',(0.03 * view._width).toString() + 'px')
+	view.panes.hud.selectAll('.info').style('font-size',(0.03 * view.svg.attr('width')).toString() + 'px')
 	view.updateDisplay([{
                 id: 'tooltip',
                 text: 'Click to place vertices; Double-click to finish'
@@ -1127,7 +1144,7 @@ Ext.define('Flux.controller.UserInteraction', {
     removePolygonDrawing: function (btn) {
 	 var view = btn.up('d3geomap'); 
       
-	  // remove the rectangular drawing overlay that blocks pointer-events
+	  // Remove the rectangular drawing overlay that blocks pointer-events
 	  // from reaching other elements
 	 delete view.panes.roiCanvas;
 	 d3.selectAll('.roiCanvas').remove();
@@ -1140,14 +1157,13 @@ Ext.define('Flux.controller.UserInteraction', {
 	 delete view.polygon; // 
 	 delete view._drawingCoords; // remove memory of previous drawing coords
 	 
-	 // restore default HUD font-size and clear text
-	 view.panes.hud.selectAll('.info').style('font-size',view._hudFontSize.toString() + 'px')
+	 // Clear HUD text
 	 view.updateDisplay([{
                 id: 'tooltip',
                 text: ''
             }]);
 	 
-	 // re-enable zoom
+	 // Re-enable zoom
 	 view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
     },
     /**
@@ -1710,8 +1726,11 @@ Ext.define('Flux.controller.UserInteraction', {
 	    this.toggleAggregateParams(false);
 	}
     
-
-	if (opts.display === 'anomalies' || cb.name === 'values') {
+        
+	if ((opts.display === 'anomalies' || cb.name === 'values')) {
+            if (!map.getMetadata()) {
+                return;
+            }
 	    suppressUpdate = true; // this disables redundant map update trigger
 	    if (map.getMetadata().get('gridded')) {
 		this.fetchRaster(map,map.mostRecentRasterParams,true);

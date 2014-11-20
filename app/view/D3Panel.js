@@ -91,8 +91,7 @@ Ext.define('Flux.view.D3Panel', {
         } else {
             offset = parseFloat(this._tendency);
         }
-        
-        
+           
         // If using Current Data Frame stats, this makes sure not to pull
         // the mean/median from metadata; b/c if anomalies are shown,
         // metadata will reflect mean of anomalies and not mean of the

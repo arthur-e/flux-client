@@ -76,7 +76,7 @@ Ext.define('Flux.model.Metadata', {
         if (!Ext.isEmpty(this._dates)) {
             return this._dates;
         }
-
+        
         if (Ext.isEmpty(bkpts)) {
             return this.get('dates');
         }
@@ -90,7 +90,7 @@ Ext.define('Flux.model.Metadata', {
             var d = dates[i].clone();
 
             // Keep adding dates until the next breakpoint is reached
-            while (d.isBefore(dates[i + 1])) {
+            while (dates[i + 1] && d.isBefore(dates[i + 1])) {
                 d.add(step, 's'); // Add the specified number of seconds
                 datesArray.push(d.clone());
             }                

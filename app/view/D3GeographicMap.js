@@ -153,7 +153,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                     }, {
                         itemId: 'btn-draw-polygon',
                         iconCls: 'icon-draw',
-                        tooltip: 'Draw Polygon to Get ROI Summary Stats',
+                        tooltip: 'Draw Polygon to Get ROI Summary Stats'
                     }, {
 		        itemId: 'btn-cancel-polygon',
                         iconCls: 'icon-draw',
@@ -164,7 +164,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 			itemId: 'btn-erase-polygon',
 			iconCls: 'icon-erase',
 			tooltip: 'Erase Polygon',
-			hidden: true,
+			hidden: true
                     }, {
                         itemId: 'btn-fetch-roi-time-series',
                         iconCls: 'icon-draw-time-series',
@@ -444,7 +444,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 		.attr({
 		    'fill':'#CC0000',
 		    'r': view._vertexRadius*2 / view._currentZoomScale,
-		    'stroke-width': view._vertexStrokeWidth*2 / view._currentZoomScale,
+		    'stroke-width': view._vertexStrokeWidth*2 / view._currentZoomScale
 		});
 	    });
 
@@ -455,7 +455,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 		.attr({
 		    'fill':'#800000',
 		    'r': view._vertexRadius / view._currentZoomScale,
-		    'stroke-width': view._vertexStrokeWidth / view._currentZoomScale,
+		    'stroke-width': view._vertexStrokeWidth / view._currentZoomScale
 		});
 	    });
 
@@ -593,7 +593,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                     .attr({
                         'x': proj([x, ll[1]])[0] + 20,
                         'y': c[1] + 30,
-                        'font-size': '8px',
+                        'font-size': '8px'
                     });
             } else {
                 view.panes.tooltip.selectAll('.tip').text('');
@@ -613,15 +613,15 @@ Ext.define('Flux.view.D3GeographicMap', {
         var display_attrs = {
             'Mean': {
                     'precision': 2,
-                    'offset': true,
+                    'offset': true
             },
             'Min': {
                     'precision': 2,
-                    'offset': true,
+                    'offset': true
             },
             'Max': {
                     'precision': 2,
-                    'offset': true,
+                    'offset': true
             },        
             'STD': {
                     'precision': 2,
@@ -651,7 +651,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                     'height': backdrop_h,
                     'x': x_init,
                     'y': y_init + 4, // this places it just underneath the HUD
-                    'pointer-events': 'all',
+                    'pointer-events': 'all'
                 });
 
             Object.keys(display_attrs).forEach(function (s, i) {
@@ -1067,7 +1067,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         //  must be appended to the wrapper layer; layers that should NOT zoom
         //  and pan should be appended to something else (e.g this.svg)
         this.panes = {
-            basemap: this.wrapper.append('g').attr('class', 'pane'),
+            basemap: this.wrapper.append('g').attr('class', 'pane')
         };
         this.panes.raster = this.wrapper.append('g').attr('class', 'pane raster');
         this.panes.hud = this.svg.append('g').attr('class', 'pane hud');
@@ -1505,7 +1505,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                 }
             })
             .style({
-                'font-size' : fs.toString() + 'px',
+                'font-size' : fs.toString() + 'px'
             });
 
         return this;

@@ -1092,11 +1092,11 @@ Ext.define('Flux.controller.UserInteraction', {
 					'height': view.svg.attr('height'),
 					'fill': 'none',
 					'x': 0,
-					'y': 0,
+					'y': 0
 				    })
 				    .style({
 					'cursor': 'crosshair',
-					'pointer-events': 'all',
+					'pointer-events': 'all'
 				    });
 	}
 	

@@ -110,7 +110,7 @@ Ext.define('Flux.view.Viewport', {
 			allowDecimals: true,
 			value: 0.0,
 			step: 0.1,
-			disabled: false,
+			disabled: false
                     }, {
                         xtype: 'menuseparator'
                     }, {
@@ -159,7 +159,7 @@ Ext.define('Flux.view.Viewport', {
                         stateId: 'displayAnomalies',
                         text: 'Anomalies',
                         group: 'display',
-                        hideOnClick: false,
+                        hideOnClick: false
 // 	   		listeners: {
 // 			    checkchange: function (cb, checked) {
 // 				 var target = Ext.getCmp('tendencyCustomValue');
@@ -195,7 +195,7 @@ Ext.define('Flux.view.Viewport', {
                         valueField: 'stepSize',
                         queryMode: 'local',
                         hideOnClick: false,
-                        editable: false,
+                        editable: false
                     }]
                 }
             }, {

@@ -99,22 +99,26 @@ Ext.define('Flux.controller.UserInteraction', {
             '#visual-menu': {
                 click: this.onVisualChange
             },
-
             'd3geomap': {
                 plotclick: this.onPlotClick,
                 fetchstats: this.fetchRoiSummaryStats,
                 removeTimeSeries: this.removeRoiTimeSeries
             },
+            'd3geomap #btn-ao-draw': {
+                click: this.onDrawRoi
+            },
+            'd3geomap #btn-ao-wkt': {
+                click: this.onAddWKT
+            },
 	    'd3geomap #btn-draw-polygon': {
-		click: this.onDrawPolygon
+		click: this.onDrawRoi
 	    },
-
 	    'd3geomap #btn-erase-polygon': {
-		click: this.onErasePolygon
+		click: this.onEraseRoiDrawing
 	    },
 
 	    'd3geomap #btn-cancel-polygon': {
-		click: this.onCancelPolygon
+		click: this.onCancelRoiDrawing
 	    },
             'd3geomap #btn-fetch-roi-time-series': {
                 click: this.onFetchRoiTimeSeriesClick
@@ -494,7 +498,7 @@ Ext.define('Flux.controller.UserInteraction', {
             
             onSuccess = onSuccess || view.displaySummaryStats;
         
-            var cs = view._drawingCoords.slice(0);
+            var cs = view._roiCoords.slice(0);
             cs.push(cs[0]);
             
             var wkt = [];
@@ -656,8 +660,7 @@ Ext.define('Flux.controller.UserInteraction', {
         if (!Ext.isEmpty(feat.get('_id'))) {
             view.store.add(feat);
         }
-	
-
+        
         // Adjust data if anomalies view selected
 	if (opts.display === 'anomalies') {
             var offset = view.getTendencyOffset();
@@ -795,6 +798,64 @@ Ext.define('Flux.controller.UserInteraction', {
         //  application is already loaded, e.g. when source changes
         //  and new metadata is propagated)
         this._initLoad = false;
+        
+    },
+    
+    onAddWKT: function () {
+        var panelWKT = new Ext.Panel({
+                floating: true,
+                //centered: false,
+                modal: true,
+                width: 400,
+                //height: 160,
+                styleHtmlContent: true,
+                dockedItems: [{
+                    xtype: 'toolbar',
+                    layout: {type: 'vbox'},
+                    items: [{
+                        xtype: 'form',
+                        title: 'Paste valid WKT Polygon here',
+                        items: [{
+                            xtype: 'textarea',
+                            width: 392,
+                            height: 76,
+                            padding: 4,
+                            value: 'POLYGON((-107.1 52.7,-107.8 19.1785,-79.1 19.1,-83.9 54.3,-107.1 52.7))',
+                        }]
+                        
+                    }, {
+                        xtype: 'toolbar',
+                        flex: 1,
+                        dock: 'bottom',
+                        ui: 'footer',
+                        layout: {
+                            pack: 'end',
+                            type: 'hbox',
+                        },
+                        items: [{
+                            xtype: 'button',
+                            text: 'Cancel',
+                            itemId: 'cancel',
+                            iconCls: 'cancel',
+                            handler: function() {
+                                this.up('panel').hide();
+                                // TODO: replace contents with displayed ROI? Or blank?
+                            }
+                        }, {
+                            xtype: 'button',
+                            text: 'Save',
+                            itemId: 'save',
+                            iconCls: 'save',
+                            handler: function() {
+                                
+                                
+                            }
+                        }]
+                    }]
+                }]
+            });
+            
+        panelWKT.show();
         
     },
     
@@ -967,9 +1028,11 @@ Ext.define('Flux.controller.UserInteraction', {
                     dates[dates.length - 1]);
             }
 
-            this.fetchRaster(view, {
-                time: d.toISOString()
-            });
+            if (!this._initLoad) {
+                this.fetchRaster(view, {
+                    time: d.toISOString()
+                });
+            }
         }
 //         // Non-gridded /////////////////////////////////////////////////////////
 //         // ***THIS is not needed b/c non-gridded date-time selection has it's own listener***
@@ -1068,11 +1131,14 @@ Ext.define('Flux.controller.UserInteraction', {
 	@param  btn {Ext.button.Button}
     */
     	
-    onDrawPolygon: function (btn) {
+    onDrawRoi: function (btn) {
 	var view = btn.up('d3geomap'); // maybe this is needed?
-	var tbar = btn.up('toolbar');
+        var menu = btn.up('menu');
+        var menu_btn = btn.up('button');
+	var tbar = menu.up('toolbar');
 
-	btn.hide();
+	menu.hide();
+        menu_btn.hide();
 	tbar.down('button[itemId="btn-cancel-polygon"]').show();
 
 	// this toggles header text
@@ -1113,18 +1179,18 @@ Ext.define('Flux.controller.UserInteraction', {
          handles UI implications
 	@param btn	{Ext button}
      */
-    onCancelPolygon: function (btn) {
-	this.removePolygonDrawing(btn);
+    onCancelRoiDrawing: function (btn) {
+	this.removeRoiOverlay(btn);
 	
 	btn.hide();
-	btn.up('toolbar').down('button[itemId="btn-draw-polygon"]').show();
+	btn.up('toolbar').down('button[itemId="btn-add-overlay"]').show();
     },
     
     /** Removes polygon elements and handles UI implications
 	@param btn	{Ext button}
      */ 
-    onErasePolygon: function (btn) {
-	 this.removePolygonDrawing(btn);
+    onEraseRoiDrawing: function (btn) {
+	 this.removeRoiOverlay(btn);
 	 
 	 // hide yourself since no polygon exists to erase anymore
 	 btn.hide();
@@ -1133,7 +1199,7 @@ Ext.define('Flux.controller.UserInteraction', {
          btn.up('toolbar').down('button[itemId="btn-fetch-roi-time-series"]').hide();
 	 
 	 // and reenable draw button
-	 btn.up('toolbar').down('button[itemId="btn-draw-polygon"]').show();
+	 btn.up('toolbar').down('button[itemId="btn-add-overlay"]').show();
 
     },
     
@@ -1141,7 +1207,7 @@ Ext.define('Flux.controller.UserInteraction', {
         and any stored coordinates and shapes
 	@param btn	{Ext button}
     */ 
-    removePolygonDrawing: function (btn) {
+    removeRoiOverlay: function (btn) {
 	 var view = btn.up('d3geomap'); 
       
 	  // Remove the rectangular drawing overlay that blocks pointer-events
@@ -1155,7 +1221,8 @@ Ext.define('Flux.controller.UserInteraction', {
 	 d3.selectAll('.roi-tracker').remove();
          
 	 delete view.polygon; // 
-	 delete view._drawingCoords; // remove memory of previous drawing coords
+	 delete view._roiCoords; // remove memory of previous drawing coords
+	 delete view._tmpRoiCoords;
 	 
 	 // Clear HUD text
 	 view.updateDisplay([{
@@ -1177,7 +1244,8 @@ Ext.define('Flux.controller.UserInteraction', {
             rast.get('timestamp')
         ];
 
-        if (this.getMap()._drawingCoords) {
+        // Recalculate summary stats if a drawn polygon exists
+        if (this.getMap()._roiCoords) {
             delete this.getMap()._currentSummaryStats;
 
             this.fetchRoiSummaryStats();
@@ -1916,7 +1984,7 @@ Ext.define('Flux.controller.UserInteraction', {
         var cmp = map.down('toolbar').down('button[itemId="btn-fetch-roi-time-series"]');
         cmp.setDisabled(!checked);
 
-        if (map._drawingCoords) {
+        if (map._roiCoords) {
             cmp.setVisible(checked);
         }
         

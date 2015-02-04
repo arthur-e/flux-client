@@ -16,21 +16,26 @@ Ext.define('Flux.model.AbstractFeature', {
      */
     getTimestampDisplay: function (fmt) {
         var d0, d1, ts;
-        var p = this.get('properties');
+        var p = this.get('properties'); 
 
         // Infer timestamp range
-        if (p) { // From the properties
+        if (p) { // From the properties... which will exist for aggregation views but rarely otherwise
             if (p.start && p.end) {
                 d0 = moment.utc(p.start).format(fmt);
                 d1 = moment.utc(p.end).format(fmt);
             }
 
-        } else { // From the data points (non-gridded)
+        } else { // From the data points (non-gridded) TODO: not just non-gridded, also most non-agg gridded types
+            //console.log(this);
+            //console.log(this.get('features'));
             ts = Ext.Array.pluck(this.get('features'), 'timestamp');
             d0 = moment.utc(Ext.Array.min(ts)).format(fmt);
             d1 = moment.utc(Ext.Array.max(ts)).format(fmt);
+            //console.log(d0, d1);
         }
-
+        
+        // TODO: Detect steps vs spans for kriged
+        
         // Template for a timestamp range display
         if (d0 === d1) {
 	    // for some reason it does not work to just return d0,

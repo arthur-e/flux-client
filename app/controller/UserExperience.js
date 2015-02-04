@@ -296,6 +296,23 @@ Ext.define('Flux.controller.UserExperience', {
                     request_params = {
                         time: datetime
                     }
+                    // Reformat request parameters if aggregation params are included
+                    if (params.hasOwnProperty('showAggregation') && params.showAggregation &&
+                        params.hasOwnProperty('intervals') && params.intervals.length > 0 &&
+                        params.hasOwnProperty('intervalGrouping') && params.intervalGrouping.length > 0 &&
+                        params.hasOwnProperty('aggregate') && params.aggregate.length > 0) {
+                        
+                        
+                        request_params = {
+                            aggregate: params.aggregate,
+                            start: datetime,
+                            end: moment(datetime).
+                                    clone().
+                                    add(params.intervals,params.intervalGrouping).
+                                    toISOString()
+                        };
+                        
+                    }
                 }
 
                 Ext.Ajax.request({
@@ -328,7 +345,7 @@ Ext.define('Flux.controller.UserExperience', {
                             method: 'GET',
                             url: Ext.String.format('/flux/api/scenarios/{0}/grid.json', params.source),
                             failure: function (response) {
-                                Ext.Msg.alert('Request Error: xy.json', 
+                                Ext.Msg.alert('Request Error: grid.json', 
                                 Ext.String.format('{0}: Ensure that source "{1}" exists',
                                                 response.responseText,
                                                 params.source

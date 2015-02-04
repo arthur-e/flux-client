@@ -34,6 +34,11 @@
     font-size: 16px !important; /* Larger toolbar button font size */
 }
 
+.x-btn-default-large .x-btn-inner {
+    font-size: 12px !important;
+    padding: 0 3px !important;
+    
+}
 /* Forms **********************************************************************/
 .x-form-trigger-input-cell { background-color: #fff !important; }
 .x-fieldset-header-text,
@@ -72,12 +77,34 @@
     background-position: 0 15px;
 }
 
+.add-overlay-menu {
+    border-style: none !important;
+    border-width: 0px !important;
+    background-color: transparent !important;
+}
+
+.add-overlay-menu-body {
+    background-color: transparent !important;
+}
+
+.add-overlay-menu-item {
+    border-width: 0px !important;
+    border-radius: 1px !important;
+    -webkit-border-radius: 1px !important;
+    -moz-border-radius: 1px !important;
+    background-image: none !important;
+    padding: 2px !important;
+    
+    
+}
+
 /* Header *********************************************************************/
 .x-panel-header-text-container-default { font-size: 14px !important; }
 
 /* Icons **********************************************************************/
 .ui-app-icon { background-size: 32px; }
 .icon-add { background-image: url(add.png); }
+.icon-plus { background-image: url(plus.png); }
 .icon-single-map { background-image: url(single_map.png); }
 .icon-coord-view { background-image: url(coordinated_view.png); }
 .icon-multiplot { background-image: url(multiplot.png); }
@@ -96,12 +123,16 @@
     background-image: url(disk.png);
     background-position: -3px -3px;
 }
+.icon-addoverlay {
+    background-image: url(add_overlay.png);
+    background-size: 25px;
+}
 .icon-draw {
     background-image: url(draw.png);
     background-size: 25px;
 }
 .icon-erase {
-    background-image: url(draw-delete.png);
+    background-image: url(erase.png);
     background-size: 24px;
     background-position: 1px 1px;
 }

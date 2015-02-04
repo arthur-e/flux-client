@@ -95,7 +95,7 @@ Ext.define('Flux.view.SourcePanel', {
             anchor: '100%'
         },
         items: [{
-            xtype: 'checkbox',
+            xtype: 'recheckbox',
             name: 'showAggregation',
             stateId: 'showAggregation',
             boxLabel: 'Show aggregation'
@@ -105,14 +105,18 @@ Ext.define('Flux.view.SourcePanel', {
             fieldLabel: 'Grouping interval',
             items: [{
                 xtype: 'numberfield',
+                stateful: true,
                 name: 'intervals',
+                stateId: 'intervals',
                 minValue: 1,
                 width: 50
             }, {
                 xtype: 'splitter'
             }, {
-                xtype: 'combo',
+                xtype: 'recombo',
                 name: 'intervalGrouping',
+                stateId: 'intervalGrouping',
+                stateful: true,
                 valueField: 'id',
                 queryMode: 'local',
                 flex: 1,
@@ -127,9 +131,11 @@ Ext.define('Flux.view.SourcePanel', {
                 })
             }]
         }, {
-            xtype: 'combo',
+            xtype: 'recombo',
             name: 'aggregate',
+            stateId: 'aggregate',
             fieldLabel: 'Statistic',
+            stateful: true,
             valueField: 'id',
             queryMode: 'local',
             store: Ext.create('Ext.data.ArrayStore', {

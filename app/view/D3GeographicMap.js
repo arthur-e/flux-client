@@ -153,7 +153,8 @@ Ext.define('Flux.view.D3GeographicMap', {
                     }, {
                         itemId: 'btn-draw-polygon',
                         iconCls: 'icon-draw',
-                        tooltip: 'Draw Polygon to Get ROI Summary Stats'
+                        tooltip: 'Draw Polygon to Get ROI Summary Stats',
+                        hidden: true
                     }, {
 		        itemId: 'btn-cancel-polygon',
                         iconCls: 'icon-draw',
@@ -172,10 +173,62 @@ Ext.define('Flux.view.D3GeographicMap', {
                         disabled: false,
                         hidden: true
 		    }, {
+                        itemId: 'btn-add-overlay',
+                        iconCls: 'icon-addoverlay',
+                        arrowCls: 'icon-addoverlay',
+                        menuAlign: 'l-r?',
+                        tooltip: 'Add ROI overlay',
+                        hidden: false,
+                        menu: {
+                            xtype: 'menu',
+                            cls: 'add-overlay-menu',
+                            bodyCls: 'add-overlay-menu-body',
+                            plain: true,
+                            columns: 1,
+                            padding: 4,
+                            margin: 0,
+                            shadow: false,
+                            defaults: {
+                                xtype: 'button',
+                                scale: 'small',
+                                textAlign: 'left',
+                                height: 20,
+                            },
+                            items: [{
+                                itemId: 'btn-ao-draw',
+                                text: 'Draw',
+                                cls: 'add-overlay-menu-item',
+                            }, {
+                                itemId: 'btn-ao-wkt',
+                                text: 'From WKT',
+                                cls: 'add-overlay-menu-item',
+                            }, {
+                                itemId: 'btn-ao-geojson',
+                                text: 'From GeoJSON',
+                                cls: 'add-overlay-menu-item',
+                            }, {
+                                itemId: 'btn-ao-wms',
+                                text: 'From WMS',
+                                cls: 'add-overlay-menu-item',
+                            }]
+                        },
+                         listeners: {
+                            mouseover: function() {
+                                this.showMenu();
+                            },
+                            menushow: function() {
+                                this.mouseLeaveMonitor = this.menu.el.monitorMouseLeave(0, this.hideMenu, this);
+                            },
+//                             destroy: function(cmb) {
+//                                 cmb.menu.el.un(cmb.mouseLeaveMonitor);
+//                             }
+                        }
+                     }, {
                         itemId: 'btn-save-image',
                         iconCls: 'icon-disk',
                         tooltip: 'Save Image'
-                    }]
+                    }, 
+                    ]
                 }), 0);
             }
         });
@@ -285,17 +338,17 @@ Ext.define('Flux.view.D3GeographicMap', {
             c = view.constrainOneHemisphere(c);
             
 	    // store the current representation of the polygon in screen coords
-	    if (!view._tmpDrawingCoords) {
-		view._tmpDrawingCoords = [];
+	    if (!view._tmpRoiCoords) {
+		view._tmpRoiCoords = [];
 	    }
 
-	    view._tmpDrawingCoords.push(c);
+	    view._tmpRoiCoords.push(c);
 
 	    // add polygon if it doesn't yet exist
 	    if (!polygon) {
 		polygon = view.wrapper.append('polygon').attr({
 			    'class': 'roi-polygon',
-			    'points': view.getSVGPolyPoints(view._tmpDrawingCoords.slice(0)),
+			    'points': view.getSVGPolyPoints(view._tmpRoiCoords.slice(0)),
 			    'pointer-events': 'none'
 			});
 
@@ -320,8 +373,8 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    // Registers drawing on double-click
 	  
             // Set temporary drawing coords to official drawing coords
-            view._drawingCoords = view._tmpDrawingCoords.slice(0);
-            delete view._tmpDrawingCoords;
+            view._roiCoords = view._tmpRoiCoords.slice(0);
+            delete view._tmpRoiCoords;
             
             // Remove any remaining tool tip text
             view.panes.tooltip.selectAll('.tip').text('');
@@ -335,9 +388,9 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    // An extra vertex is add on the second click of a double-click
 	    // Remove the vertex as well as the coordinate from the poly def.
 	    view.wrapper.selectAll('circle[vindex="' + (vindex-1) + '"]').remove();
-	    view._drawingCoords.pop();
+	    view._roiCoords.pop();
 	 
-	    var cs = view._drawingCoords.slice(0);
+	    var cs = view._roiCoords.slice(0);
 	    
 	    polygon.attr('points', view.getSVGPolyPoints(cs));
 
@@ -408,7 +461,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             var c = view.constrainLatLong(m);
             c = view.constrainOneHemisphere(c);
             
-	    var cs = view._tmpDrawingCoords.slice(0);
+	    var cs = view._tmpRoiCoords.slice(0);
 	    
 	    cs.push([c[0],c[1]]);
 	    
@@ -476,8 +529,8 @@ Ext.define('Flux.view.D3GeographicMap', {
                 y = c[1];
 		
 		// update polygon
-		view._drawingCoords[d3.select(this).attr('vindex')] = [x,y];
-		polygon.attr('points', view.getSVGPolyPoints(view._drawingCoords.slice(0)));
+		view._roiCoords[d3.select(this).attr('vindex')] = [x,y];
+		polygon.attr('points', view.getSVGPolyPoints(view._roiCoords.slice(0)));
 		
 		// update vertex
 		d3.select(this)
@@ -561,8 +614,8 @@ Ext.define('Flux.view.D3GeographicMap', {
         var x = ll[0];
         
         
-        if (view._drawingCoords) {
-            var xs = view._drawingCoords.map(function (q) {
+        if (view._roiCoords) {
+            var xs = view._roiCoords.map(function (q) {
                 return Ext.Array.map(proj.invert(q), function(l) {return l;});
             }).map(function (z) {return z[0];});
             
@@ -742,7 +795,6 @@ Ext.define('Flux.view.D3GeographicMap', {
         // If not using population statistics, calculate the new summary stats
         //  for the incoming data
         if (!this._usePopulationStats) {
-            console.log('summarizing');
             meta = this.getMetadata().copy();
             meta.set('stats', {
                 values: data.summarize()
@@ -1147,7 +1199,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         }
 	
 	// If a drawn polygon existed and has not been destroyed, it needs to be redrawn too
-        if (this._drawingCoords && this.wrapper.selectAll('.roi-polygon')[0].length === 0) {
+        if (this._roiCoords && this.wrapper.selectAll('.roi-polygon')[0].length === 0) {
 	    // reset zoom scale so that polygon vertices show up at the right size
 	    this._currentZoomScale = 1;
 	    this.redrawPolygon();
@@ -1165,13 +1217,13 @@ Ext.define('Flux.view.D3GeographicMap', {
         // add the polygon
         this.wrapper.append('polygon').attr({
                             'class': 'roi-polygon',
-                            'points': this.getSVGPolyPoints(this._drawingCoords.slice(0)),
+                            'points': this.getSVGPolyPoints(this._roiCoords.slice(0)),
                             'pointer-events': 'none'
                         });
         
         // add vertices
         var vindex = 0;
-        this._drawingCoords.forEach( function (c) {
+        this._roiCoords.forEach( function (c) {
             view.wrapper.append('circle').attr(view.getVertexAttrs(vindex, c));
             vindex += 1;
         });
@@ -1489,7 +1541,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         // text to display (to avoid cutting off particularly
         // long text, e.g. aggregate views showing [t1] >>> [t2])
         var fs = this.setHudFontSize();
-        if (data[0].text && data[0].text.length > 28) {
+        if (data[0] && data[0].text && data[0].text.length > 28) {
             fs = fs * (28 / data[0].text.length);
         }
 

@@ -269,6 +269,7 @@ Ext.define('Flux.controller.Animation', {
         @param  recs    {Array}
      */
     onStepSizeChange: function (c, recs) {
+        console.log('onStepSizeChange');
         var steps;
 
         this._stepSize = recs[0].get('stepSize');
@@ -331,6 +332,9 @@ Ext.define('Flux.controller.Animation', {
                 change: Ext.bind(this.onStepsChange, this)
             }
         }));
+        
+        // Call onStepsChange so that newly added 'steps' value registers
+        this.onStepsChange(undefined, steps);
     }
 
 });

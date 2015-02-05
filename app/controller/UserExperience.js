@@ -30,6 +30,15 @@ Ext.define('Flux.controller.UserExperience', {
         //  application state
         if (params.length > 1) {
             params = Ext.Object.fromQueryString(params.pop());
+            
+            // Since Aggregation and Difference views cannot be simultaneously shown,
+            // if both are set to true, reset Difference to false
+            if (params.hasOwnProperty('showAggregation') && params.showAggregation && 
+                params.hasOwnProperty('showDifference') && params.showDifference) {
+                params.showDifference = false;    
+            }
+            
+            
             this.setStateFromParams(params);
             
             // Automatically load data if "source" is specified

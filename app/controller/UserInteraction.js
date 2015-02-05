@@ -368,7 +368,10 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // Check for the unique ID, a hash of the parameters passed in this
         //  request
-        raster = view.store.getById(Ext.Object.toQueryString(params));
+        var rastId = Ext.String.format('source={0}&{1}', source, Ext.Object.toQueryString(params))
+        
+        
+        raster = view.store.getById(rastId);
         if (raster && !forceFetch) { 
             this.bindLayer(view, raster, params.dontResetSteps);
             this.onMapLoad(raster);
@@ -389,7 +392,7 @@ Ext.define('Flux.controller.UserInteraction', {
                     Ext.JSON.decode(response.responseText));
 
                 // Create a unique ID that can be used to find this grid
-                rast.set('_id', Ext.Object.toQueryString(opts.params));
+                rast.set('_id', Ext.String.format(rastId));
 	
                 this.bindLayer(view, rast, params.dontResetSteps);
                 this.onMapLoad(rast);
@@ -1015,7 +1018,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 d = moment.utc(values.date);
             }
 
-            // Raise an error, do nothing if the requeste date/time is out of range
+            // Raise an error, do nothing if the requested date/time is out of range
             if (dates[0].isAfter(d) || dates[dates.length - 1].isBefore(d)) {
                 return this.raiseInvalidDateTime(d, dates[0],
                     dates[dates.length - 1]);
@@ -1621,6 +1624,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // Metadata ////////////////////////////////////////////////////////////
         metadata = this.getStore('metadata').getById(source);
+        
         if (metadata) {
             operation(metadata);
 
@@ -1659,7 +1663,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // RasterGrid //////////////////////////////////////////////////////////
         grid = this.getStore('rastergrids').getById(source);
-        
+
         if (grid) {
             this.bindRasterGrid(view, grid);
 

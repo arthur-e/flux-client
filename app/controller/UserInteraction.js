@@ -1591,6 +1591,9 @@ Ext.define('Flux.controller.UserInteraction', {
         var metadata, operation, grid, view;
         var container = field.up('panel');
         var editor = field.up('roweditor');
+        
+        // Reset aggregate view
+        this.uncheckAggregates();
 
         if (Ext.isEmpty(source) || source === last) {
             return;

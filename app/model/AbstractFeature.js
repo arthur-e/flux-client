@@ -25,16 +25,14 @@ Ext.define('Flux.model.AbstractFeature', {
                 d1 = moment.utc(p.end).format(fmt);
             }
 
-        } else { // From the data points (non-gridded) TODO: not just non-gridded, also most non-agg gridded types
-            //console.log(this);
-            //console.log(this.get('features'));
+        // Get timestamp from non-gridded data points...
+        // ...in this case we're using the existence of the substring 'Overlay' in the id field
+        // as an indicator that it is a non-gridded dataset
+        } else if (this.id.indexOf('Overlay') > -1) { 
             ts = Ext.Array.pluck(this.get('features'), 'timestamp');
             d0 = moment.utc(Ext.Array.min(ts)).format(fmt);
             d1 = moment.utc(Ext.Array.max(ts)).format(fmt);
-            //console.log(d0, d1);
         }
-        
-        // TODO: Detect steps vs spans for kriged
         
         // Template for a timestamp range display
         if (d0 === d1) {

@@ -157,16 +157,16 @@ Ext.define('Flux.view.SourcePanel', {
         itemId: 'difference-fields',
         title: 'Difference',
         disabled: true,
-        stateful: true,
         stateId: 'differenceFields',
         defaults: {
             labelAlign: 'top',
             anchor: '100%'
         },
         items: [{
-            xtype: 'checkbox',
+            xtype: 'recheckbox',
             name: 'showDifference',
             stateId: 'showDifference',
+            stateful: true,
             boxLabel: 'Show difference'
         }, {
             xtype: 'combo',

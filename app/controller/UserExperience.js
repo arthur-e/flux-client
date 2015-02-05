@@ -259,6 +259,7 @@ Ext.define('Flux.controller.UserExperience', {
             },
             // If successful, bindMetadata and get xy data
             success: function (response) {
+                var request_params = {};
                 var ui = this.getController('UserInteraction');
                 var view = ui.getMap();
                 var meta = Ext.create('Flux.model.Metadata',
@@ -269,9 +270,24 @@ Ext.define('Flux.controller.UserExperience', {
 
                 ui.bindMetadata(view, meta);
                 
+                var date = meta.get('dates')[0].format('YYYY-MM-DD');
+                if (params.hasOwnProperty('date') && params.date.length > 0) {
+                    date = params.date;
+                }
+                
+                var time = meta.getTimes()[0];
+                if (params.hasOwnProperty('time') && params.time.length > 0) {
+                    time = params.time;
+                }
+                
+                datetime = Ext.String.format('{0}T{1}:00.000Z', date, time);
+                
+                
+                ////////////////////////////////////////////////////////////
+                // Handle request
+                    
                 // Set date/time to first value in metadata unless specified
                 // in the GET request
-                var request_params = {};
                 
                 if (!gridded) {
                     request_params = {
@@ -280,19 +296,6 @@ Ext.define('Flux.controller.UserExperience', {
                     }
                     
                 } else {
-                
-                    var date = meta.get('dates')[0].format('YYYY-MM-DD');
-                    if (params.hasOwnProperty('date') && params.date.length > 0) {
-                        date = params.date;
-                    }
-                    
-                    var time = meta.getTimes()[0];
-                    if (params.hasOwnProperty('time') && params.time.length > 0) {
-                        time = params.time;
-                    }
-                    
-                    datetime = Ext.String.format('{0}T{1}:00.000Z', date, time);
-                    
                     request_params = {
                         time: datetime
                     }
@@ -314,7 +317,7 @@ Ext.define('Flux.controller.UserExperience', {
                         
                     }
                 }
-
+                
                 Ext.Ajax.request({
                     method: 'GET',
                     url: Ext.String.format('/flux/api/scenarios/{0}/xy.json', params.source),
@@ -367,6 +370,87 @@ Ext.define('Flux.controller.UserExperience', {
                                 
                                 // Finally, trigger redraw() to draw the data on the map
                                 view.redraw();
+                                
+                                ////////////////////////////////////////////////////////////
+                                // Now that source data is loaded, handle difference view request
+                                if (params.hasOwnProperty('showDifference') && params.showDifference &&
+                                    params.hasOwnProperty('source2') && params.source2.length > 0 &&
+                                    params.hasOwnProperty('date2') && params.date2.length > 0 &&
+                                    params.hasOwnProperty('time2') && params.time2.length > 0) {
+                                
+                                    // NOTE: Only available for the Single Map visualization thus far
+                                    diffTime = moment.utc(Ext.String.format('{0}T{1}:00',
+                                        params.date2, params.time2));
+
+                                    if (diffTime.isSame(moment.utc(datetime))) {
+                                        Ext.Msg.alert('Request Error', 'First timestamp and second timestamp are the same in requested difference image; will not display.');
+                                        return;
+                                    }
+                    
+                                    Ext.Ajax.request({
+                                        method: 'GET',
+                                        url: Ext.String.format('/flux/api/scenarios/{0}/xy.json', params.source2),
+                                        params: {time: diffTime.toISOString()},
+                                        failure: function (response) {
+                                            Ext.Msg.alert('Request Error: xy.json', 
+                                                Ext.String.format('{0}: Source="{1}"; Params="{2}',
+                                                    response.responseText,
+                                                    params.source2,
+                                                    params
+                                                    )
+                                                );
+                                        },
+                                        success: function (response, opts) {
+                                            var rast2;
+
+                                            rast2 = Ext.create('Flux.model.Raster',
+                                                Ext.JSON.decode(response.responseText));
+
+                                            // Create a unique ID that can be used to find this grid
+                                            rast2.set('_id', Ext.Object.toQueryString(opts.params));
+
+                                            // Create the differenced grid
+                                            var rastNew;
+                                            
+                                            var f1 = rast.get('features');
+                                            var f2 = rast2.get('features');
+                                            if (f1.length !== f2.length) {
+                                                Ext.Msg.alert('Data Error', 'Cannot display the difference of two maps with difference grids. Choose instead maps from two different data sources and/or times that have the same underlying grid.');
+                                            }
+
+                                            // Add these model instances to the view's store
+                                            //ui.getStore.add(rast, rast2);
+
+                                            rastNew = Ext.create('Flux.model.Raster', {
+                                                features: (function () {
+                                                    var i;
+                                                    var g = [];
+                                                    for (i = 0; i < f1.length; i += 1) {
+                                                        g.push(f1[i] - f2[i]);
+                                                    }
+                                                    return g;
+                                                }()),
+                                                timestamp: rast.get('timestamp'),
+                                                title: Ext.String.format('{0} - {1}',
+                                                    rast.get('timestamp').format(view.timeFormat),
+                                                    rast2.get('timestamp').format(view.timeFormat))
+                                            });
+
+                                            ui.bindLayer(view, rastNew);
+                                            ui.onMapLoad(rastNew);
+                                            
+                                            // Now that all the data has been successfully retrieved, set the
+                                            // source2 drop-down field name to the parameter name.
+                                            ui._initLoad = true;
+                                            tabPanel.getActiveTab().down('field[name=source2]').setValue(params.source2);
+                                            tabPanel.getActiveTab().down('field[name=date2]').setValue(params.date2);
+                                            tabPanel.getActiveTab().down('field[name=time2]').setValue(params.time2);
+                                            ui._initLoad = false;
+                                            
+                                        }
+                                    });
+                                }
+                            ui._initLoad = false;
                             },
                             scope: this
                         });
@@ -376,7 +460,6 @@ Ext.define('Flux.controller.UserExperience', {
             },
             scope: this
         })
-        
     },
     
     /**

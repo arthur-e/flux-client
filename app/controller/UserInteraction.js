@@ -792,13 +792,6 @@ Ext.define('Flux.controller.UserInteraction', {
             // Hard trigger the date/time selection method to propagate changes
             this.onDateTimeSelection(cmp, time, date);
         }
-        
-        // Reset global indicator that map has been loaded
-        // (this prevents loading from URL parameters again once
-        //  application is already loaded, e.g. when source changes
-        //  and new metadata is propagated)
-        this._initLoad = false;
-        
     },
     
     onAddWKT: function () {
@@ -1061,68 +1054,70 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  value   {Number|String}
      */
     onDifferenceChange: function (field) {
-        var diffTime;
-        var vals = field.up('panel').getForm().getValues();
-        var view = this.getMap();
+        if (!this._initLoad) {
+            var diffTime;
+            var vals = field.up('panel').getForm().getValues();
+            var view = this.getMap();
 
-        if (Ext.Array.clean([vals.date2, vals.time2, vals.source2]).length !== 3) {
-            // Do nothing if not all of the fields are filled out
-            return;
-        }
-
-        if (!field.isVisible(true) || Ext.isEmpty(view.getMoment())) {
-            return;
-        }
-
-        if (field.up('fieldset').down('field[name=showDifference]').getValue()) {
-            // NOTE: Only available for the Single Map visualization thus far
-            diffTime = moment.utc(Ext.String.format('{0}T{1}:00',
-                vals.date2, vals.time2));
-
-            if (diffTime.isSame(view.getMoment())) {
-                Ext.Msg.alert('Request Error', 'First timestamp and second timestamp are the same in requested difference image; will not display.');
+            if (Ext.Array.clean([vals.date2, vals.time2, vals.source2]).length !== 3) {
+                // Do nothing if not all of the fields are filled out
                 return;
             }
 
-            this.fetchRasters(view, [{
-                time: view.getMoment().toISOString()
-            }, {
-                time: diffTime.toISOString()
-            }], Ext.Function.bind(function (g1, g2) { // Callback function
-                var rast;
-                var f1 = g1.get('features');
-                var f2 = g2.get('features');
+            if (!field.isVisible(true) || Ext.isEmpty(view.getMoment())) {
+                return;
+            }
 
-                if (f1.length !== f2.length) {
-                    Ext.Msg.alert('Data Error', 'Cannot display the difference of two maps with difference grids. Choose instead maps from two different data sources and/or times that have the same underlying grid.');
+            if (field.up('fieldset').down('field[name=showDifference]').getValue()) {
+                // NOTE: Only available for the Single Map visualization thus far
+                diffTime = moment.utc(Ext.String.format('{0}T{1}:00',
+                    vals.date2, vals.time2));
+
+                if (diffTime.isSame(view.getMoment())) {
+                    Ext.Msg.alert('Request Error', 'First timestamp and second timestamp are the same in requested difference image; will not display.');
+                    return;
                 }
 
-                // Add these model instances to the view's store
-                view.store.add(g1, g2);
+                this.fetchRasters(view, [{
+                    time: view.getMoment().toISOString()
+                }, {
+                    time: diffTime.toISOString()
+                }], Ext.Function.bind(function (g1, g2) { // Callback function
+                    var rast;
+                    var f1 = g1.get('features');
+                    var f2 = g2.get('features');
 
-                rast = Ext.create('Flux.model.Raster', {
-                    features: (function () {
-                        var i;
-                        var g = [];
-                        for (i = 0; i < f1.length; i += 1) {
-                            g.push(f1[i] - f2[i]);
-                        }
-                        return g;
-                    }()),
-                    timestamp: g1.get('timestamp'),
-                    title: Ext.String.format('{0} - {1}',
-                        g1.get('timestamp').format(view.timeFormat),
-                        g2.get('timestamp').format(view.timeFormat))
+                    if (f1.length !== f2.length) {
+                        Ext.Msg.alert('Data Error', 'Cannot display the difference of two maps with difference grids. Choose instead maps from two different data sources and/or times that have the same underlying grid.');
+                    }
+
+                    // Add these model instances to the view's store
+                    view.store.add(g1, g2);
+
+                    rast = Ext.create('Flux.model.Raster', {
+                        features: (function () {
+                            var i;
+                            var g = [];
+                            for (i = 0; i < f1.length; i += 1) {
+                                g.push(f1[i] - f2[i]);
+                            }
+                            return g;
+                        }()),
+                        timestamp: g1.get('timestamp'),
+                        title: Ext.String.format('{0} - {1}',
+                            g1.get('timestamp').format(view.timeFormat),
+                            g2.get('timestamp').format(view.timeFormat))
+                    });
+
+                    this.bindLayer(view, rast);
+                    this.onMapLoad(rast);
+                }, this));
+
+            } else {
+                this.fetchRaster(view, {
+                    time: view.getMoment().toISOString()
                 });
-
-                this.bindLayer(view, rast);
-                this.onMapLoad(rast);
-            }, this));
-
-        } else {
-            this.fetchRaster(view, {
-                time: view.getMoment().toISOString()
-            });
+            }
         }
     },
     

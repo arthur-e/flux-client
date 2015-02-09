@@ -113,8 +113,6 @@ Ext.define('Flux.view.D3GeographicMap', {
             }]);
         });
         
-        
-        
         this.on('render', function () {
             var view = this;
 
@@ -385,7 +383,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             // Remove tracker vertex
             view.wrapper.selectAll('.roi-tracker').remove();
             
-	    // An extra vertex is add on the second click of a double-click
+	    // An extra vertex is added on the first click of the double-click
 	    // Remove the vertex as well as the coordinate from the poly def.
 	    view.wrapper.selectAll('circle[vindex="' + (vindex-1) + '"]').remove();
 	    view._roiCoords.pop();
@@ -409,14 +407,8 @@ Ext.define('Flux.view.D3GeographicMap', {
             view.fireEvent('fetchstats');
 		
 	    // Make UI changes
-	    tbar.down('button[itemId="btn-erase-polygon"]').show();
 	    tbar.down('button[itemId="btn-cancel-polygon"]').hide();
-            
-            var cmp = tbar.down('button[itemId="btn-fetch-roi-time-series"]')
-            if (view.getMetadata().get('gridded')) {
-                cmp.show();
-            }
-            cmp.setDisabled(!Ext.ComponentQuery.query('checkbox[name="showLinePlot"]')[0].checked);
+            view.setTbarForDrawnROI(tbar);
 	    
 	    // Reset cursor (turn off crosshairs)
             view.panes.roiCanvas.selectAll('rect').style('cursor','auto');
@@ -528,16 +520,16 @@ Ext.define('Flux.view.D3GeographicMap', {
                 x = c[0];
                 y = c[1];
 		
-		// update polygon
+		// Update polygon
 		view._roiCoords[d3.select(this).attr('vindex')] = [x,y];
 		polygon.attr('points', view.getSVGPolyPoints(view._roiCoords.slice(0)));
 		
-		// update vertex
+		// Update vertex
 		d3.select(this)
 		    .attr('cx', x)
 		    .attr('cy', y);
                     
-                // since polygon is being modified,
+                // Since polygon is being modified,
                 // delete current summaryStats so that it will trigger a database ping
                 delete view._currentSummaryStats;
 	      }).on('dragend', function() {
@@ -1021,6 +1013,26 @@ Ext.define('Flux.view.D3GeographicMap', {
 	return poly;
     },
     
+     /**
+        Returns WKT Polygon representation from a list
+        of paired coordinates
+        @param coords   {Array}
+        @return         {String}
+     */
+    getWKTfromRoiCoords: function(coords) {
+        var wkt = 'POLYGON((';
+        
+        coords.push(coords[0]);
+        
+        coords.forEach(function(c) {
+            wkt += c.join(' ') + ',';
+        });
+        
+        wkt += '))';
+        
+        return wkt;
+    },
+    
     /**
         Attempts to display the value at the provided map coordinates; if the
         coordinates do not exactly match any among the current instance's grid
@@ -1426,7 +1438,28 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         return this;
     },
+    
+    /**
+        When an ROI is loaded, make necessary UI changes to toolbar
+     */
+    setTbarForDrawnROI: function() {
+        var tbar = this.down('toolbar[cls=map-tbar]');
 
+        // Hide the "add" button
+        tbar.down('button[itemId="btn-add-overlay"]').hide();
+        
+        // Show the "erase" button
+        tbar.down('button[itemId="btn-erase-polygon"]').show();
+        
+        // Conditionally display the fetch-roi-time-series button
+        var cmp = tbar.down('button[itemId="btn-fetch-roi-time-series"]');
+        
+        if (this.getMetadata().get('gridded')) {
+            cmp.show();
+        }
+        cmp.setDisabled(!Ext.ComponentQuery.query('checkbox[name="showLinePlot"]')[0].checked);   
+    },
+    
     /**
         Toggles the display of the legend on/off.
         @param  state   {Boolean}

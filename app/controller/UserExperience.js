@@ -379,6 +379,7 @@ Ext.define('Flux.controller.UserExperience', {
                                 
                                 // Finally, trigger redraw() to draw the data on the map
                                 view.redraw();
+                                view.mostRecentRasterParams = request_params;
                                 
                                 ////////////////////////////////////////////////////////////
                                 // Now that source data is loaded, handle difference view request

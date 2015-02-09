@@ -28,6 +28,10 @@ Ext.define('Flux.controller.UserInteraction', {
     }, {
         ref: 'symbology',
         selector: 'symbology'
+    
+    }, {
+        ref: 'aoGeoJSON',
+        selector: 'ao_geojson'
     }],
 
     requires: [
@@ -99,6 +103,10 @@ Ext.define('Flux.controller.UserInteraction', {
             '#visual-menu': {
                 click: this.onVisualChange
             },
+            'ao_geojson' : {
+                submit: this.onSubmitGeoJSON
+            },
+                
             'd3geomap': {
                 plotclick: this.onPlotClick,
                 fetchstats: this.fetchRoiSummaryStats,
@@ -109,6 +117,9 @@ Ext.define('Flux.controller.UserInteraction', {
             },
             'd3geomap #btn-ao-wkt': {
                 click: this.onAddWKT
+            },
+            'd3geomap #btn-ao-geojson': {
+                click: this.onAddGeoJSON
             },
 	    'd3geomap #btn-draw-polygon': {
 		click: this.onDrawRoi
@@ -299,9 +310,83 @@ Ext.define('Flux.controller.UserInteraction', {
         }
     },
     
+    /** 
+        Given a GeoJSON Polygon string OR object, extracts and returns the coordinates:
+        NOTE: does not currently support MULTIPOLYGON type
+    
+        @param  wktPolygonString  {String OR Object}  e.g. ""
+        @return                   {Array}   An array of lat/long arrays,
+                                            e.g. [[-83 42],[-84 31],...]
+    */
+    convertGeoJSONtoRoiCoords: function (gj) {
+        var proj = this.getMap().getProjection();
+
+        // If the GeoJSON isn't already an object, try parsing as a string
+        if (typeof gj == 'string') {
+            try {
+                var gj = JSON.parse(gj);
+            } catch (err) {
+                alert('Syntax error in the provided GeoJSON text');
+                return
+            }
+        }
+        
+        // Find the geometry key... accounting here for a number of possible nesting levels
+        if (gj.hasOwnProperty('features')) { // i.e. if nested in a "FeatureCollection"...
+            gj = gj.features[0];
+        }
+        
+        if (gj.hasOwnProperty('geometry')) { // i.e. if nested in a "Feature"
+            gj = gj.geometry;
+        }
+        
+        if (gj.hasOwnProperty('coordinates')) { // i.e. if nested in a "geometry"
+            if (gj.type != 'Polygon') {
+                alert(Ext.String.format('GeoJSON geometry type must be "Polygon"; the provided type is: "{0}".', gj.type));
+                return;
+            }
+            gj = gj.coordinates[0];
+        } else {
+            alert('Could not parse GeoJSON text; does "coordinates" property exist?');
+            return;
+        }
+        
+        // Remove the closing vertex at the end; unnecessary for roiCoords
+        gj.pop();
+
+        return Ext.Array.map(gj, function(l) {return proj(l);});
+
+    },
+    
+    /**
+        Given a WKT Polygon string, extracts and returns the coordinates:
+        NOTE: does not currently support MULTIPOLYGON type
+
+            @param  wktPolygonString  {String}  e.g. "POLYGON((-83 42, -84 31,...))"
+            @return                   {Array}   An array of lat/long arrays,
+                                                e.g. [[-83 42],[-84 31],...]
+    */
+    convertWKTtoRoiCoords: function (wktPolyString) {
+        var proj = this.getMap().getProjection();
+        var c = wktPolyString.replace('POLYGON((', '').replace('))', '').split(',');
+        
+        // Remove the closing vertex at the end; unnecessary for roiCoords
+        c.pop();
+        
+        var lls = c.map(function (v) {
+            return v.split(' ').map(Number);
+
+        });
+
+        return Ext.Array.map(lls, function(l) {return proj(l);});
+
+    },
+    
+    
     /**
         Makes a request for a map based on the given parameters, where the map
         is a non-gridded xy.json response (an overlay).
+
         @param  view    {Flux.view.D3GeographicMap}
         @param  params  {Object}
      */
@@ -797,7 +882,168 @@ Ext.define('Flux.controller.UserInteraction', {
         }
     },
     
-    onAddWKT: function () {
+    /**
+        Handles a click of the Add ROI Overlay - GeoJSON button by creating/showing
+        the form panel
+        
+        @param  btn             {Ext.button.Button}
+     */
+    onAddGeoJSON: function(btn) {
+        if (!this.getAoGeoJSON()) {
+            this.getContentPanel().add({
+                xtype: 'ao_geojson',
+                title: 'Add ROI from GeoJSON',
+                enableDisplay: true,
+                closable: true
+            });
+        }
+        this.getAoGeoJSON().show();
+    },
+
+    /**
+        Callback for when GeoJSON data is successfully retrieved
+        from URL or pasted-in text; draws ROI on may and makes
+        UI changes.
+        
+        @param  geojson             {String OR Object}
+     */
+    onReceiveGeoJSON: function(geojson) {
+        var map = this.getMap();
+        
+        // Convert WKT to roiCoords and draw the polygon
+        map._roiCoords = this.convertGeoJSONtoRoiCoords(geojson);
+        
+        if (map._roiCoords) {
+            // Make UI changes
+            map.setTbarForDrawnROI();
+            
+            if (this.getAoGeoJSON()) {
+                
+                
+            }
+            
+            // And draw the polygon 
+            map.redrawPolygon();                    
+        }
+        
+    },
+    
+    /**
+        Handles the click event for the "Submit" button on the
+        AddOverlayPanelGeoJSON.js panel
+        
+        @param  btn             {Ext.button.Button}
+     */
+    onSubmitGeoJSON: function(btn) {
+        var view = this;
+        var geojson;
+        
+        if (btn.up('panel').down('radiofield[inputValue=url]').checked) {
+            var url = btn.up('panel').down('textfield[name=geojson_url]').value;
+            var xhr = new XMLHttpRequest();
+            var view = this;
+            
+            // Load the JSON object from URL
+            xhr.open('get',url, true);   
+            xhr.responseType = 'json'; // <- this is critical to include; otherwise will encounter cross-origin request errors
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4) {
+                    var status = xhr.status;
+                    if (status == 200) {
+                        view.onReceiveGeoJSON(xhr.response);
+                    } else {
+                        alert('Error loading GeoJSON from requested URL', xhr.response);
+                    } 
+                }
+            }
+            xhr.send();
+            
+        } else {
+            geojson = btn.up('panel').down('textarea').value;
+            view.onReceiveGeoJSON(geojson);
+        }
+        
+
+        
+ /*       var panelWKT = new Ext.Panel({
+                floating: true,
+                //centered: false,
+                modal: true,
+                width: 400,
+                //height: 160,
+                styleHtmlContent: true,
+                dockedItems: [{
+                    xtype: 'toolbar',
+                    layout: {type: 'vbox'},
+                    items: [{
+                        xtype: 'form',
+                        title: 'Paste valid GeoJSON Polygon here',
+                        items: [{
+                            xtype: 'textarea',
+                            width: 392,
+                            height: 76,
+                            padding: 4,
+                            value: '{"type":"Feature","geometry":{ "type": "Polygon","coordinates": [[[-100.0,50.0],[-105.0,50.0],[-105.0,55.0],[-100.0,55.0],[-100.0,50.0]]]}}',
+                        }]
+                        
+                    }, {
+                        xtype: 'toolbar',
+                        flex: 1,
+                        dock: 'bottom',
+                        ui: 'footer',
+                        layout: {
+                            pack: 'end',
+                            type: 'hbox',
+                        },
+                        items: [{
+                            xtype: 'button',
+                            text: 'Cancel',
+                            itemId: 'cancel',
+                            iconCls: 'cancel',
+                            handler: function() {
+                                this.up('panel').hide();
+                                // TODO: replace contents with displayed ROI? Or blank?
+                            }
+                        }, {
+                            xtype: 'button',
+                            text: 'Save',
+                            itemId: 'save',
+                            iconCls: 'save',
+                            handler: function() {                              
+                                this.up('panel').hide();
+                                
+                                fireEventArgs
+                                // Convert WKT to roiCoords and draw the polygon
+                                map._roiCoords = view.convertGeoJSONtoRoiCoords(this.up('panel').down('textarea').value);
+                                
+                                if (map._roiCoords) {
+                                    // Make UI changes
+                                    var menu = btn.up('menu');
+                                    var tbar = menu.up('toolbar');
+                                    
+                                    menu.hide();
+                                    btn.up('button').hide();
+                                    map.setTbarForDrawnROI(tbar);
+                                    
+                                    // And draw the polygon 
+                                    map.redrawPolygon();    
+
+                                }
+                                
+                                
+                            }
+                        }]
+                    }]
+                }]
+            });
+            
+        panelWKT.show();*/     
+        
+    },
+    
+    onAddWKT: function (btn) {
+        var view = this;
+        var map = this.getMap();
         var panelWKT = new Ext.Panel({
                 floating: true,
                 //centered: false,
@@ -842,7 +1088,23 @@ Ext.define('Flux.controller.UserInteraction', {
                             text: 'Save',
                             itemId: 'save',
                             iconCls: 'save',
-                            handler: function() {
+                            handler: function() {                              
+                                // Make UI changes
+                                var menu = btn.up('menu');
+                                var menu_btn = btn.up('button');
+                                var tbar = menu.up('toolbar');
+
+                                menu.hide();
+                                menu_btn.hide();
+                                tbar.down('button[itemId="btn-erase-polygon"]').show();
+                                
+                                this.up('panel').hide();
+                                
+                                // Convert WKT to roiCoords and draw the polygon
+                                map._roiCoords = view.convertWKTtoRoiCoords(this.up('panel').down('textarea').value);
+                                map.redrawPolygon();
+                                
+                                map.setTbarForDrawnROI(tbar);
                                 
                                 
                             }
@@ -1130,7 +1392,7 @@ Ext.define('Flux.controller.UserInteraction', {
     */
     	
     onDrawRoi: function (btn) {
-	var view = btn.up('d3geomap'); // maybe this is needed?
+	var view = btn.up('d3geomap');
         var menu = btn.up('menu');
         var menu_btn = btn.up('button');
 	var tbar = menu.up('toolbar');
@@ -1189,6 +1451,7 @@ Ext.define('Flux.controller.UserInteraction', {
      */ 
     onEraseRoiDrawing: function (btn) {
 	 this.removeRoiOverlay(btn);
+         this.removeRoiTimeSeries();
 	 
 	 // hide yourself since no polygon exists to erase anymore
 	 btn.hide();

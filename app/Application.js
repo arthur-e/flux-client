@@ -22,6 +22,7 @@ Ext.define('Flux.Application', {
     extend: 'Ext.app.Application',
 
     views: [
+        'AddOverlayPanelGeoJSON',
         'D3Panel',
         'D3GeographicMap',
         'D3LinePlot',

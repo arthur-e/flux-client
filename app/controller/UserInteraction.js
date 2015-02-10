@@ -32,6 +32,9 @@ Ext.define('Flux.controller.UserInteraction', {
     }, {
         ref: 'aoGeoJSON',
         selector: 'ao_geojson'
+    }, {
+        ref: 'aoWKT',
+        selector: 'ao_wkt'
     }],
 
     requires: [
@@ -104,9 +107,11 @@ Ext.define('Flux.controller.UserInteraction', {
                 click: this.onVisualChange
             },
             'ao_geojson' : {
-                submit: this.onSubmitGeoJSON
+                submit: this.onSubmitRoiOverlay
             },
-                
+            'ao_wkt' : {
+                submit: this.onSubmitRoiOverlay
+            },
             'd3geomap': {
                 plotclick: this.onPlotClick,
                 fetchstats: this.fetchRoiSummaryStats,
@@ -359,6 +364,70 @@ Ext.define('Flux.controller.UserInteraction', {
     },
     
     /**
+        Given an array of coordinates representing a single polygon,
+        converts and returns WKT representation
+
+            @param      cs      {Array}
+            @param      sep     {String} string separator to use for coordinate pairs
+            @return             {String}   e.g. "POLYGON((-83 42, -84 31,...))"
+    */
+    convertRoiCoordsToWKT: function (cs, sep) {
+        var map = this.getMap();
+        var proj = map.getProjection();
+        
+        cs.push(cs[0]);
+        
+        var wkt = [];
+        cs.forEach(function(c) {
+            wkt.push(Ext.Array.map(proj.invert(c), function (l) {
+                    return l.toFixed(4);
+                }).join(sep))
+            });
+        
+        return Ext.String.format('POLYGON(({0}))', wkt.join(','))
+    },
+    
+    /**
+        Given a WKT Polygon string, extracts and returns the GeoJSON object:
+        NOTE: does not currently support MULTIPOLYGON type
+
+            @param  wktPolygonString  {String}  e.g. "POLYGON((-83 42, -84 31,...))"
+            @return                   {Object}  GeoJSON
+    */
+    convertWKTtoGeoJSON: function (wktPolyString) {
+        //var coords, lls;
+        //var proj = this.getMap().getProjection();
+        var c = wktPolyString.replace('POLYGON((', '').replace('))', '').split(',');
+        
+//         // Remove the closing vertex at the end; unnecessary for roiCoords
+//         c.pop();
+        
+        // Parse into a list of lat/lon coordinates
+        lls = c.map(function (v) {
+            return v.split(' ').map(Number);
+
+        });
+
+        return {
+                'type' : 'Feature',
+                'geometry' : {
+                    'type': 'Polygon',
+                    'coordinates': [lls]
+                }
+        };
+        
+//         // And project those coordinates into x/y pixel positions
+//         coords = Ext.Array.map(lls, function(l) {return proj(l);});
+//         
+//         if (coords.length < 3) {
+//             alert(Ext.String.format('Could not parse WKT text; check for proper syntax:\n\n{0}', wktPolyString));
+//             return;
+//         }
+//         return coords;
+
+    },
+    
+    /**
         Given a WKT Polygon string, extracts and returns the coordinates:
         NOTE: does not currently support MULTIPOLYGON type
 
@@ -367,18 +436,27 @@ Ext.define('Flux.controller.UserInteraction', {
                                                 e.g. [[-83 42],[-84 31],...]
     */
     convertWKTtoRoiCoords: function (wktPolyString) {
+        var coords, lls;
         var proj = this.getMap().getProjection();
         var c = wktPolyString.replace('POLYGON((', '').replace('))', '').split(',');
         
         // Remove the closing vertex at the end; unnecessary for roiCoords
         c.pop();
         
-        var lls = c.map(function (v) {
+        // Parse into a list of lat/lon coordinates
+        lls = c.map(function (v) {
             return v.split(' ').map(Number);
 
         });
 
-        return Ext.Array.map(lls, function(l) {return proj(l);});
+        // And project those coordinates into x/y pixel positions
+        coords = Ext.Array.map(lls, function(l) {return proj(l);});
+        
+        if (coords.length < 3) {
+            alert(Ext.String.format('Could not parse WKT text; check for proper syntax:\n\n{0}', wktPolyString));
+            return;
+        }
+        return coords;
 
     },
     
@@ -586,15 +664,7 @@ Ext.define('Flux.controller.UserInteraction', {
             
             onSuccess = onSuccess || view.displaySummaryStats;
         
-            var cs = view._roiCoords.slice(0);
-            cs.push(cs[0]);
-            
-            var wkt = [];
-            cs.forEach(function(c) {
-                wkt.push(Ext.Array.map(proj.invert(c), function (l) {
-                        return l.toFixed(4);
-                    }).join('+'))
-                });
+            var wkt = this.convertRoiCoordsToWKT(view._roiCoords.slice(0), '+');
 
             params = {
                 start: start,
@@ -602,7 +672,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 interval:  interval,
                 //TODO aggregate: this.getGlobalSettings().tendency,
                 // aggregate: 'mean',
-                geom: Ext.String.format('POLYGON(({0}))', wkt.join(','))
+                geom: wkt
             };
             
             Ext.Ajax.request({
@@ -889,39 +959,93 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  btn             {Ext.button.Button}
      */
     onAddGeoJSON: function(btn) {
-        if (!this.getAoGeoJSON()) {
+        var form = this.getAoGeoJSON();
+        
+        if (!form) {
             this.getContentPanel().add({
                 xtype: 'ao_geojson',
                 title: 'Add ROI from GeoJSON',
-                enableDisplay: true,
-                closable: true
             });
+            
+            form = this.getAoGeoJSON();
+            
+            // Add some default values to use as examples
+            form.show(); // <-- form has to be rendered first or the text field will not exist
+            form.down('textfield[name=roi_url]').setValue('https://rawgit.com/johan/world.geo.json/master/countries/USA/CA.geo.json');
+            form.down('textarea[name=roi_text]').setValue('{"type":"Feature","geometry":{ "type": "Polygon","coordinates": [[[-100.0,50.0],[-105.0,50.0],[-105.0,55.0],[-100.0,55.0],[-100.0,50.0]]]}}');
+                
+        } else {        
+            form.show();
         }
-        this.getAoGeoJSON().show();
+
+    },
+    
+    
+    /**
+        Handles a click of the Add ROI Overlay - WKT button by creating/showing
+        the form panel
+        
+        @param  btn             {Ext.button.Button}
+     */
+    onAddWKT: function(btn) {
+        var form = this.getAoWKT();
+        
+        if (!form) {
+            this.getContentPanel().add({
+                xtype: 'ao_wkt',
+                title: 'Add ROI from WKT',
+            });
+            
+            form = this.getAoWKT();
+           
+           // Add some default values to use as examples
+           form.show(); // <-- form has to be rendered first or the text field will not exist
+           form.down('textfield[name=roi_url]').setValue('https://rawgit.com/johan/world.geo.json/master/countries/USA/CA.geo.json');
+           form.down('textarea[name=roi_text]').setValue('POLYGON((-107.1 52.7,-107.8 19.1785,-79.1 19.1,-83.9 54.3,-107.1 52.7))');
+
+        } else {
+            form.show();
+        }
     },
 
     /**
-        Callback for when GeoJSON data is successfully retrieved
-        from URL or pasted-in text; draws ROI on may and makes
+        Callback for when ROI data is successfully retrieved
+        from URL or pasted-in text; draws ROI on map and makes
         UI changes.
         
-        @param  geojson             {String OR Object}
+        @param  btn             {Ext.Button.button}        
+        @param  roi             {String OR Object representing WKT or GeoJSON ROI}
      */
-    onReceiveGeoJSON: function(geojson) {
+    onReceiveRoiOverlay: function(btn, roi) {
+        var txt_gj, txt_wkt;
         var map = this.getMap();
+        var ao_geojson = this.getAoGeoJSON();
+        var ao_wkt = this.getAoWKT();
+        var format = btn.up('panel').format;
         
-        // Convert WKT to roiCoords and draw the polygon
-        map._roiCoords = this.convertGeoJSONtoRoiCoords(geojson);
-        
-        if (map._roiCoords) {
+        // Convert ROI to roiCoords and draw the polygon
+        if (format == 'geojson') {
+            map._roiCoords = this.convertGeoJSONtoRoiCoords(roi);
+            txt_gj = JSON.stringify(roi);
+            txt_wkt = this.convertRoiCoordsToWKT(map._roiCoords.slice(0), ' ');
+        } else if (format == 'wkt') {
+            map._roiCoords = this.convertWKTtoRoiCoords(roi);
+            txt_gj = JSON.stringify(this.convertWKTtoGeoJSON(roi));
+            txt_wkt = roi;
+        }
+
+        if (map._roiCoords && map._roiCoords.length > 2) {
             // Make UI changes
             map.setTbarForDrawnROI();
             
-            if (this.getAoGeoJSON()) {
-                
-                
+            // Replace contents of the GeoJSON text input field w/ the text of the loaded ROI
+            if (ao_geojson) {;
+                ao_geojson.down('textarea[name=roi_text]').setValue(txt_gj); 
             }
             
+            if (ao_wkt) {
+                ao_wkt.down('textarea[name=roi_text]').setValue(txt_wkt);
+            }
             // And draw the polygon 
             map.redrawPolygon();                    
         }
@@ -930,16 +1054,19 @@ Ext.define('Flux.controller.UserInteraction', {
     
     /**
         Handles the click event for the "Submit" button on the
-        AddOverlayPanelGeoJSON.js panel
+        RoiOverlayForm.js form
         
         @param  btn             {Ext.button.Button}
      */
-    onSubmitGeoJSON: function(btn) {
+    onSubmitRoiOverlay: function(btn) {
         var view = this;
-        var geojson;
         
         if (btn.up('panel').down('radiofield[inputValue=url]').checked) {
-            var url = btn.up('panel').down('textfield[name=geojson_url]').value;
+            var url = btn.up('panel').down('textfield[name=roi_url]').value;
+            
+            // This is a really specific fix b/c the default example URL requires it
+            url = url.replace('raw.githubusercontent','rawgit');
+            
             var xhr = new XMLHttpRequest();
             var view = this;
             
@@ -950,7 +1077,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 if (xhr.readyState == 4) {
                     var status = xhr.status;
                     if (status == 200) {
-                        view.onReceiveGeoJSON(xhr.response);
+                        view.onReceiveRoiOverlay(btn, xhr.response);
                     } else {
                         alert('Error loading GeoJSON from requested URL', xhr.response);
                     } 
@@ -959,164 +1086,11 @@ Ext.define('Flux.controller.UserInteraction', {
             xhr.send();
             
         } else {
-            geojson = btn.up('panel').down('textarea').value;
-            view.onReceiveGeoJSON(geojson);
+            view.onReceiveRoiOverlay(btn, btn.up('panel').down('textarea[name=roi_text]').value);
         }
-        
 
-        
- /*       var panelWKT = new Ext.Panel({
-                floating: true,
-                //centered: false,
-                modal: true,
-                width: 400,
-                //height: 160,
-                styleHtmlContent: true,
-                dockedItems: [{
-                    xtype: 'toolbar',
-                    layout: {type: 'vbox'},
-                    items: [{
-                        xtype: 'form',
-                        title: 'Paste valid GeoJSON Polygon here',
-                        items: [{
-                            xtype: 'textarea',
-                            width: 392,
-                            height: 76,
-                            padding: 4,
-                            value: '{"type":"Feature","geometry":{ "type": "Polygon","coordinates": [[[-100.0,50.0],[-105.0,50.0],[-105.0,55.0],[-100.0,55.0],[-100.0,50.0]]]}}',
-                        }]
-                        
-                    }, {
-                        xtype: 'toolbar',
-                        flex: 1,
-                        dock: 'bottom',
-                        ui: 'footer',
-                        layout: {
-                            pack: 'end',
-                            type: 'hbox',
-                        },
-                        items: [{
-                            xtype: 'button',
-                            text: 'Cancel',
-                            itemId: 'cancel',
-                            iconCls: 'cancel',
-                            handler: function() {
-                                this.up('panel').hide();
-                                // TODO: replace contents with displayed ROI? Or blank?
-                            }
-                        }, {
-                            xtype: 'button',
-                            text: 'Save',
-                            itemId: 'save',
-                            iconCls: 'save',
-                            handler: function() {                              
-                                this.up('panel').hide();
-                                
-                                fireEventArgs
-                                // Convert WKT to roiCoords and draw the polygon
-                                map._roiCoords = view.convertGeoJSONtoRoiCoords(this.up('panel').down('textarea').value);
-                                
-                                if (map._roiCoords) {
-                                    // Make UI changes
-                                    var menu = btn.up('menu');
-                                    var tbar = menu.up('toolbar');
-                                    
-                                    menu.hide();
-                                    btn.up('button').hide();
-                                    map.setTbarForDrawnROI(tbar);
-                                    
-                                    // And draw the polygon 
-                                    map.redrawPolygon();    
-
-                                }
-                                
-                                
-                            }
-                        }]
-                    }]
-                }]
-            });
-            
-        panelWKT.show();*/     
-        
     },
-    
-    onAddWKT: function (btn) {
-        var view = this;
-        var map = this.getMap();
-        var panelWKT = new Ext.Panel({
-                floating: true,
-                //centered: false,
-                modal: true,
-                width: 400,
-                //height: 160,
-                styleHtmlContent: true,
-                dockedItems: [{
-                    xtype: 'toolbar',
-                    layout: {type: 'vbox'},
-                    items: [{
-                        xtype: 'form',
-                        title: 'Paste valid WKT Polygon here',
-                        items: [{
-                            xtype: 'textarea',
-                            width: 392,
-                            height: 76,
-                            padding: 4,
-                            value: 'POLYGON((-107.1 52.7,-107.8 19.1785,-79.1 19.1,-83.9 54.3,-107.1 52.7))',
-                        }]
-                        
-                    }, {
-                        xtype: 'toolbar',
-                        flex: 1,
-                        dock: 'bottom',
-                        ui: 'footer',
-                        layout: {
-                            pack: 'end',
-                            type: 'hbox',
-                        },
-                        items: [{
-                            xtype: 'button',
-                            text: 'Cancel',
-                            itemId: 'cancel',
-                            iconCls: 'cancel',
-                            handler: function() {
-                                this.up('panel').hide();
-                                // TODO: replace contents with displayed ROI? Or blank?
-                            }
-                        }, {
-                            xtype: 'button',
-                            text: 'Save',
-                            itemId: 'save',
-                            iconCls: 'save',
-                            handler: function() {                              
-                                // Make UI changes
-                                var menu = btn.up('menu');
-                                var menu_btn = btn.up('button');
-                                var tbar = menu.up('toolbar');
 
-                                menu.hide();
-                                menu_btn.hide();
-                                tbar.down('button[itemId="btn-erase-polygon"]').show();
-                                
-                                this.up('panel').hide();
-                                
-                                // Convert WKT to roiCoords and draw the polygon
-                                map._roiCoords = view.convertWKTtoRoiCoords(this.up('panel').down('textarea').value);
-                                map.redrawPolygon();
-                                
-                                map.setTbarForDrawnROI(tbar);
-                                
-                                
-                            }
-                        }]
-                    }]
-                }]
-            });
-            
-        panelWKT.show();
-        
-    },
-    
     /**
         Handles a change in the aggregation parameters; fires a new map
         request depending on whether aggregation is requested.

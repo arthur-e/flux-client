@@ -1,13 +1,16 @@
-Ext.define('Flux.view.AddOverlayPanelGeoJSON', {
+Ext.define('Flux.view.RoiOverlayForm', {
     extend: 'Flux.view.FormPanel',
-    alias: 'widget.ao_geojson',
+    alias: 'widget.roioverlayform',
     requires: [
         'Ext.layout.container.Column',
     ],
     floating: true,
     modal: true,
     width: 580,
+    closable: true,
+    closeAction: 'hide',
     draggable: true,
+    enableDisplay: true,
     resizable: true,
     styleHtmlContent: true,
     layout: 'fit',
@@ -25,20 +28,19 @@ Ext.define('Flux.view.AddOverlayPanelGeoJSON', {
                 },
                 items: [{
                     xtype: 'radiofield',
-                    name: 'roi_geojson',
+                    name: 'roi_radio',
                     inputValue: 'url',
                     checked: false,
                     boxLabel: 'From URL:',
                     hideOnClick: false,
                     handler: function(cmp) {
                         cmp.nextSibling('[xtype=textfield]').setDisabled(!cmp.checked);
-                        cmp.nextSibling('[name=geojson_text]').setDisabled(cmp.checked);    
+                        cmp.nextSibling('[name=roi_text]').setDisabled(cmp.checked);    
                     }
                 }, {
                     xtype: 'textfield',
-                    name: 'geojson_url',
+                    name: 'roi_url',
                     padding: 2,
-                    value: 'https://rawgit.com/johan/world.geo.json/master/countries/USA/CA.geo.json',
                     disabled: true,
                     enableKeyEvents: true,
                     listeners: {
@@ -50,16 +52,15 @@ Ext.define('Flux.view.AddOverlayPanelGeoJSON', {
                    }
                 }, {
                     xtype: 'radiofield',
-                    name: 'roi_geojson',
+                    name: 'roi_radio',
                     inputValue: 'text',
                     checked: true,
                     boxLabel: 'From text:',
                     hideOnClick: false
                 }, {
                     xtype: 'textarea',
-                    name: 'geojson_text',
+                    name: 'roi_text',
                     padding: 2,
-                    value: '{"type":"Feature","geometry":{ "type": "Polygon","coordinates": [[[-100.0,50.0],[-105.0,50.0],[-105.0,55.0],[-100.0,55.0],[-100.0,50.0]]]}}',
                     flex: 1,
                     enableKeyEvents: true,
                     listeners: {

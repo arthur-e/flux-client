@@ -1025,6 +1025,9 @@ Ext.define('Flux.view.D3GeographicMap', {
         coords.push(coords[0]);
         
         coords.forEach(function(c) {
+            // limit precision
+            c[0] = parseFloat(c[0].toPrecision(5));
+            c[1] = parseFloat(c[1].toPrecision(5));
             wkt += c.join(' ') + ',';
         });
         

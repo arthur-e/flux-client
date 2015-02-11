@@ -414,6 +414,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    var cs = view._roiCoords.slice(0);
 	    
 	    polygon.attr('points', view.getSVGPolyPoints(cs));
+            polygon.attr('centroid', view.getSVGPolyCentroid(cs));
 
 	    // Reset listeners
 	    sel.on('mousemove', null);
@@ -1038,7 +1039,32 @@ Ext.define('Flux.view.D3GeographicMap', {
     getScale: function () {
         return this._scale;
     },
+    /**
+        Returns SVG polygon "points" attribute from a list
+        of paired coordinates
+        @param coords   {Array}
+        @return         {String}
+     */
     
+    getSVGPolyCentroid: function(coords) {
+        var centroid, max_x, max_y, min_x, min_y;
+
+        coords.forEach(function(c) {
+            max_x = Math.max(max_x || c[0], c[0]);
+            max_y = Math.max(max_y || c[1], c[1]);
+            min_x = Math.min(min_x || c[0], c[0]);
+            min_y = Math.min(min_y || c[1], c[1]);
+        });
+
+        
+        centroid = [
+                    min_x + ((max_x - min_x) / 2.0),
+                    min_y + ((max_y - min_y) / 2.0)
+                    ]
+        
+        //console.log(centroid, max_x, min_x, max_y, min_y);
+        return centroid;
+    },
     /**
 	Returns SVG polygon "points" attribute from a list
 	of paired coordinates
@@ -1151,9 +1177,10 @@ Ext.define('Flux.view.D3GeographicMap', {
 //             
 //                 console.log(d3.mouse(this.wrapper[0][0]));
 //                 console.log(d3.event.translate);
-
+                
                 if (d3.event.translate) {
                     this.wrapper.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
+                    //translate(' + centroid[0] + ',' + centroid[1] + ')');
                 }
                 
                 // Scale the ROI vertices appropriately
@@ -1189,6 +1216,10 @@ Ext.define('Flux.view.D3GeographicMap', {
             })
             .style('pointer-events', 'all')
             .call(this.zoom)
+            .on('mousemove', function () {
+                console.log('moved');
+                view.zoom.center(d3.mouse(view.filler[0][0]));
+            })
             .on('dblclick.zoom', null)
 //             .on('click', function () {
 //                 view.clickToCenter();
@@ -1305,6 +1336,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         this.wrapper.append('polygon').attr({
                             'class': 'roi-polygon',
                             'points': this.getSVGPolyPoints(this._roiCoords.slice(0)),
+                            'centroid': this.getSVGPolyCentroid(this._roiCoords.slice(0)),
                             'pointer-events': 'none'
                         });
         
@@ -1504,11 +1536,13 @@ Ext.define('Flux.view.D3GeographicMap', {
         var newScale = scale * factor;
         var t = translation || this.zoom.translate();
         var c = [
-            this.svg.attr('width') * 0.5,
-            this.svg.attr('height') * 0.5
+            this.filler.attr('width') * 0.5,
+            this.filler.attr('height') * 0.5
         ];
 
         duration = duration || 500; // Duration in milliseconds
+
+        
         if (extent[0] <= newScale && newScale <= extent[1]) {
             this.zoom.scale(newScale)
                 .translate([

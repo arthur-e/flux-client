@@ -1063,7 +1063,25 @@ Ext.define('Flux.controller.UserInteraction', {
             map.setTbarForDrawnROI();
 
             // And draw the polygon 
-            map.redrawPolygon();                    
+            map.redrawPolygon();   
+            
+            // And zoom to ROI
+            var x, y;
+            var centroid = d3.selectAll('.roi-polygon').attr('centroid').split(',').map(Number);
+            var scale = map.zoom.scale();
+            var width = map.filler.attr('width');
+            var height = map.filler.attr('height')
+            
+
+            x = centroid[0];
+            y = centroid[1];
+
+            map.wrapper.transition()
+                .duration(750)
+                .attr('transform', 'translate(' + width/2 + ',' + height/2 + ')scale(' + scale + ')translate(' + -x + -y + ')');
+            
+            map.zoom.center([width/2, height/2]);
+            
         }
         
     },
@@ -1475,9 +1493,11 @@ Ext.define('Flux.controller.UserInteraction', {
          
          // Store the coords temporarily in case user wants to load them
          // again via one of the RoiOverlayForms
-         view._roiCoordsMostRecent = view._roiCoords.slice(0);
-         if (ao_gj) {ao_gj.down('button[name=load_recent]').setDisabled(false)};
-         if (ao_wkt) {ao_wkt.down('button[name=load_recent]').setDisabled(false)};
+         if (view._roiCoords) {
+            view._roiCoordsMostRecent = view._roiCoords.slice(0);
+            if (ao_gj) {ao_gj.down('button[name=load_recent]').setDisabled(false)};
+            if (ao_wkt) {ao_wkt.down('button[name=load_recent]').setDisabled(false)};
+         }
          
          
 	 delete view.polygon; // 

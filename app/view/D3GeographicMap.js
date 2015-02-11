@@ -244,6 +244,26 @@ Ext.define('Flux.view.D3GeographicMap', {
         var view = this;
 
         sel = sel || this.panes.raster.selectAll('.cell');
+        
+        // Add listeners for zooming/panning
+        //   Here, we're passing the drag behavior to the filler pane (where
+        //   the other zoom behavior is enacted) b/c putting pan behavior
+        //   on the same layer as the SVG element will be sludgy/unresponsive
+        //   b/c registered mouse position is constantly changing.
+        sel.on('mousedown.zoom', function () {
+                view.filler.on('mousedown.zoom').apply(view.filler[0][0]);
+            })
+            .on('touchstart.zoom', function () {
+                view.filler.on('touchstart.zoom').apply(view.filler[0][0]);
+            })
+            .on('touchmove.zoom', function () {
+                view.filler.on('touchmove.zoom').apply(view.filler[0][0]);
+            })
+            .on('touchend.zoom', function () {
+                view.filler.on('touchend.zoom').apply(view.filler[0][0]);
+            })            
+            .on('wheel.zoom', view.filler.on('wheel.zoom'));
+            
         sel.on('mouseover', function (d) {
             var c, m, p, ll, v;
 
@@ -567,27 +587,26 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
-    clickToCenter: function () {
-        var proj = this.getProjection();
-        
-        
-
-        var centroid = d3.mouse(this.svg[0][0]);
-        var translate = proj.translate();
-        
-        proj.translate([translate[0] - centroid[0] + this.svg.attr('width')  / 2,
-                        translate[1] - centroid[1] + this.svg.attr('height')  / 2
-                        ]);
-        
-        //this.zoom.translate(proj.translate());
-        
-        console.log(this.svg.selectAll('path'));
-        this.svg.selectAll('path').transition()
-            .duration(750)
-            .attr('d', d3.geo.path().projection(proj));
-
-        
-    },
+//     clickToCenter: function () {
+//         this.zoomFunc();
+// //         var proj = this.getProjection();
+// //         
+// //         var centroid = d3.event.translate();
+// //         var translate = proj.translate();
+// //         
+// //         proj.translate([translate[0] - centroid[0] + this.wrapper.attr('width')  / 2,
+// //                         translate[1] - centroid[1] + this.wrapper.attr('height')  / 2
+// //                         ]);
+// //         
+// //         this.zoom.translate(proj.translate());
+// //         
+// //         console.log(this.svg.selectAll('path'));
+// //         this.svg.selectAll('path').transition()
+// //             .duration(750)
+// //             .attr('d', d3.geo.path().projection(proj));
+// 
+//         
+//     },
         
     /**
         Constrains a set of mouse coordinates to valid lat/long values
@@ -1122,7 +1141,20 @@ Ext.define('Flux.view.D3GeographicMap', {
             .attr('height', height);
 
 	this.zoomFunc = function () {
-                this.wrapper.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
+//                 var proj = this.getProjection();
+//                 
+//                 var centroid = d3.mouse(this.wrapper[0][0]);
+//                 var translate = proj.translate();
+//                 console.log(proj.translate([translate[0] - centroid[0] + this.wrapper.attr('width')  / 2,
+//                                 translate[1] - centroid[1] + this.wrapper.attr('height')  / 2
+//                                 ])());
+//             
+//                 console.log(d3.mouse(this.wrapper[0][0]));
+//                 console.log(d3.event.translate);
+
+                if (d3.event.translate) {
+                    this.wrapper.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
+                }
                 
                 // Scale the ROI vertices appropriately
 		this.wrapper.selectAll('.roi-vertex').attr({
@@ -1136,32 +1168,16 @@ Ext.define('Flux.view.D3GeographicMap', {
                 this._currentZoomScale = d3.event.scale;
             }
             
-	this.setProjection(projection, width, height);
-        var proj = this.getProjection();
         this.zoom = d3.behavior.zoom()
-            //.translate(proj.translate())
-            //.scale(proj.scale())
-            .translate([0, 0])
-            .scale(1)
-            .scaleExtent([1, 10])
+            .scaleExtent([1, 60])
             .on('zoom', Ext.bind(this.zoomFunc, this));
 
-        // This container will apply zoom and pan transformations to the entire
-        //  content area; NOTE: layers that need to be zoomed and panned around
-        //  must be appended to the wrapper
 
         var view = this;
-        this.wrapper = this.svg.append('g')
-                        .attr('class', 'wrapper')
-//                         .call(this.zoom)
-//                         .on('dblclick.zoom', null)
-//                         .on('click', function () {
-//                             view.clickToCenter();
-//                         });
-                
+
                         
-        // Add a background element to receive pointer events in otherwise
-        //  "empty" space
+        // Add a transparent background element overlaying the "wrapper" element
+        // to handle zoom/pan behavior
         this.filler = this.svg.append('rect')
             .attr({
                 'class': 'filler',
@@ -1173,15 +1189,16 @@ Ext.define('Flux.view.D3GeographicMap', {
             })
             .style('pointer-events', 'all')
             .call(this.zoom)
-            .on('dblclick.zoom', null);
-        
-//         this.zoomRect = this.svg.append('rect')
-//                 .attr('fill', 'none')
-//                 .attr('width', width)
-//                 .attr('height', height)
-//                 .call(this.zoom)
-//                 .on('dblclick.zoom', null)
-//                 .style('pointer-events', 'all');
+            .on('dblclick.zoom', null)
+//             .on('click', function () {
+//                 view.clickToCenter();
+//             });
+            
+        // This container will apply zoom and pan transformations to the entire
+        //  content area; NOTE: layers that need to be zoomed and panned around
+        //  must be appended to the wrapper
+        this.wrapper = this.svg.append('g')
+                .attr('class', 'wrapper');
 
         // Create panes in which to organize content at difference z-index
         //  levels using painter's algorithm (first drawn on bottom; last drawn
@@ -1315,6 +1332,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return                 {Flux.view.D3GeographicMap}
      */
     setBasemap: function (basemapUrl, boundaries) {
+        var view = this;
         var clearBasemap = Ext.Function.bind(function () {
             this.panes.basemap.select('#basemap').remove();
         }, this);
@@ -1328,7 +1346,20 @@ Ext.define('Flux.view.D3GeographicMap', {
                 .selectAll('path')
                 .data(topojson.feature(json, json.objects.basemap).features)
                 .enter().append('path')
-                .attr('d', this.path);
+                .attr('d', this.path)
+                .on('mousedown.zoom', function () {
+                    view.filler.on('mousedown.zoom').apply(view.filler[0][0]);
+                })
+                .on('touchstart.zoom', function () {
+                    view.filler.on('touchstart.zoom').apply(view.filler[0][0]);
+                })
+                .on('touchmove.zoom', function () {
+                    view.filler.on('touchmove.zoom').apply(view.filler[0][0]);
+                })
+                .on('touchend.zoom', function () {
+                    view.filler.on('touchend.zoom').apply(view.filler[0][0]);
+                })            
+                .on('wheel.zoom', view.filler.on('wheel.zoom'));
 
             if (boundaries === 'inner' || boundaries === 'both') {
                 sel.append('path')

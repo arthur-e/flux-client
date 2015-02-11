@@ -299,7 +299,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         });
 
         if (this.getMetadata() && this.getMetadata().get('gridded')) {
-            sel.on('click', function () {
+            sel.on('click', function () {                
                 view.fireEventArgs('plotclick', [view, [
                     this.attributes.x.value,
                     this.attributes.y.value
@@ -321,9 +321,12 @@ Ext.define('Flux.view.D3GeographicMap', {
         var view = this;
 	var line, polygon, c, vindex;
 
+
+        
         sel = sel || this.selectAll('.roiCanvas');
 	
-	// temporarily disabled zooming while drawing is active
+	// temporarily disable zooming while drawing is active
+        view.filler.style('pointer-events', 'none');
 	view.zoom.on('zoom',null);
 	
         sel.on('mousemove', mousemove);
@@ -417,7 +420,9 @@ Ext.define('Flux.view.D3GeographicMap', {
             d3.selectAll('.roiCanvas').remove();
             
             // Reenable zoom
+            view.filler.style('pointer-events', 'all');
             view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
+            view.zoom.center = view._roiCoords[0];
 	    
             view.updateDisplay([{
                 id: 'timestamp',
@@ -562,6 +567,27 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
+    clickToCenter: function () {
+        var proj = this.getProjection();
+        
+        
+
+        var centroid = d3.mouse(this.svg[0][0]);
+        var translate = proj.translate();
+        
+        proj.translate([translate[0] - centroid[0] + this.svg.attr('width')  / 2,
+                        translate[1] - centroid[1] + this.svg.attr('height')  / 2
+                        ]);
+        
+        //this.zoom.translate(proj.translate());
+        
+        console.log(this.svg.selectAll('path'));
+        this.svg.selectAll('path').transition()
+            .duration(750)
+            .attr('d', d3.geo.path().projection(proj));
+
+        
+    },
         
     /**
         Constrains a set of mouse coordinates to valid lat/long values
@@ -1083,7 +1109,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         @param  height  {Number}
         @return         {Flux.view.D3GeographicMap}
      */
-    init: function (width, height) {
+    init: function (width, height, projection) {
         var elementId = '#' + this.items.getAt(0).id;
 	
         // Remove any previously-rendered SVG elements
@@ -1097,27 +1123,46 @@ Ext.define('Flux.view.D3GeographicMap', {
 
 	this.zoomFunc = function () {
                 this.wrapper.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
+                
+                // Scale the ROI vertices appropriately
 		this.wrapper.selectAll('.roi-vertex').attr({
 		    'r': this._vertexRadius / d3.event.scale,
 		    'stroke-width': this._vertexStrokeWidth / d3.event.scale
 		});
+                
+                // Scale the ROI polygon appropriately
 		this.wrapper.selectAll('.roi-polygon').style('stroke-width', this._polygonStrokeWidth / d3.event.scale);
-		this._currentZoomScale = d3.event.scale;
+		
+                this._currentZoomScale = d3.event.scale;
             }
-	
+            
+	this.setProjection(projection, width, height);
+        var proj = this.getProjection();
         this.zoom = d3.behavior.zoom()
+            //.translate(proj.translate())
+            //.scale(proj.scale())
+            .translate([0, 0])
+            .scale(1)
             .scaleExtent([1, 10])
             .on('zoom', Ext.bind(this.zoomFunc, this));
 
         // This container will apply zoom and pan transformations to the entire
         //  content area; NOTE: layers that need to be zoomed and panned around
         //  must be appended to the wrapper
-        this.wrapper = this.svg.append('g').attr('class', 'wrapper')
-            .call(this.zoom);
 
+        var view = this;
+        this.wrapper = this.svg.append('g')
+                        .attr('class', 'wrapper')
+//                         .call(this.zoom)
+//                         .on('dblclick.zoom', null)
+//                         .on('click', function () {
+//                             view.clickToCenter();
+//                         });
+                
+                        
         // Add a background element to receive pointer events in otherwise
         //  "empty" space
-        this.wrapper.append('rect')
+        this.filler = this.svg.append('rect')
             .attr({
                 'class': 'filler',
                 'width': width,
@@ -1126,7 +1171,17 @@ Ext.define('Flux.view.D3GeographicMap', {
                 'x': 0,
                 'y': 0
             })
-            .style('pointer-events', 'all');
+            .style('pointer-events', 'all')
+            .call(this.zoom)
+            .on('dblclick.zoom', null);
+        
+//         this.zoomRect = this.svg.append('rect')
+//                 .attr('fill', 'none')
+//                 .attr('width', width)
+//                 .attr('height', height)
+//                 .call(this.zoom)
+//                 .on('dblclick.zoom', null)
+//                 .style('pointer-events', 'all');
 
         // Create panes in which to organize content at difference z-index
         //  levels using painter's algorithm (first drawn on bottom; last drawn
@@ -1352,7 +1407,9 @@ Ext.define('Flux.view.D3GeographicMap', {
         height = height || this.svg.attr('height');
 
         this._projId = proj;
-        this._proj = d3.geo[proj]().scale(width * 0.15)
+        this._proj = d3.geo[proj]()
+            .scale(width * 0.15)
+            //.scale((1 << 12) / 2 / Math.PI)
             .translate([
                 Number(width) * 0.5,
                 Number(height) * 0.5
@@ -1447,7 +1504,8 @@ Ext.define('Flux.view.D3GeographicMap', {
      */
     setTbarForDrawnROI: function() {
         var tbar = this.down('toolbar[cls=map-tbar]');
-
+        var meta = this.getMetadata();
+        
         // Hide the "add" button
         tbar.down('button[itemId="btn-add-overlay"]').hide();
         
@@ -1457,7 +1515,8 @@ Ext.define('Flux.view.D3GeographicMap', {
         // Conditionally display the fetch-roi-time-series button
         var cmp = tbar.down('button[itemId="btn-fetch-roi-time-series"]');
         
-        if (this.getMetadata().get('gridded')) {
+
+        if (meta && meta.get('gridded')) {
             cmp.show();
         }
         cmp.setDisabled(!Ext.ComponentQuery.query('checkbox[name="showLinePlot"]')[0].checked);   

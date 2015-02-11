@@ -58,6 +58,15 @@ Ext.define('Flux.view.RoiOverlayForm', {
                     boxLabel: 'From text:',
                     hideOnClick: false
                 }, {
+                    xtype: 'button',
+                    name: 'load_recent',
+                    text: 'Load most recently drawn ROI',
+                    disabled: true,
+                    handler: function() {
+                        view.fireEvent('loadRoi', this);
+                    }
+                    
+                }, {
                     xtype: 'textarea',
                     name: 'roi_text',
                     padding: 2,

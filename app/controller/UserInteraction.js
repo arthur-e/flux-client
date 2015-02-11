@@ -106,12 +106,6 @@ Ext.define('Flux.controller.UserInteraction', {
             '#visual-menu': {
                 click: this.onVisualChange
             },
-            'ao_geojson' : {
-                submit: this.onSubmitRoiOverlay
-            },
-            'ao_wkt' : {
-                submit: this.onSubmitRoiOverlay
-            },
             'd3geomap': {
                 plotclick: this.onPlotClick,
                 fetchstats: this.fetchRoiSummaryStats,
@@ -160,7 +154,10 @@ Ext.define('Flux.controller.UserInteraction', {
             'overlayspanel datefield': {
                 afterselect: this.onOverlayDateSelection
             },
-
+            'roioverlayform' : {
+                submit: this.onSubmitRoiOverlay,
+                loadRoi: this.onLoadMostRecentRoi
+            },
             'sourcesgridpanel': {
                 beforeedit: this.onSourceGridEntry
             },
@@ -329,12 +326,14 @@ Ext.define('Flux.controller.UserInteraction', {
         // If the GeoJSON isn't already an object, try parsing as a string
         if (typeof gj == 'string') {
             try {
-                var gj = JSON.parse(gj);
+                gj = gj.replace(/\\n/gm,'').replace(/\\"/gm,'"').trim();
+                gj = JSON.parse(gj);
             } catch (err) {
                 alert('Syntax error in the provided GeoJSON text');
                 return
             }
         }
+        
         
         // Find the geometry key... accounting here for a number of possible nesting levels
         if (gj.hasOwnProperty('features')) { // i.e. if nested in a "FeatureCollection"...
@@ -973,7 +972,11 @@ Ext.define('Flux.controller.UserInteraction', {
             form.show(); // <-- form has to be rendered first or the text field will not exist
             form.down('textfield[name=roi_url]').setValue('https://rawgit.com/johan/world.geo.json/master/countries/USA/CA.geo.json');
             form.down('textarea[name=roi_text]').setValue('{"type":"Feature","geometry":{ "type": "Polygon","coordinates": [[[-100.0,50.0],[-105.0,50.0],[-105.0,55.0],[-100.0,55.0],[-100.0,50.0]]]}}');
-                
+           
+           // And enabled the "load most recent ROI" button if recently drawn ROI exists
+           if (this.getMap()._roiCoordsMostRecent) {
+               form.down('button[name=load_recent]').setDisabled(false);
+           }  
         } else {        
             form.show();
         }
@@ -1000,52 +1003,65 @@ Ext.define('Flux.controller.UserInteraction', {
            
            // Add some default values to use as examples
            form.show(); // <-- form has to be rendered first or the text field will not exist
-           form.down('textfield[name=roi_url]').setValue('https://rawgit.com/johan/world.geo.json/master/countries/USA/CA.geo.json');
+           form.down('textfield[name=roi_url]').setValue('http://mapproxy.org/static/polygons/US.txt');
            form.down('textarea[name=roi_text]').setValue('POLYGON((-107.1 52.7,-107.8 19.1785,-79.1 19.1,-83.9 54.3,-107.1 52.7))');
 
+           // And enabled the "load most recent ROI" button if recently drawn ROI exists
+           if (this.getMap()._roiCoordsMostRecent) {
+               form.down('button[name=load_recent]').setDisabled(false);
+           }
         } else {
             form.show();
         }
     },
 
+    onLoadMostRecentRoi: function(btn) {
+        var wkt, ao_form, txt;
+        var format = btn.up('panel').format;
+        var coords = this.getMap()._roiCoordsMostRecent;
+        
+        if (coords) {
+            wkt = this.convertRoiCoordsToWKT(coords.slice(0), ' ');
+            
+            if (format == 'geojson') {
+                ao_form = this.getAoGeoJSON();
+                txt = JSON.stringify(this.convertWKTtoGeoJSON(wkt));
+                
+            } else if (format == 'wkt') {
+                ao_form = this.getAoWKT();
+                txt = wkt;
+            }
+            
+            if (ao_form) {
+                ao_form.down('textarea[name=roi_text]').setValue(txt);
+            }
+        }
+  
+    },
+    
     /**
         Callback for when ROI data is successfully retrieved
         from URL or pasted-in text; draws ROI on map and makes
         UI changes.
         
         @param  btn             {Ext.Button.button}        
-        @param  roi             {String OR Object representing WKT or GeoJSON ROI}
+        @param  roi             {String} representing WKT or GeoJSON ROI
      */
     onReceiveRoiOverlay: function(btn, roi) {
-        var txt_gj, txt_wkt;
         var map = this.getMap();
-        var ao_geojson = this.getAoGeoJSON();
-        var ao_wkt = this.getAoWKT();
         var format = btn.up('panel').format;
         
         // Convert ROI to roiCoords and draw the polygon
         if (format == 'geojson') {
             map._roiCoords = this.convertGeoJSONtoRoiCoords(roi);
-            txt_gj = JSON.stringify(roi);
-            txt_wkt = this.convertRoiCoordsToWKT(map._roiCoords.slice(0), ' ');
         } else if (format == 'wkt') {
             map._roiCoords = this.convertWKTtoRoiCoords(roi);
-            txt_gj = JSON.stringify(this.convertWKTtoGeoJSON(roi));
-            txt_wkt = roi;
         }
 
         if (map._roiCoords && map._roiCoords.length > 2) {
             // Make UI changes
             map.setTbarForDrawnROI();
-            
-            // Replace contents of the GeoJSON text input field w/ the text of the loaded ROI
-            if (ao_geojson) {;
-                ao_geojson.down('textarea[name=roi_text]').setValue(txt_gj); 
-            }
-            
-            if (ao_wkt) {
-                ao_wkt.down('textarea[name=roi_text]').setValue(txt_wkt);
-            }
+
             // And draw the polygon 
             map.redrawPolygon();                    
         }
@@ -1079,7 +1095,7 @@ Ext.define('Flux.controller.UserInteraction', {
                     if (status == 200) {
                         view.onReceiveRoiOverlay(btn, xhr.response);
                     } else {
-                        alert('Error loading GeoJSON from requested URL', xhr.response);
+                        alert('Error loading from requested URL', xhr.response);
                     } 
                 }
             }
@@ -1443,6 +1459,8 @@ Ext.define('Flux.controller.UserInteraction', {
 	@param btn	{Ext button}
     */ 
     removeRoiOverlay: function (btn) {
+         var ao_gj = this.getAoGeoJSON();
+         var ao_wkt = this.getAoWKT();
 	 var view = btn.up('d3geomap'); 
       
 	  // Remove the rectangular drawing overlay that blocks pointer-events
@@ -1454,6 +1472,13 @@ Ext.define('Flux.controller.UserInteraction', {
 	 d3.selectAll('.roi-polygon').remove(); // this removes the drawn polygon
 	 d3.selectAll('.roi-vertex').remove(); // remove vertices
 	 d3.selectAll('.roi-tracker').remove();
+         
+         // Store the coords temporarily in case user wants to load them
+         // again via one of the RoiOverlayForms
+         view._roiCoordsMostRecent = view._roiCoords.slice(0);
+         if (ao_gj) {ao_gj.down('button[name=load_recent]').setDisabled(false)};
+         if (ao_wkt) {ao_wkt.down('button[name=load_recent]').setDisabled(false)};
+         
          
 	 delete view.polygon; // 
 	 delete view._roiCoords; // remove memory of previous drawing coords

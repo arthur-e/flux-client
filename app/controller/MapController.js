@@ -115,7 +115,7 @@ Ext.define('Flux.controller.MapController', {
                 return k;
         }, this)());
 
-        cmp.init(width, height)
+        cmp.init(width, height, opts.projection)
             .setProjection(opts.projection, width, height)
             .setBasemap(opts.basemap, kw);
 

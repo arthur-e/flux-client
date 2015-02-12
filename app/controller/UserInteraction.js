@@ -1061,28 +1061,13 @@ Ext.define('Flux.controller.UserInteraction', {
         if (map._roiCoords && map._roiCoords.length > 2) {
             // Make UI changes
             map.setTbarForDrawnROI();
-
-            // And draw the polygon 
+            
+            // Draw the polygon 
             map.redrawPolygon();   
-            
-            // And zoom to ROI
-            var x, y;
-            var centroid = d3.selectAll('.roi-polygon').attr('centroid').split(',').map(Number);
-            var scale = map.zoom.scale();
-            var width = map.filler.attr('width');
-            var height = map.filler.attr('height');
-            
-            x = centroid[0];
-            y = centroid[1];
-
-            map.wrapper.transition()
-                .duration(750)
-                .attr('transform', 'translate(' + width/2 + ',' + height/2 + ')scale(' + scale + ')translate(' + -x + -y + ')');
-            
-            map.zoom.center([width/2, height/2]);
-            
+             
+            // Zoom to ROI
+            map.setZoomToRoiCenter();            
         }
-        
     },
     
     /**
@@ -1510,6 +1495,7 @@ Ext.define('Flux.controller.UserInteraction', {
             }]);
 	 
 	 // Re-enable zoom
+         view.filler.style('pointer-events', 'all');
 	 view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
     },
     /**

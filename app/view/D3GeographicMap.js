@@ -8,11 +8,6 @@ Ext.define('Flux.view.D3GeographicMap', {
         'Flux.store.Rasters'
     ],
     /**
-        An internal reference to the zoom scale.
-        @private
-      */
-    _currentZoomScale: 1,
-    /**
         An internal reference to the legend selection.
         @private
       */
@@ -420,8 +415,10 @@ Ext.define('Flux.view.D3GeographicMap', {
 	 
 	    var cs = view._roiCoords.slice(0);
 	    
+            var bbox = view.getSVGPolyBbox(cs);
 	    polygon.attr('points', view.getSVGPolyPoints(cs));
-            polygon.attr('centroid', view.getSVGPolyCentroid(cs));
+            polygon.attr('centroid', view.getSVGPolyCentroid(bbox));
+            polygon.attr('bbox', bbox);
 
 	    // Reset listeners
 	    sel.on('mousemove', null);
@@ -447,10 +444,10 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    // Remove canvas to awaken sleeping listeners underneath
             d3.selectAll('.roiCanvas').remove();
             
-            // Reenable zoom
+            // Reenable zoom and zoom to ROI center
             view.filler.style('pointer-events', 'all');
             view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
-            view.zoom.center = view._roiCoords[0];
+            view.setZoomToRoiCenter();
 	    
             view.updateDisplay([{
                 id: 'timestamp',
@@ -498,45 +495,21 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
     
-    /** Creates listeners for vertices to grow/shrink
+    /** 
+        Creates listeners for vertices to grow/shrink
         and enable dragging
     */
     addListenersForVertices: function () {
 	var view = this;
 	var vertices = this.wrapper.selectAll('.roi-vertex');
 	var polygon = this.wrapper.selectAll('polygon');
-        var proj = this.getProjection();
-
+        
 	vertices.attr('pointer-events','all');
 	
-	vertices.on('mouseover', function () {
-	    // panning will interfere with vertex dragging unless it is disabled
-	    // NOTE: if you drag quick enough to "outrun" the vertex being dragged,
-	    //       it will trigger 'mouseout' below and therefore briefly re-enable panning.
-	    //       Minor bug, but might be worth looking into fixing
-	    
-	    
-	    d3.select(this).transition()
-		.duration(40)
-		.ease('linear')
-		.attr({
-		    'fill':'#CC0000',
-		    'r': view._vertexRadius*2 / view._currentZoomScale,
-		    'stroke-width': view._vertexStrokeWidth*2 / view._currentZoomScale
-		});
-	    });
+        // Update mouseover/mouseout listeners
+        view.updateListenersForVertices();
 
-	vertices.on('mouseout', function () {
-	    d3.select(this).transition()
-		.duration(80)
-		.ease('linear')
-		.attr({
-		    'fill':'#800000',
-		    'r': view._vertexRadius / view._currentZoomScale,
-		    'stroke-width': view._vertexStrokeWidth / view._currentZoomScale
-		});
-	    });
-
+        // Define drag behavior
 	var drag = d3.behavior.drag()
 	    .on('drag', function () {
                 view.zoom.on('zoom',null);
@@ -579,6 +552,35 @@ Ext.define('Flux.view.D3GeographicMap', {
 	return this;
     },
     
+    updateListenersForVertices: function () {
+        var view = this;
+        var vertices = this.wrapper.selectAll('.roi-vertex');
+        var zoomScale = this.zoom.scale();
+        
+        vertices.on('mouseover', function () {
+            d3.select(this).transition()
+                .duration(40)
+                .ease('linear')
+                .attr({
+                    'fill':'#CC0000',
+                    'r': view._vertexRadius*2 / zoomScale,
+                    'stroke-width': view._vertexStrokeWidth*2 / zoomScale
+                });
+            });
+
+        vertices.on('mouseout', function () {
+            d3.select(this).transition()
+                .duration(80)
+                .ease('linear')
+                .attr({
+                    'fill':'#800000',
+                    'r': view._vertexRadius / zoomScale,
+                    'stroke-width': view._vertexStrokeWidth / zoomScale
+                });
+            });
+        
+    },
+    
     /**
         Removes the drawn elements from the drawing plane.
         @return {Flux.view.D3GeographicMap}
@@ -594,27 +596,6 @@ Ext.define('Flux.view.D3GeographicMap', {
         this.isDrawn = false;
         return this;
     },
-
-//     clickToCenter: function () {
-//         this.zoomFunc();
-// //         var proj = this.getProjection();
-// //         
-// //         var centroid = d3.event.translate();
-// //         var translate = proj.translate();
-// //         
-// //         proj.translate([translate[0] - centroid[0] + this.wrapper.attr('width')  / 2,
-// //                         translate[1] - centroid[1] + this.wrapper.attr('height')  / 2
-// //                         ]);
-// //         
-// //         this.zoom.translate(proj.translate());
-// //         
-// //         console.log(this.svg.selectAll('path'));
-// //         this.svg.selectAll('path').transition()
-// //             .duration(750)
-// //             .attr('d', d3.geo.path().projection(proj));
-// 
-//         
-//     },
         
     /**
         Constrains a set of mouse coordinates to valid lat/long values
@@ -785,23 +766,6 @@ Ext.define('Flux.view.D3GeographicMap', {
             view.panes.roistats.selectAll('.' + s)
                 .transition()
                 .duration(400)
-//                 .each('start', function () {
-//                     if (val > this.textContent) {
-//                         d3.select(this).style({'fill': '#80B280',
-//                                                'font-size': fs}
-//                         );
-//                     }
-//                     if (val < this.textContent) {
-//                         d3.select(this).style({'fill': '#C08080',
-//                                                'font-size': fs}
-//                         );
-//                     }
-//                     })
-//                 .each('end', function () {
-//                     d3.select(this).style({'fill': '#F5F5F5',
-//                                            'font-size': fs}
-//                     );
-//                 })
                 .tween('text', function() {
                     var start_num = 0;
                     if (this.textContent != 'NaN') {
@@ -933,8 +897,8 @@ Ext.define('Flux.view.D3GeographicMap', {
 	    'vindex': vindex,
 	    'cx': coords[0],
 	    'cy': coords[1],
-	    'r': this._vertexRadius / this._currentZoomScale,
-	    'stroke-width': this._vertexStrokeWidth / this._currentZoomScale,
+	    'r': this._vertexRadius / this.zoom.scale(),
+	    'stroke-width': this._vertexStrokeWidth / this.zoom.scale(),
 	    'fill': '#800000',
 	    'pointer-events': 'none' // otherwise double-click won't register
 	};
@@ -1046,15 +1010,14 @@ Ext.define('Flux.view.D3GeographicMap', {
     getScale: function () {
         return this._scale;
     },
+    
     /**
-        Returns SVG polygon "points" attribute from a list
-        of paired coordinates
+        Returns SVG polygon "bbox" attribute from an array of coordinates
         @param coords   {Array}
         @return         {String}
      */
-    
-    getSVGPolyCentroid: function(coords) {
-        var centroid, max_x, max_y, min_x, min_y;
+    getSVGPolyBbox: function(coords) {
+        var bbox, max_x, max_y, min_x, min_y;
 
         coords.forEach(function(c) {
             max_x = Math.max(max_x || c[0], c[0]);
@@ -1063,15 +1026,23 @@ Ext.define('Flux.view.D3GeographicMap', {
             min_y = Math.min(min_y || c[1], c[1]);
         });
 
+        bbox = [min_x, min_y, max_x, max_y];
         
-        centroid = [
-                    min_x + ((max_x - min_x) / 2.0),
-                    min_y + ((max_y - min_y) / 2.0)
-                    ]
-        
-        //console.log(centroid, max_x, min_x, max_y, min_y);
-        return centroid;
+        return bbox;
     },
+    
+    /**
+        Returns SVG polygon "centroid" attribute from a bbox
+        @param coords   {Array}
+        @return         {String}
+     */
+    getSVGPolyCentroid: function(bbox) {
+        return  [
+                    bbox[0] + ((bbox[2] - bbox[0]) / 2.0),
+                    bbox[1] + ((bbox[3] - bbox[1]) / 2.0)
+                ];
+    },
+    
     /**
 	Returns SVG polygon "points" attribute from a list
 	of paired coordinates
@@ -1186,8 +1157,9 @@ Ext.define('Flux.view.D3GeographicMap', {
                 
                 // Scale the ROI polygon appropriately
 		this.wrapper.selectAll('.roi-polygon').style('stroke-width', this._polygonStrokeWidth / d3.event.scale);
-		
-                this._currentZoomScale = d3.event.scale;
+                
+                // Update the scaling for the mouseover/mouseout listeners on ROI polygon vertices
+                this.updateListenersForVertices();
             }
             
         this.zoom = d3.behavior.zoom()
@@ -1312,8 +1284,6 @@ Ext.define('Flux.view.D3GeographicMap', {
 	
 	// If a drawn polygon existed and has not been destroyed, it needs to be redrawn too
         if (this._roiCoords && this.wrapper.selectAll('.roi-polygon')[0].length === 0) {
-	    // reset zoom scale so that polygon vertices show up at the right size
-	    this._currentZoomScale = 1;
 	    this.redrawPolygon();
 	}
         return this;
@@ -1326,22 +1296,24 @@ Ext.define('Flux.view.D3GeographicMap', {
     redrawPolygon: function () {
         var view = this;
       
-        // add the polygon
+        // Add the SVG polygon elements
+        var bbox = this.getSVGPolyBbox(this._roiCoords.slice(0));
         this.wrapper.append('polygon').attr({
                             'class': 'roi-polygon',
                             'points': this.getSVGPolyPoints(this._roiCoords.slice(0)),
-                            'centroid': this.getSVGPolyCentroid(this._roiCoords.slice(0)),
+                            'bbox' : bbox,
+                            'centroid': this.getSVGPolyCentroid(bbox),
                             'pointer-events': 'none'
                         });
         
-        // add vertices
+        // Add vertices
         var vindex = 0;
         this._roiCoords.forEach( function (c) {
             view.wrapper.append('circle').attr(view.getVertexAttrs(vindex, c));
             vindex += 1;
         });
         
-        // add grow/shrink and drag listeners for vertices
+        // Add grow/shrink and drag listeners for vertices
         this.addListenersForVertices();
         
         // get summary stats
@@ -1544,6 +1516,42 @@ Ext.define('Flux.view.D3GeographicMap', {
         }
 
         return this;
+    },
+    
+    setZoomToRoiCenter: function() {
+        var x, y;
+        var centroid = d3.selectAll('.roi-polygon').attr('centroid').split(',').map(Number);
+        var bbox = d3.selectAll('.roi-polygon').attr('bbox').split(',').map(Number);
+        var proj = this.getProjection();
+        var width = this.filler.attr('width');
+        var height = this.filler.attr('height');
+        var scale = 0.8 * (width / Math.abs(proj([bbox[2], 0])[0] - proj([bbox[0], 0])[0]));
+        var duration = 500;
+        
+        x = centroid[0];
+        y = centroid[1];
+
+        this.wrapper.transition()
+            .duration(750)
+            .attr('transform', 'translate(' + width/2 + ',' + height/2 + ')scale(' + scale + ')translate(' + -x + -y + ')');
+
+            
+        // Scale the ROI vertices appropriately
+        this.wrapper.selectAll('.roi-vertex').attr({
+            'r': this._vertexRadius / scale,
+            'stroke-width': this._vertexStrokeWidth / scale
+        });
+        
+        // Scale the ROI polygon appropriately
+        this.wrapper.selectAll('.roi-polygon').style('stroke-width', this._polygonStrokeWidth / scale);
+        
+        // Let the zoomer know that we've changed zoom/location
+        this.zoom.scale(scale);
+        this.zoom.center([width/2, height/2]);
+        this.zoom.translate([-x*scale+width/2, -y*scale+height/2]);
+        
+        // And update scale of vertice mouseover/mouseout listeners
+        this.updateListenersForVertices();
     },
     
     /**

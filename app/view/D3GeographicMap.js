@@ -253,6 +253,9 @@ Ext.define('Flux.view.D3GeographicMap', {
         sel.on('mousedown.zoom', function () {
                 view.filler.on('mousedown.zoom').apply(view.filler[0][0]);
             })
+            .on('mousemove.zoom', function () {
+                view.filler.on('mousemove.zoom').apply(view.filler[0][0]);
+            })
             .on('touchstart.zoom', function () {
                 view.filler.on('touchstart.zoom').apply(view.filler[0][0]);
             })
@@ -262,7 +265,11 @@ Ext.define('Flux.view.D3GeographicMap', {
             .on('touchend.zoom', function () {
                 view.filler.on('touchend.zoom').apply(view.filler[0][0]);
             })            
-            .on('wheel.zoom', view.filler.on('wheel.zoom'));
+            .on('wheel.zoom', function () {
+                view.zoom.center(d3.mouse(view.filler[0][0])); // can pseudo fix by setting zoom.center to mouse of wrapper or 'this'
+                view.filler.on('wheel.zoom').apply(view.filler[0][0]); // does not matter which svg element used here
+            });
+
             
         sel.on('mouseover', function (d) {
             var c, m, p, ll, v;
@@ -1167,20 +1174,8 @@ Ext.define('Flux.view.D3GeographicMap', {
             .attr('height', height);
 
 	this.zoomFunc = function () {
-//                 var proj = this.getProjection();
-//                 
-//                 var centroid = d3.mouse(this.wrapper[0][0]);
-//                 var translate = proj.translate();
-//                 console.log(proj.translate([translate[0] - centroid[0] + this.wrapper.attr('width')  / 2,
-//                                 translate[1] - centroid[1] + this.wrapper.attr('height')  / 2
-//                                 ])());
-//             
-//                 console.log(d3.mouse(this.wrapper[0][0]));
-//                 console.log(d3.event.translate);
-                
                 if (d3.event.translate) {
                     this.wrapper.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
-                    //translate(' + centroid[0] + ',' + centroid[1] + ')');
                 }
                 
                 // Scale the ROI vertices appropriately
@@ -1217,7 +1212,6 @@ Ext.define('Flux.view.D3GeographicMap', {
             .style('pointer-events', 'all')
             .call(this.zoom)
             .on('mousemove', function () {
-                console.log('moved');
                 view.zoom.center(d3.mouse(view.filler[0][0]));
             })
             .on('dblclick.zoom', null)
@@ -1379,19 +1373,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                 .data(topojson.feature(json, json.objects.basemap).features)
                 .enter().append('path')
                 .attr('d', this.path)
-                .on('mousedown.zoom', function () {
-                    view.filler.on('mousedown.zoom').apply(view.filler[0][0]);
-                })
-                .on('touchstart.zoom', function () {
-                    view.filler.on('touchstart.zoom').apply(view.filler[0][0]);
-                })
-                .on('touchmove.zoom', function () {
-                    view.filler.on('touchmove.zoom').apply(view.filler[0][0]);
-                })
-                .on('touchend.zoom', function () {
-                    view.filler.on('touchend.zoom').apply(view.filler[0][0]);
-                })            
-                .on('wheel.zoom', view.filler.on('wheel.zoom'));
+                .style('pointer-events', 'none');
 
             if (boundaries === 'inner' || boundaries === 'both') {
                 sel.append('path')

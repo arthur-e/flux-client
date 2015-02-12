@@ -1070,9 +1070,8 @@ Ext.define('Flux.controller.UserInteraction', {
             var centroid = d3.selectAll('.roi-polygon').attr('centroid').split(',').map(Number);
             var scale = map.zoom.scale();
             var width = map.filler.attr('width');
-            var height = map.filler.attr('height')
+            var height = map.filler.attr('height');
             
-
             x = centroid[0];
             y = centroid[1];
 

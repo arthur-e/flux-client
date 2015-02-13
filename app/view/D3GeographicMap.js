@@ -143,29 +143,73 @@ Ext.define('Flux.view.D3GeographicMap', {
                         listeners: {
                             click: Ext.bind(this.setZoom, this, [0.1])
                         }
-                    }, {
-                        itemId: 'btn-draw-polygon',
-                        iconCls: 'icon-draw',
-                        tooltip: 'Draw ROI',
-                        hidden: true
+//                     }, {
+//                         itemId: 'btn-draw-polygon',
+//                         iconCls: 'icon-draw',
+//                         tooltip: 'Draw ROI',
+//                         hidden: true
                     }, {
 		        itemId: 'btn-cancel-polygon',
                         iconCls: 'icon-draw',
                         tooltip: 'Cancel drawing',
 			style: 'background: #ffcc00;',
 			hidden: true
-                    }, {
-			itemId: 'btn-erase-polygon',
-			iconCls: 'icon-erase',
-			tooltip: 'Erase ROI',
-			hidden: true
-                    }, {
-                        itemId: 'btn-fetch-roi-time-series',
-                        iconCls: 'icon-draw-time-series',
-                        tooltip: 'Fetch Time-Series for ROI (enabled only if "Show line plot" is checked)',
-                        disabled: false,
-                        hidden: true
+//                     }, {
+// 			itemId: 'btn-erase-polygon',
+// 			iconCls: 'icon-erase',
+// 			tooltip: 'Erase ROI',
+// 			hidden: true
+//                     }, {
+//                         itemId: 'btn-fetch-roi-time-series',
+//                         iconCls: 'icon-draw-time-series',
+//                         tooltip: 'Fetch Time-Series for ROI (enabled only if "Show line plot" is checked)',
+//                         disabled: false,
+//                         hidden: true
 		    }, {
+                        itemId: 'btn-overlay-tools',
+                        iconCls: 'icon-addoverlay',
+                        arrowCls: 'icon-addoverlay',
+                        style: 'background: #E9B8B8;',
+                        menuAlign: 'l-r?',
+                        hidden: true,
+                        menu: {
+                            xtype: 'menu',
+                            cls: 'add-overlay-menu',
+                            bodyCls: 'add-overlay-menu-body',
+                            plain: true,
+                            columns: 1,
+                            padding: 4,
+                            margin: 0,
+                            shadow: false,
+                            defaults: {
+                                xtype: 'button',
+                                scale: 'small',
+                                textAlign: 'left',
+                                height: 20,
+                                cls: 'add-overlay-menu-item'
+                            },
+                            items: [{
+//                                 xtype: 'label',
+//                                 text: 'ROI Tools...',
+//                                 cls: 'add-overlay-menu-title'
+//                             }, {
+                                itemId: 'btn-fetch-roi-time-series',
+                                text: 'Fetch time series',
+                                tooltip: 'Check "Show line plot" to enable'
+                            }, {
+                                itemId: 'btn-remove-roi',
+                                text: 'Remove',
+                            }]
+                        },
+                         listeners: {
+                            mouseover: function() {
+                                this.showMenu();
+                            },
+                            menushow: function() {
+                                this.mouseLeaveMonitor = this.menu.el.monitorMouseLeave(0, this.hideMenu, this);
+                            },
+                        }
+                    }, {
                         itemId: 'btn-add-overlay',
                         iconCls: 'icon-addoverlay',
                         arrowCls: 'icon-addoverlay',
@@ -185,6 +229,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                                 scale: 'small',
                                 textAlign: 'left',
                                 height: 20,
+                                cls: 'add-overlay-menu-item'
                             },
                             items: [{
                                 xtype: 'label',
@@ -193,15 +238,12 @@ Ext.define('Flux.view.D3GeographicMap', {
                             }, {
                                 itemId: 'btn-ao-draw',
                                 text: 'Draw',
-                                cls: 'add-overlay-menu-item',
                             }, {
                                 itemId: 'btn-ao-wkt',
                                 text: 'From WKT',
-                                cls: 'add-overlay-menu-item',
                             }, {
                                 itemId: 'btn-ao-geojson',
                                 text: 'From GeoJSON',
-                                cls: 'add-overlay-menu-item',
                             }]
                         },
                          listeners: {
@@ -211,9 +253,6 @@ Ext.define('Flux.view.D3GeographicMap', {
                             menushow: function() {
                                 this.mouseLeaveMonitor = this.menu.el.monitorMouseLeave(0, this.hideMenu, this);
                             },
-//                             destroy: function(cmb) {
-//                                 cmb.menu.el.un(cmb.mouseLeaveMonitor);
-//                             }
                         }
                      }, {
                         itemId: 'btn-save-image',
@@ -1569,16 +1608,15 @@ Ext.define('Flux.view.D3GeographicMap', {
         var tbar = this.down('toolbar[cls=map-tbar]');
         var meta = this.getMetadata();
         
-        // Hide the "add" button
+        // Hide the "Add ROI" menu
         tbar.down('button[itemId="btn-add-overlay"]').hide();
         
-        // Show the "erase" button
-        tbar.down('button[itemId="btn-erase-polygon"]').show();
+        // Show the "ROI Tools" menu
+        tbar.down('button[itemId="btn-overlay-tools"]').show();
         
         // Conditionally display the fetch-roi-time-series button
         var cmp = tbar.down('button[itemId="btn-fetch-roi-time-series"]');
         
-
         if (meta && meta.get('gridded')) {
             cmp.show();
         }

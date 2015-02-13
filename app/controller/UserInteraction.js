@@ -121,10 +121,9 @@ Ext.define('Flux.controller.UserInteraction', {
             'd3geomap #btn-ao-geojson': {
                 click: this.onAddGeoJSON
             },
-	    'd3geomap #btn-erase-polygon': {
-		click: this.onEraseRoiDrawing
+	    'd3geomap #btn-remove-roi': {
+		click: this.onRemoveRoi
 	    },
-
 	    'd3geomap #btn-cancel-polygon': {
 		click: this.onCancelRoiDrawing
 	    },
@@ -717,7 +716,9 @@ Ext.define('Flux.controller.UserInteraction', {
                 metadata.getId()),
 
             callback: function () {
-                view.getEl().unmask();
+                if (view.getEl()) {
+                    view.getEl().unmask();
+                }
             },
 
             failure: function (response) {
@@ -1455,21 +1456,32 @@ Ext.define('Flux.controller.UserInteraction', {
 	btn.up('toolbar').down('button[itemId="btn-add-overlay"]').show();
     },
     
-    /** Removes polygon elements and handles UI implications
+    /** Handles click of btn-remove-roi button, making
+        UI changes and removing data
 	@param btn	{Ext button}
      */ 
-    onEraseRoiDrawing: function (btn) {
-	 this.removeRoiOverlay(btn);
-         this.removeRoiTimeSeries();
+    onRemoveRoi: function (btn) {
+        this.removeRoiOverlay(btn);
+        this.removeRoiTimeSeries();
 	 
-	 // hide yourself since no polygon exists to erase anymore
-	 btn.hide();
+        var menu = btn.up('menu');
+        var menu_btn = btn.up('button');
+        var tbar = menu.up('toolbar');
+        
+        // Hide yourself and your menu since no polygon exists to erase anymore
+        //btn.hide();
+        menu.hide();
+        menu_btn.hide();
+        
+        // Show the "add ROI" button
+        tbar.down('button[itemId=btn-add-overlay]').show();
+
          
          // hide time-series fetcher for same reason
-         btn.up('toolbar').down('button[itemId="btn-fetch-roi-time-series"]').hide();
+         //btn.up('toolbar').down('button[itemId="btn-fetch-roi-time-series"]').hide();
 	 
-	 // and reenable draw button
-	 btn.up('toolbar').down('button[itemId="btn-add-overlay"]').show();
+// 	 // and reenable draw button
+// 	 btn.up('toolbar').down('button[itemId="btn-add-overlay"]').show();
 
     },
     

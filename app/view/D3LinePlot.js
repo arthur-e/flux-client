@@ -179,7 +179,7 @@ Ext.define('Flux.view.D3LinePlot', {
         var y = this.scales.y;
         var view = this;
         
-        displayText = displayText || 'mean +/- std of user-defined region-of-interest';
+        displayText = displayText || 'mean +/- std of ROI';
         
         seriesStats['series'] = seriesStats['seriesMean'];
         var series = Ext.create('Flux.model.TimeSeries',seriesStats);   

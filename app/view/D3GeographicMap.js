@@ -31,7 +31,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         The stroke-width size for ROI polygon
         @private
      */
-    _polygonStrokeWidth: 1, 
+    _polygonStrokeWidth: 1.5, 
     
     
     /**
@@ -162,7 +162,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                     }, {
                         itemId: 'btn-fetch-roi-time-series',
                         iconCls: 'icon-draw-time-series',
-                        tooltip: 'Fetch Time-Series for Drawn Polygon (enabled only if "Show line plot" is checked)',
+                        tooltip: 'Fetch Time-Series for ROI (enabled only if "Show line plot" is checked)',
                         disabled: false,
                         hidden: true
 		    }, {
@@ -170,7 +170,6 @@ Ext.define('Flux.view.D3GeographicMap', {
                         iconCls: 'icon-addoverlay',
                         arrowCls: 'icon-addoverlay',
                         menuAlign: 'l-r?',
-                        tooltip: 'Add ROI overlay',
                         hidden: false,
                         menu: {
                             xtype: 'menu',
@@ -188,6 +187,10 @@ Ext.define('Flux.view.D3GeographicMap', {
                                 height: 20,
                             },
                             items: [{
+                                xtype: 'label',
+                                text: 'Add ROI',
+                                cls: 'add-overlay-menu-title'
+                            }, {
                                 itemId: 'btn-ao-draw',
                                 text: 'Draw',
                                 cls: 'add-overlay-menu-item',
@@ -198,10 +201,6 @@ Ext.define('Flux.view.D3GeographicMap', {
                             }, {
                                 itemId: 'btn-ao-geojson',
                                 text: 'From GeoJSON',
-                                cls: 'add-overlay-menu-item',
-                            }, {
-                                itemId: 'btn-ao-wms',
-                                text: 'From WMS',
                                 cls: 'add-overlay-menu-item',
                             }]
                         },
@@ -343,8 +342,6 @@ Ext.define('Flux.view.D3GeographicMap', {
         var view = this;
 	var line, polygon, c, vindex;
 
-
-        
         sel = sel || this.selectAll('.roiCanvas');
 	
 	// temporarily disable zooming while drawing is active
@@ -369,11 +366,13 @@ Ext.define('Flux.view.D3GeographicMap', {
 
 	    // add polygon if it doesn't yet exist
 	    if (!polygon) {
-		polygon = view.wrapper.append('polygon').attr({
+		polygon = view.wrapper.append('polygon')
+                        .attr({
 			    'class': 'roi-polygon',
 			    'points': view.getSVGPolyPoints(view._tmpRoiCoords.slice(0)),
 			    'pointer-events': 'none'
-			});
+			})
+                        .style('stroke-width', view._polygonStrokeWidth / view.zoom.scale());
 
 		vindex = 0;
 	    }
@@ -466,7 +465,8 @@ Ext.define('Flux.view.D3GeographicMap', {
                     'class': 'roi-tracker',
                     'cx': m[0],
                     'cy': m[1],
-                    'r': 2,
+                    'r': view._vertexRadius / view.zoom.scale(),
+                    'stroke-width': view._vertexStrokeWidth / view.zoom.scale(), 
                     'fill': '#800000',
                     'pointer-events': 'none' // otherwise double-click won't register);
                 });
@@ -1518,6 +1518,9 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
     
+    /**
+        Set the zoom level to that of the currently loaded ROI polygon.
+     */
     setZoomToRoiCenter: function() {
         var x, y;
         var centroid = d3.selectAll('.roi-polygon').attr('centroid').split(',').map(Number);
@@ -1525,7 +1528,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         var proj = this.getProjection();
         var width = this.filler.attr('width');
         var height = this.filler.attr('height');
-        var scale = 0.8 * (width / Math.abs(proj([bbox[2], 0])[0] - proj([bbox[0], 0])[0]));
+        var scale = 0.8 * (width / Math.abs(proj([0, 0])[0] - proj([bbox[0]-bbox[2], 0])[0]));
         var duration = 500;
         
         x = centroid[0];
@@ -1535,7 +1538,6 @@ Ext.define('Flux.view.D3GeographicMap', {
             .duration(750)
             .attr('transform', 'translate(' + width/2 + ',' + height/2 + ')scale(' + scale + ')translate(' + -x + -y + ')');
 
-            
         // Scale the ROI vertices appropriately
         this.wrapper.selectAll('.roi-vertex').attr({
             'r': this._vertexRadius / scale,

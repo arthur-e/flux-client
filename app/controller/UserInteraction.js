@@ -334,7 +334,6 @@ Ext.define('Flux.controller.UserInteraction', {
             }
         }
         
-        
         // Find the geometry key... accounting here for a number of possible nesting levels
         if (gj.hasOwnProperty('features')) { // i.e. if nested in a "FeatureCollection"...
             gj = gj.features[0];
@@ -1003,7 +1002,7 @@ Ext.define('Flux.controller.UserInteraction', {
            
            // Add some default values to use as examples
            form.show(); // <-- form has to be rendered first or the text field will not exist
-           form.down('textfield[name=roi_url]').setValue('http://mapproxy.org/static/polygons/US.txt');
+           form.down('textfield[name=roi_url]').setValue('http://webserver.mtri.org/static/conus.txt');
            form.down('textarea[name=roi_text]').setValue('POLYGON((-107.1 52.7,-107.8 19.1785,-79.1 19.1,-83.9 54.3,-107.1 52.7))');
 
            // And enabled the "load most recent ROI" button if recently drawn ROI exists
@@ -1082,26 +1081,17 @@ Ext.define('Flux.controller.UserInteraction', {
         if (btn.up('panel').down('radiofield[inputValue=url]').checked) {
             var url = btn.up('panel').down('textfield[name=roi_url]').value;
             
-            // This is a really specific fix b/c the default example URL requires it
-            url = url.replace('raw.githubusercontent','rawgit');
-            
-            var xhr = new XMLHttpRequest();
-            var view = this;
-            
-            // Load the JSON object from URL
-            xhr.open('get',url, true);   
-            xhr.responseType = 'json'; // <- this is critical to include; otherwise will encounter cross-origin request errors
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState == 4) {
-                    var status = xhr.status;
-                    if (status == 200) {
-                        view.onReceiveRoiOverlay(btn, xhr.response);
-                    } else {
-                        alert('Error loading from requested URL', xhr.response);
-                    } 
-                }
-            }
-            xhr.send();
+            Ext.Ajax.request({
+                method: 'GET',
+                url: '/flux/api/forward.json',
+                params: {'url' : url},
+                failure: function (response) {
+                    Ext.Msg.alert('Error loading from requested URL', response.responseText);
+                },
+                success: function (response) {
+                    view.onReceiveRoiOverlay(btn, response.responseText);
+                },
+            });
             
         } else {
             view.onReceiveRoiOverlay(btn, btn.up('panel').down('textarea[name=roi_text]').value);

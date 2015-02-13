@@ -1,5 +1,6 @@
 Ext.require([
     'Ext.data.ArrayStore',
+    'Ext.form.Label',
     'Ext.data.Request',
     'Ext.grid.plugin.RowEditing',
     'Ext.state.*',

@@ -87,6 +87,15 @@
     background-color: transparent !important;
 }
 
+.add-overlay-menu-title {
+    padding: 2px;
+    text-align: left;
+    color: #525252;
+    font-weight: 700;
+    font-size: 14px;
+    
+}
+
 .add-overlay-menu-item {
     border-width: 0px !important;
     border-radius: 1px !important;
@@ -94,8 +103,6 @@
     -moz-border-radius: 1px !important;
     background-image: none !important;
     padding: 2px !important;
-    
-    
 }
 
 /* Header *********************************************************************/

@@ -248,11 +248,11 @@ Ext.define('Flux.controller.MapController', {
             
             // Deactivate drawing button if it was active at the time of resize since all
             // drawing listeners will have been destroyed.
-            var btn_cancel = view.down('toolbar[cls="map-tbar"]').down('button[itemId="btn-cancel-polygon"]');
+            var btn_cancel = view.down('toolbar[cls="map-tbar"]').down('button[itemId="btn-cancel-drawing"]');
             if (!btn_cancel.hidden) {
                 btn_cancel.hide();
-                view.fireEvent('removeRoiOverlay');
-                view.down('toolbar[cls=map-tbar]').down('button[itemId="btn-add-overlay"]').show();
+                view.fireEvent('removeRoi');
+                view.down('toolbar[cls=map-tbar]').down('button[itemId="btn-add-roi"]').show();
             }
 
             // Update the projections ComboBox; rescale each projection contained

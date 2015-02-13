@@ -96,7 +96,7 @@ Ext.define('Flux.view.RoiOverlayForm', {
                     xtype: 'button',
                     text: 'Submit',
                     itemId: 'submit',
-                    cls: 'add-overlay-menu-item',
+                    cls: 'add-roi-menu-item',
                     width: 120,
                     handler: function() {                              
                         this.up('panel').hide();

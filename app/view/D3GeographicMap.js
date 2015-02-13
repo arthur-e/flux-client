@@ -143,39 +143,23 @@ Ext.define('Flux.view.D3GeographicMap', {
                         listeners: {
                             click: Ext.bind(this.setZoom, this, [0.1])
                         }
-//                     }, {
-//                         itemId: 'btn-draw-polygon',
-//                         iconCls: 'icon-draw',
-//                         tooltip: 'Draw ROI',
-//                         hidden: true
                     }, {
-		        itemId: 'btn-cancel-polygon',
+		        itemId: 'btn-cancel-drawing',
                         iconCls: 'icon-draw',
                         tooltip: 'Cancel drawing',
 			style: 'background: #ffcc00;',
 			hidden: true
-//                     }, {
-// 			itemId: 'btn-erase-polygon',
-// 			iconCls: 'icon-erase',
-// 			tooltip: 'Erase ROI',
-// 			hidden: true
-//                     }, {
-//                         itemId: 'btn-fetch-roi-time-series',
-//                         iconCls: 'icon-draw-time-series',
-//                         tooltip: 'Fetch Time-Series for ROI (enabled only if "Show line plot" is checked)',
-//                         disabled: false,
-//                         hidden: true
 		    }, {
-                        itemId: 'btn-overlay-tools',
-                        iconCls: 'icon-addoverlay',
-                        arrowCls: 'icon-addoverlay',
+                        itemId: 'btn-roi-tools',
+                        iconCls: 'icon-add-roi',
+                        arrowCls: 'icon-add-roi',
                         style: 'background: #E9B8B8;',
                         menuAlign: 'l-r?',
                         hidden: true,
                         menu: {
                             xtype: 'menu',
-                            cls: 'add-overlay-menu',
-                            bodyCls: 'add-overlay-menu-body',
+                            cls: 'add-roi-menu',
+                            bodyCls: 'add-roi-menu-body',
                             plain: true,
                             columns: 1,
                             padding: 4,
@@ -186,13 +170,9 @@ Ext.define('Flux.view.D3GeographicMap', {
                                 scale: 'small',
                                 textAlign: 'left',
                                 height: 20,
-                                cls: 'add-overlay-menu-item'
+                                cls: 'add-roi-menu-item'
                             },
                             items: [{
-//                                 xtype: 'label',
-//                                 text: 'ROI Tools...',
-//                                 cls: 'add-overlay-menu-title'
-//                             }, {
                                 itemId: 'btn-fetch-roi-time-series',
                                 text: 'Fetch time series',
                                 tooltip: 'Check "Show line plot" to enable'
@@ -210,15 +190,15 @@ Ext.define('Flux.view.D3GeographicMap', {
                             },
                         }
                     }, {
-                        itemId: 'btn-add-overlay',
-                        iconCls: 'icon-addoverlay',
-                        arrowCls: 'icon-addoverlay',
+                        itemId: 'btn-add-roi',
+                        iconCls: 'icon-add-roi',
+                        arrowCls: 'icon-add-roi',
                         menuAlign: 'l-r?',
                         hidden: false,
                         menu: {
                             xtype: 'menu',
-                            cls: 'add-overlay-menu',
-                            bodyCls: 'add-overlay-menu-body',
+                            cls: 'add-roi-menu',
+                            bodyCls: 'add-roi-menu-body',
                             plain: true,
                             columns: 1,
                             padding: 4,
@@ -229,20 +209,20 @@ Ext.define('Flux.view.D3GeographicMap', {
                                 scale: 'small',
                                 textAlign: 'left',
                                 height: 20,
-                                cls: 'add-overlay-menu-item'
+                                cls: 'add-roi-menu-item'
                             },
                             items: [{
                                 xtype: 'label',
                                 text: 'Add ROI...',
-                                cls: 'add-overlay-menu-title'
+                                cls: 'add-roi-menu-title'
                             }, {
-                                itemId: 'btn-ao-draw',
+                                itemId: 'btn-add-roi-draw',
                                 text: 'Draw',
                             }, {
-                                itemId: 'btn-ao-wkt',
+                                itemId: 'btn-add-roi-wkt',
                                 text: 'From WKT',
                             }, {
-                                itemId: 'btn-ao-geojson',
+                                itemId: 'btn-add-roi-geojson',
                                 text: 'From GeoJSON',
                             }]
                         },
@@ -473,7 +453,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             view.fireEvent('fetchstats');
 		
 	    // Make UI changes
-	    tbar.down('button[itemId="btn-cancel-polygon"]').hide();
+	    tbar.down('button[itemId="btn-cancel-drawing"]').hide();
             view.setTbarForDrawnROI(tbar);
 	    
 	    // Reset cursor (turn off crosshairs)
@@ -1609,10 +1589,10 @@ Ext.define('Flux.view.D3GeographicMap', {
         var meta = this.getMetadata();
         
         // Hide the "Add ROI" menu
-        tbar.down('button[itemId="btn-add-overlay"]').hide();
+        tbar.down('button[itemId="btn-add-roi"]').hide();
         
         // Show the "ROI Tools" menu
-        tbar.down('button[itemId="btn-overlay-tools"]').show();
+        tbar.down('button[itemId="btn-roi-tools"]').show();
         
         // Conditionally display the fetch-roi-time-series button
         var cmp = tbar.down('button[itemId="btn-fetch-roi-time-series"]');

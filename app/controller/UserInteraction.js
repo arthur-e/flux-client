@@ -94,7 +94,6 @@ Ext.define('Flux.controller.UserInteraction', {
 	    '#settings-menu numberfield[name=tendencyCustomValue]': { 
 		change: this.onStatsChange
 	    },
-
             '#settings-menu slider[name=markerSize]': {
                 change: this.onOverlayMarkerChange
             },
@@ -110,67 +109,63 @@ Ext.define('Flux.controller.UserInteraction', {
                 plotclick: this.onPlotClick,
                 fetchstats: this.fetchRoiSummaryStats,
                 removeTimeSeries: this.removeRoiTimeSeries,
-                removeRoiOverlay: this.removeRoiOverlay
+                removeRoi: this.removeRoi
             },
-            'd3geomap #btn-ao-draw': {
+            'd3geomap #btn-add-roi-draw': {
                 click: this.onDrawRoi
             },
-            'd3geomap #btn-ao-wkt': {
+            'd3geomap #btn-add-roi-wkt': {
                 click: this.onAddWKT
             },
-            'd3geomap #btn-ao-geojson': {
+            'd3geomap #btn-add-roi-geojson': {
                 click: this.onAddGeoJSON
             },
 	    'd3geomap #btn-remove-roi': {
 		click: this.onRemoveRoi
 	    },
-	    'd3geomap #btn-cancel-polygon': {
+	    'd3geomap #btn-cancel-drawing': {
 		click: this.onCancelRoiDrawing
 	    },
             'd3geomap #btn-fetch-roi-time-series': {
                 click: this.onFetchRoiTimeSeriesClick
             },
-	    
             'd3geomap #btn-save-image': {
                 click: this.onSaveImage
             },
-
+            
             'field[name=source]': {
                 change: this.onSourceChange
             },
-
             'field[name=source2]': {
                 change: this.onSourceDifferenceChange
             },
-
             'field[name=date], field[name=time], field[name=end]': {
                 change: this.onDateTimeSelection,
                 expand: this.uncheckAggregates
             },
-
+            
             'overlayspanel datefield': {
                 afterselect: this.onOverlayDateSelection
             },
+            
             'roioverlayform' : {
                 submit: this.onSubmitRoiOverlay,
                 loadRoi: this.onLoadMostRecentRoi
             },
+            
             'sourcesgridpanel': {
                 beforeedit: this.onSourceGridEntry
             },
-
+            
             'sourcepanel fieldset checkbox': {
                 change: this.onAggOrDiffToggle
             },
-
             'sourcepanel #aggregation-fields field': {
                 change: this.onAggregationChange
             },
-
             'sourcepanel #difference-fields field': {
                 change: this.onDifferenceChange
             }
-
         });
 
         // Late event listeners (need to be bound after state is recalled)
@@ -869,12 +864,10 @@ Ext.define('Flux.controller.UserInteraction', {
                 for (i = 0; i < f1.length; i += 1) {
                     f1[i].properties.value = f1[i].properties.value - offset;
                     g.push(f1[i]);
-                }
-                return g;
-            }()));
+                    }
+                    return g;
+                }()));
             }
-
-            
 	}	
 
         view.draw(feat, true);
@@ -1409,7 +1402,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
 	menu.hide();
         menu_btn.hide();
-	tbar.down('button[itemId="btn-cancel-polygon"]').show();
+	tbar.down('button[itemId="btn-cancel-drawing"]').show();
 
 	// this toggles header text
 	view.panes.hud.selectAll('.info').style('font-size',(0.03 * view.svg.attr('width')).toString() + 'px')
@@ -1445,15 +1438,15 @@ Ext.define('Flux.controller.UserInteraction', {
     },
     
      /** Handles click of the 'actively drawing polygon' button
-         (btn-cancel-polygon); removes polygon elements and
+         (btn-cancel-drawing); removes polygon elements and
          handles UI implications
 	@param btn	{Ext button}
      */
     onCancelRoiDrawing: function (btn) {
-	this.removeRoiOverlay(btn);
+	this.removeRoi(btn);
 	
 	btn.hide();
-	btn.up('toolbar').down('button[itemId="btn-add-overlay"]').show();
+	btn.up('toolbar').down('button[itemId="btn-add-roi"]').show();
     },
     
     /** Handles click of btn-remove-roi button, making
@@ -1461,28 +1454,19 @@ Ext.define('Flux.controller.UserInteraction', {
 	@param btn	{Ext button}
      */ 
     onRemoveRoi: function (btn) {
-        this.removeRoiOverlay(btn);
+        this.removeRoi(btn);
         this.removeRoiTimeSeries();
 	 
         var menu = btn.up('menu');
         var menu_btn = btn.up('button');
         var tbar = menu.up('toolbar');
         
-        // Hide yourself and your menu since no polygon exists to erase anymore
-        //btn.hide();
+        // Hide the "ROI tools "button menu
         menu.hide();
         menu_btn.hide();
         
-        // Show the "add ROI" button
-        tbar.down('button[itemId=btn-add-overlay]').show();
-
-         
-         // hide time-series fetcher for same reason
-         //btn.up('toolbar').down('button[itemId="btn-fetch-roi-time-series"]').hide();
-	 
-// 	 // and reenable draw button
-// 	 btn.up('toolbar').down('button[itemId="btn-add-overlay"]').show();
-
+        // Show the "add ROI" button menu
+        tbar.down('button[itemId=btn-add-roi]').show();
     },
     
     /** 
@@ -1490,7 +1474,7 @@ Ext.define('Flux.controller.UserInteraction', {
         and any stored coordinates and shapes
 	@param btn	{Ext button}
     */ 
-    removeRoiOverlay: function (btn) {
+    removeRoi: function (btn) {
          var ao_gj = this.getAoGeoJSON();
          var ao_wkt = this.getAoWKT();
 	 var view = this.getMap(); 

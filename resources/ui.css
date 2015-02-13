@@ -77,17 +77,17 @@
     background-position: 0 15px;
 }
 
-.add-overlay-menu {
+.add-roi-menu {
     border-style: none !important;
     border-width: 0px !important;
     background-color: transparent !important;
 }
 
-.add-overlay-menu-body {
+.add-roi-menu-body {
     background-color: transparent !important;
 }
 
-.add-overlay-menu-title {
+.add-roi-menu-title {
     padding: 4px;
     text-align: left;
     color: #2D75A9;
@@ -101,7 +101,7 @@
     
 }
 
-.add-overlay-menu-item {
+.add-roi-menu-item {
     border-width: 0px !important;
     border-radius: 1px !important;
     -webkit-border-radius: 1px !important;
@@ -135,7 +135,7 @@
     background-image: url(disk.png);
     background-position: -3px -3px;
 }
-.icon-addoverlay {
+.icon-add-roi {
     background-image: url(roi.png);
     background-size: 25px;
 }
@@ -148,10 +148,10 @@
     background-size: 24px;
     background-position: 1px 1px;
 }
-.icon-draw-time-series {
+/*.icon-draw-time-series {
     background-image: url(draw-time-series.png);
     background-size: 25px;
-}
+}*/
 .icon-link {
     background-image: url(link.png);
     background-size: 25px;

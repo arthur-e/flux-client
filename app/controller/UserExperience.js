@@ -33,11 +33,10 @@ Ext.define('Flux.controller.UserExperience', {
             
             // Since Aggregation and Difference views cannot be simultaneously shown,
             // if both are set to true, reset Difference to false
-            if (params.hasOwnProperty('showAggregation') && params.showAggregation && 
-                params.hasOwnProperty('showDifference') && params.showDifference) {
-                params.showDifference = false;    
+            if (params.hasOwnProperty('showAggregation') && params.showAggregation === 'true' && 
+                params.hasOwnProperty('showDifference') && params.showDifference === 'true') {
+                params.showDifference = false;
             }
-            
             
             this.setStateFromParams(params);
             
@@ -376,6 +375,7 @@ Ext.define('Flux.controller.UserExperience', {
                                 // source drop-down field name to the parameter name.
                                 // The date/time fields are set w/in propagateMetadata
                                 tabPanel.getActiveTab().down('field[name=source]').setValue(params.source);
+                                tabPanel.getActiveTab().down('recheckbox[name=showAggregation]').setValue(params.showAggregation);
                                 
                                 // Finally, trigger redraw() to draw the data on the map
                                 view.redraw();
@@ -441,9 +441,9 @@ Ext.define('Flux.controller.UserExperience', {
                                                     return g;
                                                 }()),
                                                 timestamp: rast.get('timestamp'),
-                                                title: Ext.String.format('{0} - {1}',
-                                                    rast.get('timestamp').format(view.timeFormat),
-                                                    rast2.get('timestamp').format(view.timeFormat))
+                                                properties: {
+                                                    title: ui.getDifferencedMapTitle(rast, rast2, view.timeFormat)
+                                                }
                                             });
 
                                             ui.bindLayer(view, rastNew);
@@ -452,6 +452,7 @@ Ext.define('Flux.controller.UserExperience', {
                                             // Now that all the data has been successfully retrieved, set the
                                             // source2 drop-down field name to the parameter name.
                                             ui._initLoad = true;
+                                            tabPanel.getActiveTab().down('recheckbox[name=showDifference]').setValue(true);
                                             tabPanel.getActiveTab().down('field[name=source2]').setValue(params.source2);
                                             tabPanel.getActiveTab().down('field[name=date2]').setValue(params.date2);
                                             tabPanel.getActiveTab().down('field[name=time2]').setValue(params.time2);
@@ -554,14 +555,6 @@ Ext.define('Flux.controller.UserExperience', {
 		});
 	    }
 	    
-// 	    // Enable the ROI time series fetch if "Show line plot" is checked
-//             if (key === 'showLinePlot') {
-//                 Ext.onReady(function () {
-//                     var cmp = Ext.ComponentQuery.query('button[itemId="btn-fetch-roi-time-series"]')[0];
-//                     cmp.setDisabled(!params[key]);
-//                     
-//                 });
-//             }
 	});
     }
 

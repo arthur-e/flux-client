@@ -146,7 +146,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                     }, {
                         itemId: 'btn-draw-polygon',
                         iconCls: 'icon-draw',
-                        tooltip: 'Draw Polygon to Get ROI Summary Stats',
+                        tooltip: 'Draw ROI',
                         hidden: true
                     }, {
 		        itemId: 'btn-cancel-polygon',
@@ -157,7 +157,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                     }, {
 			itemId: 'btn-erase-polygon',
 			iconCls: 'icon-erase',
-			tooltip: 'Erase Polygon',
+			tooltip: 'Erase ROI',
 			hidden: true
                     }, {
                         itemId: 'btn-fetch-roi-time-series',
@@ -188,7 +188,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                             },
                             items: [{
                                 xtype: 'label',
-                                text: 'Add ROI',
+                                text: 'Add ROI...',
                                 cls: 'add-overlay-menu-title'
                             }, {
                                 itemId: 'btn-ao-draw',
@@ -683,6 +683,13 @@ Ext.define('Flux.view.D3GeographicMap', {
         
     },
     
+    /**
+        Creates (or updates) an ROI summary stats display
+        on the map.
+        
+        @param  series  {roi.json response Object}
+        @param  view    {Flux.view.D3GeographicMap}
+    */
     displaySummaryStats: function (series, view) {
         view._currentSummaryStats = series;
 
@@ -714,6 +721,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         
         var offset = view.getTendencyOffset();
 
+        /////////////////////////////////////////////////////////////
         // Summary stats display - create if it doesn't already exist
         if (d3.selectAll('.roi-stats')[0].length === 0) {
             view.panes.roistats = view.svg.append('g').attr('class', 'pane roi-stats');
@@ -750,6 +758,8 @@ Ext.define('Flux.view.D3GeographicMap', {
             });
         }
         
+        /////////////////////////////////////////////////////////////
+        // Update the values
         Object.keys(display_attrs).forEach(function (s, i) { 
             var fs = '16px';
             var val = view._currentSummaryStats.properties['all' + s];
@@ -758,11 +768,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                 val = val - offset;
             }
 
-            
-            // Set some silly D3 transition animation for when number change
-            // -attempted to make font color change depending on whether number is rising or
-            //  lowering but for some reason this makes the font-size also change which
-            //  doesn't look nearly as slick, so commented out for now
+            // Set some fancy D3 transition animation for when number change
             view.panes.roistats.selectAll('.' + s)
                 .transition()
                 .duration(400)
@@ -776,7 +782,8 @@ Ext.define('Flux.view.D3GeographicMap', {
                         round = (prec.length > 1) ? Math.pow(10, prec[1].length) : 1;
 
                     return function(t) {
-                        this.textContent = (Math.round(i(t) * round) / round).toFixed(display_attrs[s]['precision']);
+                        this.textContent = (Math.round(i(t) * round) / round)
+                                            .toFixed(display_attrs[s]['precision']);
                     
                 };
             });
@@ -875,7 +882,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 
             // Then, take the ratio of the SVG width to this scene width to find
             //  the zoom factor; scale it slightly so we don't zoom in too far
-            this.setZoom(0.8 * (this.svg.attr('width') / (proj([bbox[2], 0])[0] - proj([bbox[0], 0])[0])), [
+            this.setZoom(0.8 * (this.svg.attr('width') / Math.abs(proj([0, 0])[0] - proj([bbox[2] - bbox[0], 0])[0])), [
                 (c1[0] - c2[0]),
                 (c1[1] - c2[1])
             ]);
@@ -1496,7 +1503,6 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         duration = duration || 500; // Duration in milliseconds
 
-        
         if (extent[0] <= newScale && newScale <= extent[1]) {
             this.zoom.scale(newScale)
                 .translate([

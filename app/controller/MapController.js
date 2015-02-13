@@ -251,7 +251,8 @@ Ext.define('Flux.controller.MapController', {
             var btn_cancel = view.down('toolbar[cls="map-tbar"]').down('button[itemId="btn-cancel-polygon"]');
             if (!btn_cancel.hidden) {
                 btn_cancel.hide();
-                view.down('toolbar[cls=map-tbar]').down('button[itemId="btn-draw-polygon"]').show();
+                view.fireEvent('removeRoiOverlay');
+                view.down('toolbar[cls=map-tbar]').down('button[itemId="btn-add-overlay"]').show();
             }
 
             // Update the projections ComboBox; rescale each projection contained

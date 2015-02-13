@@ -16,7 +16,7 @@ Ext.define('Flux.field.StatefulCheckbox', {
     applyState: function (state) {
         if (state) {
             this.setDisabled(state.disabled);
-            this.setValue(state.value);
+            this.setValue(state.value);     
         }
     }
 });

@@ -109,7 +109,8 @@ Ext.define('Flux.controller.UserInteraction', {
             'd3geomap': {
                 plotclick: this.onPlotClick,
                 fetchstats: this.fetchRoiSummaryStats,
-                removeTimeSeries: this.removeRoiTimeSeries
+                removeTimeSeries: this.removeRoiTimeSeries,
+                removeRoiOverlay: this.removeRoiOverlay
             },
             'd3geomap #btn-ao-draw': {
                 click: this.onDrawRoi
@@ -120,9 +121,6 @@ Ext.define('Flux.controller.UserInteraction', {
             'd3geomap #btn-ao-geojson': {
                 click: this.onAddGeoJSON
             },
-	    'd3geomap #btn-draw-polygon': {
-		click: this.onDrawRoi
-	    },
 	    'd3geomap #btn-erase-polygon': {
 		click: this.onEraseRoiDrawing
 	    },
@@ -518,7 +516,6 @@ Ext.define('Flux.controller.UserInteraction', {
             delete view._storedTendencyOffset;
         }
         
-        
 	view.mostRecentRasterParams = params;
 	
 	if (!view.getMetadata()) {
@@ -530,7 +527,6 @@ Ext.define('Flux.controller.UserInteraction', {
         // Check for the unique ID, a hash of the parameters passed in this
         //  request
         var rastId = Ext.String.format('source={0}&{1}', source, Ext.Object.toQueryString(params))
-        
         
         raster = view.store.getById(rastId);
         if (raster && !forceFetch) { 
@@ -741,6 +737,37 @@ Ext.define('Flux.controller.UserInteraction', {
         });
     },
 
+    /**
+        Builds title map title property (for displaying in HUD)
+        from two grids used in differenced views.
+        
+        @param  g1      {Flux.model.RasterGrid}
+        @param  g2      {Flux.model.RasterGrid}
+        @return title   {String}
+     */  
+    getDifferencedMapTitle: function(g1, g2, fmt) {
+        var s1 = g1.get('properties').source;
+        var s2 = g2.get('properties').source;
+        
+        // If the sources of the differenced datasets are the same,
+        // the title need only reflect the timestamps
+        var title = Ext.String.format('{0} - {1}',
+                    g1.get('timestamp').format(fmt),
+                    g2.get('timestamp').format(fmt));
+        
+        // If they are different, source should be included in 
+        // display
+        if (s1 !== s2) {
+            title = Ext.String.format('{0} {1} - {2} {3}',
+                    g1.get('properties').source,
+                    g1.get('timestamp').format(fmt),
+                    g2.get('properties').source,
+                    g2.get('timestamp').format(fmt))
+            
+        }
+        
+        return title;
+    },
     
     getInterval: function (metadata) {
         var step = Ext.Array.min(metadata.getTimeOffsets());
@@ -972,7 +999,7 @@ Ext.define('Flux.controller.UserInteraction', {
             form.down('textfield[name=roi_url]').setValue('https://rawgit.com/johan/world.geo.json/master/countries/USA/CA.geo.json');
             form.down('textarea[name=roi_text]').setValue('{"type":"Feature","geometry":{ "type": "Polygon","coordinates": [[[-100.0,50.0],[-105.0,50.0],[-105.0,55.0],[-100.0,55.0],[-100.0,50.0]]]}}');
            
-           // And enabled the "load most recent ROI" button if recently drawn ROI exists
+           // And enable the "load most recent ROI" button if recently drawn ROI exists
            if (this.getMap()._roiCoordsMostRecent) {
                form.down('button[name=load_recent]').setDisabled(false);
            }  
@@ -1351,9 +1378,9 @@ Ext.define('Flux.controller.UserInteraction', {
                             return g;
                         }()),
                         timestamp: g1.get('timestamp'),
-                        title: Ext.String.format('{0} - {1}',
-                            g1.get('timestamp').format(view.timeFormat),
-                            g2.get('timestamp').format(view.timeFormat))
+                        properties: {
+                            title: this.getDifferencedMapTitle(g1, g2, view.timeFormat)
+                        }
                     });
 
                     this.bindLayer(view, rast);
@@ -1446,14 +1473,15 @@ Ext.define('Flux.controller.UserInteraction', {
 
     },
     
-    /** Removes all polygon drawing element including drawing pane
+    /** 
+        Removes all polygon drawing element including drawing pane
         and any stored coordinates and shapes
 	@param btn	{Ext button}
     */ 
     removeRoiOverlay: function (btn) {
          var ao_gj = this.getAoGeoJSON();
          var ao_wkt = this.getAoWKT();
-	 var view = btn.up('d3geomap'); 
+	 var view = this.getMap(); 
       
 	  // Remove the rectangular drawing overlay that blocks pointer-events
 	  // from reaching other elements

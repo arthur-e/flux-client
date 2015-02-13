@@ -24,6 +24,11 @@ Ext.define('Flux.model.AbstractFeature', {
                 d0 = moment.utc(p.start).format(fmt);
                 d1 = moment.utc(p.end).format(fmt);
             }
+            
+            // Some views may have the title explicitly defined 
+            if (p.title) {
+                return p.title; 
+            }
 
         // Get timestamp from non-gridded data points...
         // ...in this case we're using the existence of the substring 'Overlay' in the id field
@@ -33,6 +38,7 @@ Ext.define('Flux.model.AbstractFeature', {
             d0 = moment.utc(Ext.Array.min(ts)).format(fmt);
             d1 = moment.utc(Ext.Array.max(ts)).format(fmt);
         }
+
         
         // Template for a timestamp range display
         if (d0 === d1) {

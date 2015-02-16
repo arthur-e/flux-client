@@ -347,7 +347,12 @@ Ext.define('Flux.controller.UserExperience', {
                             Ext.JSON.decode(response.responseText));
 
                         // Create a unique ID that can be used to find this grid
-                        rast.set('_id', Ext.Object.toQueryString(opts.params));
+                        rast.set('_id',
+                                 Ext.String.format('source={0}&{1}',
+                                                    params.source,
+                                                    Ext.Object.toQueryString(opts.params)
+                                                )
+                             );
 
                         ui.bindLayer(view, rast);
                         ui.onMapLoad(rast);
@@ -417,7 +422,12 @@ Ext.define('Flux.controller.UserExperience', {
                                                 Ext.JSON.decode(response.responseText));
 
                                             // Create a unique ID that can be used to find this grid
-                                            rast2.set('_id', Ext.Object.toQueryString(opts.params));
+                                            rast2.set('_id',
+                                                        Ext.String.format('source={0}&{1}',
+                                                                        params.source2,
+                                                                        Ext.Object.toQueryString(opts.params)
+                                                                    )
+                                                    );
 
                                             // Create the differenced grid
                                             var rastNew;
@@ -442,7 +452,8 @@ Ext.define('Flux.controller.UserExperience', {
                                                 }()),
                                                 timestamp: rast.get('timestamp'),
                                                 properties: {
-                                                    title: ui.getDifferencedMapTitle(rast, rast2, view.timeFormat)
+                                                    title: ui.getDifferencedMapTitle(rast, rast2, view.timeFormat),
+                                                    timestamp_diff: rast2.get('timestamp'),
                                                 }
                                             });
 

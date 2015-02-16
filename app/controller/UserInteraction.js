@@ -524,7 +524,7 @@ Ext.define('Flux.controller.UserInteraction', {
         
         raster = view.store.getById(rastId);
         if (raster && !forceFetch) { 
-            this.bindLayer(view, raster, params.dontResetSteps);
+            this.bindLayer(view, raster);
             this.onMapLoad(raster);
             return;
         }
@@ -545,7 +545,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 // Create a unique ID that can be used to find this grid
                 rast.set('_id', Ext.String.format(rastId));
 	
-                this.bindLayer(view, rast, params.dontResetSteps);
+                this.bindLayer(view, rast);
                 this.onMapLoad(rast);
             },
             failure: function (response) {
@@ -583,7 +583,7 @@ Ext.define('Flux.controller.UserInteraction', {
                         Ext.JSON.decode(response.responseText));
 
                     // Create a unique ID that can be used to find this grid
-                    grid.set('_id', Ext.Object.toQueryString(opts.params));
+                    grid.set('_id', Ext.String.format('source={0}&{1}', source, Ext.Object.toQueryString(opts.params)));
 
                     callback(null, grid);
                 }
@@ -591,9 +591,9 @@ Ext.define('Flux.controller.UserInteraction', {
         };
 
         // Check for both of the needed map grids
-        grid1 = view.store.getById(Ext.Object.toQueryString(params[0]));
-        grid2 = view.store.getById(Ext.Object.toQueryString(params[1]));
-
+        grid1 = view.store.getById(Ext.String.format('source={0}&{1}', source, Ext.Object.toQueryString(params[0])));
+        grid2 = view.store.getById(Ext.String.format('source={0}&{1}', source, Ext.Object.toQueryString(params[1])));        
+        
         // Create a request queue in case we need to download one or more grids
         mapQueue = queue();
 
@@ -601,12 +601,12 @@ Ext.define('Flux.controller.UserInteraction', {
             return operation.call(view, grid1, grid2);
         }
 
-        if (grid1) {
-            mapQueue.defer(fetch, params[1]); // 1st grid already loaded; get 2nd
+        if (!grid1) {
+            mapQueue.defer(fetch, params[0]);
         }
 
-        if (grid2) {
-            mapQueue.defer(fetch, params[0]); // 2nd grid already loaded; get 1st
+        if (!grid2) {
+            mapQueue.defer(fetch, params[1]);
         }
 
         mapQueue.await(function (error, a, b) {
@@ -833,7 +833,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  view    {Flux.view.D3Panel}
         @param  raster  {Flux.model.Raster}
      */
-    bindLayer: function (view, feat, dontResetSteps) {
+    bindLayer: function (view, feat) {
         var opts = this.getGlobalSettings();
 
         if (!Ext.isEmpty(feat.get('_id'))) {
@@ -874,7 +874,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
         if (opts.statsFrom === 'data') {
             // Also update the slider bounds
-            this.onMetadataAdded(undefined, [view.getMetadata()], dontResetSteps);
+            this.onMetadataAdded(undefined, [view.getMetadata()]);
 
             // The color scale can only be properly adjusted AFTER data are bound
             //  to the view
@@ -1323,7 +1323,7 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     onDifferenceChange: function (field) {
         if (!this._initLoad) {
-            var diffTime;
+            //var diffTime;
             var vals = field.up('panel').getForm().getValues();
             var view = this.getMap();
 
@@ -1338,48 +1338,53 @@ Ext.define('Flux.controller.UserInteraction', {
 
             if (field.up('fieldset').down('field[name=showDifference]').getValue()) {
                 // NOTE: Only available for the Single Map visualization thus far
-                diffTime = moment.utc(Ext.String.format('{0}T{1}:00',
+                this._diffTime = moment.utc(Ext.String.format('{0}T{1}:00',
                     vals.date2, vals.time2));
 
-                if (diffTime.isSame(view.getMoment())) {
+                if (this._diffTime.isSame(view.getMoment())) {
                     Ext.Msg.alert('Request Error', 'First timestamp and second timestamp are the same in requested difference image; will not display.');
                     return;
                 }
 
+                
+                
                 this.fetchRasters(view, [{
-                    time: view.getMoment().toISOString()
+                    time: view.getMoment().toISOString(),
                 }, {
-                    time: diffTime.toISOString()
-                }], Ext.Function.bind(function (g1, g2) { // Callback function
-                    var rast;
-                    var f1 = g1.get('features');
-                    var f2 = g2.get('features');
-
-                    if (f1.length !== f2.length) {
-                        Ext.Msg.alert('Data Error', 'Cannot display the difference of two maps with difference grids. Choose instead maps from two different data sources and/or times that have the same underlying grid.');
-                    }
-
-                    // Add these model instances to the view's store
-                    view.store.add(g1, g2);
-
-                    rast = Ext.create('Flux.model.Raster', {
-                        features: (function () {
-                            var i;
-                            var g = [];
-                            for (i = 0; i < f1.length; i += 1) {
-                                g.push(f1[i] - f2[i]);
-                            }
-                            return g;
-                        }()),
-                        timestamp: g1.get('timestamp'),
-                        properties: {
-                            title: this.getDifferencedMapTitle(g1, g2, view.timeFormat)
-                        }
-                    });
-
-                    this.bindLayer(view, rast);
-                    this.onMapLoad(rast);
-                }, this));
+                    time: this._diffTime.toISOString(),
+                }], Ext.Function.bind(this.onDifferenceReceive, this)
+//                 Ext.Function.bind(function (g1, g2) { // Callback function
+//                     var rast;
+//                     var f1 = g1.get('features');
+//                     var f2 = g2.get('features');
+// 
+//                     if (f1.length !== f2.length) {
+//                         Ext.Msg.alert('Data Error', 'Cannot display the difference of two maps with difference grids. Choose instead maps from two different data sources and/or times that have the same underlying grid.');
+//                     }
+// 
+//                     // Add these model instances to the view's store
+//                     view.store.add(g1, g2);
+// 
+//                     rast = Ext.create('Flux.model.Raster', {
+//                         features: (function () {
+//                             var i;
+//                             var g = [];
+//                             for (i = 0; i < f1.length; i += 1) {
+//                                 g.push(f1[i] - f2[i]);
+//                             }
+//                             return g;
+//                         }()),
+//                         timestamp: g1.get('timestamp'),
+//                         properties: {
+//                             title: this.getDifferencedMapTitle(g1, g2, view.timeFormat)
+//                         }
+//                     });
+// 
+//                     this.bindLayer(view, rast);
+//                     this.onMapLoad(rast);
+//                 }, this)
+                    
+                );
 
             } else {
                 this.fetchRaster(view, {
@@ -1387,6 +1392,50 @@ Ext.define('Flux.controller.UserInteraction', {
                 });
             }
         }
+    },
+    
+    onDifferenceReceive: function (r1, r2) {
+        var view = this.getMap();
+        var rast, g1, g2;
+
+        if (r1.get('timestamp').toISOString() === this._diffTime.toISOString()) {
+            g1 = r2;
+            g2 = r1;
+        } else if (r2.get('timestamp').toISOString() === this._diffTime.toISOString()) {
+            g1 = r1;
+            g2 = r2;
+        } else {
+            return Ext.alert('Could not determine which dataset is difference dataset');
+        }
+        
+        var f1 = g1.get('features');
+        var f2 = g2.get('features');
+
+        if (f1.length !== f2.length) {
+            Ext.Msg.alert('Data Error', 'Cannot display the difference of two maps with difference grids. Choose instead maps from two different data sources and/or times that have the same underlying grid.');
+        }
+
+        // Add these model instances to the view's store
+        view.store.add(g1, g2);
+
+        rast = Ext.create('Flux.model.Raster', {
+            features: (function () {
+                var i;
+                var g = [];
+                for (i = 0; i < f1.length; i += 1) {
+                    g.push(f1[i] - f2[i]);
+                }
+                return g;
+            }()),
+            timestamp: g1.get('timestamp'),
+            properties: {
+                title: this.getDifferencedMapTitle(g1, g2, view.timeFormat),
+                timestamp_diff: g2.get('timestamp')
+            }
+        });
+
+        this.bindLayer(view, rast);
+        this.onMapLoad(rast);
     },
     
     /**
@@ -1549,17 +1598,18 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  recs    	{Array}
         @param	dontResetSTeps 	{Boolean}
      */
-    onMetadataAdded: function (store, recs, dontResetSteps) {
+    onMetadataAdded: function (store, recs) {
         var metadata = recs[0];
 
         if (!metadata) {
             return;
         } 
          
-        if (metadata.get('gridded') && !dontResetSteps) {
+        if (metadata.get('gridded') && !this._dontResetSteps) {
             this.getController('Animation').enableAnimation(metadata);
         }
-
+        this._dontResetSteps = false;
+        
         // Initialize the values of the domain bounds and threshold sliders
         // Applying the anomaly offset may be better implemented earlier in the
         // metadata get/set/bind process...

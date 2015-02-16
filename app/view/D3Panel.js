@@ -78,6 +78,14 @@ Ext.define('Flux.view.D3Panel', {
     },
 
     /**
+        Returns the timestamp currently associated with the differenced map
+        @return {moment}
+     */
+    getMomentOfDifference: function () {
+        return this._model.get('properties').timestamp_diff;
+    },
+
+    /**
         Returns the appropriate offset for the selected central tendency.
         Needed for displaying anomalies data.
 

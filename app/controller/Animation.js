@@ -184,24 +184,39 @@ Ext.define('Flux.controller.Animation', {
         this._delay = this.getTopToolbar().down('#animate-delay').getValue();
     },
 
-    /**TODO fetchRaster()
+    /**
         Causes the corresponding view to "step" forwards or backwards in time
         with the animation according to a specified number of steps.
         @param  steps   {Number}    Negative steps are steps taken backwards
      */
     stepBy: function (steps) {
-        var query = Ext.ComponentQuery.query('d3geomap');
-
-        Ext.each(query, Ext.Function.bind(function (view) {
+        var ui = this.getController('UserInteraction');
+        var map = ui.getMap();
+        
+        Ext.each(map, Ext.Function.bind(function (view) {
 	    var params, args, vals;  
 	    var ts = view.getMoment();
+            var agg_toggle = Ext.ComponentQuery.query('field[name=showAggregation]')[0].getValue();
+            var diff_toggle = Ext.ComponentQuery.query('field[name=showDifference]')[0].getValue();
 
             if (Ext.isEmpty(ts)) {
                 return;
             }
-            var agg_toggle = Ext.ComponentQuery.query('field[name=showAggregation]')[0].getValue();
+
+            ui._dontResetSteps = true;
+            
+            ///////////////////////////////////////////////////////
+            // Non-agg/Non-diff views
+            params = {
+                time: ts.clone()
+                    .add(steps, this._stepSize)
+                    .toISOString()
+            };
+            
+            ///////////////////////////////////////////////////////
+            // Aggregation views
             if (agg_toggle) {
-		args = this.getController('UserInteraction').getAggregationArgs();
+		args = ui.getAggregationArgs();
 		vals = Ext.Object.getValues(args);
 		if (Ext.Array.clean(vals).length !== vals.length) {
 		    // Throw an alert and turn off animation if not all of the aggregation fields are filled out
@@ -219,15 +234,29 @@ Ext.define('Flux.controller.Animation', {
 			  .add(steps, this._stepSize)
 			  .toISOString()
 		};
-	    } else {
-		params = {
-		    time: ts.clone()
-			.add(steps, this._stepSize)
-			.toISOString()
-		};
 	    }
-	    params['dontResetSteps'] = true;
-            this.getController('UserInteraction').fetchRaster(view, params);
+	    
+	    ///////////////////////////////////////////////////////
+	    // Differenced views
+	    if (diff_toggle) {
+                var vals = ui.getSourcePanel().getForm().getValues();
+                ui._diffTime = view.getMomentOfDifference()//moment.utc(Ext.String.format('{0}T{1}:00',vals.date2, vals.time2)).clone()
+                                     .clone()
+                                     .add(steps, this._stepSize)
+                
+                params = [{
+                    time: ts.clone()
+                            .add(steps, this._stepSize)
+                            .toISOString()
+                }, {
+                    time: ui._diffTime.toISOString()
+                }]
+
+                ui.fetchRasters(view, params, Ext.Function.bind(ui.onDifferenceReceive, ui));
+
+            } else {
+                ui.fetchRaster(view, params);
+            }
         }, this));
     },
 
@@ -269,7 +298,6 @@ Ext.define('Flux.controller.Animation', {
         @param  recs    {Array}
      */
     onStepSizeChange: function (c, recs) {
-        console.log('onStepSizeChange');
         var steps;
 
         this._stepSize = recs[0].get('stepSize');

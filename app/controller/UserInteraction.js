@@ -1182,12 +1182,15 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     onAggOrDiffToggle: function (cb, checked) {
         var n = 'showAggregation';
-        if (cb.getName() === n) {
-            n = 'showDifference';
-        }
-        if (checked) {
-            cb.up('form').down(Ext.String.format('checkbox[name={0}]', n))
-                .setValue(false);
+        
+        if (cb.getName() != 'syncDifference') {
+            if (cb.getName() === n) {
+                n = 'showDifference';
+            }
+            if (checked) {
+                cb.up('form').down(Ext.String.format('checkbox[name={0}]', n))
+                    .setValue(false);
+            }
         }
     },
 
@@ -1319,72 +1322,76 @@ Ext.define('Flux.controller.UserInteraction', {
         Handles a change in the differencing parameters; fires a new map
         request depending on whether differencing is requested.
         @param  field   {Ext.form.field.Base}
-        @param  value   {Number|String}
      */
     onDifferenceChange: function (field) {
         if (!this._initLoad) {
-            //var diffTime;
             var vals = field.up('panel').getForm().getValues();
             var view = this.getMap();
-
-            if (Ext.Array.clean([vals.date2, vals.time2, vals.source2]).length !== 3) {
-                // Do nothing if not all of the fields are filled out
-                return;
-            }
-
+            
             if (!field.isVisible(true) || Ext.isEmpty(view.getMoment())) {
                 return;
             }
+            
+            // If the source2 field changed and it's different than source2,
+            // get the metadata and disable "syncDifference" checkbox if
+            // "steps" of each are not equal
+            //
+            // We should't need to worry about getting the 'fetchRasters' functionality
+            // below into this callback because a source change resets the date/time
+            // fields as well, necessitating at the very least two more user
+            // interactions (selecting date, animating) before this checkbox state
+            // becomes relevant
+            if (field.name === 'source2') {
+                var chk = field.up('panel').down('recheckbox[name=syncDifference]');
+                
+                if (vals.source != vals.source2) {
+                    Ext.Ajax.request({
+                        method: 'GET',
+                        url: '/flux/api/scenarios.json',
+                        params: {
+                            scenario: vals.source2
+                        },
+                        callback: function (o, s, response) {
+                            var meta = Ext.create('Flux.model.Metadata',
+                                Ext.JSON.decode(response.responseText));
+                            var disable = meta.get('steps') != view.getMetadata().get('steps');
+                            if (disable) {
+                                chk.setValue(false);
+                            }
+                            chk.setDisabled(disable);
+                        },
 
+                        scope: this
+                    });
+                } else {
+                    chk.setDisabled(false);
+                }
+            }
+
+            // Do nothing if not all of the fields are filled out
+            if (Ext.Array.clean([vals.date2, vals.time2, vals.source2]).length !== 3) {
+                return;
+            }
+
+            // If showDifference is checked, get the timestamp values and fetch the data
+            // NOTE: Only available for the Single Map visualization thus far
             if (field.up('fieldset').down('field[name=showDifference]').getValue()) {
-                // NOTE: Only available for the Single Map visualization thus far
                 this._diffTime = moment.utc(Ext.String.format('{0}T{1}:00',
                     vals.date2, vals.time2));
 
-                if (this._diffTime.isSame(view.getMoment())) {
-                    Ext.Msg.alert('Request Error', 'First timestamp and second timestamp are the same in requested difference image; will not display.');
+                if (this._diffTime.isSame(view.getMoment()) && vals.source == vals.source2) {
+                    Ext.Msg.alert('Request Error', 'Source and timestamp of the first image are the same in requested difference image; will not display.');
                     return;
                 }
 
-                
-                
-                this.fetchRasters(view, [{
-                    time: view.getMoment().toISOString(),
-                }, {
-                    time: this._diffTime.toISOString(),
-                }], Ext.Function.bind(this.onDifferenceReceive, this)
-//                 Ext.Function.bind(function (g1, g2) { // Callback function
-//                     var rast;
-//                     var f1 = g1.get('features');
-//                     var f2 = g2.get('features');
-// 
-//                     if (f1.length !== f2.length) {
-//                         Ext.Msg.alert('Data Error', 'Cannot display the difference of two maps with difference grids. Choose instead maps from two different data sources and/or times that have the same underlying grid.');
-//                     }
-// 
-//                     // Add these model instances to the view's store
-//                     view.store.add(g1, g2);
-// 
-//                     rast = Ext.create('Flux.model.Raster', {
-//                         features: (function () {
-//                             var i;
-//                             var g = [];
-//                             for (i = 0; i < f1.length; i += 1) {
-//                                 g.push(f1[i] - f2[i]);
-//                             }
-//                             return g;
-//                         }()),
-//                         timestamp: g1.get('timestamp'),
-//                         properties: {
-//                             title: this.getDifferencedMapTitle(g1, g2, view.timeFormat)
-//                         }
-//                     });
-// 
-//                     this.bindLayer(view, rast);
-//                     this.onMapLoad(rast);
-//                 }, this)
-                    
-                );
+                this.fetchRasters(view, 
+                                  [{
+                                    time: view.getMoment().toISOString(),
+                                   }, {
+                                    time: this._diffTime.toISOString(),
+                                   }], 
+                                   Ext.Function.bind(this.onDifferenceReceive, this)
+                                  );
 
             } else {
                 this.fetchRaster(view, {
@@ -1394,6 +1401,13 @@ Ext.define('Flux.controller.UserInteraction', {
         }
     },
     
+    /**
+        Acts as a callback function for fetchRasters, takes
+        two raster grids as input, differences those grids, and
+        binds the result to the Flux.view.D3GeographicMap
+        @param  r1   {Ext.model.Raster}
+        @param  r2   {Ext.model.Raster}
+     */
     onDifferenceReceive: function (r1, r2) {
         var view = this.getMap();
         var rast, g1, g2;

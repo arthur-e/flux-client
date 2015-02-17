@@ -467,6 +467,7 @@ Ext.define('Flux.controller.UserExperience', {
                                             tabPanel.getActiveTab().down('field[name=source2]').setValue(params.source2);
                                             tabPanel.getActiveTab().down('field[name=date2]').setValue(params.date2);
                                             tabPanel.getActiveTab().down('field[name=time2]').setValue(params.time2);
+                                            tabPanel.getActiveTab().down('recheckbox[name=syncDifference]').setValue(params.syncDifference);
                                             ui._initLoad = false;
                                             
                                         }

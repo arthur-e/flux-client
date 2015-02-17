@@ -109,7 +109,6 @@ Ext.define('Flux.controller.Animation', {
         @param  metadata    {Flux.model.Metadata}
      */
     enableAnimation: function (metadata) {
-	//alert('enableAnimation called');
         var d, steps, stepSize;
         var cmp = this.getSettingsMenu().down('field[name=stepSize]');
         var offsets = metadata.getTimeOffsets();
@@ -198,7 +197,8 @@ Ext.define('Flux.controller.Animation', {
 	    var ts = view.getMoment();
             var agg_toggle = Ext.ComponentQuery.query('field[name=showAggregation]')[0].getValue();
             var diff_toggle = Ext.ComponentQuery.query('field[name=showDifference]')[0].getValue();
-
+            var diff_sync = Ext.ComponentQuery.query('checkbox[name=syncDifference]')[0].checked;
+            
             if (Ext.isEmpty(ts)) {
                 return;
             }
@@ -240,9 +240,12 @@ Ext.define('Flux.controller.Animation', {
 	    // Differenced views
 	    if (diff_toggle) {
                 var vals = ui.getSourcePanel().getForm().getValues();
-                ui._diffTime = view.getMomentOfDifference()//moment.utc(Ext.String.format('{0}T{1}:00',vals.date2, vals.time2)).clone()
+                ui._diffTime = view.getMomentOfDifference();
+                if (diff_sync) {//moment.utc(Ext.String.format('{0}T{1}:00',vals.date2, vals.time2)).clone()
+                    ui._diffTime = view.getMomentOfDifference()
                                      .clone()
                                      .add(steps, this._stepSize)
+                }
                 
                 params = [{
                     time: ts.clone()

@@ -197,6 +197,15 @@ Ext.define('Flux.view.SourcePanel', {
             valueField: 'time',
             queryMode: 'local',
             disabled: true
+        }, {
+            xtype: 'recheckbox',
+            name: 'syncDifference',
+            stateId: 'syncDifference',
+            stateful: true,
+            checked: true,
+            boxLabel: 'Sync when animating',
+            tooltip: 'If unchecked, timestamp of the difference dataset will remain static while animating'
+
         }]
 
     }]

@@ -48,9 +48,12 @@
     stroke-width: 3px;
     cursor: pointer;
 }
-.raster { shape-rendering: crispEdges; }
+.datalayer { shape-rendering: crispEdges; }
 .overlay { shape-rendering: crispEdges; }
 rect { shape-rendering: crispEdges; }
+rect.outline { stroke-width: 1;
+                stroke: #fff;
+}
 text { font: 14px Helvetica,Arial,sans-serif; }
 text.info {
     font-family: Helvetica,Arial,sans-serif;

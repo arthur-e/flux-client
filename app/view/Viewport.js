@@ -182,7 +182,12 @@ Ext.define('Flux.view.Viewport', {
                         increment: 1,
                         minValue: 3,
                         maxValue: 10
-                    }, {
+                    },  {  
+                        xtype: 'recheckbox',
+                        name: 'markerOutline',
+                        stateId: 'markerOutline',
+                        boxLabel: 'Show marker outline',
+                    }, {                      
                         xtype: 'menuseparator'
                     }, {
                         text: 'Steps each animation frame:',

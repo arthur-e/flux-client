@@ -5,6 +5,9 @@ Ext.define('Flux.controller.MapController', {
         ref: 'mapSettings',
         selector: 'mapsettings'
     }, {
+        ref: 'nongriddedPanel',
+        selector: 'nongriddedpanel'
+    }, {
         ref: 'settingsMenu',
         selector: '#settings-menu'
     }, {
@@ -256,9 +259,10 @@ Ext.define('Flux.controller.MapController', {
             }
 
             // Update the projections ComboBox; rescale each projection contained
+            var showOverlay = this.getNongriddedPanel().down('recheckbox[name=overlay]').checked;
             view.init(width, height)
                 .setBasemap(this.getMapSettings().down('combo[name=basemap]').getValue())
-                .redraw(true)
+                .redraw(true, showOverlay)
                 .updateDisplay();
         }
     },

@@ -26,7 +26,17 @@ Ext.define('Flux.view.D3GeographicMap', {
     _mercatorFactor: function (phi) {
         return 1/Math.cos((Math.PI * phi) / 180);
     },
-
+    
+    /**
+        The stroke color for nongridded overlay
+        @private
+     */
+    _overlayStroke: '#555', 
+     /**
+        The stroke-width size for nongridded overlay
+        @private
+     */
+    _overlayStrokeWidth: 1.0, 
      /**
         The stroke-width size for ROI polygon
         @private
@@ -256,7 +266,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         var proj = this.getProjection();
         var view = this;
 
-        sel = sel || this.panes.raster.selectAll('.cell');
+        sel = sel || this.panes.datalayer.selectAll('.cell');
         
         // Add listeners for zooming/panning
         //   Here, we're passing the drag behavior to the filler pane (where
@@ -287,9 +297,9 @@ Ext.define('Flux.view.D3GeographicMap', {
         sel.on('mouseover', function (d) {
             var c, m, p, ll, v;
 
-            //if (Ext.isEmpty(d)) {
-            //    return;
-            //}
+            if (Ext.isEmpty(d)) {
+               return;
+            }
 
             p = view.getMetadata().get('precision');
             if (showAsOverlay) {
@@ -821,8 +831,9 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return         {Flux.view.D3GeographicMap}
      */
     draw: function (data, zoom, showAsOverlay) {
-        var bbox, lat, lng, meta, c1, c2, pane, sel;
+        var bbox, lat, lng, meta, c1, c2, pane, rectClass, sel;
         var proj = this.getProjection();
+        //var gridded = data.id.indexOf('Flux.model.Raster') == -1;
 
         if (!data) {
             return this;
@@ -855,7 +866,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         //  resize events require drawing again with the same (meta)data
         if (!showAsOverlay) {
             this._model = data;
-            pane = this.panes.raster;
+            pane = this.panes.datalayer;
         } else {
             this._modelOverlay = data;
             pane = this.panes.overlay;
@@ -890,6 +901,9 @@ Ext.define('Flux.view.D3GeographicMap', {
         // Applies the color scale to the current selection
         this.update(sel, showAsOverlay);
 
+        // Display Marker outlines if checked
+        this.fireEvent('toggleOutline');
+        
         ////////////////////////////////////////////////////////////////////////
         // Zoom to Feature /////////////////////////////////////////////////////
 
@@ -1191,6 +1205,19 @@ Ext.define('Flux.view.D3GeographicMap', {
                     this.wrapper.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
                 }
                 
+                // Scale stroke-width for nongridded data appropriately, whether it exists as...
+                // ...an overlay OR...
+                this.panes.overlay.selectAll('.cell').style({
+                    'stroke-width': this._overlayStrokeWidth / d3.event.scale
+                });
+                
+                // ...as a primary model instance...
+                if (this._model.id.indexOf('Flux.model.Nongridded') > -1) {
+                    this.panes.datalayer.selectAll('.cell').style({
+                        'stroke-width': this._overlayStrokeWidth / d3.event.scale
+                    });
+                }
+                
                 // Scale the ROI vertices appropriately
 		this.wrapper.selectAll('.roi-vertex').attr({
 		    'r': this._vertexRadius / d3.event.scale,
@@ -1247,7 +1274,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         this.panes = {
             basemap: this.wrapper.append('g').attr('class', 'pane')
         };
-        this.panes.raster = this.wrapper.append('g').attr('class', 'pane raster');
+        this.panes.datalayer = this.wrapper.append('g').attr('class', 'pane datalayer');
         this.panes.overlay = this.wrapper.append('g').attr('class', 'pane overlay');
         this.panes.hud = this.svg.append('g').attr('class', 'pane hud');
         this.panes.legend = this.svg.append('g').attr('class', 'pane legend');
@@ -1320,9 +1347,13 @@ Ext.define('Flux.view.D3GeographicMap', {
         @param  zoom    {Boolean}
         @return         {Flux.view.D3GeographicMap}
      */
-    redraw: function (zoom) {
+    redraw: function (zoom, showOverlay) {
         if (this._model) {
             this.draw(this._model, zoom).updateLegend();
+        }
+        
+        if (this._modelOverlay && showOverlay) {
+            this.draw(this._modelOverlay, zoom, showOverlay);
         }
 	
 	// If a drawn polygon existed and has not been destroyed, it needs to be redrawn too
@@ -1506,9 +1537,9 @@ Ext.define('Flux.view.D3GeographicMap', {
     setScale: function (scale, opts) {
         this._scale = scale;
 	
-        if (this.panes.raster) {
+        if (this.panes.datalayer) {
 	    if (opts && !opts.suppressUpdate) {
-		this.update(this.panes.raster.selectAll('.cell'));
+		this.update(this.panes.datalayer.selectAll('.cell'));
 	    }
 	    
             this.updateLegend();
@@ -1686,7 +1717,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return             {Flux.view.D3GeographicMap}
      */
     update: function (selection, showAsOverlay) {
-        var pane = this.panes.raster;
+        var pane = this.panes.datalayer;
         if (showAsOverlay) {
             pane = this.panes.overlay;
         }

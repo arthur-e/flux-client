@@ -112,7 +112,8 @@ Ext.define('Flux.controller.UserInteraction', {
                 plotclick: this.onPlotClick,
                 fetchstats: this.fetchRoiSummaryStats,
                 removeTimeSeries: this.removeRoiTimeSeries,
-                removeRoi: this.removeRoi
+                removeRoi: this.removeRoi,
+                toggleOutline: this.onMarkerOutlineToggle
             },
             'd3geomap #btn-add-roi-draw': {
                 click: this.onDrawRoi
@@ -155,7 +156,13 @@ Ext.define('Flux.controller.UserInteraction', {
             'nongriddedpanel datefield': {
                 afterselect: this.onNongriddedDateSelection
             },
+            'nongriddedpanel recheckbox[name=overlay]': {
+                change: this.onOverlayToggle
+            },
             
+            '#settings-menu recheckbox[name=markerOutline]': {
+                change: this.onMarkerOutlineToggle
+            },
             'roioverlayform' : {
                 submit: this.onSubmitRoiOverlay,
                 loadRoi: this.onLoadMostRecentRoi
@@ -164,7 +171,6 @@ Ext.define('Flux.controller.UserInteraction', {
             'sourcesgridpanel': {
                 beforeedit: this.onSourceGridEntry
             },
-            
             'sourcepanel fieldset checkbox': {
                 change: this.onAggOrDiffToggle
             },
@@ -183,7 +189,6 @@ Ext.define('Flux.controller.UserInteraction', {
                     change: this.toggleLinePlotDisplay
                 }
             });
-
         }, this));
         
     },
@@ -1626,6 +1631,44 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
+        Handles toggle of whether or not Nongridded overlay data 
+        should include an outline (to better set it apart from
+        the underlying gridded data)
+        
+        @param  cb      {Ext.form.field.Checkbox}
+        @param  checked {Boolean}
+     */
+    onMarkerOutlineToggle: function (cb) {
+        cb = cb || this.getSettingsMenu().down('recheckbox[name=markerOutline]');
+        var checked = cb.checked;
+        var view = this.getMap();
+        var cb_overlay = this.getNongriddedPanel().down('recheckbox[name=overlay]');
+
+        // By default, select the overlay pane
+        var sel = view.panes.overlay.selectAll('.cell');
+        
+        // But if you're in the non-gridded-map and showOverlay is not checked,
+        // select the non-overlay data pane
+        if (cb_overlay.up('tabbedpanel').getActiveTab().itemId === 'non-gridded-map' && !cb_overlay.checked) {
+            sel = view.panes.datalayer.selectAll('.cell');
+        }
+        
+        if (sel) {  
+            if (checked) {
+                sel.style({
+                    'stroke-width': view._overlayStrokeWidth / view.zoom.scale(),
+                    'stroke' : view._overlayStroke
+                });
+            } else {
+                sel.style({'stroke-width': 0,
+                        'stoke' : '#00'
+                });
+            }
+        }
+
+    },
+    
+    /**
         Follows the addition of Metadata to a view's metadata store; enables
         the Animation controls.
         @param  store		{Flux.store.Metadata}
@@ -1693,11 +1736,63 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  size    {Number}
      */
     onNongriddedMarkerChange: function (s, size) {
+        var view = this;
+        var showOverlay = this.getNongriddedPanel().down('recheckbox[name=overlay]').checked;
         Ext.each(Ext.ComponentQuery.query('d3geomap'), function (v) {
-            v.setMarkerSize(size).redraw();
+            v.setMarkerSize(size).redraw(view.zoom, showOverlay);
         });
     },
+    
+    /**
+        Handles toggle of whether or not Nongridded data 
+        should be shown as overlay on top of Gridded data
+        
+        @param  cb      {Ext.form.field.Checkbox}
+        @param  checked {Boolean}
+     */
+    onOverlayToggle: function (cb, checked) {
+        var values = cb.up('panel').getForm().getValues();
+        var view = this.getMap();
 
+        // Quit if any of the required Nongridded fields are empty
+        if (Ext.isEmpty(values.start) ||
+            Ext.isEmpty(values.end) ||
+            Ext.isEmpty(values.source_nongridded)) {
+            return;
+        }
+        
+        if (checked) {
+            // The app state at which this checkbox is checked and
+            // Nongridded fields are filled out are:
+            // map._model = currently selected Nongridded
+            // map._metadata = currently select Nongridded
+            //
+            // These need to be reset to the values shown
+            // in the Gridded tab
+            console.log('lets do overlay stuff');
+            
+            //cb.up('panel').down('recheckbox[name=markerOutline]').show();
+            
+            
+            this.bindMetadataOverlay(view, view.getMetadata());
+            view._modelOverlay = view._model;
+            
+            // Do the things that are done under onSourceChange and then onDateTimeSelection
+            // that normally serve to load/draw the Raster MapController
+            
+            // Finally, draw the overlay on top
+            
+            
+            
+            
+        } else {
+            this.bindMetadata(view, view.getMetadataOverlay());
+            view._model = view._modelOverlay;
+            view.draw(view._model);
+        }
+        
+    },
+    
     /**
         Handles a click event on the D3GeographicMap instance. Initiaties a time
         series data request (to t.json endpoint) and plots the mean daily time
@@ -2050,10 +2145,8 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  last    {String}
      */
     onSourceChangeNongridded: function (field, source, last) {
-        console.log('onSourceChangeNongridded');
         var metadata, operation, grid, view;
         var container = field.up('panel');
-        //var editor = field.up('roweditor');
         var showAsOverlay = field.up('panel').down('recheckbox[name=overlay]').checked;
         
         if (Ext.isEmpty(source) || source === last) {

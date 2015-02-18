@@ -83,8 +83,7 @@ Ext.define('Flux.view.NongriddedPanel', {
         name: 'overlay',
         stateId: 'overlay',
         stateful: true,
-        checked: false,
-        boxLabel: 'Overlay on gridded data',
+        boxLabel: 'Overlay on gridded data'
     }]
 });
 

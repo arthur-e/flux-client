@@ -68,7 +68,14 @@ Ext.define('Flux.view.D3Panel', {
     getMetadata: function () {
         return this._metadata;
     },
-
+    /**
+        Returns the stored reference to the Flux.model.Metadata used for an
+        Overlay layer
+        @return {Flux.model.Metadata}
+     */
+    getMetadataOverlay: function () {
+        return this._metadataOverlay;
+    },
     /**
         Returns the timestamp currently associated with this view.
         @return {moment}
@@ -107,7 +114,7 @@ Ext.define('Flux.view.D3Panel', {
         // exist, storing them if not, and then deleting them whenever the
         // current data frame changes (i.e. time changes as opposed to display)
         // 
-        // _storedTendencyOffset is deleted in fetchRaster/fetchOverlay if
+        // _storedTendencyOffset is deleted in fetchRaster/fetchNongridded if
         // time parameter changes.
         if (!this._usePopulationStats) {
             if (typeof(this._storedTendencyOffset) === 'undefined') {
@@ -141,6 +148,17 @@ Ext.define('Flux.view.D3Panel', {
     },
 
     /**
+        Set the metadata; retains a reference to Flux.model.Metadata instance.
+        @param  metadata    {Flux.model.Metadata}
+        @return             {Flux.view.D3Panel}
+        @return             {Flux.view.D3Panel}
+     */
+    setMetadataOverlay: function (metadata) {
+        this._metadataOverlay = metadata;
+        return this;
+    },
+
+    /**
         Toggles the display of anomalies in the data.
         @param  state       {Boolean}
         @param  tendency    {String}
@@ -161,15 +179,20 @@ Ext.define('Flux.view.D3Panel', {
         @param  metadata    {Flux.model.Metadata}
         @return             {Flux.view.D3Panel}
      */
-    togglePopulationStats: function (state, metadata) {
-        if (Ext.isEmpty(this.getMetadata())) {
+    togglePopulationStats: function (state, metadata, isOverlay) {
+        if ((!isOverlay && Ext.isEmpty(this.getMetadata())) ||
+            (isOverlay && Ext.isEmpty(this.getMetadataOverlay()))) {
             return;
         }
 
         this._usePopulationStats = state;
 
         if (metadata) {
-            this.setMetadata(metadata);
+            if (!isOverlay) {
+                this.setMetadata(metadata);
+            } else {
+                this.setMetadataOverlay(metadata);
+            }
         }
 
         return this;

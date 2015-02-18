@@ -1,4 +1,4 @@
-Ext.define('Flux.model.Overlay', {
+Ext.define('Flux.model.Nongridded', {
     extend: 'Flux.model.AbstractFeature',
 
     fields: ['_id', {

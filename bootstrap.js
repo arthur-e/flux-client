@@ -820,7 +820,7 @@ Ext.ClassManager.addNameAlternateMappings({
   "Flux.view.D3Panel": [],
   "Flux.view.FormPanel": [],
   "Flux.view.MapSettings": [],
-  "Flux.view.OverlaysPanel": [],
+  "Flux.view.NongriddedPanel": [],
   "Flux.view.SidePanel": [],
   "Flux.view.SourcePanel": [],
   "Flux.view.SourceSelectionCarousel": [],
@@ -1756,7 +1756,7 @@ Ext.ClassManager.addNameAliasMappings({
   "Flux.model.AbstractFeature": [],
   "Flux.model.CoordView": [],
   "Flux.model.Metadata": [],
-  "Flux.model.Overlay": [],
+  "Flux.model.Nongridded": [],
   "Flux.model.Palette": [],
   "Flux.model.Raster": [],
   "Flux.model.RasterGrid": [],
@@ -1770,9 +1770,6 @@ Ext.ClassManager.addNameAliasMappings({
   "Flux.store.Scenarios": [],
   "Flux.store.TimeSeries": [],
   "Flux.type.Moment": [],
-  "Flux.view.AddOverlayPanel": [
-    "widget.addoverlayspanel"
-  ],
   "Flux.view.D3GeographicMap": [
     "widget.d3geomap"
   ],
@@ -1788,8 +1785,17 @@ Ext.ClassManager.addNameAliasMappings({
   "Flux.view.MapSettings": [
     "widget.mapsettings"
   ],
-  "Flux.view.OverlaysPanel": [
-    "widget.overlayspanel"
+  "Flux.view.NongriddedPanel": [
+    "widget.nongriddedpanel"
+  ],
+  "Flux.view.RoiOverlayForm": [
+    "widget.roioverlayform"
+  ],
+  "Flux.view.RoiOverlayFormGeoJSON": [
+    "widget.ao_geojson"
+  ],
+  "Flux.view.RoiOverlayFormWKT": [
+    "widget.ao_wkt"
   ],
   "Flux.view.SidePanel": [
     "widget.sidepanel"

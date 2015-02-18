@@ -14,6 +14,9 @@ Ext.define('Flux.controller.UserInteraction', {
         ref: 'mapSettings',
         selector: 'mapsettings'
     }, {
+        ref: 'nongriddedPanel',
+        selector: 'nongriddedpanel'
+    }, {
         ref: 'settingsMenu',
         selector: '#settings-menu'
     }, {
@@ -40,7 +43,7 @@ Ext.define('Flux.controller.UserInteraction', {
     requires: [
         'Ext.data.ArrayStore',
         'Ext.state.CookieProvider',
-        'Flux.model.Overlay',
+        'Flux.model.Nongridded',
         'Flux.model.Raster',
         'Flux.model.RasterGrid',
         'Flux.model.Metadata',
@@ -95,7 +98,7 @@ Ext.define('Flux.controller.UserInteraction', {
 		change: this.onStatsChange
 	    },
             '#settings-menu slider[name=markerSize]': {
-                change: this.onOverlayMarkerChange
+                change: this.onNongriddedMarkerChange
             },
 
             '#single-map': {
@@ -136,16 +139,21 @@ Ext.define('Flux.controller.UserInteraction', {
             'field[name=source]': {
                 change: this.onSourceChange
             },
+            
+            'field[name=source_nongridded]': {
+                change: this.onSourceChangeNongridded
+            },
+            
             'field[name=source2]': {
                 change: this.onSourceDifferenceChange
             },
-            'field[name=date], field[name=time], field[name=end]': {
+            'field[name=date], field[name=time]': {// field[name=end]': {
                 change: this.onDateTimeSelection,
                 expand: this.uncheckAggregates
             },
             
-            'overlayspanel datefield': {
-                afterselect: this.onOverlayDateSelection
+            'nongriddedpanel datefield': {
+                afterselect: this.onNongriddedDateSelection
             },
             
             'roioverlayform' : {
@@ -458,23 +466,28 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  view    {Flux.view.D3GeographicMap}
         @param  params  {Object}
      */
-    fetchOverlay: function (view, params) {
-        var overlay;
+    fetchNongridded: function (view, params) {
+        var overlay, id;
+        var showAsOverlay = this.getNongriddedPanel().down('recheckbox[name=overlay]').checked;
 
-        if (view.mostRecentOverlayParams != params) {
+        if (view.mostRecentNongriddedParams != params) {
             delete view._storedTendencyOffset;
         }
         
-	view.mostRecentOverlayParams = params;
+	view.mostRecentNongriddedParams = params;
 	
-        if (!view.getMetadata()) {
+        if (!view.getMetadata() || (showAsOverlay && !view.getMetadataOverlay())) {
             return;
         }
 
+        id = view.getMetadata().getId();
+        if (showAsOverlay) {
+            id = view.getMetadataOverlay().getId();
+        }
+        
         Ext.Ajax.request({
             method: 'GET',
-            url: Ext.String.format('/flux/api/scenarios/{0}/xy.json',
-                view.getMetadata().getId()),
+            url: Ext.String.format('/flux/api/scenarios/{0}/xy.json', id),
             params: params,
             callback: function (opts, success, response) {
                 var ov;
@@ -483,10 +496,10 @@ Ext.define('Flux.controller.UserInteraction', {
                     return;
                 }
 
-                ov = Ext.create('Flux.model.Overlay',
+                ov = Ext.create('Flux.model.Nongridded',
                     Ext.JSON.decode(response.responseText));
 
-                this.bindLayer(view, ov);
+                this.bindLayer(view, ov, showAsOverlay);
                 this.onMapLoad(ov);
             },
             failure: function (response) {
@@ -645,8 +658,8 @@ Ext.define('Flux.controller.UserInteraction', {
                 end = end || view.mostRecentRasterParams.time || meta.get('dates')[0].toISOString();
                 interval = this.getInterval(meta);
             } else {
-                start = start || view.mostRecentOverlayParams.start;
-                end = end || view.mostRecentOverlayParams.end;
+                start = start || view.mostRecentNongriddedParams.start;
+                end = end || view.mostRecentNongriddedParams.end;
                 interval = undefined;
             }
             
@@ -826,16 +839,17 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
-        Binds a Flux.model.Raster or Flux.model.Overlay instance to the
+        Binds a Flux.model.Raster or Flux.model.Nongridded instance to the
         provided view, a Flux.view.D3GeographicMap instance. If an _id is
         provided (on Raster instances), the view's store is updated with that
         instance.
         @param  view    {Flux.view.D3Panel}
-        @param  raster  {Flux.model.Raster}
+        @param  feat    {Flux.model.Raster  or Flux.model.Nongridded}
      */
-    bindLayer: function (view, feat) {
+    bindLayer: function (view, feat, showAsOverlay) {
         var opts = this.getGlobalSettings();
-
+        
+        // Cache the data if it's not already cached
         if (!Ext.isEmpty(feat.get('_id'))) {
             view.store.add(feat);
         }
@@ -847,7 +861,7 @@ Ext.define('Flux.controller.UserInteraction', {
 	    f1 = feat.get('features');
             
             // Gridded data
-            if (view.getMetadata().get('gridded')) {
+            if (view.getMetadata().get('gridded') && !showAsOverlay) {
                 feat.set('features', (function () {
                             var i;
                             var g = [];
@@ -870,7 +884,7 @@ Ext.define('Flux.controller.UserInteraction', {
             }
 	}	
 
-        view.draw(feat, true);
+        view.draw(feat, true, showAsOverlay);
 
         if (opts.statsFrom === 'data') {
             // Also update the slider bounds
@@ -904,6 +918,20 @@ Ext.define('Flux.controller.UserInteraction', {
         if (opts.statsFrom === 'population') {
             view.updateScale(this.getSymbology().getForm().getValues());
         }
+    },
+    
+    /**
+        Binds a Flux.model.Metadata instance to the provided view, a
+        Flux.view.D3GeographicMap instance.
+        @param  view        {Flux.view.D3Panel}
+        @param  metaadata   {Flux.model.Metadata}
+     */
+    bindMetadataOverlay: function (view, metadata) {
+        var opts = this.getGlobalSettings();
+
+        view.setMetadataOverlay(metadata)
+            .togglePopulationStats(opts.statsFrom === 'population', metadata, true)
+            .toggleAnomalies(opts.display === 'anomalies', opts.tendency);
     },
 
      /**
@@ -942,7 +970,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 cmp.enable();
             });
             
-            this.onOverlayDateSelection(Ext.ComponentQuery.query('field[name=end]')[0]);
+            this.onNongriddedDateSelection(Ext.ComponentQuery.query('field[name=end]')[0]);
         
         } else {
         
@@ -1298,16 +1326,6 @@ Ext.define('Flux.controller.UserInteraction', {
                 });
             }
         }
-//         // Non-gridded /////////////////////////////////////////////////////////
-//         // ***THIS is not needed b/c non-gridded date-time selection has it's own listener***
-//         } else {
-//             if (values.date && values.end) {
-//                 this.fetchOverlay(view, {
-//                     start: Ext.String.format('{0}T00:00Z', values.date),
-//                     end: Ext.String.format('{0}T23:59Z', values.end)
-//                 });
-//             }
-//         }
 
         // Enable the FieldSets in this form
         if (this.getGlobalSettings().statsFrom === 'data') {
@@ -1576,14 +1594,15 @@ Ext.define('Flux.controller.UserInteraction', {
 	 view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
     },
     /**
-        Propagates wider changes following the loading of a new Raster instance.
+        Propagates wider changes following the loading of a new Raster/Nongridded instance.
         Specifically, this updates the D3LinePlot instance.
-        @param  rast    {Flux.model.Raster}
+        
+        @param  feat    {Flux.model.Raster or Flux.model.Nongridded}
      */
-    onMapLoad: function (rast) {
-        var props = rast.get('properties');
+    onMapLoad: function (feat) {
+        var props = feat.get('properties');
         var moments = [
-            rast.get('timestamp')
+            feat.get('timestamp')
         ];
 
         // Recalculate summary stats if a drawn polygon exists
@@ -1593,6 +1612,7 @@ Ext.define('Flux.controller.UserInteraction', {
             this.fetchRoiSummaryStats();
         }
         
+        // Update lineplot
         if (this.getLinePlot()) {
             if (props.start && props.end) {
                 moments = [
@@ -1644,7 +1664,7 @@ Ext.define('Flux.controller.UserInteraction', {
         overlays.
         @param  f   {Ext.form.Field}
      */
-    onOverlayDateSelection: function (f) {
+    onNongriddedDateSelection: function (f) {
         var editor = f.up('roweditor');
         var values = f.up('panel').getForm().getValues();
         var view;
@@ -1661,7 +1681,7 @@ Ext.define('Flux.controller.UserInteraction', {
             view = this.getMap();
         }
 
-        this.fetchOverlay(view, {
+        this.fetchNongridded(view, {
             start: moment.utc(values.start).toISOString(),
             end: moment.utc(values.end).toISOString()
         });
@@ -1672,7 +1692,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  s       {Ext.slider.Single}
         @param  size    {Number}
      */
-    onOverlayMarkerChange: function (s, size) {
+    onNongriddedMarkerChange: function (s, size) {
         Ext.each(Ext.ComponentQuery.query('d3geomap'), function (v) {
             v.setMarkerSize(size).redraw();
         });
@@ -1918,14 +1938,14 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  panel   {Ext.panel.TabPanel}
      */
     onSingleMapTabChange: function (panel) {
-        panel.getActiveTab().getForm().reset();
-
-        if (panel.getActiveTab.title !== 'gridded-map') {
-            panel.down('field[name=showLinePlot]').setValue(false);
-        }
-
-        // Clear any currently drawn features
-        this.getMap().clear();
+//         panel.getActiveTab().getForm().reset();
+// 
+//         if (panel.getActiveTab.title !== 'gridded-map') {
+//             panel.down('field[name=showLinePlot]').setValue(false);
+//         }
+// 
+//         // Clear any currently drawn features
+//         this.getMap().clear();
     },
 
     /**
@@ -1993,15 +2013,7 @@ Ext.define('Flux.controller.UserInteraction', {
             });
         }
 
-        // Do not continue if the source is non-gridded
-        //console.log(field.getStore().getById(source).get('gridded'));
-//         var store = field.getStore().getById(source);
-//         var store = Ext.StoreManager.get('scenarios');//.getById(source);
-// 
-//         if (!store) {
-//             return;
-//         }
-//         
+        // Do not continue if the source is non-gridded  
         if (!field.getStore().getById(source).get('gridded')) {
             return;
         }
@@ -2029,7 +2041,63 @@ Ext.define('Flux.controller.UserInteraction', {
         }
 
     },
+    
+   /**
+        Handles a change in the data "source" from a ComboBox configured for
+        selecting from among sources (e.g. scenarios, model runs, etc.).
+        @param  field   {Ext.form.field.ComboBox}
+        @param  source  {String}
+        @param  last    {String}
+     */
+    onSourceChangeNongridded: function (field, source, last) {
+        console.log('onSourceChangeNongridded');
+        var metadata, operation, grid, view;
+        var container = field.up('panel');
+        //var editor = field.up('roweditor');
+        var showAsOverlay = field.up('panel').down('recheckbox[name=overlay]').checked;
+        
+        if (Ext.isEmpty(source) || source === last) {
+            return;
+        }
 
+       view = this.getMap();
+
+        // Callback ////////////////////////////////////////////////////////////
+        operation = Ext.Function.bind(function (metadata) {
+            if (showAsOverlay) {
+                this.bindMetadataOverlay(view, metadata)
+            } else {
+                this.bindMetadata(view, metadata);
+            }
+            this.propagateMetadata(container, metadata);
+        }, this);
+
+        // Metadata ////////////////////////////////////////////////////////////
+        metadata = this.getStore('metadata').getById(source);
+        
+        if (metadata) {
+            operation(metadata);
+
+        } else {
+            Ext.Ajax.request({
+                method: 'GET',
+                url: '/flux/api/scenarios.json',
+                params: {
+                    scenario: source
+                },
+                callback: function (o, s, response) {
+                    var meta = Ext.create('Flux.model.Metadata',
+                        Ext.JSON.decode(response.responseText));
+
+                    this.getStore('metadata').add(meta);
+
+                    operation(meta, field);
+                },
+
+                scope: this
+            });
+        }
+    },
     /**
         Handles a change in the data "source" from a ComboBox configured for
         selecting from among sources (e.g. scenarios, model runs, etc.)
@@ -2150,7 +2218,7 @@ Ext.define('Flux.controller.UserInteraction', {
 	    if (map.getMetadata().get('gridded')) {
 		this.fetchRaster(map,map.mostRecentRasterParams,true);
 	    } else {
-		this.fetchOverlay(map, map.mostRecentOverlayParams);
+		this.fetchNongridded(map, map.mostRecentNongriddedParams);
 	    }
 	}
 

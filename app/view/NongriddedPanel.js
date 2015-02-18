@@ -1,6 +1,6 @@
-Ext.define('Flux.view.OverlaysPanel', {
+Ext.define('Flux.view.NongriddedPanel', {
     extend: 'Flux.view.FormPanel',
-    alias: 'widget.overlayspanel',
+    alias: 'widget.nongriddedpanel',
 
     requires: [
         'Ext.form.field.ComboBox'
@@ -9,7 +9,7 @@ Ext.define('Flux.view.OverlaysPanel', {
     items: [{
         xtype: 'combo',
         fieldLabel: 'Select non-gridded data source',
-        name: 'source',
+        name: 'source_nongridded',
         anchor: '100%',
         emptyText: 'Select...',
         style: {maxWidth: '200px'},
@@ -78,7 +78,13 @@ Ext.define('Flux.view.OverlaysPanel', {
                 this.fireEventArgs('afterselect', [this]);
             }
         }
-
+    }, {
+        xtype: 'recheckbox',
+        name: 'overlay',
+        stateId: 'overlay',
+        stateful: true,
+        checked: false,
+        boxLabel: 'Overlay on gridded data',
     }]
 });
 

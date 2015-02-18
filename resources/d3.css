@@ -49,6 +49,7 @@
     cursor: pointer;
 }
 .raster { shape-rendering: crispEdges; }
+.overlay { shape-rendering: crispEdges; }
 rect { shape-rendering: crispEdges; }
 text { font: 14px Helvetica,Arial,sans-serif; }
 text.info {

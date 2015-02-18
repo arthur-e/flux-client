@@ -255,7 +255,7 @@ Ext.define('Flux.view.Viewport', {
                     title: 'Gridded',
                     itemId: 'gridded-map'
                 }, {
-                    xtype: 'overlayspanel',
+                    xtype: 'nongriddedpanel',
                     title: 'Non-gridded',
                     itemId: 'non-gridded-map'
                 }]

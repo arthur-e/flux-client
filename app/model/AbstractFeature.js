@@ -31,9 +31,9 @@ Ext.define('Flux.model.AbstractFeature', {
             }
 
         // Get timestamp from non-gridded data points...
-        // ...in this case we're using the existence of the substring 'Overlay' in the id field
+        // ...in this case we're using the existence of the substring 'Nongridded' in the id field
         // as an indicator that it is a non-gridded dataset
-        } else if (this.id.indexOf('Overlay') > -1) { 
+        } else if (this.id.indexOf('Nongridded') > -1) { 
             ts = Ext.Array.pluck(this.get('features'), 'timestamp');
             d0 = moment.utc(Ext.Array.min(ts)).format(fmt);
             d1 = moment.utc(Ext.Array.max(ts)).format(fmt);

@@ -252,7 +252,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         @param  sel {d3.selection}
         @return     {Flux.view.D3GeographicMap}
      */
-    addListeners: function (sel) {
+    addListeners: function (sel, showAsOverlay) {
         var proj = this.getProjection();
         var view = this;
 
@@ -292,13 +292,16 @@ Ext.define('Flux.view.D3GeographicMap', {
             //}
 
             p = view.getMetadata().get('precision');
+            if (showAsOverlay) {
+                p = view.getMetadataOverlay().get('precision');
+            }
             m = d3.mouse(view.svg[0][0]);
             c = [
                 this.attributes.x.value,
                 this.attributes.y.value
             ];
 
-            if (view.getMetadata().get('gridded')) {
+            if (view.getMetadata().get('gridded') && !showAsOverlay) {
                 // Need to add half the grid spacing as this was subtracted to obtain
                 //  the upper-left corner of the grid cell
                 ll = view.getMetadata().calcHalfOffsetCoordinates(proj.invert(c));
@@ -338,7 +341,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             view.fireEventArgs('mouseout', [view]);
         });
 
-        if (this.getMetadata() && this.getMetadata().get('gridded')) {
+        if (this.getMetadata() && this.getMetadata().get('gridded') && !showAsOverlay) {
             sel.on('click', function () {                
                 view.fireEventArgs('plotclick', [view, [
                     this.attributes.x.value,
@@ -817,8 +820,8 @@ Ext.define('Flux.view.D3GeographicMap', {
         @param  zoom    {Boolean}
         @return         {Flux.view.D3GeographicMap}
      */
-    draw: function (data, zoom) {
-        var bbox, lat, lng, meta, c1, c2, sel;
+    draw: function (data, zoom, showAsOverlay) {
+        var bbox, lat, lng, meta, c1, c2, pane, sel;
         var proj = this.getProjection();
 
         if (!data) {
@@ -830,18 +833,34 @@ Ext.define('Flux.view.D3GeographicMap', {
         // If not using population statistics, calculate the new summary stats
         //  for the incoming data
         if (!this._usePopulationStats) {
-            meta = this.getMetadata().copy();
-            meta.set('stats', {
-                values: data.summarize()
-            });
+            if (!showAsOverlay) {
+                meta = this.getMetadata().copy();
+                meta.set('stats', {
+                    values: data.summarize()
+                });
 
-            this.setMetadata(meta);
+                this.setMetadata(meta);
+            } else {
+                meta = this.getMetadataOverlay().copy();
+                meta.set('stats', {
+                    values: data.summarize()
+                });
+
+                this.setMetadataOverlay(meta);
+            }
+               
         }
 
         // Retain references to last drawing data and metadata; for instance,
         //  resize events require drawing again with the same (meta)data
-        this._model = data;
-
+        if (!showAsOverlay) {
+            this._model = data;
+            pane = this.panes.raster;
+        } else {
+            this._modelOverlay = data;
+            pane = this.panes.overlay;
+        }
+        
         // Disallow zooming by default
         zoom = (zoom === true);
 
@@ -849,27 +868,27 @@ Ext.define('Flux.view.D3GeographicMap', {
         // Selection and Attributes ////////////////////////////////////////////
 
         // Sets the enter or update selection's data
-        sel = this.panes.raster.selectAll('.cell')
-            .data(data.get('features'), function (d, i) {
-                return i; // Use the cell index as the key
-            });
+        sel = pane.selectAll('.cell')
+                .data(data.get('features'), function (d, i) {
+                    return i; // Use the cell index as the key
+                });
 
         // Append a <rect> for every grid cell so long as the features haven't
         //  been drawn before or the layer is non-gridded
-        if (!this.isDrawn || !this.getMetadata().get('gridded')) {
+        if (!this.isDrawn || !this.getMetadata().get('gridded') || showAsOverlay) {
             sel.exit().remove();
             sel.enter().append('rect');
 
             // Add mouseover and mouseout event listeners
-            this.addListeners(sel);
+            this.addListeners(sel, showAsOverlay);
         }
 
         // Calculate the position and dimensions attributes of the elements
-        sel.attr(this.getDrawingAttrs())
+        sel.attr(this.getDrawingAttrs(showAsOverlay))
             .style('cursor', 'pointer'); // Show link pointer when hovering over
 
         // Applies the color scale to the current selection
-        this.update(sel);
+        this.update(sel, showAsOverlay);
 
         ////////////////////////////////////////////////////////////////////////
         // Zoom to Feature /////////////////////////////////////////////////////
@@ -895,10 +914,8 @@ Ext.define('Flux.view.D3GeographicMap', {
             c2 = proj([lng, lat]);
 
             // Get the pixel coordinates of the longitude maximum and minmum,
-            //  then take the difference to get the pixel width of the scene:
+            //  then take the difference to get the pixel width of the scene.
             //
-            //  (proj([bbox[2], 0])[0] - proj([bbox[0], 0])[0])
-
             // Then, take the ratio of the SVG width to this scene width to find
             //  the zoom factor; scale it slightly so we don't zoom in too far
             this.setZoom(0.8 * (this.svg.attr('width') / Math.abs(proj([0, 0])[0] - proj([bbox[2] - bbox[0], 0])[0])), [
@@ -943,7 +960,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         Creates an Object of attributes for the drawing features.
         @return {Object}
      */
-    getDrawingAttrs: function () {
+    getDrawingAttrs: function (showAsOverlay) {
         var attrs, grid, gridxy;
         var proj = this.getProjection();
         var scaling = this._mercatorFactor;
@@ -955,8 +972,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         ////////////////////////////////////////////////////////////////////////
         // Non-gridded Overlay /////////////////////////////////////////////////
-
-        if (!this._metadata.get('gridded')) {
+        if (!this._metadata.get('gridded') || showAsOverlay) {
 
             return attrs = {
                 'x': function (d) {
@@ -1232,6 +1248,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             basemap: this.wrapper.append('g').attr('class', 'pane')
         };
         this.panes.raster = this.wrapper.append('g').attr('class', 'pane raster');
+        this.panes.overlay = this.wrapper.append('g').attr('class', 'pane overlay');
         this.panes.hud = this.svg.append('g').attr('class', 'pane hud');
         this.panes.legend = this.svg.append('g').attr('class', 'pane legend');
         this.panes.tooltip = this.svg.append('g').attr('class', 'pane tooltip');
@@ -1668,10 +1685,14 @@ Ext.define('Flux.view.D3GeographicMap', {
         @param  selection   {d3.selection}
         @return             {Flux.view.D3GeographicMap}
      */
-    update: function (selection) {
+    update: function (selection, showAsOverlay) {
+        var pane = this.panes.raster;
+        if (showAsOverlay) {
+            pane = this.panes.overlay;
+        }
+        
         if (selection) {
-	  
-            if (this.getMetadata().get('gridded')) {
+            if (this.getMetadata().get('gridded') && !showAsOverlay) {
                 selection.attr('fill', Ext.bind(function (d) {
                     if (Ext.isEmpty(d)) {
                         return 'transparent';
@@ -1690,8 +1711,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             return this;
         }
 
-        this.panes.raster.selectAll('.cell')
-        .attr(this.getDrawingAttrs());
+        pane.selectAll('.cell').attr(this.getDrawingAttrs());
 
         return this;
     },

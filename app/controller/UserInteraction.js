@@ -1649,7 +1649,7 @@ Ext.define('Flux.controller.UserInteraction', {
         
         // But if you're in the non-gridded-map and showOverlay is not checked,
         // select the non-overlay data pane
-        if (cb_overlay.up('tabbedpanel').getActiveTab().itemId === 'non-gridded-map' && !cb_overlay.checked) {
+        if (view._model.id.indexOf('Flux.model.Nongridded') > -1 && !cb_overlay.checked) {
             sel = view.panes.datalayer.selectAll('.cell');
         }
         
@@ -1763,32 +1763,51 @@ Ext.define('Flux.controller.UserInteraction', {
         
         if (checked) {
             // The app state at which this checkbox is checked and
-            // Nongridded fields are filled out are:
+            // Nongridded fields are filled out is this:
             // map._model = currently selected Nongridded
             // map._metadata = currently select Nongridded
             //
             // These need to be reset to the values shown
-            // in the Gridded tab
-            console.log('lets do overlay stuff');
-            
-            //cb.up('panel').down('recheckbox[name=markerOutline]').show();
-            
-            
+            // in the Gridded tab.
+
+            // Move the currently loaded metadata and model data to the
+            // corresponding overlay stores
             this.bindMetadataOverlay(view, view.getMetadata());
             view._modelOverlay = view._model;
             
             // Do the things that are done under onSourceChange and then onDateTimeSelection
-            // that normally serve to load/draw the Raster MapController
+            // that normally serve to load/draw the gridded data
+            var source = this.getSourcePanel().down('field[name=source]').getValue();
+            var date = this.getSourcePanel().down('field[name=date]').getValue();
+            var time_field = this.getSourcePanel().down('field[name=time]');
+            var time = time_field.getValue();
             
+            // If all the necessary values are filled out
+            if (!Ext.isEmpty(source) && !Ext.isEmpty(date) && !Ext.isEmpty(time)) {
+                // This assumes that since the fields are already filled out, the metadata
+                // and grid already exists in the store, which should always be the case
+                
+                this.bindMetadata(view, this.getStore('metadata').getById(source));
+                this.bindRasterGrid(view, this.getStore('rastergrids').getById(source));
+                this.onDateTimeSelection(time_field, time);
+            }
             // Finally, draw the overlay on top
-            
-            
-            
+            view.draw(view._modelOverlay, true, true);
             
         } else {
+            // Remove currently drawn elements on the map
+            view.clear();
+            
+            // Bind what is currently used as the Overlay metadata/data 
+            // to the primary data layer
             this.bindMetadata(view, view.getMetadataOverlay());
-            view._model = view._modelOverlay;
-            view.draw(view._model);
+            this.bindLayer(view, view._modelOverlay);
+            
+            // Refetch summary stats
+            if (view._roiCoords) {
+                delete view._currentSummaryStats;
+                this.fetchRoiSummaryStats();
+            }        
         }
         
     },
@@ -2054,7 +2073,7 @@ Ext.define('Flux.controller.UserInteraction', {
         var metadata, operation, grid, view;
         var container = field.up('panel');
         var editor = field.up('roweditor');
-        
+
         // Reset aggregate view
         this.uncheckAggregates();
 

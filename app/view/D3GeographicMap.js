@@ -1536,9 +1536,10 @@ Ext.define('Flux.view.D3GeographicMap', {
      */
     setScale: function (scale, opts) {
         this._scale = scale;
+        var suppress = opts.suppressUpdate | false;
 	
         if (this.panes.datalayer) {
-	    if (opts && !opts.suppressUpdate) {
+	    if (!suppress) {
 		this.update(this.panes.datalayer.selectAll('.cell'));
 	    }
 	    

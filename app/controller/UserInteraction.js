@@ -488,6 +488,7 @@ Ext.define('Flux.controller.UserInteraction', {
         id = view.getMetadata().getId();
         if (showAsOverlay) {
             id = view.getMetadataOverlay().getId();
+            console.log(id);
         }
         
         Ext.Ajax.request({
@@ -910,6 +911,15 @@ Ext.define('Flux.controller.UserInteraction', {
     bindMetadata: function (view, metadata) {
         var opts = this.getGlobalSettings();
 
+        // If the currently loaded metadata is nongridded, shuttle that metadata
+        // into the Overlay store before overwriting so that the data can be displayed as
+        // an Overlay later if desired
+        if (view._model && view._model.id.indexOf('Flux.model.Nongridded') > -1 && view.getMetadata()) {
+            view.setMetadataOverlay(view.getMetadata());
+            view._modelOverlay = view._model;
+        }
+        
+        // Set Metadata
         view.setMetadata(metadata)
             .togglePopulationStats(opts.statsFrom === 'population', metadata)
             .toggleAnomalies(opts.display === 'anomalies', opts.tendency);
@@ -1661,7 +1671,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 });
             } else {
                 sel.style({'stroke-width': 0,
-                        'stoke' : '#00'
+                           'stroke' : 'none'
                 });
             }
         }
@@ -1737,6 +1747,7 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     onNongriddedMarkerChange: function (s, size) {
         var view = this;
+        var map = this.getMap();
         var showOverlay = this.getNongriddedPanel().down('recheckbox[name=overlay]').checked;
         Ext.each(Ext.ComponentQuery.query('d3geomap'), function (v) {
             v.setMarkerSize(size).redraw(view.zoom, showOverlay);
@@ -1772,8 +1783,13 @@ Ext.define('Flux.controller.UserInteraction', {
 
             // Move the currently loaded metadata and model data to the
             // corresponding overlay stores
-            this.bindMetadataOverlay(view, view.getMetadata());
-            view._modelOverlay = view._model;
+            if (!view._metadataOverlay) {
+                this.bindMetadataOverlay(view, view.getMetadata());
+            }
+            
+            if (!view._modelOverlay) {
+                view._modelOverlay = view._model;
+            }
             
             // Do the things that are done under onSourceChange and then onDateTimeSelection
             // that normally serve to load/draw the gridded data
@@ -1802,6 +1818,10 @@ Ext.define('Flux.controller.UserInteraction', {
             // to the primary data layer
             this.bindMetadata(view, view.getMetadataOverlay());
             this.bindLayer(view, view._modelOverlay);
+            
+            // Clear the overlay data
+            delete view._metadataOverlay;
+            delete view._modelOverlay;
             
             // Refetch summary stats
             if (view._roiCoords) {
@@ -2052,12 +2072,29 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  panel   {Ext.panel.TabPanel}
      */
     onSingleMapTabChange: function (panel) {
-//         panel.getActiveTab().getForm().reset();
-// 
-//         if (panel.getActiveTab.title !== 'gridded-map') {
-//             panel.down('field[name=showLinePlot]').setValue(false);
-//         }
-// 
+        //panel.getActiveTab().getForm().reset();
+
+        if (panel.getActiveTab.title !== 'gridded-map') {
+            // Disable line plot
+            //panel.down('field[name=showLinePlot]').setValue(false);
+
+            var source = panel.down('field[name=source]').getValue();
+            var date = panel.down('field[name=date]').getValue();
+            var time = panel.down('field[name=time]').getValue();
+            var chk = panel.down('recheckbox[name=overlay]');
+            //var time = time_field.getValue();
+            
+            // If gridded data is not loaded, set overlay to unchecked/disabled
+            if (Ext.isEmpty(source) || Ext.isEmpty(date) || Ext.isEmpty(time)) {
+                chk.setValue(false);
+                chk.setDisabled(true);
+            } else {
+                chk.setDisabled(false);
+            }
+            
+            
+        }
+
 //         // Clear any currently drawn features
 //         this.getMap().clear();
     },
@@ -2447,6 +2484,9 @@ Ext.define('Flux.controller.UserInteraction', {
                         clock.enable();
                     }, cal, {single: true});
                 }
+                
+                // Finally, enable the field
+                cal.enable();
             });
 
         }

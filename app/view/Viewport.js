@@ -178,10 +178,10 @@ Ext.define('Flux.view.Viewport', {
                         xtype: 'reslider',
                         name: 'markerSize',
                         stateId: 'markerSize',
-                        value: 5,
-                        increment: 1,
-                        minValue: 3,
-                        maxValue: 10
+                        value: 10,
+                        increment: 2,
+                        minValue: 6,
+                        maxValue: 20
                     },  {  
                         xtype: 'recheckbox',
                         name: 'markerOutline',

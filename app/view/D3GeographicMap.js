@@ -17,7 +17,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         The size of the markers to use for displaying vector overlays.
         @private
      */
-    _markerSize: 5,
+    _markerSize: 10,
 
     /**
         The scaling factor for a Mercator projection.
@@ -978,7 +978,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         var attrs, grid, gridxy;
         var proj = this.getProjection();
         var scaling = this._mercatorFactor;
-        var sz = this._markerSize;
+        var sz = this._markerSize / this.zoom.scale();
 
         if (!this._metadata) {
             return;
@@ -1205,18 +1205,33 @@ Ext.define('Flux.view.D3GeographicMap', {
                     this.wrapper.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
                 }
                 
+
+                //this.setMarkerSize(this._markerSize/d3.event.scale);
+                var sz = this._markerSize/d3.event.scale;
                 // Scale stroke-width for nongridded data appropriately, whether it exists as...
                 // ...an overlay OR...
-                this.panes.overlay.selectAll('.cell').style({
-                    'stroke-width': this._overlayStrokeWidth / d3.event.scale
-                });
+                this.panes.overlay.selectAll('.cell')
+                    .style({
+                        'stroke-width': this._overlayStrokeWidth / d3.event.scale
+                    })
+                    .attr({
+                        'height' : sz,
+                        'width' : sz
+                    });
                 
                 // ...as a primary model instance...
                 if (this._model.id.indexOf('Flux.model.Nongridded') > -1) {
-                    this.panes.datalayer.selectAll('.cell').style({
-                        'stroke-width': this._overlayStrokeWidth / d3.event.scale
-                    });
+                    this.panes.datalayer.selectAll('.cell')
+                        .style({
+                            'stroke-width': this._overlayStrokeWidth / d3.event.scale
+                        })
+                        .attr({
+                            'height' : sz,
+                            'width' : sz
+                        });
                 }
+                
+
                 
                 // Scale the ROI vertices appropriately
 		this.wrapper.selectAll('.roi-vertex').attr({
@@ -1536,7 +1551,10 @@ Ext.define('Flux.view.D3GeographicMap', {
      */
     setScale: function (scale, opts) {
         this._scale = scale;
-        var suppress = opts.suppressUpdate | false;
+        var suppress = false;
+        if (opts) {
+            suppress = opts.suppressUpdate;
+        }
 	
         if (this.panes.datalayer) {
 	    if (!suppress) {

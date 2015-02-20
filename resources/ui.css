@@ -168,3 +168,6 @@
 
 /* Toolbars *******************************************************************/
 .x-toolbar-default.map-tbar { background-color: transparent !important; }
+
+/* Labels *******************************************************************/
+.info-label { font-size: 10px !important;color: #555 !important;}

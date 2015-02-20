@@ -7,6 +7,14 @@ Ext.define('Flux.view.NongriddedPanel', {
     ],
 
     items: [{
+        xtype: 'checkbox',
+        name: 'showNongridded',
+        stateId: 'showNongridded',
+        //stateful: true,
+        disabled: true,
+        checked: false,
+        boxLabel: 'Show'
+    }, {
         xtype: 'combo',
         fieldLabel: 'Select non-gridded data source',
         name: 'source_nongridded',
@@ -79,13 +87,11 @@ Ext.define('Flux.view.NongriddedPanel', {
             }
         }
     }, {
-        xtype: 'recheckbox',
-        name: 'overlay',
-        stateId: 'overlay',
-        stateful: true,
-        disabled: true,
-        checked: false,
-        boxLabel: 'Show as overlay on gridded data'
+        xtype: 'label',
+        name: 'uncheck-info',
+        cls: 'info-label',
+        html: '*When both <b>non-gridded</b> and <b>gridded</b> datasets are showing, <b>gridded</b> attributes are used for map settings and calculations.' ,
+        hidden: false,
     }]
 });
 

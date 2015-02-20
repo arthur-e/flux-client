@@ -24,10 +24,18 @@ Ext.define('Flux.view.SourcePanel', {
     },
 
     items: [{
+        xtype: 'checkbox',
+        name: 'showGridded',
+        stateId: 'showGridded',
+        checked: false,
+        disabled: true,
+        boxLabel: 'Show'
+    }, {
         xtype: 'combo',
         name: 'source',
         anchor: '100%',
-        fieldLabel: 'Select dataset (e.g. model run) and date/time',
+        //fieldLabel: 'Select dataset (e.g. model run) and date/time',
+        fieldLabel: 'Select dataset and date/time',
         emptyText: 'Select...',
         style: {maxWidth: '200px'},
         displayField: '_id',

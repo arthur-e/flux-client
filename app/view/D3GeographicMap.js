@@ -926,13 +926,8 @@ Ext.define('Flux.view.D3GeographicMap', {
             }
 
             c2 = proj([lng, lat]);
-
-            // Get the pixel coordinates of the longitude maximum and minmum,
-            //  then take the difference to get the pixel width of the scene.
-            //
-            // Then, take the ratio of the SVG width to this scene width to find
-            //  the zoom factor; scale it slightly so we don't zoom in too far
-            this.setZoom(0.8 * (this.svg.attr('width') / Math.abs(proj([0, 0])[0] - proj([bbox[2] - bbox[0], 0])[0])), [
+            
+            this.setZoom(this.getZoomScaleFromBbox(bbox), [
                 (c1[0] - c2[0]),
                 (c1[1] - c2[1])
             ]);
@@ -1220,7 +1215,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                     });
                 
                 // ...as a primary model instance...
-                if (this._model.id.indexOf('Flux.model.Nongridded') > -1) {
+                if (this._model && this._model.id.indexOf('Flux.model.Nongridded') > -1) {
                     this.panes.datalayer.selectAll('.cell')
                         .style({
                             'stroke-width': this._overlayStrokeWidth / d3.event.scale
@@ -1230,8 +1225,6 @@ Ext.define('Flux.view.D3GeographicMap', {
                             'width' : sz
                         });
                 }
-                
-
                 
                 // Scale the ROI vertices appropriately
 		this.wrapper.selectAll('.roi-vertex').attr({
@@ -1610,6 +1603,29 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
     
+    getZoomScaleFromBbox: function(bbox) {
+        var proj = this.getProjection();
+        var width = this.filler.attr('width');
+        var projx1 = proj([0,0])[0];
+        var projx2 = proj([bbox[2] - bbox[0], 0])[0]; 
+        var factor = 0.8;
+        
+        // If projected max x is greater than projected min x,
+        // the target feature is close to global in scope, and so
+        // just zoom all the way out
+        if (projx2 < projx1) {
+            return 1;
+        }
+        
+        // Get the pixel coordinates of the longitude maximum and minmum,
+        //  then take the difference to get the pixel width of the scene.
+        //
+        // Then, take the ratio of the SVG width to this scene width to find
+        //  the zoom factor; scale it slightly so we don't zoom in too far
+        
+        return factor * (width / Math.abs(projx1 - projx2));
+    },
+    
     /**
         Set the zoom level to that of the currently loaded ROI polygon.
      */
@@ -1617,10 +1633,9 @@ Ext.define('Flux.view.D3GeographicMap', {
         var x, y;
         var centroid = d3.selectAll('.roi-polygon').attr('centroid').split(',').map(Number);
         var bbox = d3.selectAll('.roi-polygon').attr('bbox').split(',').map(Number);
-        var proj = this.getProjection();
         var width = this.filler.attr('width');
         var height = this.filler.attr('height');
-        var scale = 0.8 * (width / Math.abs(proj([0, 0])[0] - proj([bbox[0]-bbox[2], 0])[0]));
+        var scale = this.getZoomScaleFromBbox(bbox);
         var duration = 500;
         
         x = centroid[0];

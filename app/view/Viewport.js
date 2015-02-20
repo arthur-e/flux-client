@@ -160,14 +160,6 @@ Ext.define('Flux.view.Viewport', {
                         text: 'Anomalies',
                         group: 'display',
                         hideOnClick: false
-// 	   		listeners: {
-// 			    checkchange: function (cb, checked) {
-// 				 var target = Ext.getCmp('tendencyCustomValue');
-// 				 if (target) {
-// 				    target.setDisabled(!checked);
-// 				 }
-// 			    }
-// 			}
                     }, {
                         xtype: 'menuseparator'
                     }, {

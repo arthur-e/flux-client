@@ -259,7 +259,7 @@ Ext.define('Flux.controller.MapController', {
             }
 
             // Update the projections ComboBox; rescale each projection contained
-            var showOverlay = this.getNongriddedPanel().down('recheckbox[name=overlay]').checked;
+            var showOverlay = this.getController('UserInteraction').showAsOverlay();
             view.init(width, height)
                 .setBasemap(this.getMapSettings().down('combo[name=basemap]').getValue())
                 .redraw(true, showOverlay)

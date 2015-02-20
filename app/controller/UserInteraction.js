@@ -156,8 +156,8 @@ Ext.define('Flux.controller.UserInteraction', {
             'nongriddedpanel datefield': {
                 afterselect: this.onNongriddedDateSelection
             },
-            'nongriddedpanel recheckbox[name=overlay]': {
-                change: this.onOverlayToggle
+            'nongriddedpanel checkbox[name=showNongridded]': {
+                change: this.onShowNongriddedToggle
             },
             
             '#settings-menu recheckbox[name=markerOutline]': {
@@ -170,6 +170,9 @@ Ext.define('Flux.controller.UserInteraction', {
             
             'sourcesgridpanel': {
                 beforeedit: this.onSourceGridEntry
+            },
+            'sourcepanel checkbox[name=showGridded]': {
+                change: this.onShowGriddedToggle
             },
             'sourcepanel fieldset checkbox': {
                 change: this.onAggOrDiffToggle
@@ -463,6 +466,18 @@ Ext.define('Flux.controller.UserInteraction', {
 
     },
     
+    /**
+        Returns a boolean indicating whether or not to show Nongridded
+        data overlaid onto the Gridded data
+
+        @return  {Boolean}
+     */
+    showAsOverlay: function () {
+        var showNongridded = this.getNongriddedPanel().down('checkbox[name=showNongridded]').checked;
+        var showGridded = this.getSourcePanel().down('checkbox[name=showGridded]').checked;
+        
+        return showNongridded && showGridded;
+    },
     
     /**
         Makes a request for a map based on the given parameters, where the map
@@ -472,23 +487,35 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  params  {Object}
      */
     fetchNongridded: function (view, params) {
-        var overlay, id;
-        var showAsOverlay = this.getNongriddedPanel().down('recheckbox[name=overlay]').checked;
+        var overlay, id, ngId;
+        //var showAsOverlay = this.getNongriddedPanel().down('recheckbox[name=overlay]').checked;
+        var showAsOverlay = this.showAsOverlay();
 
+        
         if (view.mostRecentNongriddedParams != params) {
             delete view._storedTendencyOffset;
         }
         
 	view.mostRecentNongriddedParams = params;
 	
-        if (!view.getMetadata() || (showAsOverlay && !view.getMetadataOverlay())) {
+        if (!view.getMetadata() && !view.getMetadataOverlay()) {
             return;
         }
 
         id = view.getMetadata().getId();
         if (showAsOverlay) {
             id = view.getMetadataOverlay().getId();
-            console.log(id);
+        }
+        ngId = Ext.String.format('source={0}&{1}', id, Ext.Object.toQueryString(params));
+        
+        ng = view.store.getById(ngId);
+
+        // If the data already exists locally cached, use that instead
+        // of making another request
+        if (ng) {
+            this.bindLayer(view, ng);
+            this.onMapLoad(ng);
+            return;
         }
         
         Ext.Ajax.request({
@@ -496,17 +523,19 @@ Ext.define('Flux.controller.UserInteraction', {
             url: Ext.String.format('/flux/api/scenarios/{0}/xy.json', id),
             params: params,
             callback: function (opts, success, response) {
-                var ov;
+                var ng;
 
                 if (!success) {
                     return;
                 }
 
-                ov = Ext.create('Flux.model.Nongridded',
+                ng = Ext.create('Flux.model.Nongridded',
                     Ext.JSON.decode(response.responseText));
-
-                this.bindLayer(view, ov, showAsOverlay);
-                this.onMapLoad(ov);
+                
+                ng.set('_id', Ext.String.format(ngId));
+                
+                this.bindLayer(view, ng);
+                this.onMapLoad(ng);
             },
             failure: function (response) {
                 Ext.Msg.alert('Request Error', response.responseText);
@@ -538,7 +567,7 @@ Ext.define('Flux.controller.UserInteraction', {
 	source = view.getMetadata().getId();
 
         // Check for the unique ID, a hash of the parameters passed in this
-        //  request
+        // request
         var rastId = Ext.String.format('source={0}&{1}', source, Ext.Object.toQueryString(params))
         
         raster = view.store.getById(rastId);
@@ -852,12 +881,21 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  view    {Flux.view.D3Panel}
         @param  feat    {Flux.model.Raster  or Flux.model.Nongridded}
      */
-    bindLayer: function (view, feat, showAsOverlay) {
+    bindLayer: function (view, feat) {
+        var ngFeat;
         var opts = this.getGlobalSettings();
+        var isGridded = feat.id.indexOf('Flux.model.Raster') > -1;
         
         // Cache the data if it's not already cached
         if (!Ext.isEmpty(feat.get('_id'))) {
             view.store.add(feat);
+        }
+        
+        // Get non-gridded data
+        if (isGridded && view.getMetadataOverlay()) {
+            ngFeat = view._modelOverlay;
+        } else if (!isGridded) {
+            ngFeat = feat.copy();
         }
         
         // Adjust data if anomalies view selected
@@ -867,7 +905,7 @@ Ext.define('Flux.controller.UserInteraction', {
 	    f1 = feat.get('features');
             
             // Gridded data
-            if (view.getMetadata().get('gridded') && !showAsOverlay) {
+            if (isGridded) {
                 feat.set('features', (function () {
                             var i;
                             var g = [];
@@ -876,21 +914,55 @@ Ext.define('Flux.controller.UserInteraction', {
                             }
                             return g;
                         }()));
-            // Non-gridded data
-            } else {
-                feat.set('features', (function () {
-                var i;
-                var g = [];
-                for (i = 0; i < f1.length; i += 1) {
-                    f1[i].properties.value = f1[i].properties.value - offset;
-                    g.push(f1[i]);
-                    }
-                    return g;
+                
+//                 // If we have an overlay, adjust that data as well
+//                 if (view.getMetadataOverlay()) {
+//                     ngFeat = view._modelOverlay;
+//                 }
+            }
+            
+            // If we have non-gridded data to process
+            if (ngFeat) {
+                f1 = ngFeat.get('features');
+                ngFeat.set('features', (function () {
+                    var i;
+                    var g = [];
+                    for (i = 0; i < f1.length; i += 1) {
+                        f1[i].properties.value = f1[i].properties.value - offset;
+                        g.push(f1[i]);
+                        }
+                        return g;
                 }()));
             }
+            
 	}	
+	
+	// Draw the data on the map depending on the show/hide
+	// statuses of the Gridded/Non-gridded data sources
+        if (isGridded) {
+            // If we're binding a Gridded layer...
+            if (this._model && this._model.id.indexOf('Flux.model.Nongridded') > -1) {
+                // ...but the most recently loaded model is Nongridded,
+                // shuttle that nongridded model to overlay store
+                this.bindMetadataOverlay(view, view.getMetadata());
+                view._modelOverlay = view._model;
+            }
 
-        view.draw(feat, true, showAsOverlay);
+            // Draw our Gridded layer
+            view.draw(feat, true, false);
+            
+            // And draw the Nongridded layer as an overlay if indicated
+            if (this.showAsOverlay()) {
+                view.draw(ngFeat, true, true);
+            }
+        
+        } else if (this.showAsOverlay()) {
+            // If we're binding a Nongridded layer as an overlay
+            view.draw(ngFeat, true, true);
+        } else {
+            // If we're binding a Nongridded layer as primary
+            view.draw(ngFeat, true, false);
+        }
 
         if (opts.statsFrom === 'data') {
             // Also update the slider bounds
@@ -961,6 +1033,27 @@ Ext.define('Flux.controller.UserInteraction', {
 	      args[t.getName()] = t.getValue();
 	  });
 	return args;
+    },
+    
+    /**
+        Returns boolean indicating whether the time step in
+        the provided view's Metadata is less than daily.
+        
+        @param  view          {Flux.view.D3GeographicMap}
+        @param  metadata      {Flux.model.Metadata}
+        @return               {Boolean}
+     */
+    lessThanDaily: function (view, metadata) {
+        var ltDaily = false;
+        
+        steps = metadata.getTimeOffsets();
+        if (!Ext.isEmpty(steps)) {
+            if (Ext.Array.min(steps) < 86400) {
+                ltDaily = true;
+            }
+        }
+        
+        return ltDaily;
     },
     
     /**
@@ -1308,13 +1401,17 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // If the data are less than daily in step/span and no time is yet
         //  specified, do nothing
-        steps = view.getMetadata().getTimeOffsets();
-        if (!Ext.isEmpty(steps)) {
-            if (Ext.Array.min(steps) < 86400
-                    && Ext.isEmpty(values.time)) {
-                return;
-            }
+        if (this.lessThanDaily(view, view.getMetadata()) && Ext.isEmpty(values.time)) {
+            return;
         }
+        
+//         steps = view.getMetadata().getTimeOffsets();
+//         if (!Ext.isEmpty(steps)) {
+//             if (Ext.Array.min(steps) < 86400
+//                     && Ext.isEmpty(values.time)) {
+//                 return;
+//             }
+//         }
 
         dates = view.getMetadata().get('dates');
 
@@ -1339,6 +1436,14 @@ Ext.define('Flux.controller.UserInteraction', {
                 this.fetchRaster(view, {
                     time: d.toISOString()
                 });
+            }
+            
+            // Enable/check the showGridded box
+            var chk = field.up('panel').down('checkbox[name=showGridded]');
+            if (!chk.checked) {
+                this._suppressBind = true; // this tells the checkbox toggle listener to chill out 
+                chk.setDisabled(false);
+                chk.setValue(true);
             }
         }
 
@@ -1652,14 +1757,13 @@ Ext.define('Flux.controller.UserInteraction', {
         cb = cb || this.getSettingsMenu().down('recheckbox[name=markerOutline]');
         var checked = cb.checked;
         var view = this.getMap();
-        var cb_overlay = this.getNongriddedPanel().down('recheckbox[name=overlay]');
 
         // By default, select the overlay pane
         var sel = view.panes.overlay.selectAll('.cell');
         
         // But if you're in the non-gridded-map and showOverlay is not checked,
         // select the non-overlay data pane
-        if (view._model.id.indexOf('Flux.model.Nongridded') > -1 && !cb_overlay.checked) {
+        if (view._model.id.indexOf('Flux.model.Nongridded') > -1 && !this.showAsOverlay()) {
             sel = view.panes.datalayer.selectAll('.cell');
         }
         
@@ -1733,6 +1837,15 @@ Ext.define('Flux.controller.UserInteraction', {
         } else {
             view = this.getMap();
         }
+        
+        // Enable/check the 'Show' checkbox
+        var chk = f.up('panel').down('checkbox[name=showNongridded]');
+        if (!chk.checked) {
+            this._suppressBind = true;
+
+            chk.setDisabled(false);
+            chk.setValue(true);
+        }
 
         this.fetchNongridded(view, {
             start: moment.utc(values.start).toISOString(),
@@ -1748,88 +1861,127 @@ Ext.define('Flux.controller.UserInteraction', {
     onNongriddedMarkerChange: function (s, size) {
         var view = this;
         var map = this.getMap();
-        var showOverlay = this.getNongriddedPanel().down('recheckbox[name=overlay]').checked;
+        var showAsOverlay = this.showAsOverlay();
         Ext.each(Ext.ComponentQuery.query('d3geomap'), function (v) {
-            v.setMarkerSize(size).redraw(view.zoom, showOverlay);
+            v.setMarkerSize(size).redraw(view.zoom, showAsOverlay);
         });
     },
-    
     /**
-        Handles toggle of whether or not Nongridded data 
-        should be shown as overlay on top of Gridded data
+        Handles toggle of whether or not Gridded data
+        should be shown
         
         @param  cb      {Ext.form.field.Checkbox}
         @param  checked {Boolean}
      */
-    onOverlayToggle: function (cb, checked) {
-        var values = cb.up('panel').getForm().getValues();
+    onShowGriddedToggle: function (cb, checked) {
         var view = this.getMap();
-
-        // Quit if any of the required Nongridded fields are empty
-        if (Ext.isEmpty(values.start) ||
-            Ext.isEmpty(values.end) ||
-            Ext.isEmpty(values.source_nongridded)) {
+        var cbNongridded = this.getNongriddedPanel().down('checkbox[name=showNongridded]');
+        
+        if (checked) {
+            cbNongridded.setBoxLabel('Show*');    
+        } else {
+            cbNongridded.setBoxLabel('Show');    
+        }
+        // If instructed to suppress, all you have to do is draw
+        // the overlay (if valid)
+        if (this._suppressBind) {
+            if (this.showAsOverlay()) {
+                view.draw(view._modelOverlay, true, true);
+            }
+            this._suppressBind = false;
             return;
         }
         
+        var values = cb.up('panel').getForm().getValues();
+        var showNongridded = cbNongridded.checked;
+        
         if (checked) {
-            // The app state at which this checkbox is checked and
-            // Nongridded fields are filled out is this:
-            // map._model = currently selected Nongridded
-            // map._metadata = currently select Nongridded
-            //
-            // These need to be reset to the values shown
-            // in the Gridded tab.
+            this.setAsPrimaryGridded();
 
+            // if showNongridded is also checked...
+            if (this.showAsOverlay()) {
+                view.draw(view._modelOverlay, true, true);
+            }
+        // if showGridded is NOT checked...
+        } else {
+            view.clear();
+            
+            // ...and showNongrided is checked
+            if (showNongridded) {
+                this.setAsPrimaryNonGridded();
+            }
+
+        }
+
+    },
+    /**
+        Handles toggle of whether or not Nongridded data 
+        should be shown
+        
+        @param  cb      {Ext.form.field.Checkbox}
+        @param  checked {Boolean}
+     */
+    onShowNongriddedToggle: function (cb, checked) {
+        var values = cb.up('panel').getForm().getValues();
+        var view = this.getMap();
+        var showGridded = this.getSourcePanel().down('checkbox[name=showGridded]').checked;
+        var currentModelIsNongridded = view._model && view._model.id.indexOf('Flux.model.Nongridded') > -1;
+        
+        if (this._suppressBind) {
+            this._suppressBind = false;
+            return;
+        }
+
+//         // Quit if any of the required Nongridded fields are empty
+//         if (Ext.isEmpty(values.start) ||
+//             Ext.isEmpty(values.end) ||
+//             Ext.isEmpty(values.source_nongridded)) {
+//             return;
+//         }
+        
+        // Remove currently drawn elements on the map
+        view.clear();
+        
+        // if both showGridded and showNongridded are checked...
+        if (this.showAsOverlay()) { 
             // Move the currently loaded metadata and model data to the
             // corresponding overlay stores
-            if (!view._metadataOverlay) {
+            if (!view._metadataOverlay && currentModelIsNongridded) {
                 this.bindMetadataOverlay(view, view.getMetadata());
             }
             
-            if (!view._modelOverlay) {
+            if (!view._modelOverlay && currentModelIsNongridded) {
                 view._modelOverlay = view._model;
             }
             
-            // Do the things that are done under onSourceChange and then onDateTimeSelection
-            // that normally serve to load/draw the gridded data
-            var source = this.getSourcePanel().down('field[name=source]').getValue();
-            var date = this.getSourcePanel().down('field[name=date]').getValue();
-            var time_field = this.getSourcePanel().down('field[name=time]');
-            var time = time_field.getValue();
+            this.setAsPrimaryGridded();
             
-            // If all the necessary values are filled out
-            if (!Ext.isEmpty(source) && !Ext.isEmpty(date) && !Ext.isEmpty(time)) {
-                // This assumes that since the fields are already filled out, the metadata
-                // and grid already exists in the store, which should always be the case
-                
-                this.bindMetadata(view, this.getStore('metadata').getById(source));
-                this.bindRasterGrid(view, this.getStore('rastergrids').getById(source));
-                this.onDateTimeSelection(time_field, time);
-            }
             // Finally, draw the overlay on top
             view.draw(view._modelOverlay, true, true);
-            
-        } else {
-            // Remove currently drawn elements on the map
-            view.clear();
-            
-            // Bind what is currently used as the Overlay metadata/data 
-            // to the primary data layer
-            this.bindMetadata(view, view.getMetadataOverlay());
-            this.bindLayer(view, view._modelOverlay);
-            
-            // Clear the overlay data
-            delete view._metadataOverlay;
-            delete view._modelOverlay;
-            
-            // Refetch summary stats
-            if (view._roiCoords) {
-                delete view._currentSummaryStats;
-                this.fetchRoiSummaryStats();
-            }        
-        }
         
+        // if showNongridded is checked but showGridded is not
+        } else if (checked) {
+            this.setAsPrimaryNonGridded();
+            
+//             // Bind what is currently used as the Overlay metadata/data 
+//             // to the primary data layer
+//             this.bindMetadata(view, view.getMetadataOverlay());
+//             this.bindLayer(view, view._modelOverlay);
+//             
+//             // Clear the overlay data
+//             delete view._metadataOverlay;
+//             delete view._modelOverlay;
+            
+        // if showNongridded is NOT checked bu showGridded IS
+        } else if (showGridded) {
+            this.setAsPrimaryGridded();
+        } 
+        
+        // Refetch summary stats
+        if (view._roiCoords) {
+            delete view._currentSummaryStats;
+            this.fetchRoiSummaryStats();
+        }
     },
     
     /**
@@ -2074,26 +2226,26 @@ Ext.define('Flux.controller.UserInteraction', {
     onSingleMapTabChange: function (panel) {
         //panel.getActiveTab().getForm().reset();
 
-        if (panel.getActiveTab.title !== 'gridded-map') {
-            // Disable line plot
-            //panel.down('field[name=showLinePlot]').setValue(false);
-
-            var source = panel.down('field[name=source]').getValue();
-            var date = panel.down('field[name=date]').getValue();
-            var time = panel.down('field[name=time]').getValue();
-            var chk = panel.down('recheckbox[name=overlay]');
-            //var time = time_field.getValue();
-            
-            // If gridded data is not loaded, set overlay to unchecked/disabled
-            if (Ext.isEmpty(source) || Ext.isEmpty(date) || Ext.isEmpty(time)) {
-                chk.setValue(false);
-                chk.setDisabled(true);
-            } else {
-                chk.setDisabled(false);
-            }
-            
-            
-        }
+//         if (panel.getActiveTab.title !== 'gridded-map') {
+//             // Disable line plot
+//             //panel.down('field[name=showLinePlot]').setValue(false);
+// 
+//             var source = panel.down('field[name=source]').getValue();
+//             var date = panel.down('field[name=date]').getValue();
+//             var time = panel.down('field[name=time]').getValue();
+//             var chk = panel.down('recheckbox[name=overlay]');
+//             //var time = time_field.getValue();
+//             
+//             // If gridded data is not loaded, set overlay to unchecked/disabled
+//             if (Ext.isEmpty(source) || Ext.isEmpty(date) || Ext.isEmpty(time)) {
+//                 chk.setValue(false);
+//                 chk.setDisabled(true);
+//             } else {
+//                 chk.setDisabled(false);
+//             }
+//             
+//             
+//         }
 
 //         // Clear any currently drawn features
 //         this.getMap().clear();
@@ -2113,7 +2265,23 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // Reset aggregate view
         this.uncheckAggregates();
-
+        
+        // Reset showGridded
+        this._suppressBind = true;
+        container.down('checkbox[name=showGridded]').setValue(false);
+        container.down('checkbox[name=showGridded]').setDisabled(true);
+        
+        // And uncheck showNongridded too. Even though this provides a 
+        // slight inconvenience to the user, it is necessary b/c
+        // if Nongridded is set to primary, the metadata will be
+        // overwritten in this function; if Nongridded is set to 
+        // overlay, (a) it may be using an improper color scale and
+        // (b) if the user does not complete Gridded dataset selection
+        // (i.e. does not select date/time), Nongridded data will be
+        // stuck in overlay even though it would need to behave as primary
+        this._suppressBind = true;
+        this.getNongriddedPanel().down('checkbox[name=showNongridded]').setValue(false);
+        
         if (Ext.isEmpty(source) || source === last) {
             return;
         }
@@ -2203,7 +2371,7 @@ Ext.define('Flux.controller.UserInteraction', {
     onSourceChangeNongridded: function (field, source, last) {
         var metadata, operation, grid, view;
         var container = field.up('panel');
-        var showAsOverlay = field.up('panel').down('recheckbox[name=overlay]').checked;
+        var showGridded = this.getSourcePanel().down('checkbox[name=showGridded]').checked;
         
         if (Ext.isEmpty(source) || source === last) {
             return;
@@ -2213,7 +2381,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // Callback ////////////////////////////////////////////////////////////
         operation = Ext.Function.bind(function (metadata) {
-            if (showAsOverlay) {
+            if (showGridded) {
                 this.bindMetadataOverlay(view, metadata)
             } else {
                 this.bindMetadata(view, metadata);
@@ -2435,7 +2603,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
         carousel.setWidth(w).getLayout().setActiveItem(item.idx);
     },
-
+    
     /**
         Propagates changes in the metadata to child components of a given
         container, specifically, setting the DateField and TimeField instances.
@@ -2531,7 +2699,64 @@ Ext.define('Flux.controller.UserInteraction', {
         }
         
     },
+
+    /**
+        Sets currently specified gridded data as primary (i.e. not overlay) data
+        source. Used in handling of showGridded and showNongridded checkbox changes.
+
+     */
+    setAsPrimaryGridded: function () {
+            var triggerField, triggerValue;
+            var view = this.getMap();
+            var source = this.getSourcePanel().down('field[name=source]').getValue();
+            var date_field = this.getSourcePanel().down('field[name=date]');
+            var date = date_field.getValue();
+            var time_field = this.getSourcePanel().down('field[name=time]');
+            var time = time_field.getValue();
+            var storeMeta = this.getStore('metadata').getById(source);
+            var storeGrid = this.getStore('rastergrids').getById(source);
+            
+            if (this.lessThanDaily(view, storeMeta)) {
+                if (Ext.isEmpty(time)) {
+                    return;
+                } 
+                triggerField = time_field;
+                triggerValue = time;    
+            }
+            
+            // If all the necessary values are filled out and the stores exist...
+            if (!Ext.isEmpty(source) && !Ext.isEmpty(date) && storeMeta && storeGrid) { 
+                // Do the things that are done under onSourceChange and then onDateTimeSelection
+                // that normally serve to load/draw the gridded data
+                this.bindMetadata(view, storeMeta);
+                this.bindRasterGrid(view, storeGrid);
+                this.onDateTimeSelection(triggerField || date_field, triggerValue || date);
+            }
+        
+    },
     
+    /**
+        Sets currently specified nongridded data as primary (i.e. not overlay) data
+        source. Used in handling of showGridded and showNongridded checkbox changes.
+
+     */
+    setAsPrimaryNonGridded: function () {
+        var panel = this.getNongriddedPanel();
+        var values = panel.getForm().getValues();
+        
+        // Quit if any of the required Nongridded fields are empty
+        if (Ext.isEmpty(values.start) ||
+            Ext.isEmpty(values.end) ||
+            Ext.isEmpty(values.source_nongridded)) {
+            return;
+        }
+
+        var source = panel.down('field[name=source_nongridded]').getValue();
+        var end_field = panel.down('field[name=end]');
+        
+        this.bindMetadata(this.getMap(), this.getStore('metadata').getById(source));
+        this.onNongriddedDateSelection(end_field);
+    },
     
     /**
         Toggles on/off the Time Series display below the map in the Single Map

@@ -910,7 +910,11 @@ Ext.define('Flux.controller.UserInteraction', {
                             var i;
                             var g = [];
                             for (i = 0; i < f1.length; i += 1) {
-                                g.push(f1[i] - offset);
+                                if (f1[i] === null ) {
+                                    g.push(null);
+                                } else {
+                                    g.push(f1[i] - offset);
+                                }
                             }
                             return g;
                         }()));

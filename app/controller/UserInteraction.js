@@ -908,12 +908,10 @@ Ext.define('Flux.controller.UserInteraction', {
 	if (opts.display === 'anomalies') {
             var offset = view.getTendencyOffset();
             
-	    f1 = JSON.parse(JSON.stringify(feat.get('features_raw')));
-            
             //////////////////
             // Gridded data
             if (isGridded && feat.get('properties').offset != offset) {
-
+                f1 = JSON.parse(JSON.stringify(feat.get('features_raw')));
                 feat.set('features', (function () {
                     var i;
                     var g = [];
@@ -933,6 +931,7 @@ Ext.define('Flux.controller.UserInteraction', {
             ////////////////////
             // NonGridded data (note may run in addition to gridded data if overlay exists)
             if (ngFeat && ngFeat.get('offset') != offset) {
+                f1 = JSON.parse(JSON.stringify(ngFeat.get('features_raw')));
                 ngFeat.set('features', (function () {
                     var i;
                     var g = [];

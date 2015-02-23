@@ -16,7 +16,7 @@ Ext.define('Flux.model.Nongridded', {
      */
     summarize: function () {
         var data = Ext.Array.pluck(
-            Ext.Array.pluck(this.data.features, 'properties'), 'value');
+            Ext.Array.pluck(this.data.features_raw, 'properties'), 'value');
         var s = this.Stats(data);
         return {
             min: Ext.Array.min(Ext.Array.clean(data)),

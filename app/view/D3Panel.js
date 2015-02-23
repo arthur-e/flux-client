@@ -116,21 +116,22 @@ Ext.define('Flux.view.D3Panel', {
         // 
         // _storedTendencyOffset is deleted in fetchRaster/fetchNongridded if
         // time parameter changes.
-        if (!this._usePopulationStats) {
-            if (typeof(this._storedTendencyOffset) === 'undefined') {
-                this._storedTendencyOffset = {
-                    'mean' : this.getMetadata().getSummaryStats()['mean'],
-                    'median': this.getMetadata().getSummaryStats()['median']
-                };
-            }
-                
-            if (['mean','median'].indexOf(this._tendency) > -1) {
-                offset = this._storedTendencyOffset[this._tendency];
-            }
-            
-        } else {
-            delete this._storedTendencyOffset;
-        }
+//         if (!this._usePopulationStats) {
+//             console.log('getTendencyOffset', this.getMetadata().getSummaryStats());
+//             if (typeof(this._storedTendencyOffset) === 'undefined') {
+//                 this._storedTendencyOffset = {
+//                     'mean' : this.getMetadata().getSummaryStats()['mean'],
+//                     'median': this.getMetadata().getSummaryStats()['median']
+//                 };
+//             }
+//                 
+//             if (['mean','median'].indexOf(this._tendency) > -1) {
+//                 offset = this._storedTendencyOffset[this._tendency];
+//             }
+//             
+//         } else {
+//             delete this._storedTendencyOffset;
+//         }
         
         return offset;
 

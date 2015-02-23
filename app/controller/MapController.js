@@ -202,6 +202,7 @@ Ext.define('Flux.controller.MapController', {
             // For every d3geomap instance, update the scale's output range
             if (v.getScale()) {
                 if (typeof v.getScale().quantiles === 'function') {
+                    console.log('setScale from onPaletteChange');
                     v.setScale(v.getScale().range(cs));
                 }
             }

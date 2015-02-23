@@ -145,10 +145,10 @@ Ext.define('Flux.model.Metadata', {
         var stats = this.getSummaryStats();
         var tendency = config.tendency;
         
-        // Reset the offset to zero if Current Data Frame is being used
-	if (config.statsFrom === 'data') {
-            offset = 0;
-        }
+//         // Reset the offset to zero if Current Data Frame is being used
+// 	if (config.statsFrom === 'data') {
+//             offset = 0;
+//         }
         
 	if (typeof tendency === 'undefined') {
 	    tendency = 'mean';

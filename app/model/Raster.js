@@ -18,7 +18,7 @@ Ext.define('Flux.model.Raster', {
         @return         {Object}
      */
     summarize: function () {
-        var data = this.get('features');
+        var data = this.get('features_raw');
         var s = this.Stats(data);
         return {
             min: Ext.Array.min(Ext.Array.clean(data)),

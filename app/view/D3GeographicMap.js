@@ -899,7 +899,9 @@ Ext.define('Flux.view.D3GeographicMap', {
             .style('cursor', 'pointer'); // Show link pointer when hovering over
 
         // Applies the color scale to the current selection
+/*        if (showAsOverlay) */
         this.update(sel, showAsOverlay);
+//         }
 
         // Display Marker outlines if checked
         this.fireEvent('toggleOutline');
@@ -1552,6 +1554,10 @@ Ext.define('Flux.view.D3GeographicMap', {
         if (this.panes.datalayer) {
 	    if (!suppress) {
 		this.update(this.panes.datalayer.selectAll('.cell'));
+                
+                if (this.panes.overlay.selectAll('.cell').length > 0) { // better way of determining if overlay???
+                    this.update(this.panes.overlay.selectAll('.cell'), true);
+                }
 	    }
 	    
             this.updateLegend();

@@ -160,7 +160,7 @@ Ext.define('Flux.model.Metadata', {
 	} else { // otherwise set to the user-provided value
 	    var central_tendency = tendency;
 	}
-	
+
         if (config.autoscale) { // If no defined bounds...
 	    domain = [
 		(central_tendency - offset - (sigmas * stats.std)), // Lower bound

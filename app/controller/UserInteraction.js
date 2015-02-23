@@ -492,9 +492,9 @@ Ext.define('Flux.controller.UserInteraction', {
         var showAsOverlay = this.showAsOverlay();
 
         
-        if (view.mostRecentNongriddedParams != params) {
-            delete view._storedTendencyOffset;
-        }
+//         if (view.mostRecentNongriddedParams != params) {
+//             delete view._storedTendencyOffset;
+//         }
         
 	view.mostRecentNongriddedParams = params;
 	
@@ -533,7 +533,7 @@ Ext.define('Flux.controller.UserInteraction', {
                     Ext.JSON.decode(response.responseText));
                 
                 ng.set('_id', Ext.String.format(ngId));
-                ng.set('anomalies', false);
+                ng.set('offset', 0);
                 ng.set('features_raw', JSON.parse(JSON.stringify(ng.get('features'))));
                 
                 this.bindLayer(view, ng);
@@ -556,9 +556,9 @@ Ext.define('Flux.controller.UserInteraction', {
     fetchRaster: function (view, params) {
         var raster, source, opts;
         
-        if (view.mostRecentRasterParams != params) {
-            delete view._storedTendencyOffset;
-        }
+//         if (view.mostRecentRasterParams != params) {
+//             delete view._storedTendencyOffset;
+//         }
         
 	view.mostRecentRasterParams = params;
 	
@@ -595,7 +595,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 // Create a unique ID that can be used to find this grid
                 rast.set('_id', Ext.String.format(rastId));
                 rast.set('features_raw', JSON.parse(JSON.stringify(rast.get('features'))));
-                rast.get('properties').anomalies = false;
+                rast.get('properties').offset = 0;
 	
                 this.bindLayer(view, rast);
                 this.onMapLoad(rast);
@@ -908,10 +908,12 @@ Ext.define('Flux.controller.UserInteraction', {
 	if (opts.display === 'anomalies') {
             var offset = view.getTendencyOffset();
             
-	    f1 = JSON.parse(JSON.stringify(feat.get('features')));
+	    f1 = JSON.parse(JSON.stringify(feat.get('features_raw')));
             
+            //////////////////
             // Gridded data
-            if (isGridded && !feat.get('properties').anomalies) {
+            if (isGridded && feat.get('properties').offset != offset) {
+
                 feat.set('features', (function () {
                     var i;
                     var g = [];
@@ -925,12 +927,12 @@ Ext.define('Flux.controller.UserInteraction', {
                     return g;
                 }()));
                 
-                feat.get('properties').anomalies = true;
+                feat.get('properties').offset = offset;
             }
 
-            // If we have non-gridded data to process
-            if (ngFeat && !ngFeat.get('anomalies')) {
-                f1 = JSON.parse(JSON.stringify(ngFeat.get('features_raw')));
+            ////////////////////
+            // NonGridded data (note may run in addition to gridded data if overlay exists)
+            if (ngFeat && ngFeat.get('offset') != offset) {
                 ngFeat.set('features', (function () {
                     var i;
                     var g = [];
@@ -941,19 +943,20 @@ Ext.define('Flux.controller.UserInteraction', {
                         return g;
                 }()));
                 
-                ngFeat.set('anomalies', true);
+                ngFeat.set('offset', offset);
             }
+            
         /////////////////////////////////////////////////////
-        // Adjust data if Raw Values view selected
+        // Reset data if Raw Values view selected
 	} else {
             if (isGridded) {
                 feat.set('features', JSON.parse(JSON.stringify(feat.get('features_raw'))));
-                feat.get('properties').anomalies = false;
+                feat.get('properties').offset = 0;
             }
             
             if (ngFeat) {
                 ngFeat.set('features', JSON.parse(JSON.stringify(ngFeat.get('features_raw'))));
-                ngFeat.set('anomalies', false);
+                ngFeat.set('offset', 0);
             }
         }
 	
@@ -1023,7 +1026,6 @@ Ext.define('Flux.controller.UserInteraction', {
         // Only when using population statistics will the color scale be ready
         //  before data have been bound to the view
         if (opts.statsFrom === 'population') {
-            console.log('updateScale from bindMetadata');
             view.updateScale(this.getSymbology().getForm().getValues());
         }
     },
@@ -2547,7 +2549,8 @@ Ext.define('Flux.controller.UserInteraction', {
 	}
     
         
-	if ((opts.display === 'anomalies' || cb.name === 'values')) {
+	if ((opts.display === 'anomalies' || cb.name === 'values' )) {
+            //['tendencyMean','tendencyMedian','tendencyCustomValue','tendencyCustomValue'].indexOf(cb.name) > -1)) {
             if (!map.getMetadata()) {
                 return;
             }

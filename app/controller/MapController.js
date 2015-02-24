@@ -11,6 +11,9 @@ Ext.define('Flux.controller.MapController', {
         ref: 'settingsMenu',
         selector: '#settings-menu'
     }, {
+        ref: 'sourcePanel',
+        selector: 'sourcepanel'
+    }, {
         ref: 'symbology',
         selector: 'symbology'
     }],
@@ -202,7 +205,6 @@ Ext.define('Flux.controller.MapController', {
             // For every d3geomap instance, update the scale's output range
             if (v.getScale()) {
                 if (typeof v.getScale().quantiles === 'function') {
-                    console.log('setScale from onPaletteChange');
                     v.setScale(v.getScale().range(cs));
                 }
             }
@@ -217,13 +219,20 @@ Ext.define('Flux.controller.MapController', {
         @param  recs    {Array}
      */
     onProjectionChange: function (c, recs) {
+        
+        var showNongridded = this.getNongriddedPanel().down('checkbox[name=showNongridded]').checked;
+        var showGridded = this.getSourcePanel().down('checkbox[name=showGridded]').checked;
+        
         Ext.each(Ext.ComponentQuery.query('d3geomap'), function (v) {
             if (v.getProjection().id === recs[0].get('id')) {
                 return;
             }
 
+            // TODO: check for _roiCoords and reproject those too
+            
             // For every d3geomap instance, update the projection
-            v.setProjection(recs[0].get('id')).update();
+            v.setProjection(recs[0].get('id'))
+            v.redraw(v.zoom, showGridded && showNongridded);
         });
     },
 

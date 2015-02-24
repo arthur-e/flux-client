@@ -289,7 +289,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                 view.filler.on('touchend.zoom').apply(view.filler[0][0]);
             })            
             .on('wheel.zoom', function () {
-                view.zoom.center(d3.mouse(view.filler[0][0])); // can pseudo fix by setting zoom.center to mouse of wrapper or 'this'
+                view.zoom.center(d3.mouse(view.filler[0][0]));
                 view.filler.on('wheel.zoom').apply(view.filler[0][0]); // does not matter which svg element used here
             });
 
@@ -1758,10 +1758,8 @@ Ext.define('Flux.view.D3GeographicMap', {
      */
     update: function (selection, showAsOverlay) {
         var pane = this.panes.datalayer;
-        if (showAsOverlay) {
-            pane = this.panes.overlay;
-        }
-        
+
+        // If a selection was provided, update color attributes
         if (selection) {
             if (this.getMetadata().get('gridded') && !showAsOverlay) {
                 selection.attr('fill', Ext.bind(function (d) {
@@ -1781,8 +1779,14 @@ Ext.define('Flux.view.D3GeographicMap', {
 
             return this;
         }
+        
+        
+        // If no selection was provided, update location attributes
+        if (showAsOverlay) {
+            pane = this.panes.overlay;
+        }
 
-        pane.selectAll('.cell').attr(this.getDrawingAttrs());
+        pane.selectAll('.cell').attr(this.getDrawingAttrs(showAsOverlay));
 
         return this;
     },

@@ -113,6 +113,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             // Figure out what timestamp description to display at the top
             if (!showAsOverlay) { // Don't reset HUD if an overlay was just drawn
                 this._display = grid.getTimestampDisplay(this.timeFormat);
+                this.setTitle(grid.getTimestampDisplay(this.timeFormat));
             }
             this.updateDisplay([{
                 id: 'timestamp',

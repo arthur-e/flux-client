@@ -255,7 +255,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
         newView = container.add({
             xtype: 'd3geomap',
-            title: title,
+            title: 'Map ' + (n + 1),
             anchor: anchor,
             enableDisplay: true,
             timeFormat: 'YYYY-MM-DD [at] HH:ss',
@@ -1462,7 +1462,7 @@ Ext.define('Flux.controller.UserInteraction', {
             
             // Enable/check the showGridded box
             var chk = field.up('panel').down('checkbox[name=showGridded]');
-            if (!chk.checked) {
+            if (chk && !chk.checked) {
                 this._suppressBind = true; // this tells the checkbox toggle listener to chill out 
                 chk.setDisabled(false);
                 chk.setValue(true);
@@ -2281,28 +2281,37 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  last    {String}
      */
     onSourceChange: function (field, source, last) {
-        var metadata, operation, grid, view;
+        var metadata, operation, grid, view, showGriddedChk, showNongriddedChk;
         var container = field.up('panel');
         var editor = field.up('roweditor');
+        var showGriddedChk = container.down('checkbox[name=showGridded]');
+        var showNongriddedChk = this.getNongriddedPanel().down('checkbox[name=showNongridded]');
 
         // Reset aggregate view
         this.uncheckAggregates();
         
         // Reset showGridded
         this._suppressBind = true;
-        container.down('checkbox[name=showGridded]').setValue(false);
-        container.down('checkbox[name=showGridded]').setDisabled(true);
         
-        // And uncheck showNongridded too. Even though this provides a 
-        // slight inconvenience to the user, it is necessary b/c
-        // if Nongridded is set to primary, the metadata will be
-        // overwritten in this function; if Nongridded is set to 
-        // overlay, (a) it may be using an improper color scale and
-        // (b) if the user does not complete Gridded dataset selection
-        // (i.e. does not select date/time), Nongridded data will be
-        // stuck in overlay even though it would need to behave as primary
-        this._suppressBind = true;
-        this.getNongriddedPanel().down('checkbox[name=showNongridded]').setValue(false);
+        // If in  Single Map view, uncheck "Show" box
+        if (showGriddedChk) {
+            showGriddedChk.setValue(false);
+            showGriddedChk.setDisabled(true);
+        }
+        
+        // If in  Single Map view, uncheck "Show" Nongridded box
+        if (showNongriddedChk) {
+            // And uncheck showNongridded too. Even though this provides a 
+            // slight inconvenience to the user, it is necessary b/c
+            // if Nongridded is set to primary, the metadata will be
+            // overwritten in this function; if Nongridded is set to 
+            // overlay, (a) it may be using an improper color scale and
+            // (b) if the user does not complete Gridded dataset selection
+            // (i.e. does not select date/time), Nongridded data will be
+            // stuck in overlay even though it would need to behave as primary
+            this._suppressBind = true;
+            showNongriddedChk.setValue(false);
+        }
         
         if (Ext.isEmpty(source) || source === last) {
             return;

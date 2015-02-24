@@ -142,13 +142,13 @@ Ext.define('Flux.controller.UserInteraction', {
             },
             
             'field[name=source_nongridded]': {
-                change: this.onSourceChangeNongridded
+                change: this.onSourceChange//Nongridded
             },
             
             'field[name=source2]': {
                 change: this.onSourceDifferenceChange
             },
-            'field[name=date], field[name=time]': {// field[name=end]': {
+            'field[name=date], field[name=time], field[name=end]': {
                 change: this.onDateTimeSelection,
                 expand: this.uncheckAggregates
             },
@@ -491,7 +491,6 @@ Ext.define('Flux.controller.UserInteraction', {
         //var showAsOverlay = this.getNongriddedPanel().down('recheckbox[name=overlay]').checked;
         var showAsOverlay = this.showAsOverlay();
 
-        
 //         if (view.mostRecentNongriddedParams != params) {
 //             delete view._storedTendencyOffset;
 //         }
@@ -535,6 +534,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 ng.set('_id', Ext.String.format(ngId));
                 ng.set('offset', 0);
                 ng.set('features_raw', JSON.parse(JSON.stringify(ng.get('features'))));
+                ng.set('source', id);
                 
                 this.bindLayer(view, ng);
                 this.onMapLoad(ng);
@@ -595,7 +595,8 @@ Ext.define('Flux.controller.UserInteraction', {
                 // Create a unique ID that can be used to find this grid
                 rast.set('_id', Ext.String.format(rastId));
                 rast.set('features_raw', JSON.parse(JSON.stringify(rast.get('features'))));
-                rast.get('properties').offset = 0;
+                rast.set('offset', 0);
+                rast.set('source', source);
 	
                 this.bindLayer(view, rast);
                 this.onMapLoad(rast);
@@ -795,8 +796,8 @@ Ext.define('Flux.controller.UserInteraction', {
         @return title   {String}
      */  
     getDifferencedMapTitle: function(g1, g2, fmt) {
-        var s1 = g1.get('properties').source;
-        var s2 = g2.get('properties').source;
+        var s1 = g1.get('source');
+        var s2 = g2.get('source');
         
         // If the sources of the differenced datasets are the same,
         // the title need only reflect the timestamps
@@ -808,9 +809,9 @@ Ext.define('Flux.controller.UserInteraction', {
         // display
         if (s1 !== s2) {
             title = Ext.String.format('{0} {1} - {2} {3}',
-                    g1.get('properties').source,
+                    g1.get('source'),
                     g1.get('timestamp').format(fmt),
-                    g2.get('properties').source,
+                    g2.get('source'),
                     g2.get('timestamp').format(fmt))
             
         }
@@ -910,7 +911,7 @@ Ext.define('Flux.controller.UserInteraction', {
             
             //////////////////
             // Gridded data
-            if (isGridded && feat.get('properties').offset != offset) {
+            if (isGridded && feat.get('offset') != offset) {
                 f1 = JSON.parse(JSON.stringify(feat.get('features_raw')));
                 feat.set('features', (function () {
                     var i;
@@ -925,7 +926,7 @@ Ext.define('Flux.controller.UserInteraction', {
                     return g;
                 }()));
                 
-                feat.get('properties').offset = offset;
+                feat.set('offset', offset);
             }
 
             ////////////////////
@@ -950,7 +951,7 @@ Ext.define('Flux.controller.UserInteraction', {
 	} else {
             if (isGridded) {
                 feat.set('features', JSON.parse(JSON.stringify(feat.get('features_raw'))));
-                feat.get('properties').offset = 0;
+                feat.set('offset', 0);
             }
             
             if (ngFeat) {
@@ -1417,6 +1418,15 @@ Ext.define('Flux.controller.UserInteraction', {
             view = this.getMap();
         }
 
+        // If nongridded, reroute request as appropriate
+        // (important in Coordinated View, which automatically
+        //  sends source combo change events here)
+
+        if (!view.getMetadata().get('gridded')) {
+            this.onNongriddedDateSelection(field);
+            return;
+        }
+        
         if (Ext.isEmpty(values.source) || Ext.isEmpty(values.date)) {
             return;
         }
@@ -1755,7 +1765,7 @@ Ext.define('Flux.controller.UserInteraction', {
         }
         
         // Update lineplot
-        if (this.getLinePlot()) {
+        if (this.getLinePlot() && props) {
             if (props.start && props.end) {
                 moments = [
                     moment.utc(props.start),
@@ -1764,6 +1774,8 @@ Ext.define('Flux.controller.UserInteraction', {
             }
 
             this.getLinePlot().updateAnnotation(moments);
+        } else {
+            this.getSourcePanel().down('recheckbox[name=showLinePlot]').setValue(false);
         }
     },
 
@@ -1847,8 +1859,9 @@ Ext.define('Flux.controller.UserInteraction', {
         var editor = f.up('roweditor');
         var values = f.up('panel').getForm().getValues();
         var view;
+        var start = values.start || values.date;
 
-        if (Ext.isEmpty(values.start) || Ext.isEmpty(values.end)) {
+        if (!start || Ext.isEmpty(values.end)) {
             return;
         }
 
@@ -1862,7 +1875,7 @@ Ext.define('Flux.controller.UserInteraction', {
         
         // Enable/check the 'Show' checkbox
         var chk = f.up('panel').down('checkbox[name=showNongridded]');
-        if (!chk.checked) {
+        if (chk && !chk.checked) {
             this._suppressBind = true;
 
             chk.setDisabled(false);
@@ -1870,7 +1883,7 @@ Ext.define('Flux.controller.UserInteraction', {
         }
 
         this.fetchNongridded(view, {
-            start: moment.utc(values.start).toISOString(),
+            start: moment.utc(start).toISOString(),
             end: moment.utc(values.end).toISOString()
         });
     },
@@ -2281,11 +2294,12 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  last    {String}
      */
     onSourceChange: function (field, source, last) {
-        console.log('onSourceChange');
         var metadata, operation, grid, view, showGriddedChk, showNongriddedChk;
         var container = field.up('panel');
         var editor = field.up('roweditor');
-        var showGriddedChk = container.down('checkbox[name=showGridded]');
+        var showGriddedChk = this.getSourcePanel().down('checkbox[name=showGridded]');
+        console.log(showGriddedChk);
+        var showGridded = showGriddedChk.checked || false;
         var showNongriddedChk = this.getNongriddedPanel().down('checkbox[name=showNongridded]');
 
         // Reset aggregate view
@@ -2293,12 +2307,6 @@ Ext.define('Flux.controller.UserInteraction', {
         
         // Reset showGridded
         this._suppressBind = true;
-        
-        // If in  Single Map view, uncheck "Show" box
-        if (showGriddedChk) {
-            showGriddedChk.setValue(false);
-            showGriddedChk.setDisabled(true);
-        }
         
         // If in  Single Map view, uncheck "Show" Nongridded box
         if (showNongriddedChk) {
@@ -2328,13 +2336,20 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // Callback ////////////////////////////////////////////////////////////
         operation = Ext.Function.bind(function (metadata) {
-            this.bindMetadata(view, metadata);
-            this.propagateMetadata(container, metadata);
-            
-            // (Re)load the line plot if the source has actually changed
-            if (this.getLinePlot()
-                    && (!this.getLinePlot().isDrawn || source !== last)) {
-                this.bindMetadata(this.getLinePlot(), metadata);
+            if (metadata.get('gridded') || !showGridded) // In Single Map view, bind as primary if Gridded OR if showGridded is FALSE
+                                                          // In Coorindated View, bind as primary no matter what
+            {
+                this.bindMetadata(view, metadata);
+                this.propagateMetadata(container, metadata);
+                
+                // (Re)load the line plot if the source has actually changed
+                if (this.getLinePlot()
+                        && (!this.getLinePlot().isDrawn || source !== last)) {
+                    this.bindMetadata(this.getLinePlot(), metadata);
+                }
+            } else {
+                this.bindMetadataOverlay(view, metadata);
+                this.propagateMetadata(container, metadata);
             }
         }, this);
 
@@ -2370,6 +2385,13 @@ Ext.define('Flux.controller.UserInteraction', {
         }
 
         // RasterGrid //////////////////////////////////////////////////////////
+        
+        // If in  Single Map view, uncheck "Show" box
+        if (showGriddedChk) {
+            showGriddedChk.setValue(false);
+            showGriddedChk.setDisabled(true);
+        }
+        
         grid = this.getStore('rastergrids').getById(source);
 
         if (grid) {
@@ -2393,60 +2415,60 @@ Ext.define('Flux.controller.UserInteraction', {
 
     },
     
-   /**
-        Handles a change in the data "source" from a ComboBox configured for
-        selecting from among sources (e.g. scenarios, model runs, etc.).
-        @param  field   {Ext.form.field.ComboBox}
-        @param  source  {String}
-        @param  last    {String}
-     */
-    onSourceChangeNongridded: function (field, source, last) {
-        var metadata, operation, grid, view;
-        var container = field.up('panel');
-        var showGridded = this.getSourcePanel().down('checkbox[name=showGridded]').checked;
-        
-        if (Ext.isEmpty(source) || source === last) {
-            return;
-        }
-
-       view = this.getMap();
-
-        // Callback ////////////////////////////////////////////////////////////
-        operation = Ext.Function.bind(function (metadata) {
-            if (showGridded) {
-                this.bindMetadataOverlay(view, metadata)
-            } else {
-                this.bindMetadata(view, metadata);
-            }
-            this.propagateMetadata(container, metadata);
-        }, this);
-
-        // Metadata ////////////////////////////////////////////////////////////
-        metadata = this.getStore('metadata').getById(source);
-        
-        if (metadata) {
-            operation(metadata);
-
-        } else {
-            Ext.Ajax.request({
-                method: 'GET',
-                url: '/flux/api/scenarios.json',
-                params: {
-                    scenario: source
-                },
-                callback: function (o, s, response) {
-                    var meta = Ext.create('Flux.model.Metadata',
-                        Ext.JSON.decode(response.responseText));
-
-                    this.getStore('metadata').add(meta);
-
-                    operation(meta, field);
-                },
-
-                scope: this
-            });
-        }
-    },
+//    /**
+//         Handles a change in the data "source" from a ComboBox configured for
+//         selecting from among sources (e.g. scenarios, model runs, etc.).
+//         @param  field   {Ext.form.field.ComboBox}
+//         @param  source  {String}
+//         @param  last    {String}
+//      */
+//     onSourceChangeNongridded: function (field, source, last) {
+//         var metadata, operation, grid, view;
+//         var container = field.up('panel');
+//         var showGridded = this.getSourcePanel().down('checkbox[name=showGridded]').checked;
+//         
+//         if (Ext.isEmpty(source) || source === last) {
+//             return;
+//         }
+// 
+//        view = this.getMap();
+// 
+//         // Callback ////////////////////////////////////////////////////////////
+//         operation = Ext.Function.bind(function (metadata) {
+//             if (showGridded) {
+//                 this.bindMetadataOverlay(view, metadata)
+//             } else {
+//                 this.bindMetadata(view, metadata);
+//             }
+//             this.propagateMetadata(container, metadata);
+//         }, this);
+// 
+//         // Metadata ////////////////////////////////////////////////////////////
+//         metadata = this.getStore('metadata').getById(source);
+//         
+//         if (metadata) {
+//             operation(metadata);
+// 
+//         } else {
+//             Ext.Ajax.request({
+//                 method: 'GET',
+//                 url: '/flux/api/scenarios.json',
+//                 params: {
+//                     scenario: source
+//                 },
+//                 callback: function (o, s, response) {
+//                     var meta = Ext.create('Flux.model.Metadata',
+//                         Ext.JSON.decode(response.responseText));
+// 
+//                     this.getStore('metadata').add(meta);
+// 
+//                     operation(meta, field);
+//                 },
+// 
+//                 scope: this
+//             });
+//         }
+//     },
     /**
         Handles a change in the data "source" from a ComboBox configured for
         selecting from among sources (e.g. scenarios, model runs, etc.)

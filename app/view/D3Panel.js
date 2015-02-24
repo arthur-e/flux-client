@@ -106,32 +106,6 @@ Ext.define('Flux.view.D3Panel', {
         } else {
             offset = parseFloat(this._tendency);
         }
-           
-        // If using Current Data Frame stats, this makes sure not to pull
-        // the mean/median from metadata; b/c if anomalies are shown,
-        // metadata will reflect mean of anomalies and not mean of the
-        // original dataset. This is handled by checking if stored offsets
-        // exist, storing them if not, and then deleting them whenever the
-        // current data frame changes (i.e. time changes as opposed to display)
-        // 
-        // _storedTendencyOffset is deleted in fetchRaster/fetchNongridded if
-        // time parameter changes.
-//         if (!this._usePopulationStats) {
-//             console.log('getTendencyOffset', this.getMetadata().getSummaryStats());
-//             if (typeof(this._storedTendencyOffset) === 'undefined') {
-//                 this._storedTendencyOffset = {
-//                     'mean' : this.getMetadata().getSummaryStats()['mean'],
-//                     'median': this.getMetadata().getSummaryStats()['median']
-//                 };
-//             }
-//                 
-//             if (['mean','median'].indexOf(this._tendency) > -1) {
-//                 offset = this._storedTendencyOffset[this._tendency];
-//             }
-//             
-//         } else {
-//             delete this._storedTendencyOffset;
-//         }
         
         return offset;
 

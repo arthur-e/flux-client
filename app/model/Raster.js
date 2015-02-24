@@ -8,7 +8,16 @@ Ext.define('Flux.model.Raster', {
         name: 'features',
         type: 'auto'
     }, {
+        name: 'features_raw',
+        type: 'auto'
+    }, {
         name: 'properties',
+        type: 'auto'
+    }, {
+        name: 'offset',
+        type: 'auto'
+    }, {
+        name: 'source',
         type: 'auto'
     }],
 

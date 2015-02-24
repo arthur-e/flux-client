@@ -90,7 +90,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             The scale used for coloring map elements.
             @private
          */
-        this._scale = d3.scale.quantile();
+        this._colorScale = d3.scale.quantile();
 
         /**
             The Flux.store.Rasters instance associated with this view.
@@ -109,9 +109,11 @@ Ext.define('Flux.view.D3GeographicMap', {
             };
         }
 
-        this.on('draw', function (v, grid) {
+        this.on('draw', function (v, grid, showAsOverlay) {
             // Figure out what timestamp description to display at the top
-            this._display = grid.getTimestampDisplay(this.timeFormat);
+            if (!showAsOverlay) { // Don't reset HUD if an overlay was just drawn
+                this._display = grid.getTimestampDisplay(this.timeFormat);
+            }
             this.updateDisplay([{
                 id: 'timestamp',
                 text: this._display
@@ -899,9 +901,8 @@ Ext.define('Flux.view.D3GeographicMap', {
             .style('cursor', 'pointer'); // Show link pointer when hovering over
 
         // Applies the color scale to the current selection
-/*        if (showAsOverlay) */
         this.update(sel, showAsOverlay);
-//         }
+
 
         // Display Marker outlines if checked
         this.fireEvent('toggleOutline');
@@ -937,7 +938,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         }
 
         this.isDrawn = true;
-        this.fireEventArgs('draw', [this, data]);
+        this.fireEventArgs('draw', [this, data, showAsOverlay]);
         return this;
     },
     
@@ -1060,8 +1061,8 @@ Ext.define('Flux.view.D3GeographicMap', {
         Returns the current map scale.
         @return {d3.scale.*}
      */
-    getScale: function () {
-        return this._scale;
+    getColorScale: function () {
+        return this._colorScale;
     },
     
     /**
@@ -1556,8 +1557,8 @@ Ext.define('Flux.view.D3GeographicMap', {
         @param  scale   {d3.scale.*}
         @return         {Flux.fview.D3GeographicMap}
      */
-    setScale: function (scale, opts) {
-        this._scale = scale;
+    setColorScale: function (scale, opts) {
+        this._colorScale = scale;
         var suppress = false;
         if (opts) {
             suppress = opts.suppressUpdate;
@@ -1748,11 +1749,6 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         return this;
     },
-
-//     triggerRoiTimeSeries: function (response, view) {
-//         view.fireEventArgs('roiclick', [response]);
-//         
-//     },
     
     /**
         Draws again the visualization features of the map by updating their
@@ -1771,19 +1767,18 @@ Ext.define('Flux.view.D3GeographicMap', {
                         return 'transparent';
                     }
 
-                    return this.getScale()(d);
+                    return this.getColorScale()(d);
                 }, this));
 
             } else {
                 selection.attr('fill', Ext.bind(function (d) {
-                    return this.getScale()(d.properties.value);
+                    return this.getColorScale()(d.properties.value);
                 }, this));
 
             }
 
             return this;
         }
-        
         
         // If no selection was provided, update location attributes
         if (showAsOverlay) {
@@ -1847,7 +1842,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         var bins, h, ordinal, unitsLabel;
         var p = this.getMetadata().get('precision');
         var s = 0.025 * this.svg.attr('width'); // Length on a side of the legend's bins
-        var colors = this._scale.range();
+        var colors = this._colorScale.range();
         var units = this.getMetadata().get('units');
 
         // Add on the measurement units for the data values or nothing
@@ -1864,15 +1859,15 @@ Ext.define('Flux.view.D3GeographicMap', {
         //  top of the Panel's header
         var yOffset = this.svg.attr('height') - this.getHeader().getHeight();
 
-        if (this._scale.domain().length === 0) {
+        if (this._colorScale.domain().length === 0) {
             return this;
         }
 
-        if (typeof this._scale.quantiles === 'function') {
-            bins = bins || this._scale.quantiles();
+        if (typeof this._colorScale.quantiles === 'function') {
+            bins = bins || this._colorScale.quantiles();
             ordinal = false;
         } else {
-            bins = bins || this._scale.domain();
+            bins = bins || this._colorScale.domain();
             ordinal = true;
             if (bins.length === 1) {
                 bins = [Math.floor(bins[0]), (Math.floor(bins[0]) + 1)];
@@ -1950,7 +1945,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         //  the opts argument and makes it optional? That ways the view could
         //  call this method on its own
      */
-    updateScale: function (opts) {
+    updateColorScale: function (opts) {
         var palette, scale;
         var metadata;
 
@@ -1981,7 +1976,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             scale = metadata.getQuantileScale(opts,offset).range(palette.get('colors'));
         }
 
-        return this.setScale(scale, opts);
+        return this.setColorScale(scale, opts);
     }
 
 });

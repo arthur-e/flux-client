@@ -47,12 +47,12 @@ Ext.define('Flux.controller.UserExperience', {
                 }, this);
             }
             
-            // Send notice that date/time are ignored unless "source" is specified
-            if (((params.hasOwnProperty('date') && params.date.length > 0) || 
-                 (params.hasOwnProperty('time') && params.time.length > 0)) &&
-                 !params.hasOwnProperty('source') || !params.source.length) {
-                Ext.Msg.alert('Alert','"date" and "time" URL parameters are ignored unless "source" is specified');
-            }
+//             // Send notice that date/time are ignored unless "source" is specified
+//             if (((params.hasOwnProperty('date') && params.date.length > 0) || 
+//                  (params.hasOwnProperty('time') && params.time.length > 0)) &&
+//                  !params.hasOwnProperty('source') || !params.source.length) {
+//                 Ext.Msg.alert('Alert','"date" and "time" URL parameters are ignored unless "source" is specified');
+//             }
         }
 
         ////////////////////////////////////////////////////////////////////////

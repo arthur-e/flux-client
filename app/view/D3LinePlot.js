@@ -595,7 +595,7 @@ Ext.define('Flux.view.D3LinePlot', {
         //  the opts argument and makes it optional? That ways the view could
         //  call this method on its own
      */
-    updateScale: function () {
+    updateColorScale: function () {
         var metadata;
 
         if (!this.getMetadata()) {

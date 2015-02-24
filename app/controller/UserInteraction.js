@@ -992,7 +992,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
             // The color scale can only be properly adjusted AFTER data are bound
             //  to the view
-            view.updateScale(this.getSymbology().getForm().getValues());
+            view.updateColorScale(this.getSymbology().getForm().getValues());
         }
     },
 
@@ -1025,7 +1025,7 @@ Ext.define('Flux.controller.UserInteraction', {
         // Only when using population statistics will the color scale be ready
         //  before data have been bound to the view
         if (opts.statsFrom === 'population') {
-            view.updateScale(this.getSymbology().getForm().getValues());
+            view.updateColorScale(this.getSymbology().getForm().getValues());
         }
     },
     
@@ -2533,7 +2533,7 @@ Ext.define('Flux.controller.UserInteraction', {
 	    view.toggleAnomalies((opts.display === 'anomalies'),
                 opts.tendency);
             
-	    // redraw should NOT be needed here because updateScales()
+	    // redraw should NOT be needed here because updateColorScales()
 	    // called below cascades to a redraw...but turns out in some instances it is needed.
             if (opts.statsFrom === 'data') {
                 view.redraw();
@@ -2564,7 +2564,7 @@ Ext.define('Flux.controller.UserInteraction', {
 	    }
 	}
 
-        this.getController('MapController').updateScales({'suppressUpdate':suppressUpdate});
+        this.getController('MapController').updateColorScales({'suppressUpdate':suppressUpdate});
 
         // For what it's worth, grab the Metadata on the one (first) map and
         //  use it to propagate the population summary statistics

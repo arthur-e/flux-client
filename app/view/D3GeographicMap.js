@@ -1202,43 +1202,9 @@ Ext.define('Flux.view.D3GeographicMap', {
                     this.wrapper.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
                 }
                 
-
-                //this.setMarkerSize(this._markerSize/d3.event.scale);
-                var sz = this._markerSize/d3.event.scale;
-                // Scale stroke-width for nongridded data appropriately, whether it exists as...
-                // ...an overlay OR...
-                this.panes.overlay.selectAll('.cell')
-                    .style({
-                        'stroke-width': this._overlayStrokeWidth / d3.event.scale
-                    })
-                    .attr({
-                        'height' : sz,
-                        'width' : sz
-                    });
+                // Update drawing scale for auxiliary drawn components (ROI, Nongridded markers)
+                this.scaleAuxiliaryMapComponents(d3.event.scale);
                 
-                // ...as a primary model instance...
-                if (this._model && this._model.id.indexOf('Flux.model.Nongridded') > -1) {
-                    this.panes.datalayer.selectAll('.cell')
-                        .style({
-                            'stroke-width': this._overlayStrokeWidth / d3.event.scale
-                        })
-                        .attr({
-                            'height' : sz,
-                            'width' : sz
-                        });
-                }
-                
-                // Scale the ROI vertices appropriately
-		this.wrapper.selectAll('.roi-vertex').attr({
-		    'r': this._vertexRadius / d3.event.scale,
-		    'stroke-width': this._vertexStrokeWidth / d3.event.scale
-		});
-                
-                // Scale the ROI polygon appropriately
-		this.wrapper.selectAll('.roi-polygon').style('stroke-width', this._polygonStrokeWidth / d3.event.scale);
-                
-                // Update the scaling for the mouseover/mouseout listeners on ROI polygon vertices
-                this.updateListenersForVertices();
             }
             
         this.zoom = d3.behavior.zoom()
@@ -1407,6 +1373,52 @@ Ext.define('Flux.view.D3GeographicMap', {
         view.fireEvent('fetchstats');
     },
 
+    /**
+        Updates drawing scale (size) of auxiliary map components 
+        (incl. ROI vertices/polygon, Nongridded markers) according
+        to the provided zoom scale.
+        
+        @param  scale           {}
+     */
+    scaleAuxiliaryMapComponents: function (scale) {
+        var sz = this._markerSize/scale;
+                
+        // Scale stroke-width for nongridded data appropriately, whether it exists as...
+        // ...an overlay OR...
+        this.panes.overlay.selectAll('.cell')
+            .style({
+                'stroke-width': this._overlayStrokeWidth / scale
+            })
+            .attr({
+                'height' : sz,
+                'width' : sz
+            });
+        
+        // ...as a primary model instance...
+        if (this._model && this._model.id.indexOf('Flux.model.Nongridded') > -1) {
+            this.panes.datalayer.selectAll('.cell')
+                .style({
+                    'stroke-width': this._overlayStrokeWidth / scale
+                })
+                .attr({
+                    'height' : sz,
+                    'width' : sz
+                });
+        }
+        
+        // Scale the ROI vertices appropriately
+        this.wrapper.selectAll('.roi-vertex').attr({
+            'r': this._vertexRadius / scale,
+            'stroke-width': this._vertexStrokeWidth / scale
+        });
+        
+        // Scale the ROI polygon appropriately
+        this.wrapper.selectAll('.roi-polygon').style('stroke-width', this._polygonStrokeWidth / scale);
+        
+        // Update the scaling for the mouseover/mouseout listeners on ROI polygon vertices
+        this.updateListenersForVertices();
+    },
+    
     /**
         Draws or redraws the basemap given the URL of a new TopoJSON file.
         @param  basemapUrl      {String}
@@ -1651,22 +1663,14 @@ Ext.define('Flux.view.D3GeographicMap', {
             .duration(750)
             .attr('transform', 'translate(' + width/2 + ',' + height/2 + ')scale(' + scale + ')translate(' + -x + -y + ')');
 
-        // Scale the ROI vertices appropriately
-        this.wrapper.selectAll('.roi-vertex').attr({
-            'r': this._vertexRadius / scale,
-            'stroke-width': this._vertexStrokeWidth / scale
-        });
-        
-        // Scale the ROI polygon appropriately
-        this.wrapper.selectAll('.roi-polygon').style('stroke-width', this._polygonStrokeWidth / scale);
+        // Scale ROI vertices/polygon and Nongridded markers to new scale
+        this.scaleAuxiliaryMapComponents(scale);
         
         // Let the zoomer know that we've changed zoom/location
         this.zoom.scale(scale);
         this.zoom.center([width/2, height/2]);
         this.zoom.translate([-x*scale+width/2, -y*scale+height/2]);
-        
-        // And update scale of vertice mouseover/mouseout listeners
-        this.updateListenersForVertices();
+
     },
     
     /**

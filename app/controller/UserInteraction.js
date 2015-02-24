@@ -638,6 +638,8 @@ Ext.define('Flux.controller.UserInteraction', {
                     // Create a unique ID that can be used to find this grid
                     grid.set('_id', Ext.String.format('source={0}&{1}', source, Ext.Object.toQueryString(opts.params)));
                     grid.set('features_raw', JSON.parse(JSON.stringify(grid.get('features'))));
+                    grid.set('offset', 0);
+                    grid.set('source', source);
                     
                     callback(null, grid);
                 }
@@ -1421,12 +1423,11 @@ Ext.define('Flux.controller.UserInteraction', {
         // If nongridded, reroute request as appropriate
         // (important in Coordinated View, which automatically
         //  sends source combo change events here)
-
         if (!view.getMetadata().get('gridded')) {
             this.onNongriddedDateSelection(field);
             return;
         }
-        
+      
         if (Ext.isEmpty(values.source) || Ext.isEmpty(values.date)) {
             return;
         }
@@ -1436,6 +1437,7 @@ Ext.define('Flux.controller.UserInteraction', {
         if (this.lessThanDaily(view, view.getMetadata()) && Ext.isEmpty(values.time)) {
             return;
         }
+
         
 //         steps = view.getMetadata().getTimeOffsets();
 //         if (!Ext.isEmpty(steps)) {
@@ -1494,7 +1496,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  field   {Ext.form.field.Base}
      */
     onDifferenceChange: function (field) {
-        if (!this._initLoad) {
+        if (!this._initLoad && this.getMap()._model) {
             var vals = field.up('panel').getForm().getValues();
             var view = this.getMap();
             
@@ -1592,8 +1594,8 @@ Ext.define('Flux.controller.UserInteraction', {
             return Ext.alert('Could not determine which dataset is difference dataset');
         }
         
-        var f1 = g1.get('features');
-        var f2 = g2.get('features');
+        var f1 = g1.get('features_raw');
+        var f2 = g2.get('features_raw');
 
         if (f1.length !== f2.length) {
             Ext.Msg.alert('Data Error', 'Cannot display the difference of two maps with difference grids. Choose instead maps from two different data sources and/or times that have the same underlying grid.');
@@ -1603,7 +1605,7 @@ Ext.define('Flux.controller.UserInteraction', {
         view.store.add(g1, g2);
 
         rast = Ext.create('Flux.model.Raster', {
-            features: (function () {
+            features_raw: (function () {
                 var i;
                 var g = [];
                 for (i = 0; i < f1.length; i += 1) {
@@ -1612,9 +1614,12 @@ Ext.define('Flux.controller.UserInteraction', {
                 return g;
             }()),
             timestamp: g1.get('timestamp'),
+            offset: 0,
+            source: g1.get('source'),
             properties: {
                 title: this.getDifferencedMapTitle(g1, g2, view.timeFormat),
-                timestamp_diff: g2.get('timestamp')
+                timestamp_diff: g2.get('timestamp'),
+                source_diff: g2.get('source')
             }
         });
 
@@ -2295,10 +2300,9 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     onSourceChange: function (field, source, last) {
         var metadata, operation, grid, view, showGriddedChk, showNongriddedChk;
-        var container = field.up('panel');
+//         var container = field.up();//'panel');
         var editor = field.up('roweditor');
         var showGriddedChk = this.getSourcePanel().down('checkbox[name=showGridded]');
-        console.log(showGriddedChk);
         var showGridded = showGriddedChk.checked || false;
         var showNongriddedChk = this.getNongriddedPanel().down('checkbox[name=showNongridded]');
 
@@ -2336,11 +2340,12 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // Callback ////////////////////////////////////////////////////////////
         operation = Ext.Function.bind(function (metadata) {
-            if (metadata.get('gridded') || !showGridded) // In Single Map view, bind as primary if Gridded OR if showGridded is FALSE
-                                                          // In Coorindated View, bind as primary no matter what
-            {
+            if (metadata.get('gridded') || !showGridded ||
+                this.getSourceCarousel().getLayout().activeItem.getItemId() === 'coordinated-view') {
+                                                         // In Single Map view, bind as primary if Gridded OR if showGridded is FALSE
+                                                         // In Cooridinated View, bind as primary no matter what
                 this.bindMetadata(view, metadata);
-                this.propagateMetadata(container, metadata);
+                this.propagateMetadata(field, metadata);
                 
                 // (Re)load the line plot if the source has actually changed
                 if (this.getLinePlot()
@@ -2349,7 +2354,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 }
             } else {
                 this.bindMetadataOverlay(view, metadata);
-                this.propagateMetadata(container, metadata);
+                this.propagateMetadata(field, metadata);
             }
         }, this);
 
@@ -2480,7 +2485,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  last    {String}
      */
     onSourceDifferenceChange: function (field, source, last) {
-        var container = field.up('fieldset');
+        //var container = field.up('fieldset');
         var metadata;
 
         if (Ext.isEmpty(source) || source === last) {
@@ -2490,7 +2495,7 @@ Ext.define('Flux.controller.UserInteraction', {
         // Metadata ////////////////////////////////////////////////////////////
         metadata = this.getStore('metadata').getById(source);
         if (metadata) {
-            this.propagateMetadata(container, metadata);
+            this.propagateMetadata(field, metadata);
 
         } else {
             Ext.Ajax.request({
@@ -2505,7 +2510,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
                     this.getStore('metadata').add(meta);
 
-                    this.propagateMetadata(container, meta);
+                    this.propagateMetadata(field, meta);
                 },
 
                 scope: this
@@ -2667,10 +2672,21 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  container   {Ext.container.Contianer}
         @param  metadata    {Ext.model.Metadata}
      */
-    propagateMetadata: function (container, metadata) {
+    propagateMetadata: function (field, metadata) {
         var fmt = 'YYYY-MM-DD';
-        var calendars = container.query('datefield');
-        var clocks = container.query('combo[valueField=time]');
+        var calendars = field.up().query('datefield');
+        var clocks = field.up().query('combo[valueField=time]');
+//         var calendars = [];
+//         Ext.each(['date','start','end'], function (n) {
+//             var cal = field.next('datefield[name=' + n + ']');
+//             if (cal) {
+//                 calendars.push(cal);
+//             }
+//         });
+
+        
+//         var aclock = field.next('combo[valueField=time]');
+        
         var dates = metadata.getDisabledDates(fmt);
         var step = Ext.Array.min(metadata.getTimeOffsets() || []);
         var params = window.location.href.split('?');
@@ -2679,7 +2695,7 @@ Ext.define('Flux.controller.UserInteraction', {
         // Create date picker calendar
         if (calendars) {
             Ext.each(calendars, function (cal) {
-                var clock = cal.nextSibling('combo[valueField=time]');
+                var clock = cal.next('combo[valueField=time]');
                 cal.initDate = metadata.get('dates')[0].format(fmt);
                 cal.reset();
                 cal.setDisabledDates(['^(?!).*$']);
@@ -2692,19 +2708,26 @@ Ext.define('Flux.controller.UserInteraction', {
                     this.resumeEvent('change');
                 }, cal, {single: true});
 
-                // If no information about the interval between data is known...
-                if (!step && clock) {
-                    // Update the available times to choose from with each date chosen
-                    cal.on('change', function (f, date) {
-                        clock.reset();
-                        clock.bindStore(Ext.create('Ext.data.ArrayStore', {
-                            fields: ['time'],
-                            data: metadata.getTimes(date)
-                        }));
-                    });
-
+                // vvv This is commented out b/c:
+                //      (a) it was causing problems w/ Coordinated View when
+                //          a Nongridded dataset was selected first- this function
+                //          was somehow embedding itself into ALL calendars, and so 
+                //          the time stores were always being reset
+                //      (b) have not come upon a use-case where this is needed
+//                 // If no information about the interval between data is known...
+//                 if (!step && clock) {
+//                     // Update the available times to choose from with each date chosen
+//                     cal.on('change', function (f, date) {
+//                         clock.reset();
+//                         clock.bindStore(Ext.create('Ext.data.ArrayStore', {
+//                             fields: ['time'],
+//                             data: metadata.getTimes(date)
+//                         }));
+//                     });
+/*
                 // If data are sub-daily enable the TimeField
-                } else if (step < 86400) {
+                } else if (step < 86400) {*/
+                if (step < 86400) {
                     cal.on('change', function () {
                         clock.enable();
                     }, cal, {single: true});
@@ -2721,13 +2744,13 @@ Ext.define('Flux.controller.UserInteraction', {
         //TODO Use the step/span indicated by the given date (from above)?
         if (clocks) {
             // For every Ext.form.field.Time found...
-            Ext.each(clocks, function (clock) {
-                clock.reset();
-                clock.bindStore(Ext.create('Ext.data.ArrayStore', {
+            Ext.each(clocks, function (aclock) {
+                aclock.reset();
+                aclock.bindStore(Ext.create('Ext.data.ArrayStore', {
                     fields: ['time'],
                     data: metadata.getTimes()
                 }));
-                clock.disable();
+                aclock.disable();
             });
         }
         

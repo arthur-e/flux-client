@@ -2281,6 +2281,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  last    {String}
      */
     onSourceChange: function (field, source, last) {
+        console.log('onSourceChange');
         var metadata, operation, grid, view, showGriddedChk, showNongriddedChk;
         var container = field.up('panel');
         var editor = field.up('roweditor');
@@ -2339,7 +2340,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // Metadata ////////////////////////////////////////////////////////////
         metadata = this.getStore('metadata').getById(source);
-        
+
         if (metadata) {
             operation(metadata);
 
@@ -2688,7 +2689,9 @@ Ext.define('Flux.controller.UserInteraction', {
                 }
                 
                 // Finally, enable the field
-                cal.enable();
+                if (metadata.get('gridded') && cal.name != 'end') {
+                    cal.enable();
+                }
             });
 
         }

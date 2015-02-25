@@ -111,6 +111,7 @@ Ext.define('Flux.controller.UserInteraction', {
             'd3geomap': {
                 plotclick: this.onPlotClick,
                 fetchstats: this.fetchRoiSummaryStats,
+                mapzoom: this.syncZoom,
                 removeTimeSeries: this.removeRoiTimeSeries,
                 removeRoi: this.removeRoi,
                 toggleOutline: this.onMarkerOutlineToggle
@@ -205,6 +206,7 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     addMap: function (title) {
         var anchor, newView;
+        var zoomFactor, zoomTranslate;
         var basemap = this.getMapSettings().down('combo[name=basemap]').getValue();
         var container = this.getContentPanel();
         var query = Ext.ComponentQuery.query('d3geomap');
@@ -236,13 +238,14 @@ Ext.define('Flux.controller.UserInteraction', {
 
         Ext.each(query, function (view) {
             view.anchor = anchor;
-
+            
             // Add a listener to re-initialize the D3GeographicMap instance
             //  after it has received its layout from the parent container
             view.on('afterlayout', function () {
                 this.init(this.getWidth(), this.getHeight())
                     .setBasemap(basemap)
-                    .redraw(true);
+                    .redraw();
+                    
             }, view, {
                 single: true // Remove this listener
             });
@@ -259,7 +262,8 @@ Ext.define('Flux.controller.UserInteraction', {
             anchor: anchor,
             enableDisplay: true,
             timeFormat: 'YYYY-MM-DD [at] HH:ss',
-            closable: true
+            closable: true,
+            _syncZoom: true
         });
 
         // j works here because we want the new item to be positioned below
@@ -282,7 +286,34 @@ Ext.define('Flux.controller.UserInteraction', {
             }
 
         }
+        
+        // Sync zoom level/position
+        var query = Ext.ComponentQuery.query('d3geomap');
+        var counter = 0;
+        Ext.each(query, function (view) {
+            counter += 1;
+            zoomFactor = 1;
+            zoomTrans_x = 0;
+            zoomTrans_y = 0;
+            
+            if (n === 1 && counter === 1) {
+                zoomFactor = 0.5;
+                zoomTrans_x = -0.5;
+                zoomTrans_y = 0;
+            }
+            if (n === 1 && counter === 2) {
+                view._transOffset_y = 157.25;
+            }
 
+            view.setZoomInit(zoomFactor, [zoomTrans_x*view.getWidth(), zoomTrans_y*view.getHeight()]);
+            
+//             if (n === 1 && counter === 2) {
+//                 console.log('reseting translate!', view.title);
+//                 view.zoom.translate([0, 157.25]);
+//                 
+//             }
+        });
+        
         return newView;
     },
 
@@ -974,19 +1005,19 @@ Ext.define('Flux.controller.UserInteraction', {
             }
 
             // Draw our Gridded layer
-            view.draw(feat, true, false);
+            view.draw(feat, false);
             
             // And draw the Nongridded layer as an overlay if indicated
             if (this.showAsOverlay()) {
-                view.draw(ngFeat, true, true);
+                view.draw(ngFeat, true);
             }
         
         } else if (this.showAsOverlay()) {
             // If we're binding a Nongridded layer as an overlay
-            view.draw(ngFeat, true, true);
+            view.draw(ngFeat, true);
         } else {
             // If we're binding a Nongridded layer as primary
-            view.draw(ngFeat, true, false);
+            view.draw(ngFeat, false);
         }
 
         if (opts.statsFrom === 'data') {
@@ -1911,7 +1942,7 @@ Ext.define('Flux.controller.UserInteraction', {
         var map = this.getMap();
         var showAsOverlay = this.showAsOverlay();
         Ext.each(Ext.ComponentQuery.query('d3geomap'), function (v) {
-            v.setMarkerSize(size).redraw(view.zoom, showAsOverlay);
+            v.setMarkerSize(size).redraw(showAsOverlay);
         });
     },
     /**
@@ -1934,7 +1965,7 @@ Ext.define('Flux.controller.UserInteraction', {
         // the overlay (if valid)
         if (this._suppressBind) {
             if (this.showAsOverlay()) {
-                view.draw(view._modelOverlay, true, true);
+                view.draw(view._modelOverlay, true);
             }
             this._suppressBind = false;
             return;
@@ -1948,7 +1979,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
             // if showNongridded is also checked...
             if (this.showAsOverlay()) {
-                view.draw(view._modelOverlay, true, true);
+                view.draw(view._modelOverlay, true);
             }
         // if showGridded is NOT checked...
         } else {
@@ -2005,7 +2036,7 @@ Ext.define('Flux.controller.UserInteraction', {
             this.setAsPrimaryGridded();
             
             // Finally, draw the overlay on top
-            view.draw(view._modelOverlay, true, true);
+            view.draw(view._modelOverlay, true);
         
         // if showNongridded is checked but showGridded is not
         } else if (checked) {
@@ -2856,6 +2887,20 @@ Ext.define('Flux.controller.UserInteraction', {
         this.onNongriddedDateSelection(end_field);
     },
     
+    syncZoom: function(currentMap, event, mostRecentZoomScale) {
+        var query = Ext.ComponentQuery.query('d3geomap');
+        var factor = event.scale / mostRecentZoomScale; 
+        
+        Ext.each(query, function (view) {
+            if (view != currentMap) {
+                event.scale = factor * view.zoom.scale();
+                view.zoomFunc(event, true);
+            }
+            
+        });
+        
+    },
+    
     /**
         Toggles on/off the Time Series display below the map in the Single Map
         visualization.
@@ -2918,7 +2963,7 @@ Ext.define('Flux.controller.UserInteraction', {
         map.on('afterlayout', function () {
             this.init(this.getWidth(), this.getHeight())
                 .setBasemap(basemap)
-                .redraw(true);
+                .redraw();
         }, map, {
             single: true // Remove this listener
         });

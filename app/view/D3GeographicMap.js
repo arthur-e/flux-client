@@ -50,6 +50,9 @@ Ext.define('Flux.view.D3GeographicMap', {
      */
     _showLegendUnits: true,
 
+    _syncZoom: false,
+    _transOffset_x: 0,
+    _transOffset_y: 0,
      /**
         The radius and stroke-width size for ROI polygon vertices
         @private
@@ -114,7 +117,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             if (!showAsOverlay) { // Don't reset HUD if an overlay was just drawn
                 this._display = grid.getTimestampDisplay(this.timeFormat);
                 if (this.title != 'Single Map') { // Set the title if in Coordinated View
-                    this.setTitle(grid.getTimestampDisplay(this.timeFormat));
+                    this.setTitle(Ext.String.format('{0}: {1}', grid.get('source'), grid.getTimestampDisplay(this.timeFormat)));
                 }
             }
             this.updateDisplay([{
@@ -835,7 +838,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         @param  zoom    {Boolean}
         @return         {Flux.view.D3GeographicMap}
      */
-    draw: function (data, zoom, showAsOverlay) {
+    draw: function (data, showAsOverlay) {
         var bbox, lat, lng, meta, c1, c2, pane, rectClass, sel;
         var proj = this.getProjection();
         //var gridded = data.id.indexOf('Flux.model.Raster') == -1;
@@ -844,7 +847,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             return this;
         }
 
-        this.fireEventArgs('beforedraw', [this, data, zoom]);
+//         this.fireEventArgs('beforedraw', [this, data]);
 
         // If not using population statistics, calculate the new summary stats
         //  for the incoming data
@@ -877,8 +880,8 @@ Ext.define('Flux.view.D3GeographicMap', {
             pane = this.panes.overlay;
         }
         
-        // Disallow zooming by default
-        zoom = (zoom === true);
+//         // Disallow zooming by default
+//         zoom = (zoom === true);
 
         ////////////////////////////////////////////////////////////////////////
         // Selection and Attributes ////////////////////////////////////////////
@@ -933,10 +936,12 @@ Ext.define('Flux.view.D3GeographicMap', {
 
             c2 = proj([lng, lat]);
             
-            this.setZoom(this.getZoomScaleFromBbox(bbox), [
-                (c1[0] - c2[0]),
-                (c1[1] - c2[1])
-            ]);
+            if (!this._syncZoom) {
+                this.setZoom(this.getZoomScaleFromBbox(bbox), [
+                    (c1[0] - c2[0]),
+                    (c1[1] - c2[1])
+                ]);
+            }
 
         }
 
@@ -1142,6 +1147,29 @@ Ext.define('Flux.view.D3GeographicMap', {
         return wkt;
     },
     
+    getZoomScaleFromBbox: function(bbox) {
+        var proj = this.getProjection();
+        var width = this.filler.attr('width');
+        var projx1 = proj([0,0])[0];
+        var projx2 = proj([bbox[2] - bbox[0], 0])[0]; 
+        var factor = 0.8;
+        
+        // If projected max x is greater than projected min x,
+        // the target feature is close to global in scope, and so
+        // just zoom all the way out
+        if (projx2 < projx1) {
+            return 1;
+        }
+        
+        // Get the pixel coordinates of the longitude maximum and minmum,
+        //  then take the difference to get the pixel width of the scene.
+        //
+        // Then, take the ratio of the SVG width to this scene width to find
+        //  the zoom factor; scale it slightly so we don't zoom in too far
+        
+        return factor * (width / Math.abs(projx1 - projx2));
+    },
+    
     /**
         Attempts to display the value at the provided map coordinates; if the
         coordinates do not exactly match any among the current instance's grid
@@ -1189,9 +1217,9 @@ Ext.define('Flux.view.D3GeographicMap', {
         @param  height  {Number}
         @return         {Flux.view.D3GeographicMap}
      */
-    init: function (width, height, projection) {
+    init: function (width, height, projection) {//, zoomFactor, zoomTranslate) {
         var elementId = '#' + this.items.getAt(0).id;
-	
+        
         // Remove any previously-rendered SVG elements
         if (this.svg !== undefined) {
             this.svg.remove();
@@ -1201,20 +1229,44 @@ Ext.define('Flux.view.D3GeographicMap', {
             .attr('width', width)
             .attr('height', height);
 
-	this.zoomFunc = function () {
-                if (d3.event.translate) {
-                    this.wrapper.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
+        // Function to run when zooming
+	this.zoomFunc = function (event, suppressSync) {
+                if (!event) {
+                    event = d3.event;
+                }
+
+                var scale = Number(event.scale);
+            
+                if (event.translate) {
+                    this.wrapper.attr('transform', Ext.String.format('translate({0},{1})scale({2})',
+                                                                     event.translate[0] - (this._transOffset_x*event.scale),
+                                                                     event.translate[1] - (this._transOffset_y*event.scale),
+                                                                     event.scale));
                 }
                 
                 // Update drawing scale for auxiliary drawn components (ROI, Nongridded markers)
-                this.scaleAuxiliaryMapComponents(d3.event.scale);
+                this.scaleAuxiliaryMapComponents(event.scale);
                 
+                // Since the "zoom event" may sometimes come from a neighboring map, we need to
+                // ensure that the current zoom params are manually set
+                this.zoom.scale(event.scale);
+                this.zoom.translate(event.translate)
+                
+                
+                // Alert UI a map has been zoomed to facilitate binding pan/zoom w/ other maps
+                if (!suppressSync && this._syncZoom) {
+                    this.fireEventArgs('mapzoom', [this, event, this._mostRecentZoomScale]);
+                }
+
+                this._mostRecentZoomScale = scale;
+
             }
             
         this.zoom = d3.behavior.zoom()
-            .scaleExtent([1, 60])
+            .scaleExtent([0.01, 60])
             .on('zoom', Ext.bind(this.zoomFunc, this));
 
+        this._mostRecentZoomScale = this.zoom.scale();
 
         var view = this;
 
@@ -1236,9 +1288,6 @@ Ext.define('Flux.view.D3GeographicMap', {
                 view.zoom.center(d3.mouse(view.filler[0][0]));
             })
             .on('dblclick.zoom', null)
-//             .on('click', function () {
-//                 view.clickToCenter();
-//             });
             
         // This container will apply zoom and pan transformations to the entire
         //  content area; NOTE: layers that need to be zoomed and panned around
@@ -1318,7 +1367,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             .attr('class', 'units');
 
         this.isDrawn = false;
-
+        
         return this;
     },    
     
@@ -1327,13 +1376,13 @@ Ext.define('Flux.view.D3GeographicMap', {
         @param  zoom    {Boolean}
         @return         {Flux.view.D3GeographicMap}
      */
-    redraw: function (zoom, showOverlay) {
+    redraw: function (showOverlay) {
         if (this._model) {
-            this.draw(this._model, zoom).updateLegend();
+            this.draw(this._model).updateLegend();
         }
         
         if (this._modelOverlay && showOverlay) {
-            this.draw(this._modelOverlay, zoom, showOverlay);
+            this.draw(this._modelOverlay, showOverlay);
         }
 	
 	// If a drawn polygon existed and has not been destroyed, it needs to be redrawn too
@@ -1625,29 +1674,40 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
     
-    getZoomScaleFromBbox: function(bbox) {
-        var proj = this.getProjection();
+    setZoomInit: function (factor, translation, duration) {
+        var scale = this.zoom.scale();
+        var extent = this.zoom.scaleExtent();
+        var newScale = scale * factor;
         var width = this.filler.attr('width');
-        var projx1 = proj([0,0])[0];
-        var projx2 = proj([bbox[2] - bbox[0], 0])[0]; 
-        var factor = 0.8;
-        
-        // If projected max x is greater than projected min x,
-        // the target feature is close to global in scope, and so
-        // just zoom all the way out
-        if (projx2 < projx1) {
-            return 1;
-        }
-        
-        // Get the pixel coordinates of the longitude maximum and minmum,
-        //  then take the difference to get the pixel width of the scene.
-        //
-        // Then, take the ratio of the SVG width to this scene width to find
-        //  the zoom factor; scale it slightly so we don't zoom in too far
-        
-        return factor * (width / Math.abs(projx1 - projx2));
+        var height = this.filler.attr('height');
+        var t = translation || this.zoom.translate();
+        var c = [
+            width * 0.5,
+            height * 0.5
+        ];
+
+        duration = duration || 500; // Duration in milliseconds
+        var translate = [
+                    c[0] + (t[0] - c[0]) / scale * newScale, 
+                    c[1] + (t[1] - c[1]) / scale * newScale
+                    ];
+        this.wrapper.attr('transform', 'translate(' + translate + ')scale(' + newScale + ')');
+
+        // Let the zoomer know that we've changed zoom/location
+        this.zoom.scale(newScale);
+        this.zoom.center([width/2, height/2]);
+        this.zoom.translate([translate[0] - this._transOffset_x, translate[1] - this._transOffset_y]);
+        this._mostRecentZoomScale = newScale;
+//         this.zoom.scale(newScale)
+//             .translate([
+//                 c[0] + (t[0] - c[0]) / scale * newScale, 
+//                 c[1] + (t[1] - c[1]) / scale * newScale
+//             ])
+//             .event((this._transitions) ? this.wrapper.transition().duration(duration) : this.wrapper);
+
+        return this;
     },
-    
+
     /**
         Set the zoom level to that of the currently loaded ROI polygon.
      */
@@ -1658,22 +1718,21 @@ Ext.define('Flux.view.D3GeographicMap', {
         var width = this.filler.attr('width');
         var height = this.filler.attr('height');
         var scale = this.getZoomScaleFromBbox(bbox);
-        var duration = 500;
-        
+
         x = centroid[0];
         y = centroid[1];
 
         this.wrapper.transition()
             .duration(750)
-            .attr('transform', 'translate(' + width/2 + ',' + height/2 + ')scale(' + scale + ')translate(' + -x + -y + ')');
-
-        // Scale ROI vertices/polygon and Nongridded markers to new scale
-        this.scaleAuxiliaryMapComponents(scale);
+            .attr('transform', 'translate(' + width/2 + ',' + height/2 + ')scale(' + scale + ')translate(' + -x + ',' + -y + ')');
         
         // Let the zoomer know that we've changed zoom/location
         this.zoom.scale(scale);
         this.zoom.center([width/2, height/2]);
         this.zoom.translate([-x*scale+width/2, -y*scale+height/2]);
+        
+        // Scale ROI vertices/polygon and Nongridded markers to new scale
+        this.scaleAuxiliaryMapComponents(scale);
 
     },
     

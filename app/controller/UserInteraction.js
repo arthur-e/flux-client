@@ -2797,6 +2797,10 @@ Ext.define('Flux.controller.UserInteraction', {
             var time = time_field.getValue();
             var storeMeta = this.getStore('metadata').getById(source);
             var storeGrid = this.getStore('rastergrids').getById(source);
+            var tbar = view.down('toolbar[cls=map-tbar]');
+            var showLinePlot = this.getSourcePanel().down('recheckbox[name=showLinePlot]');
+            
+            tbar.down('button[itemId=btn-fetch-roi-time-series]').setDisabled(!showLinePlot);
             
             if (this.lessThanDaily(view, storeMeta)) {
                 if (Ext.isEmpty(time)) {
@@ -2823,8 +2827,12 @@ Ext.define('Flux.controller.UserInteraction', {
 
      */
     setAsPrimaryNonGridded: function () {
+        var view = this.getMap();
         var panel = this.getNongriddedPanel();
         var values = panel.getForm().getValues();
+        
+        var tbar = view.down('toolbar[cls=map-tbar]');
+        tbar.down('button[itemId=btn-fetch-roi-time-series]').setDisabled(true);
         
         // Quit if any of the required Nongridded fields are empty
         if (Ext.isEmpty(values.start) ||
@@ -2836,7 +2844,7 @@ Ext.define('Flux.controller.UserInteraction', {
         var source = panel.down('field[name=source_nongridded]').getValue();
         var end_field = panel.down('field[name=end]');
         
-        this.bindMetadata(this.getMap(), this.getStore('metadata').getById(source));
+        this.bindMetadata(view, this.getStore('metadata').getById(source));
         this.onNongriddedDateSelection(end_field);
     },
     
@@ -2854,9 +2862,13 @@ Ext.define('Flux.controller.UserInteraction', {
         var container = map.ownerCt;
         var series;
 
-        // Toggle visibility of the ROI fetch time series button
         var cmp = map.down('toolbar').down('button[itemId="btn-fetch-roi-time-series"]');
-        cmp.setDisabled(!checked);
+        // Toggle visibility of the ROI fetch time series button
+        if (map.getMetadata().get('gridded')) {
+            cmp.setDisabled(!checked);
+        } else {
+            cmp.setDisabled(true);
+        }
 
         if (map._roiCoords) {
             cmp.setVisible(checked);

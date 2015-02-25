@@ -1482,10 +1482,18 @@ Ext.define('Flux.controller.UserInteraction', {
         }
 
         // Enable the FieldSets in this form
-        if (this.getGlobalSettings().statsFrom === 'data') {
+        var settings = this.getGlobalSettings();
+        
+        if (settings.statsFrom === 'data') {
             Ext.each(this.getSourcePanel().query('fieldset'), function (fs) {
                 fs.enable();
             });
+            
+            if (settings.display === 'values') {
+                Ext.each(this.getSourcePanel().query('recheckbox'), function (fs) {
+                    fs.enable();
+                });
+            }
         }
 
     },
@@ -2300,14 +2308,10 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     onSourceChange: function (field, source, last) {
         var metadata, operation, grid, view, showGriddedChk, showNongriddedChk;
-//         var container = field.up();//'panel');
         var editor = field.up('roweditor');
         var showGriddedChk = this.getSourcePanel().down('checkbox[name=showGridded]');
         var showGridded = showGriddedChk.checked || false;
         var showNongriddedChk = this.getNongriddedPanel().down('checkbox[name=showNongridded]');
-
-        // Reset aggregate view
-        this.uncheckAggregates();
         
         // Reset showGridded
         this._suppressBind = true;
@@ -2342,8 +2346,9 @@ Ext.define('Flux.controller.UserInteraction', {
         operation = Ext.Function.bind(function (metadata) {
             if (metadata.get('gridded') || !showGridded ||
                 this.getSourceCarousel().getLayout().activeItem.getItemId() === 'coordinated-view') {
-                                                         // In Single Map view, bind as primary if Gridded OR if showGridded is FALSE
-                                                         // In Cooridinated View, bind as primary no matter what
+                // In Single Map view, bind as primary if Gridded OR if showGridded is FALSE
+                // In Cooridinated View, bind as primary no matter what
+                
                 this.bindMetadata(view, metadata);
                 this.propagateMetadata(field, metadata);
                 
@@ -2396,6 +2401,9 @@ Ext.define('Flux.controller.UserInteraction', {
             showGriddedChk.setValue(false);
             showGriddedChk.setDisabled(true);
         }
+        
+        // ...and reset aggregate view
+        this.uncheckAggregates();
         
         grid = this.getStore('rastergrids').getById(source);
 
@@ -2920,7 +2928,14 @@ Ext.define('Flux.controller.UserInteraction', {
     /**
         Unchecks the "Show Aggregation" and "Show Difference" checkboxes.
      */
-    uncheckAggregates: function () {
+    uncheckAggregates: function (cmp) {
+        // Do not uncheck aggregates if triggered from a datefield change and
+        // that datefield is on the Nongridded Panel... changes in Nongridded
+        // dates should have nothing to do with Aggregations
+        if (cmp && cmp.up().xtype === 'nongriddedpanel') {
+            return; 
+        }
+
         Ext.each(this.getSourcePanel().query('fieldset checkbox'), function (cb) {
             cb.setValue(false);
         });
@@ -2936,7 +2951,7 @@ Ext.define('Flux.controller.UserInteraction', {
 	    Ext.each(cmps.query('trigger'), function (field) {
 		field.setDisabled(disable);
 	    });
-	    cmps.query('checkbox')[0].setDisabled(disable);
+	    cmps.query('recheckbox')[0].setDisabled(disable);
 	});
     }
 

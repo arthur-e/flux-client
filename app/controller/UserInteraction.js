@@ -357,7 +357,6 @@ Ext.define('Flux.controller.UserInteraction', {
                 if (n > 5) { // 3x3 map layout
                     zoomTrans_y = -0.25;
                     view._transOffset_y = view.getHeight() * 0.25; 
-                    
                 }
             }
 
@@ -2723,6 +2722,8 @@ Ext.define('Flux.controller.UserInteraction', {
                 container = this.getContentPanel();
                 w = (Ext.getBody().getWidth() > 1000) ? 250 : '20%';
                 this.getSymbology().up('sidepanel').expand(false);
+                // See note below
+                this.getMapSettings().down('recombo[name=projection]').setReadOnly(false);
 
                 items = [{
                     xtype: 'd3geomap',
@@ -2750,6 +2751,11 @@ Ext.define('Flux.controller.UserInteraction', {
             case 'coordinated-view':
                 w = 350;
                 this.getSymbology().up('sidepanel').collapse();
+                
+                // Disable ability to change Map projection (must set read-only instead of
+                // simply disabling we still need to read/use the value, which can't be done
+                // if enabled)
+                this.getMapSettings().down('recombo[name=projection]').setReadOnly(true);
                 this.getSourcesGrid().getStore().removeAll();
                 break;
         }

@@ -1325,8 +1325,8 @@ Ext.define('Flux.controller.UserInteraction', {
             // Make UI changes
             map.setTbarForDrawnROI();
             
-            // Draw the polygon 
-            map.redrawPolygon();   
+            // Draw the ROI 
+            map.redrawRoi();   
              
             // Zoom to ROI
             map.setZoomToRoiCenter();            
@@ -1728,11 +1728,12 @@ Ext.define('Flux.controller.UserInteraction', {
         var menu_btn = btn.up('button');
 	var tbar = menu.up('toolbar');
 
+        // Adjust UI
 	menu.hide();
         menu_btn.hide();
 	tbar.down('button[itemId="btn-cancel-drawing"]').show();
 
-	// this toggles header text
+	// Toggles header text
 	view.panes.hud.selectAll('.info').style('font-size',(0.03 * view.svg.attr('width')).toString() + 'px')
 	view.updateDisplay([{
                 id: 'tooltip',

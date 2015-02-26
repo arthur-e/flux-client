@@ -430,7 +430,6 @@ Ext.define('Flux.view.D3GeographicMap', {
 	
 	sel.on('dblclick', finishPolygon);
 	
-	// Functions specific to polygon drawing listeners
 	function finishPolygon() {
 	    // Registers drawing on double-click
 	  
@@ -448,7 +447,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             view.wrapper.selectAll('.roi-tracker').remove();
             
 	    // An extra vertex is added on the first click of the double-click
-	    // Remove the vertex as well as the coordinate from the poly def.
+	    // Remove the vertex as well as the coordinate from the poly definition
 	    view.wrapper.selectAll('circle[vindex="' + (vindex-1) + '"]').remove();
 	    view._roiCoords.pop();
 	 
@@ -1387,27 +1386,34 @@ Ext.define('Flux.view.D3GeographicMap', {
 	
 	// If a drawn polygon existed and has not been destroyed, it needs to be redrawn too
         if (this._roiCoords && this.wrapper.selectAll('.roi-polygon')[0].length === 0) {
-	    this.redrawPolygon();
+	    this.redrawRoi();
 	}
         return this;
     },
     
-    /** Redraws a polygon after a map reset caused by dimensions of 
-        the parent map component changing
+    /** 
+        Redraws an ROI, needed e.g. after changing dimensions causes
+        the map to reset. Assumes exsiting _roiCoords.
     */
     
-    redrawPolygon: function () {
+    redrawRoi: function () {
+        if (!this._roiCoords) {
+            return;
+        }
+        
         var view = this;
       
         // Add the SVG polygon elements
         var bbox = this.getSVGPolyBbox(this._roiCoords.slice(0));
-        this.wrapper.append('polygon').attr({
+        this.wrapper.append('polygon')
+                        .attr({
                             'class': 'roi-polygon',
                             'points': this.getSVGPolyPoints(this._roiCoords.slice(0)),
                             'bbox' : bbox,
                             'centroid': this.getSVGPolyCentroid(bbox),
                             'pointer-events': 'none'
-                        });
+                        })
+                        .style('stroke-width', this._polygonStrokeWidth / this.zoom.scale());
         
         // Add vertices
         var vindex = 0;
@@ -1419,13 +1425,33 @@ Ext.define('Flux.view.D3GeographicMap', {
         // Add grow/shrink and drag listeners for vertices
         this.addListenersForVertices();
         
-        // get summary stats
-        delete view._currentSummaryStats; // TODO: this is suboptimal b/c triggers another request when it could reuse existing stats
+        // Refetch summary stats
+        // TODO: this is suboptimal b/c triggers another request when it could reuse existing stats
+        delete view._currentSummaryStats; 
         d3.selectAll('.roi-stats').remove();
-
         view.fireEvent('fetchstats');
     },
-
+    
+    /**
+        Returns an array of pixel coordinates projected
+        to the specified new map projection. 
+        
+        @param  cs           {Array} e.g. [[0,4],[0,2],[3,2],[3,4]]
+        @param  oldproj      {d3.geo.*}       
+        @param  newproj      {d3.geo.*}
+        @return              {Array}
+    */
+    reprojectRoiCoords: function (cs, oldproj, newproj) {
+        // Conversts coordinates to lat/long using old projection and then
+        // back to pixel coordinates useing the new projection
+        return Ext.Array.map(cs, function (c) {
+                return newproj(Ext.Array.map(oldproj.invert([c[0],c[1]]), function(l) {
+                        return l;
+                }));
+        });
+        
+    },
+    
     /**
         Updates drawing scale (size) of auxiliary map components 
         (incl. ROI vertices/polygon, Nongridded markers) according
@@ -1569,13 +1595,13 @@ Ext.define('Flux.view.D3GeographicMap', {
         @return         {Flux.view.D3GeographicMap}
      */
     setProjection: function (proj, width, height) {
+        var projOld = this._proj;
         width = width || this.svg.attr('width');
         height = height || this.svg.attr('height');
-
+        
         this._projId = proj;
         this._proj = d3.geo[proj]()
             .scale(width * 0.15)
-            //.scale((1 << 12) / 2 / Math.PI)
             .translate([
                 Number(width) * 0.5,
                 Number(height) * 0.5
@@ -1583,11 +1609,17 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         this.path = d3.geo.path()
             .projection(this._proj);
-
+            
         // Update the data in every currently drawn path
         this.svg.selectAll('path')
             .attr('d', this.path);
-
+        
+        // If a drawn polygon existed reproject those coordinates
+        if (this._roiCoords && projOld) {
+            this.fireEvent('removeRoi');
+            this._roiCoords = this.reprojectRoiCoords(this._roiCoordsMostRecent.slice(0), projOld, this._proj);
+            this.redrawRoi();
+        }
         return this;
     },
 

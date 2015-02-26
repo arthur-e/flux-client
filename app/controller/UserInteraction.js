@@ -1498,7 +1498,11 @@ Ext.define('Flux.controller.UserInteraction', {
         var d, dates, steps, view;
         var editor = field.up('roweditor');
         var values = field.up('panel').getForm().getValues();
-
+        
+        if (!value) {
+            return; // Ignore undefined, null values
+        }
+        
         if (editor) {
             view = editor.editingPlugin.getCmp().getView().getSelectionModel()
                 .getSelection()[0].get('view');
@@ -1514,10 +1518,6 @@ Ext.define('Flux.controller.UserInteraction', {
             this.onNongriddedDateSelection(field);
             return;
         }        
-              
-        if (!value) {
-            return; // Ignore undefined, null values
-        }
 
         values.date = values.date || date;
 

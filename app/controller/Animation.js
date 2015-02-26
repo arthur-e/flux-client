@@ -190,7 +190,9 @@ Ext.define('Flux.controller.Animation', {
     /**
         Causes the corresponding view to "step" forwards or backwards in time
         with the animation according to a specified number of steps.
-        @param  steps   {Number}    Negative steps are steps taken backwards
+        @param  steps   {Number}        Negative steps are steps taken backwards
+        @param  reset   {Boolean}       Get timestamp from whatever is set in the UI
+                                        instead of drawn map
      */
     stepBy: function (steps, reset) {
         var ui = this.getController('UserInteraction');
@@ -207,6 +209,8 @@ Ext.define('Flux.controller.Animation', {
             ts = view.getMoment();
             ts_diff = view.getMomentOfDifference();
             if (reset) {
+                steps = 0;
+                
                 var date = Ext.ComponentQuery.query('datefield[name=date]')[0].rawValue;
                 var time = Ext.ComponentQuery.query('combo[name=time]')[0].value;
         
@@ -302,16 +306,7 @@ Ext.define('Flux.controller.Animation', {
         @param  btn {Ext.button.Button}
      */
     onResetButton: function (btn) {
-        var ui = this.getController('UserInteraction');
-
-        // Force feed stepBy the moment as indicated in the UI
-        var date = Ext.ComponentQuery.query('datefield[name=date]')[0].rawValue;
-        var time = Ext.ComponentQuery.query('combo[name=time]')[0].value;
-        
-        var m = moment.utc(Ext.String.format('{0}T{1}:00.000Z', date, time));
-
         this.stepBy(0, true);
-        
         btn.hide();
     },
 

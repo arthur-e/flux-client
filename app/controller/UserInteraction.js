@@ -287,31 +287,83 @@ Ext.define('Flux.controller.UserInteraction', {
 
         }
         
+        ////////////////////////////////////////
         // Sync zoom level/position
+        // 
+        // Initial zoom level/position is set using the
+        // zoomFactor/zoomTrans_x/zoomTrans_y variables;
+        //
+        // Afterwards, zoom behavior is sync'ed using the
+        // _transOffset_y variable.
         var query = Ext.ComponentQuery.query('d3geomap');
         var counter = 0;
         Ext.each(query, function (view) {
             counter += 1;
+            
+            // Default values
             zoomFactor = 1;
             zoomTrans_x = 0;
             zoomTrans_y = 0;
             
-            if (n === 1 && counter === 1) {
-                zoomFactor = 0.5;
-                zoomTrans_x = -0.5;
-                zoomTrans_y = 0;
+            // Translations for the 1st map added
+            if (counter === 1) {
+                if (n > 0) { // 2x1 map layout
+                    zoomFactor = 0.5;
+                    zoomTrans_x = -0.5;
+                }
+                if (n > 1) { // 2x2 map layout
+                    zoomTrans_y = -0.5;
+                }
+                if (n > 3) { // 3x2 map layout
+                    zoomFactor = 0.3333;
+                    zoomTrans_x = -1;
+                }
+                if (n > 5) { // 3x3 map layout
+                    zoomTrans_y = -1;
+                }
             }
-            if (n === 1 && counter === 2) {
-                view._transOffset_y = 157.25;
+            // Translations for the 2nd map added
+            if (counter === 2) {
+                if (n > 0) { // 2x1 map layout
+                    view._transOffset_y = view.getHeight() * 0.25;
+                }
+                if (n > 1) { // 2x2 map layout
+                    zoomTrans_y = -0.5;
+                    view._transOffset_y = view.getHeight() * 0.50;
+                }
+                if (n > 3) { // 3x2 map layout
+                    zoomTrans_x = -0.25;
+                    zoomFactor = 0.66667;
+                }
+                if (n > 5) { // 3x3 map layout
+                    zoomTrans_y = -1;
+                    view._transOffset_y = view.getHeight() * 0.75;
+                }
+            }
+            // Translations for the 3rd/4th maps added
+            if (counter === 3 || counter === 4) {
+                if (n > 3) { // 3x2 map layout
+                    zoomFactor = 0.66667;
+                    zoomTrans_x = -0.25;
+                }
+                if (n > 5) { // 3x3 map layout
+                    zoomTrans_y = -0.25;
+                }
+                
+            }
+            // Translations for the 5th/6th maps added
+            if (counter === 5 || counter === 6) {
+                view._transOffset_y = view.getHeight() * 0.166667;
+                if (n > 5) { // 3x3 map layout
+                    zoomTrans_y = -0.25;
+                    view._transOffset_y = view.getHeight() * 0.25; 
+                    
+                }
             }
 
+            // Finally, set initial zoom for the map based on the factors above
             view.setZoomInit(zoomFactor, [zoomTrans_x*view.getWidth(), zoomTrans_y*view.getHeight()]);
             
-//             if (n === 1 && counter === 2) {
-//                 console.log('reseting translate!', view.title);
-//                 view.zoom.translate([0, 157.25]);
-//                 
-//             }
         });
         
         return newView;

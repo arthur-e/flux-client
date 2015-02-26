@@ -1674,7 +1674,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
     
-    setZoomInit: function (factor, translation, duration) {
+    setZoomInit: function (factor, translation) {
         var scale = this.zoom.scale();
         var extent = this.zoom.scaleExtent();
         var newScale = scale * factor;
@@ -1686,7 +1686,6 @@ Ext.define('Flux.view.D3GeographicMap', {
             height * 0.5
         ];
 
-        duration = duration || 500; // Duration in milliseconds
         var translate = [
                     c[0] + (t[0] - c[0]) / scale * newScale, 
                     c[1] + (t[1] - c[1]) / scale * newScale
@@ -1696,14 +1695,9 @@ Ext.define('Flux.view.D3GeographicMap', {
         // Let the zoomer know that we've changed zoom/location
         this.zoom.scale(newScale);
         this.zoom.center([width/2, height/2]);
-        this.zoom.translate([translate[0] - this._transOffset_x, translate[1] - this._transOffset_y]);
+        this.zoom.translate([translate[0] + this._transOffset_x, translate[1] + this._transOffset_y]);
+        
         this._mostRecentZoomScale = newScale;
-//         this.zoom.scale(newScale)
-//             .translate([
-//                 c[0] + (t[0] - c[0]) / scale * newScale, 
-//                 c[1] + (t[1] - c[1]) / scale * newScale
-//             ])
-//             .event((this._transitions) ? this.wrapper.transition().duration(duration) : this.wrapper);
 
         return this;
     },

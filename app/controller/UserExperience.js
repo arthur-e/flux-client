@@ -250,6 +250,11 @@ Ext.define('Flux.controller.UserExperience', {
             tabPanel.setActiveTab('non-gridded-map');
         }
         
+        if (gridded) {
+            tabPanel.getActiveTab().down('checkbox[name=showGridded]').setValue(params.showGridded);
+//             tabPanel.getActiveTab().down('checkbox[name=showGridded]').setDisabled(false);
+        }
+        
         // First get metadata
         Ext.Ajax.request({
             method: 'GET',
@@ -341,6 +346,7 @@ Ext.define('Flux.controller.UserExperience', {
                     },
                     // If successful, bind layer and get raster grid
                     success: function (response, opts) {
+                        // This basically recreated fetchRaster. Merged as needed.
                         var rast;
 
                         rast = Ext.create('Flux.model.Raster',
@@ -353,6 +359,11 @@ Ext.define('Flux.controller.UserExperience', {
                                                     Ext.Object.toQueryString(opts.params)
                                                 )
                              );
+                        
+                        // Create a unique ID that can be used to find this grid
+                        rast.set('features_raw', JSON.parse(JSON.stringify(rast.get('features'))));
+                        rast.set('offset', 0);
+                        rast.set('source', params.source);
 
                         ui.bindLayer(view, rast);
                         ui.onMapLoad(rast);
@@ -381,6 +392,8 @@ Ext.define('Flux.controller.UserExperience', {
                                 // The date/time fields are set w/in propagateMetadata
                                 tabPanel.getActiveTab().down('field[name=source]').setValue(params.source);
                                 tabPanel.getActiveTab().down('recheckbox[name=showAggregation]').setValue(params.showAggregation);
+                                tabPanel.getActiveTab().down('checkbox[name=showGridded]').setValue(params.showGridded);
+                                tabPanel.getActiveTab().down('checkbox[name=showGridded]').setDisabled(false);
                                 
                                 // Finally, trigger redraw() to draw the data on the map
                                 view.redraw();

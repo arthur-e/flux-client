@@ -230,6 +230,16 @@ Ext.define('Flux.view.Viewport', {
                 iconCls: 'icon-control-right',
                 tooltip: 'Step forwards',
                 disabled: true
+            }, {
+                xtype: 'button',
+                cls: 'anim-btn',
+                overCls: 'reset-over',
+                itemId: 'reset-btn',
+                text: 'Reset',
+                tooltip: 'Return to the dataset specified in the selection menu',
+                //style: 'background: #ffcc00;',
+                disabled: true,
+                hidden: true
             }]
         },
 

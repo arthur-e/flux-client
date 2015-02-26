@@ -44,6 +44,10 @@ Ext.define('Flux.controller.Animation', {
 
             '#forward-btn, #backward-btn': {
                 click: this.onStepButton
+            },
+            
+            '#reset-btn': {
+                click: this.onResetButton
             }
 
         });
@@ -188,16 +192,32 @@ Ext.define('Flux.controller.Animation', {
         with the animation according to a specified number of steps.
         @param  steps   {Number}    Negative steps are steps taken backwards
      */
-    stepBy: function (steps) {
+    stepBy: function (steps, reset) {
         var ui = this.getController('UserInteraction');
         var map = ui.getMap();
         
+        this.getTopToolbar().down('button[itemId=reset-btn]').show();
+
         Ext.each(map, Ext.Function.bind(function (view) {
-	    var params, args, vals;  
-	    var ts = view.getMoment();
+	    var params, args, ts, ts_diff, vals;  
             var agg_toggle = Ext.ComponentQuery.query('field[name=showAggregation]')[0].getValue();
             var diff_toggle = Ext.ComponentQuery.query('field[name=showDifference]')[0].getValue();
             var diff_sync = Ext.ComponentQuery.query('checkbox[name=syncDifference]')[0].checked;
+            
+            ts = view.getMoment();
+            ts_diff = view.getMomentOfDifference();
+            if (reset) {
+                var date = Ext.ComponentQuery.query('datefield[name=date]')[0].rawValue;
+                var time = Ext.ComponentQuery.query('combo[name=time]')[0].value;
+        
+                ts = moment.utc(Ext.String.format('{0}T{1}:00.000Z', date, time));
+                
+                if (diff_toggle) {
+                    var date = Ext.ComponentQuery.query('datefield[name=date2]')[0].rawValue;
+                    var time = Ext.ComponentQuery.query('combo[name=time2]')[0].value;
+                    ts_diff = moment.utc(Ext.String.format('{0}T{1}:00.000Z', date, time));
+                }
+            }
             
             if (Ext.isEmpty(ts)) {
                 return;
@@ -212,7 +232,7 @@ Ext.define('Flux.controller.Animation', {
                     .add(steps, this._stepSize)
                     .toISOString()
             };
-            
+                
             ///////////////////////////////////////////////////////
             // Aggregation views
             if (agg_toggle) {
@@ -240,10 +260,9 @@ Ext.define('Flux.controller.Animation', {
 	    // Differenced views
 	    if (diff_toggle) {
                 var vals = ui.getSourcePanel().getForm().getValues();
-                ui._diffTime = view.getMomentOfDifference();
-                if (diff_sync) {//moment.utc(Ext.String.format('{0}T{1}:00',vals.date2, vals.time2)).clone()
-                    ui._diffTime = view.getMomentOfDifference()
-                                     .clone()
+                ui._diffTime = ts_diff;
+                if (diff_sync) {
+                    ui._diffTime = ts_diff.clone()
                                      .add(steps, this._stepSize)
                 }
                 
@@ -274,6 +293,26 @@ Ext.define('Flux.controller.Animation', {
     onDelayChange: function (slider) {
         this._delay = slider.getValue();
         this.getTopToolbar().down('#animate-btn').toggle(false);
+    },
+    
+
+    /**
+        Handles reset to starting dataset specified in the source panel.
+        
+        @param  btn {Ext.button.Button}
+     */
+    onResetButton: function (btn) {
+        var ui = this.getController('UserInteraction');
+
+        // Force feed stepBy the moment as indicated in the UI
+        var date = Ext.ComponentQuery.query('datefield[name=date]')[0].rawValue;
+        var time = Ext.ComponentQuery.query('combo[name=time]')[0].value;
+        
+        var m = moment.utc(Ext.String.format('{0}T{1}:00.000Z', date, time));
+
+        this.stepBy(0, true);
+        
+        btn.hide();
     },
 
     /**

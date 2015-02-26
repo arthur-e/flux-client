@@ -2,6 +2,12 @@ Ext.define('Flux.controller.UserInteraction', {
     extend: 'Ext.app.Controller',
 
     refs: [{
+        ref: 'aoGeoJSON',
+        selector: 'ao_geojson'
+    }, {
+        ref: 'aoWKT',
+        selector: 'ao_wkt'
+    }, {
         ref: 'contentPanel',
         selector: '#content'
     }, {
@@ -31,13 +37,9 @@ Ext.define('Flux.controller.UserInteraction', {
     }, {
         ref: 'symbology',
         selector: 'symbology'
-    
     }, {
-        ref: 'aoGeoJSON',
-        selector: 'ao_geojson'
-    }, {
-        ref: 'aoWKT',
-        selector: 'ao_wkt'
+        ref: 'topToolbar',
+        selector: 'viewport toolbar'
     }],
 
     requires: [
@@ -635,7 +637,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  view    {Flux.view.D3GeographicMap}
         @param  params  {Object}
      */
-    fetchRaster: function (view, params) {
+    fetchRaster: function (view, params, callback) {
         var raster, source, opts;
         
 //         if (view.mostRecentRasterParams != params) {
@@ -682,6 +684,10 @@ Ext.define('Flux.controller.UserInteraction', {
 	
                 this.bindLayer(view, rast);
                 this.onMapLoad(rast);
+                
+                if (callback) {
+                    callback();
+                }
             },
             failure: function (response) {
                 Ext.Msg.alert('Request Error', response.responseText);
@@ -1153,6 +1159,10 @@ Ext.define('Flux.controller.UserInteraction', {
     lessThanDaily: function (view, metadata) {
         var ltDaily = false;
         
+        if (!metadata) {
+            return;
+        }
+        
         steps = metadata.getTimeOffsets();
         if (!Ext.isEmpty(steps)) {
             if (Ext.Array.min(steps) < 86400) {
@@ -1488,11 +1498,6 @@ Ext.define('Flux.controller.UserInteraction', {
         var d, dates, steps, view;
         var editor = field.up('roweditor');
         var values = field.up('panel').getForm().getValues();
-        values.date = values.date || date;
-
-        if (!value) {
-            return; // Ignore undefined, null values
-        }
 
         if (editor) {
             view = editor.editingPlugin.getCmp().getView().getSelectionModel()
@@ -1501,15 +1506,21 @@ Ext.define('Flux.controller.UserInteraction', {
         } else {
             view = this.getMap();
         }
-
+        
         // If nongridded, reroute request as appropriate
         // (important in Coordinated View, which automatically
         //  sends source combo change events here)
         if (!view.getMetadata().get('gridded')) {
             this.onNongriddedDateSelection(field);
             return;
+        }        
+              
+        if (!value) {
+            return; // Ignore undefined, null values
         }
-      
+
+        values.date = values.date || date;
+
         if (Ext.isEmpty(values.source) || Ext.isEmpty(values.date)) {
             return;
         }
@@ -1565,6 +1576,9 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // Enable the FieldSets in this form
         var settings = this.getGlobalSettings();
+        
+        // Hide the Animation "Reset" button
+        this.getTopToolbar().down('button[itemId=reset-btn]').hide();
         
         if (settings.statsFrom === 'data') {
             Ext.each(this.getSourcePanel().query('fieldset'), function (fs) {
@@ -2396,6 +2410,9 @@ Ext.define('Flux.controller.UserInteraction', {
         var showGridded = showGriddedChk.checked || false;
         var showNongriddedChk = this.getNongriddedPanel().down('checkbox[name=showNongridded]');
         
+        // Hide the Animation "Reset" button
+        this.getTopToolbar().down('button[itemId=reset-btn]').hide();
+
         // Reset showGridded
         this._suppressBind = true;
         
@@ -2886,36 +2903,43 @@ Ext.define('Flux.controller.UserInteraction', {
 
      */
     setAsPrimaryGridded: function () {
-            var triggerField, triggerValue;
-            var view = this.getMap();
-            var source = this.getSourcePanel().down('field[name=source]').getValue();
-            var date_field = this.getSourcePanel().down('field[name=date]');
-            var date = date_field.getValue();
-            var time_field = this.getSourcePanel().down('field[name=time]');
-            var time = time_field.getValue();
-            var storeMeta = this.getStore('metadata').getById(source);
-            var storeGrid = this.getStore('rastergrids').getById(source);
-            var tbar = view.down('toolbar[cls=map-tbar]');
-            var showLinePlot = this.getSourcePanel().down('recheckbox[name=showLinePlot]');
+        var triggerField, triggerValue;
+        var view = this.getMap();
+        var source = this.getSourcePanel().down('field[name=source]').getValue();
+        var date_field = this.getSourcePanel().down('field[name=date]');
+        var date = date_field.getValue();
+        var time_field = this.getSourcePanel().down('field[name=time]');
+        var time = time_field.getValue();
+        var storeMeta = this.getStore('metadata').getById(source);
+        var storeGrid = this.getStore('rastergrids').getById(source);
+        var tbar = view.down('toolbar[cls=map-tbar]');
+        var showLinePlot = this.getSourcePanel().down('recheckbox[name=showLinePlot]');
+        
+        tbar.down('button[itemId=btn-fetch-roi-time-series]').setDisabled(!showLinePlot);
+        
+        if (this.lessThanDaily(view, storeMeta)) {
+            if (Ext.isEmpty(time)) {
+                return;
+            } 
+            triggerField = time_field;
+            triggerValue = time;    
+        }
+        
+        // If all the necessary values are filled out and the stores exist...
+        if (!Ext.isEmpty(source) && !Ext.isEmpty(date) && storeMeta && storeGrid) { 
+            // Do the things that are done under onSourceChange and then onDateTimeSelection
+            // that normally serve to load/draw the gridded data
+            this.bindMetadata(view, storeMeta);
+            this.bindRasterGrid(view, storeGrid);
+            this.onDateTimeSelection(triggerField || date_field, triggerValue || date);
             
-            tbar.down('button[itemId=btn-fetch-roi-time-series]').setDisabled(!showLinePlot);
-            
-            if (this.lessThanDaily(view, storeMeta)) {
-                if (Ext.isEmpty(time)) {
-                    return;
-                } 
-                triggerField = time_field;
-                triggerValue = time;    
-            }
-            
-            // If all the necessary values are filled out and the stores exist...
-            if (!Ext.isEmpty(source) && !Ext.isEmpty(date) && storeMeta && storeGrid) { 
-                // Do the things that are done under onSourceChange and then onDateTimeSelection
-                // that normally serve to load/draw the gridded data
-                this.bindMetadata(view, storeMeta);
-                this.bindRasterGrid(view, storeGrid);
-                this.onDateTimeSelection(triggerField || date_field, triggerValue || date);
-            }
+            // Enable animation controls
+            Ext.each(this.getTopToolbar().query('button[cls=anim-btn]'), function (btn) {
+                btn.enable();
+            });
+        }
+        
+        
         
     },
     
@@ -2928,9 +2952,15 @@ Ext.define('Flux.controller.UserInteraction', {
         var view = this.getMap();
         var panel = this.getNongriddedPanel();
         var values = panel.getForm().getValues();
-        
         var tbar = view.down('toolbar[cls=map-tbar]');
+        
+        // Disable Fetch ROI time series button
         tbar.down('button[itemId=btn-fetch-roi-time-series]').setDisabled(true);
+        
+        // Disable Animation controls
+        Ext.each(this.getTopToolbar().query('button[cls=anim-btn]'), function (btn) {
+            btn.disable();
+        });
         
         // Quit if any of the required Nongridded fields are empty
         if (Ext.isEmpty(values.start) ||

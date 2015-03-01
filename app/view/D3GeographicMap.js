@@ -7,103 +7,67 @@ Ext.define('Flux.view.D3GeographicMap', {
         'Ext.toolbar.Toolbar',
         'Flux.store.Rasters'
     ],
-    /**
-        An internal reference to the legend selection.
-        @private
-      */
-    _legend: {},
 
-    /**
-        The size of the markers to use for displaying vector overlays.
-        @private
-     */
+    // An internal reference to the legend selection.
+     _legend: {},
+
+    // The size of the markers to use for displaying vector overlays.
     _markerSize: 10,
 
-    /**
-        The scaling factor for a Mercator projection.
-        @private
-     */
+    // The scaling factor for a Mercator projection.
     _mercatorFactor: function (phi) {
         return 1/Math.cos((Math.PI * phi) / 180);
     },
-    
-    /**
-        The stroke color for nongridded overlay
-        @private
-     */
-    _overlayStroke: '#555', 
-     /**
-        The stroke-width size for nongridded overlay
-        @private
-     */
-    _overlayStrokeWidth: 1.0, 
-     /**
-        The stroke-width size for ROI polygon
-        @private
-     */
-    _polygonStrokeWidth: 1.5, 
-    
-    
-    /**
-        Flag to determine whether or not units should be displayed in the legend.
-        @private
-     */
+
+    // The stroke color for nongridded overlay
+    _overlayStroke: '#555',
+
+    // The stroke-width size for nongridded overlay
+    _overlayStrokeWidth: 1.0,
+
+    // The stroke-width size for ROI polygon
+    _polygonStrokeWidth: 1.5,
+
+    // Flag to determine whether or not units should be displayed in the legend.
     _showLegendUnits: true,
 
     _syncZoom: false,
     _transOffset_x: 0,
     _transOffset_y: 0,
-     /**
-        The radius and stroke-width size for ROI polygon vertices
-        @private
-     */
+
+    // The radius and stroke-width size for ROI polygon vertices
     _vertexRadius: 5,
-    _vertexStrokeWidth: 20, // a larger stroke-width means an easier to 'grab' vertex
-    
-    /**
-        Configuration and state for the basemap(s).
-     */
+    _vertexStrokeWidth: 20, // A larger stroke-width means an easier to 'grab' vertex
+
+    // Configuration and state for the basemap(s).
     basemaps: {
         boundaries: 'both'
     },
 
-    /**
-        Enables the heads-up-display to show timestamps, mouseover events, etc.
-     */
+    // Enables the heads-up-display to show timestamps, mouseover events, etc.
     enableDisplay: true,
 
-    /**
-        Flag to indicate whether or not the <rect> elements have already
-        been added to the map.
-     */
+    // Flag to indicate whether or not the <rect> elements have already
+    // been added to the map.
     isDrawn: false,
 
-    /**
-        The moment.js time display format to use.
-     */
+    // The moment.js time display format to use.
     timeFormat: 'YYYY MM-DD HH:ss',
 
-    /**
-        Initializes the component.
-     */
+    // Initializes the component.
     initComponent: function () {
         this.addEvents('mouseover', 'mouseout');
 
-        /**
-            The scale used for coloring map elements.
-            @private
-         */
+        // The scale used for coloring map elements.
         this._colorScale = d3.scale.quantile();
 
-        /**
-            The Flux.store.Rasters instance associated with this view.
-         */
+        // The Flux.store.Rasters instance associated with this view.
         this.store = Ext.create('Flux.store.Rasters');
 
         // Rewrite the updateDisplay() function to update the Panel's header
         //  title if displays are disabled
         if (!this.enableDisplay) {
-            this.updateDisplay = function (data) {  
+            this.updateDisplay = function (data) {
                 if (this.isDrawn) {
                     data = data[0] || data;
                     this.setTitle(Ext.String.format('{0}: {1}',
@@ -125,7 +89,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                 text: this._display
             }]);
         });
-        
+
         this.on('render', function () {
             var view = this;
 
@@ -162,12 +126,12 @@ Ext.define('Flux.view.D3GeographicMap', {
                             click: Ext.bind(this.setZoom, this, [0.1])
                         }
                     }, {
-		        itemId: 'btn-cancel-drawing',
+            	        itemId: 'btn-cancel-drawing',
                         iconCls: 'icon-draw',
                         tooltip: 'Cancel drawing',
-			style: 'background: #ffcc00;',
-			hidden: true
-		    }, {
+                        style: 'background: #ffcc00;',
+                        hidden: true
+            	    }, {
                         itemId: 'btn-roi-tools',
                         iconCls: 'icon-add-roi',
                         arrowCls: 'icon-add-roi',
@@ -199,7 +163,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                                 text: 'Remove',
                             }]
                         },
-                         listeners: {
+                        listeners: {
                             mouseover: function() {
                                 this.showMenu();
                             },
@@ -244,7 +208,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                                 text: 'From GeoJSON',
                             }]
                         },
-                         listeners: {
+                        listeners: {
                             mouseover: function() {
                                 this.showMenu();
                             },
@@ -252,35 +216,35 @@ Ext.define('Flux.view.D3GeographicMap', {
                                 this.mouseLeaveMonitor = this.menu.el.monitorMouseLeave(0, this.hideMenu, this);
                             },
                         }
-                     }, {
+                    }, {
                         itemId: 'btn-save-image',
                         iconCls: 'icon-disk',
                         tooltip: 'Save Image'
-                    }, 
-                    ]
-                }), 0);
+                    },
+                ]
+            }), 0);
             }
         });
 
         this.callParent(arguments);
     },
 
-    /**
-        Add event listeners to the drawn elements.
-        @param  sel {d3.selection}
-        @return     {Flux.view.D3GeographicMap}
-     */
+    // Add event listeners to the drawn elements.
+    //
+    //     @param  sel {d3.selection}
+    //     @return     {Flux.view.D3GeographicMap}
+
     addListeners: function (sel, showAsOverlay) {
         var proj = this.getProjection();
         var view = this;
 
         sel = sel || this.panes.datalayer.selectAll('.cell');
-        
-        // Add listeners for zooming/panning
-        //   Here, we're passing the drag behavior to the filler pane (where
-        //   the other zoom behavior is enacted) b/c putting pan behavior
-        //   on the same layer as the SVG element will be sludgy/unresponsive
-        //   b/c registered mouse position is constantly changing.
+
+        // Add listeners for zooming/panning.
+        // Here, we're passing the drag behavior to the filler pane (where
+        // the other zoom behavior is enacted) b/c putting pan behavior
+        // on the same layer as the SVG element will be sludgy/unresponsive
+        // because registered mouse position is constantly changing.
         sel.on('mousedown.zoom', function () {
                 view.filler.on('mousedown.zoom').apply(view.filler[0][0]);
             })
@@ -295,13 +259,12 @@ Ext.define('Flux.view.D3GeographicMap', {
             })
             .on('touchend.zoom', function () {
                 view.filler.on('touchend.zoom').apply(view.filler[0][0]);
-            })            
+            })
             .on('wheel.zoom', function () {
                 view.zoom.center(d3.mouse(view.filler[0][0]));
-                view.filler.on('wheel.zoom').apply(view.filler[0][0]); // does not matter which svg element used here
+                view.filler.on('wheel.zoom').apply(view.filler[0][0]); // Does not matter which svg element used here
             });
 
-            
         sel.on('mouseover', function (d) {
             var c, m, p, ll, v;
 
@@ -329,9 +292,9 @@ Ext.define('Flux.view.D3GeographicMap', {
                 ll = Ext.Array.map(proj.invert(c), function (l) {
                     return l.toFixed(5);
                 });
-                v = d.properties.value; // For non-gridded data, choose the value property 
+                v = d.properties.value; // For non-gridded data, choose the value property
             }
-     
+
             // Heads-up-display
             view.updateDisplay([{
                 id: 'tooltip',
@@ -360,7 +323,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         });
 
         if (this.getMetadata() && this.getMetadata().get('gridded') && !showAsOverlay) {
-            sel.on('click', function () {                
+            sel.on('click', function () {
                 view.fireEventArgs('plotclick', [view, [
                     this.attributes.x.value,
                     this.attributes.y.value
@@ -371,231 +334,228 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
-    /**
-        Add event listeners related to drawing polygons
-        @param  sel  {d3.selection}
-        @param	tbar {Ext.Toolbar}
-        @return      {Flux.view.D3GeographicMap}
-    */
+    // Add event listeners related to drawing polygons
+    //
+    //     @param  sel  {d3.selection}
+    //     @param	tbar {Ext.Toolbar}
+    //     @return      {Flux.view.D3GeographicMap}
+
     addListenersForDrawing: function (sel, tbar) {
         var proj = this.getProjection();
         var view = this;
-	var line, polygon, c, vindex;
+	    var line, polygon, c, vindex;
 
         sel = sel || this.selectAll('.roiCanvas');
-	
-	// temporarily disable zooming while drawing is active
+
+        // Temporarily disable zooming while drawing is active
         view.filler.style('pointer-events', 'none');
-	view.zoom.on('zoom',null);
-	
+	    view.zoom.on('zoom',null);
+
         sel.on('mousemove', mousemove);
 
-	// add vertex on click
-	sel.on('click', function () {
-	    var m = d3.mouse(view.wrapper[0][0]);
-            
+        // Add vertex on click
+        sel.on('click', function () {
+    	    var m = d3.mouse(view.wrapper[0][0]);
+
             c = view.constrainLatLong(m);
             c = view.constrainOneHemisphere(c);
-            
-	    // store the current representation of the polygon in screen coords
-	    if (!view._tmpRoiCoords) {
-		view._tmpRoiCoords = [];
-	    }
 
-	    view._tmpRoiCoords.push(c);
+    	    // Store the current representation of the polygon in screen coords
+    	    if (!view._tmpRoiCoords) {
+                view._tmpRoiCoords = [];
+    	    }
 
-	    // add polygon if it doesn't yet exist
-	    if (!polygon) {
-		polygon = view.wrapper.append('polygon')
-                        .attr({
-			    'class': 'roi-polygon',
-			    'points': view.getSVGPolyPoints(view._tmpRoiCoords.slice(0)),
-			    'pointer-events': 'none'
-			})
-                        .style('stroke-width', view._polygonStrokeWidth / view.zoom.scale());
+    	    view._tmpRoiCoords.push(c);
 
-		vindex = 0;
-	    }
-	    
-	    // add vertex
-	    view.wrapper.append('circle').attr(view.getVertexAttrs(vindex,c));
-	    
-	    // vindex is used to track the order vertices are placed
-	    //  which is essential for implementing drag functionality
-	    vindex += 1;
-	    
-	    // once clicked, activate a different mousemove function
-	    sel.on('mousemove', mousemoveDraw);
+    	    // Add polygon if it doesn't yet exist
+    	    if (!polygon) {
+        		polygon = view.wrapper.append('polygon')
+                .attr({
+    			    'class': 'roi-polygon',
+    			    'points': view.getSVGPolyPoints(view._tmpRoiCoords.slice(0)),
+    			    'pointer-events': 'none'
+    			})
+                .style('stroke-width', view._polygonStrokeWidth / view.zoom.scale());
+
+                vindex = 0;
+    	    }
+
+    	    // Add vertex
+    	    view.wrapper.append('circle').attr(view.getVertexAttrs(vindex,c));
+
+    	    // `vindex` is used to track the order vertices are placed
+    	    // which is essential for implementing drag functionality
+    	    vindex += 1;
+
+    	    // Once clicked, activate a different mousemove function
+    	    sel.on('mousemove', mousemoveDraw);
         });
-	
-	sel.on('dblclick', finishPolygon);
-	
-	function finishPolygon() {
-	    // Registers drawing on double-click
-	  
+
+    	sel.on('dblclick', finishPolygon);
+
+        // Registers drawing on double-click
+    	function finishPolygon() {
             // Set temporary drawing coords to official drawing coords
             view._roiCoords = view._tmpRoiCoords.slice(0);
             delete view._tmpRoiCoords;
-            
+
             // Remove any remaining tool tip text
             view.panes.tooltip.selectAll('.tip').text('');
-            
+
             // Reset HUD font size
             view.panes.hud.selectAll('.info').style('font-size',view.setHudFontSize().toString() + 'px');
-            
+
             // Remove tracker vertex
             view.wrapper.selectAll('.roi-tracker').remove();
-            
-	    // An extra vertex is added on the first click of the double-click
-	    // Remove the vertex as well as the coordinate from the poly definition
-	    view.wrapper.selectAll('circle[vindex="' + (vindex-1) + '"]').remove();
-	    view._roiCoords.pop();
-	 
-	    var cs = view._roiCoords.slice(0);
-	    
+
+    	    // An extra vertex is added on the first click of the double-click
+    	    // Remove the vertex as well as the coordinate from the poly definition
+    	    view.wrapper.selectAll('circle[vindex="' + (vindex-1) + '"]').remove();
+    	    view._roiCoords.pop();
+
+    	    var cs = view._roiCoords.slice(0);
+
             var bbox = view.getSVGPolyBbox(cs);
-	    polygon.attr('points', view.getSVGPolyPoints(cs));
+            polygon.attr('points', view.getSVGPolyPoints(cs));
             polygon.attr('centroid', view.getSVGPolyCentroid(bbox));
             polygon.attr('bbox', bbox);
 
-	    // Reset listeners
-	    sel.on('mousemove', null);
-	    sel.on('click', null);
-	    sel.on('dblclick', null);
-            
+    	    // Reset listeners
+    	    sel.on('mousemove', null);
+    	    sel.on('click', null);
+    	    sel.on('dblclick', null);
+
             // Reset summary stats
             delete view._currentSummaryStats;
-	    
-	    // Grow/shrink/drag listeners to vertices
-	    view.addListenersForVertices();
-	    
+
+    	    // Grow/shrink/drag listeners to vertices
+    	    view.addListenersForVertices();
+
             // Return summary stats
             view.fireEvent('fetchstats');
-		
-	    // Make UI changes
-	    tbar.down('button[itemId="btn-cancel-drawing"]').hide();
+
+    	    // Make UI changes
+    	    tbar.down('button[itemId="btn-cancel-drawing"]').hide();
             view.setTbarForDrawnROI(tbar);
-	    
-	    // Reset cursor (turn off crosshairs)
+
+    	    // Reset cursor (turn off crosshairs)
             view.panes.roiCanvas.selectAll('rect').style('cursor','auto');
-            
-	    // Remove canvas to awaken sleeping listeners underneath
+
+    	    // Remove canvas to awaken sleeping listeners underneath
             d3.selectAll('.roiCanvas').remove();
-            
+
             // Reenable zoom and zoom to ROI center
             view.filler.style('pointer-events', 'all');
             view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
             view.setZoomToRoiCenter();
-	    
+
             view.updateDisplay([{
                 id: 'timestamp',
                 text: view._display
             }]);
         }
-	
-	// Add a floating vertex under the mouse pointer when drawing
+
+    	// Add a floating vertex under the mouse pointer when drawing
         function mousemove() {
             var m = d3.mouse(view.wrapper[0][0]);
             var c = view.constrainLatLong(m);
             c = view.constrainOneHemisphere(c);
-            
+
             if (view.wrapper.selectAll('.roi-tracker')[0].length === 0) {
                 view.wrapper.append('circle').attr({
                     'class': 'roi-tracker',
                     'cx': m[0],
                     'cy': m[1],
                     'r': view._vertexRadius / view.zoom.scale(),
-                    'stroke-width': view._vertexStrokeWidth / view.zoom.scale(), 
+                    'stroke-width': view._vertexStrokeWidth / view.zoom.scale(),
                     'fill': '#800000',
                     'pointer-events': 'none' // otherwise double-click won't register);
                 });
             }
             // Update tracker vertex
             view.wrapper.selectAll('.roi-tracker').attr({'cx':c[0],'cy':c[1]});
-            
+
         }
-	
-	
-	// When drawing, update polygon as mouse moves
-	function mousemoveDraw() {
-	    var m = d3.mouse(view.wrapper[0][0]);
-            var c = view.constrainLatLong(m);
-            c = view.constrainOneHemisphere(c);
-            
-	    var cs = view._tmpRoiCoords.slice(0);
-	    
-	    cs.push([c[0],c[1]]);
-	    
-	    polygon.attr('points', view.getSVGPolyPoints(cs));
-            
+
+    	// When drawing, update polygon as mouse moves
+    	function mousemoveDraw() {
+    	    var m = d3.mouse(view.wrapper[0][0]);
+                var c = view.constrainLatLong(m);
+                c = view.constrainOneHemisphere(c);
+
+    	    var cs = view._tmpRoiCoords.slice(0);
+
+    	    cs.push([c[0],c[1]]);
+
+    	    polygon.attr('points', view.getSVGPolyPoints(cs));
+
             mousemove();
-	}
-	
+    	}
+
         return this;
     },
-    
-    /** 
-        Creates listeners for vertices to grow/shrink
-        and enable dragging
-    */
+
+    // Creates listeners for vertices to grow/shrink
+    // and enable dragging
+
     addListenersForVertices: function () {
-	var view = this;
-	var vertices = this.wrapper.selectAll('.roi-vertex');
-	var polygon = this.wrapper.selectAll('polygon');
-        
-	vertices.attr('pointer-events','all');
-	
+    	var view = this;
+    	var vertices = this.wrapper.selectAll('.roi-vertex');
+    	var polygon = this.wrapper.selectAll('polygon');
+
+    	vertices.attr('pointer-events','all');
+
         // Update mouseover/mouseout listeners
         view.updateListenersForVertices();
 
         // Define drag behavior
-	var drag = d3.behavior.drag()
-	    .on('drag', function () {
+    	var drag = d3.behavior.drag()
+    	    .on('drag', function () {
                 view.zoom.on('zoom',null);
-                
-		m = d3.mouse(view.wrapper[0][0]);
+
+                m = d3.mouse(view.wrapper[0][0]);
                 var x = m[0]
                 var y = m[1];
-                
+
                 dragged = true;
-                
+
                 c = view.constrainLatLong(m);
                 c = view.constrainOneHemisphere(c)//, [d3.select(this).attr('cx'),d3.select(this).attr('cy')]);
-            
+
                 x = c[0];
                 y = c[1];
-		
-		// Update polygon
-		view._roiCoords[d3.select(this).attr('vindex')] = [x,y];
-		polygon.attr('points', view.getSVGPolyPoints(view._roiCoords.slice(0)));
-		
-		// Update vertex
-		d3.select(this)
-		    .attr('cx', x)
-		    .attr('cy', y);
-                    
+
+                // Update polygon
+                view._roiCoords[d3.select(this).attr('vindex')] = [x,y];
+                polygon.attr('points', view.getSVGPolyPoints(view._roiCoords.slice(0)));
+
+                // Update vertex
+                d3.select(this)
+                    .attr('cx', x)
+                    .attr('cy', y);
+
                 // Since polygon is being modified,
                 // delete current summaryStats so that it will trigger a database ping
                 delete view._currentSummaryStats;
-	      }).on('dragend', function() {
+
+            }).on('dragend', function() {
                 view.panes.tooltip.selectAll('.tip').text('');
                 view.zoom.on('zoom', Ext.bind(view.zoomFunc, view));
-                if (dragged) { 
-                    view.fireEvent('fetchstats');
-                    view.fireEvent('removeTimeSeries');
-                }
-              });
-	
-	vertices.call(drag);
-      
-	return this;
+                if (dragged) {
+                view.fireEvent('fetchstats');
+                view.fireEvent('removeTimeSeries');
+            }});
+
+        vertices.call(drag);
+
+        return this;
     },
-    
+
     updateListenersForVertices: function () {
         var view = this;
         var vertices = this.wrapper.selectAll('.roi-vertex');
         var zoomScale = this.zoom.scale();
-        
+
         vertices.on('mouseover', function () {
             d3.select(this).transition()
                 .duration(40)
@@ -617,13 +577,13 @@ Ext.define('Flux.view.D3GeographicMap', {
                     'stroke-width': view._vertexStrokeWidth / zoomScale
                 });
             });
-        
+
     },
-    
-    /**
-        Removes the drawn elements from the drawing plane.
-        @return {Flux.view.D3GeographicMap}
-     */
+
+    // Removes the drawn elements from the drawing plane.
+    //
+    //     @return {Flux.view.D3GeographicMap}
+
     clear: function () {
         this._model = undefined;
         this.svg.selectAll('.info').text('');
@@ -635,39 +595,37 @@ Ext.define('Flux.view.D3GeographicMap', {
         this.isDrawn = false;
         return this;
     },
-        
-    /**
-        Constrains a set of mouse coordinates to valid lat/long values
-        e.g. lat values > 90 will be set to 90
-        @param
-    */
+
+    // Constrains a set of mouse coordinates to valid lat/long values
+    // e.g. lat values > 90 will be set to 90
+
     constrainLatLong: function (m) {
         var proj = this.getProjection();
-        
+
         ll = Ext.Array.map(proj.invert([m[0],m[1]]), function(l) {return l;});
-        
+
         var x = ll[0];
         var y = ll[1];
-        
+
         if (ll[1] >= 90) {
             y = 89.9;
         }
-        
+
         if (ll[1] <= -89.9) {
             y = -89.9;
         }
-        
+
         if (ll[0] >= 180) {
             x = 179.9;
         }
-        
+
         if (ll[0] <= -180) {
             x = -179.9;
         }
 
         return proj([x,y]);
     },
-    
+
     // We also need to apply constraint to vertices so that polygon does not span multiple
     // hemispheres because MongoDB cannot handle spatial queries larger than that.
     // See here:
@@ -677,21 +635,21 @@ Ext.define('Flux.view.D3GeographicMap', {
         var proj = this.getProjection();
         var ll = Ext.Array.map(proj.invert([c[0],c[1]]), function(l) {return l;});
         var x = ll[0];
-        
-        
+
+
         if (view._roiCoords) {
             var xs = view._roiCoords.map(function (q) {
                 return Ext.Array.map(proj.invert(q), function(l) {return l;});
             }).map(function (z) {return z[0];});
-            
-            
+
+
             var min_x = Math.min.apply(Math, xs);
-            var max_x = Math.max.apply(Math, xs); 
-            
+            var max_x = Math.max.apply(Math, xs);
+
             var exceeds = false;
-            
+
             [min_x, max_x].forEach( function (extreme) {
-                
+
                 if (Math.abs(ll[0] - extreme) > 180) {
                     exceeds = true;
                     if (x >= extreme) {
@@ -701,9 +659,9 @@ Ext.define('Flux.view.D3GeographicMap', {
                     }
                     ;
                 }
-                        
+
             });
-            
+
             if (exceeds) {
                 // Near-cursor tooltip
                 view.panes.tooltip.selectAll('.tip')
@@ -716,19 +674,18 @@ Ext.define('Flux.view.D3GeographicMap', {
             } else {
                 view.panes.tooltip.selectAll('.tip').text('');
             }
-        }  
-        
+        }
+
         return proj([x, ll[1]]);
-        
+
     },
-    
-    /**
-        Creates (or updates) an ROI summary stats display
-        on the map.
-        
-        @param  series  {roi.json response Object}
-        @param  view    {Flux.view.D3GeographicMap}
-    */
+
+    // Creates (or updates) an ROI summary stats display
+    // on the map.
+    //
+    //     @param  series  {roi.json response Object}
+    //     @param  view    {Flux.view.D3GeographicMap}
+
     displaySummaryStats: function (series, view) {
         view._currentSummaryStats = series;
 
@@ -747,7 +704,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             'Max': {
                     'precision': 2,
                     'offset': true
-            },        
+            },
             'STD': {
                     'precision': 2,
                     'offset': false
@@ -757,19 +714,18 @@ Ext.define('Flux.view.D3GeographicMap', {
                     'offset': false
             }
         }
-        
+
         var offset = view.getTendencyOffset();
 
-        /////////////////////////////////////////////////////////////
         // Summary stats display - create if it doesn't already exist
         if (d3.selectAll('.roi-stats')[0].length === 0) {
             view.panes.roistats = view.svg.append('g').attr('class', 'pane roi-stats');
-            
+
             var backdrop_w = 100;
             var backdrop_h = 110;
             var y_init = view.svg.attr('height') - backdrop_h - 30;//- (0.05 * view._height);
             var x_init = view.svg.attr('width') - backdrop_w - 50;
-            
+
             view.panes.roistats.append('rect')
                 .attr({
                     'class': 'roi-stats-backdrop',
@@ -787,7 +743,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                     'x': x_init + 6,
                     'y': y_init + 22 +(i*19)
                 });
-                
+
                 view.panes.roistats.append('text').text('').attr({
                     'class': 'roi-stats-text-data ' + s,
                     'text-anchor': 'end',
@@ -796,13 +752,12 @@ Ext.define('Flux.view.D3GeographicMap', {
                 });
             });
         }
-        
-        /////////////////////////////////////////////////////////////
+
         // Update the values
-        Object.keys(display_attrs).forEach(function (s, i) { 
+        Object.keys(display_attrs).forEach(function (s, i) {
             var fs = '16px';
             var val = view._currentSummaryStats.properties['all' + s];
-            
+
             if (view._showAnomalies && display_attrs[s]['offset']) {
                 val = val - offset;
             }
@@ -823,30 +778,30 @@ Ext.define('Flux.view.D3GeographicMap', {
                     return function(t) {
                         this.textContent = (Math.round(i(t) * round) / round)
                                             .toFixed(display_attrs[s]['precision']);
-                    
+
                 };
             });
         });
-        
+
     },
-    
-    /**
-        Draws the visualization features on the map given input data and the
-        corresponding metadata.
-        @param  data    {Flux.model.Raster}
-        @param  zoom    {Boolean}
-        @return         {Flux.view.D3GeographicMap}
-     */
+
+    // Draws the visualization features on the map given input data and the
+    // corresponding metadata.
+    //
+    //     @param  data    {Flux.model.Raster}
+    //     @param  zoom    {Boolean}
+    //     @return         {Flux.view.D3GeographicMap}
+
     draw: function (data, showAsOverlay) {
         var bbox, lat, lng, meta, c1, c2, pane, rectClass, sel;
         var proj = this.getProjection();
-        //var gridded = data.id.indexOf('Flux.model.Raster') == -1;
+        // var gridded = data.id.indexOf('Flux.model.Raster') == -1;
 
         if (!data) {
             return this;
         }
 
-//         this.fireEventArgs('beforedraw', [this, data]);
+        // this.fireEventArgs('beforedraw', [this, data]);
 
         // If not using population statistics, calculate the new summary stats
         //  for the incoming data
@@ -866,7 +821,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 
                 this.setMetadataOverlay(meta);
             }
-               
+
         }
 
         // Retain references to last drawing data and metadata; for instance,
@@ -878,12 +833,11 @@ Ext.define('Flux.view.D3GeographicMap', {
             this._modelOverlay = data;
             pane = this.panes.overlay;
         }
-        
-//         // Disallow zooming by default
-//         zoom = (zoom === true);
 
-        ////////////////////////////////////////////////////////////////////////
-        // Selection and Attributes ////////////////////////////////////////////
+        // Disallow zooming by default
+        // zoom = (zoom === true);
+
+        // **Selection and Attributes**
 
         // Sets the enter or update selection's data
         sel = pane.selectAll('.cell')
@@ -911,9 +865,8 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         // Display Marker outlines if checked
         this.fireEvent('toggleOutline');
-        
-        ////////////////////////////////////////////////////////////////////////
-        // Zoom to Feature /////////////////////////////////////////////////////
+
+        // **Zoom to Feature**
 
         // Skip zooming to the data if they've been drawn or if map is already zoomed
         if (!this.isDrawn && this.zoom.scale() === 1) {
@@ -934,7 +887,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             }
 
             c2 = proj([lng, lat]);
-            
+
             if (!this._syncZoom) {
                 this.setZoom(this.getZoomScaleFromBbox(bbox), [
                     (c1[0] - c2[0]),
@@ -948,37 +901,36 @@ Ext.define('Flux.view.D3GeographicMap', {
         this.fireEventArgs('draw', [this, data, showAsOverlay]);
         return this;
     },
-    
-    /**
-        Returns attributes for SVG circle element of
-        the ROI polygon vertex class
-     */
+
+    // Returns attributes for SVG circle element of
+    // the ROI polygon vertex class
+
     getVertexAttrs: function(vindex, coords) {
-	var attrs = {
-	    'class': 'roi-vertex',
-	    'vindex': vindex,
-	    'cx': coords[0],
-	    'cy': coords[1],
-	    'r': this._vertexRadius / this.zoom.scale(),
-	    'stroke-width': this._vertexStrokeWidth / this.zoom.scale(),
-	    'fill': '#800000',
-	    'pointer-events': 'none' // otherwise double-click won't register
-	};
-	return attrs;
+    	var attrs = {
+    	    'class': 'roi-vertex',
+    	    'vindex': vindex,
+    	    'cx': coords[0],
+    	    'cy': coords[1],
+    	    'r': this._vertexRadius / this.zoom.scale(),
+    	    'stroke-width': this._vertexStrokeWidth / this.zoom.scale(),
+    	    'fill': '#800000',
+    	    'pointer-events': 'none' // otherwise double-click won't register
+    	};
+    	return attrs;
     },
-    
-    /**
-        Returns the retained reference to the underlying grid geometry.
-        @return {Flux.model.RasterGrid}
-     */
+
+    // Returns the retained reference to the underlying grid geometry.
+    //
+    //     @return {Flux.model.RasterGrid}
+
     getRasterGrid: function () {
         return this._grid;
     },
 
-    /**
-        Creates an Object of attributes for the drawing features.
-        @return {Object}
-     */
+    // Creates an Object of attributes for the drawing features.
+    //
+    //     @return {Object}
+
     getDrawingAttrs: function (showAsOverlay) {
         var attrs, grid, gridxy;
         var proj = this.getProjection();
@@ -989,8 +941,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             return;
         }
 
-        ////////////////////////////////////////////////////////////////////////
-        // Non-gridded Overlay /////////////////////////////////////////////////
+        // **Non-gridded Overlay**
         if (!this._metadata.get('gridded') || showAsOverlay) {
 
             return attrs = {
@@ -1008,8 +959,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             };
         }
 
-        ////////////////////////////////////////////////////////////////////////
-        // Gridded Raster //////////////////////////////////////////////////////
+        // **Gridded Raster**
         if (!this.getRasterGrid()) {
             return;
         }
@@ -1056,28 +1006,28 @@ Ext.define('Flux.view.D3GeographicMap', {
         return attrs;
     },
 
-    /**
-        Returns the current map projection.
-        @return {d3.geo.*}
-     */
+    // Returns the current map projection.
+    //
+    //     @return {d3.geo.*}
+
     getProjection: function () {
         return this._proj;
     },
 
-    /**
-        Returns the current map scale.
-        @return {d3.scale.*}
-     */
+    // Returns the current map scale.
+    //
+    //     @return {d3.scale.*}
+
     getColorScale: function () {
         return this._colorScale;
     },
-    
-    /**
-        Returns SVG polygon "bbox" attribute from an array of coordinates
-        @param coords   {Array}
-        @return         {String}
-     */
-    getSVGPolyBbox: function(coords) {
+
+    // Returns SVG polygon "bbox" attribute from an array of coordinates
+    //
+    //     @param coords   {Array}
+    //     @return         {String}
+
+    getSVGPolyBbox: function (coords) {
         var bbox, max_x, max_y, min_x, min_y;
 
         coords.forEach(function(c) {
@@ -1088,94 +1038,93 @@ Ext.define('Flux.view.D3GeographicMap', {
         });
 
         bbox = [min_x, min_y, max_x, max_y];
-        
+
         return bbox;
     },
-    
-    /**
-        Returns SVG polygon "centroid" attribute from a bbox
-        @param coords   {Array}
-        @return         {String}
-     */
-    getSVGPolyCentroid: function(bbox) {
+
+    // Returns SVG polygon "centroid" attribute from a bbox
+    //
+    //     @param coords   {Array}
+    //     @return         {String}
+
+    getSVGPolyCentroid: function (bbox) {
         return  [
                     bbox[0] + ((bbox[2] - bbox[0]) / 2.0),
                     bbox[1] + ((bbox[3] - bbox[1]) / 2.0)
                 ];
     },
-    
-    /**
-	Returns SVG polygon "points" attribute from a list
-	of paired coordinates
-	@param coords 	{Array}
-	@return 	{String}
-     */
-    
-    getSVGPolyPoints: function(coords) {
-	var poly = '';
-	
-	coords.push(coords[0]);
-	
-	coords.forEach(function(c) {
-	    poly += c.join() + ' ';
-	});
-	
-	return poly;
+
+	// Returns SVG polygon "points" attribute from a list
+	// of paired coordinates
+    //
+    // 	@param  coords 	{Array}
+    // 	@return         {String}
+
+    getSVGPolyPoints: function (coords) {
+    	var poly = '';
+
+    	coords.push(coords[0]);
+
+    	coords.forEach(function(c) {
+    	    poly += c.join() + ' ';
+    	});
+
+    	return poly;
     },
-    
-     /**
-        Returns WKT Polygon representation from a list
-        of paired coordinates
-        @param coords   {Array}
-        @return         {String}
-     */
-    getWKTfromRoiCoords: function(coords) {
+
+    // Returns WKT Polygon representation from a list
+    // of paired coordinates
+    //
+    //     @param coords   {Array}
+    //     @return         {String}
+
+    getWKTfromRoiCoords: function (coords) {
         var wkt = 'POLYGON((';
-        
+
         coords.push(coords[0]);
-        
+
         coords.forEach(function(c) {
             // limit precision
             c[0] = parseFloat(c[0].toPrecision(5));
             c[1] = parseFloat(c[1].toPrecision(5));
             wkt += c.join(' ') + ',';
         });
-        
+
         wkt += '))';
-        
+
         return wkt;
     },
-    
+
     getZoomScaleFromBbox: function(bbox) {
         var proj = this.getProjection();
         var width = this.filler.attr('width');
         var projx1 = proj([0,0])[0];
-        var projx2 = proj([bbox[2] - bbox[0], 0])[0]; 
+        var projx2 = proj([bbox[2] - bbox[0], 0])[0];
         var factor = 0.8;
-        
+
         // If projected max x is greater than projected min x,
         // the target feature is close to global in scope, and so
         // just zoom all the way out
         if (projx2 < projx1) {
             return 1;
         }
-        
+
         // Get the pixel coordinates of the longitude maximum and minmum,
         //  then take the difference to get the pixel width of the scene.
         //
         // Then, take the ratio of the SVG width to this scene width to find
         //  the zoom factor; scale it slightly so we don't zoom in too far
-        
+
         return factor * (width / Math.abs(projx1 - projx2));
     },
-    
-    /**
-        Attempts to display the value at the provided map coordinates; if the
-        coordinates do not exactly match any among the current instance's grid
-        geometry, nothing is done.
-        @param  coords  {Array}
-        @return         {D3GeographicMap}
-     */
+
+    // Attempts to display the value at the provided map coordinates; if the
+    // coordinates do not exactly match any among the current instance's grid
+    // geometry, nothing is done.
+    //
+    //     @param  coords  {Array}
+    //     @return         {D3GeographicMap}
+
     highlightMapLocation: function (coords) {
         var i;
 
@@ -1193,13 +1142,12 @@ Ext.define('Flux.view.D3GeographicMap', {
             text: this._model.get('features')[i]
         }]);
     },
-    
-    /**
-        Sets font size for HUD text according to height/width
-        of the map component.
-        
-        @return         {Number}
-     */
+
+    // Sets font size for HUD text according to height/width
+    // of the map component.
+    //
+    //     @return         {Number}
+
     setHudFontSize: function () {
         var fs = this.svg.attr('height') * 0.04;
         if (this.svg.attr('height') / this.svg.attr('width') > 1) {
@@ -1208,59 +1156,59 @@ Ext.define('Flux.view.D3GeographicMap', {
         return fs;
     },
 
-    /**
-        Initializes drawing; defines and appends the SVG element(s). The drawing
-        panes are set up and SVG element(s) are initialized, sometimes with
-        empty data sets.
-        @param  width   {Number}
-        @param  height  {Number}
-        @return         {Flux.view.D3GeographicMap}
-     */
+    // Initializes drawing; defines and appends the SVG element(s). The drawing
+    // panes are set up and SVG element(s) are initialized, sometimes with
+    // empty data sets.
+    //
+    //     @param  width   {Number}
+    //     @param  height  {Number}
+    //     @return         {Flux.view.D3GeographicMap}
+
     init: function (width, height, projection) {//, zoomFactor, zoomTranslate) {
         var elementId = '#' + this.items.getAt(0).id;
-        
+
         // Remove any previously-rendered SVG elements
         if (this.svg !== undefined) {
             this.svg.remove();
         }
-        
+
         this.svg = d3.select(elementId).append('svg')
             .attr('width', width)
             .attr('height', height);
 
         // Function to run when zooming
-	this.zoomFunc = function (event, suppressSync) {
-                if (!event) {
-                    event = d3.event;
-                }
-
-                var scale = Number(event.scale);
-            
-                if (event.translate) {
-                    this.wrapper.attr('transform', Ext.String.format('translate({0},{1})scale({2})',
-                                                                     event.translate[0] - (this._transOffset_x*event.scale),
-                                                                     event.translate[1] - (this._transOffset_y*event.scale),
-                                                                     event.scale));
-                }
-                
-                // Update drawing scale for auxiliary drawn components (ROI, Nongridded markers)
-                this.scaleAuxiliaryMapComponents(event.scale);
-                
-                // Since the "zoom event" may sometimes come from a neighboring map, we need to
-                // ensure that the current zoom params are manually set
-                this.zoom.scale(event.scale);
-                this.zoom.translate(event.translate)
-                
-                
-                // Alert UI a map has been zoomed to facilitate binding pan/zoom w/ other maps
-                if (!suppressSync && this._syncZoom) {
-                    this.fireEventArgs('mapzoom', [this, event, this._mostRecentZoomScale]);
-                }
-
-                this._mostRecentZoomScale = scale;
-
+    	this.zoomFunc = function (event, suppressSync) {
+            if (!event) {
+                event = d3.event;
             }
-            
+
+            var scale = Number(event.scale);
+
+            if (event.translate) {
+                this.wrapper.attr('transform', Ext.String.format('translate({0},{1})scale({2})',
+                    event.translate[0] - (this._transOffset_x*event.scale),
+                    event.translate[1] - (this._transOffset_y*event.scale),
+                    event.scale));
+            }
+
+            // Update drawing scale for auxiliary drawn components (ROI, Nongridded markers)
+            this.scaleAuxiliaryMapComponents(event.scale);
+
+            // Since the "zoom event" may sometimes come from a neighboring map, we need to
+            // ensure that the current zoom params are manually set
+            this.zoom.scale(event.scale);
+            this.zoom.translate(event.translate)
+
+
+            // Alert UI a map has been zoomed to facilitate binding pan/zoom w/ other maps
+            if (!suppressSync && this._syncZoom) {
+                this.fireEventArgs('mapzoom', [this, event, this._mostRecentZoomScale]);
+            }
+
+            this._mostRecentZoomScale = scale;
+
+        };
+
         this.zoom = d3.behavior.zoom()
             .scaleExtent([0.01, 60])
             .on('zoom', Ext.bind(this.zoomFunc, this));
@@ -1269,7 +1217,6 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         var view = this;
 
-                        
         // Add a transparent background element overlaying the "wrapper" element
         // to handle zoom/pan behavior
         this.filler = this.svg.append('rect')
@@ -1287,7 +1234,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                 view.zoom.center(d3.mouse(view.filler[0][0]));
             })
             .on('dblclick.zoom', null)
-            
+
         // This container will apply zoom and pan transformations to the entire
         //  content area; NOTE: layers that need to be zoomed and panned around
         //  must be appended to the wrapper
@@ -1308,7 +1255,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         this.panes.legend = this.svg.append('g').attr('class', 'pane legend');
         this.panes.tooltip = this.svg.append('g').attr('class', 'pane tooltip');
 
-        // Tooltip /////////////////////////////////////////////////////////////
+        // **Tooltip**
         this.panes.tooltip.selectAll('.tip')
             .data([0])
             .enter()
@@ -1316,7 +1263,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             .text('')
             .attr('class', 'info tip');
 
-        // Heads-Up-Display (HUD) date/time info ///////////////////////////////
+        // **Heads-Up-Display (HUD) Date/Time Info**
         if (this.enableDisplay) {
             this.panes.hud.selectAll('.backdrop')
                 .data([0])
@@ -1352,7 +1299,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                 'text-anchor': 'middle'
             });
 
-        // Legend //////////////////////////////////////////////////////////////
+        // **Legend**
         this._legend.yScale = d3.scale.linear();
         this._legend.yAxis = d3.svg.axis()
             .scale(this._legend.yScale)
@@ -1366,102 +1313,99 @@ Ext.define('Flux.view.D3GeographicMap', {
             .attr('class', 'units');
 
         this.isDrawn = false;
-        
+
         return this;
-    },    
-    
-    /**
-        Draws the view again with the same data it already has bound to it.
-        @param  zoom    {Boolean}
-        @return         {Flux.view.D3GeographicMap}
-     */
+    },
+
+    // Draws the view again with the same data it already has bound to it.
+    //
+    //     @param  zoom    {Boolean}
+    //     @return         {Flux.view.D3GeographicMap}
+
     redraw: function (showOverlay) {
         if (this._model) {
             this.draw(this._model).updateLegend();
         }
-        
+
         if (this._modelOverlay && showOverlay) {
             this.draw(this._modelOverlay, showOverlay);
         }
-	
-	// If a drawn polygon existed and has not been destroyed, it needs to be redrawn too
+
+        // If a drawn polygon existed and has not been destroyed, it needs to be redrawn too
         if (this._roiCoords && this.wrapper.selectAll('.roi-polygon')[0].length === 0) {
-	    this.redrawRoi();
-	}
+	       this.redrawRoi();
+        }
+
         return this;
     },
-    
-    /** 
-        Redraws an ROI, needed e.g. after changing dimensions causes
-        the map to reset. Assumes exsiting _roiCoords.
-    */
-    
+
+    // Redraws an ROI, needed e.g. after changing dimensions causes
+    // the map to reset. Assumes exsiting _roiCoords.
+
     redrawRoi: function () {
         if (!this._roiCoords) {
             return;
         }
-        
+
         var view = this;
-      
+
         // Add the SVG polygon elements
         var bbox = this.getSVGPolyBbox(this._roiCoords.slice(0));
         this.wrapper.append('polygon')
-                        .attr({
-                            'class': 'roi-polygon',
-                            'points': this.getSVGPolyPoints(this._roiCoords.slice(0)),
-                            'bbox' : bbox,
-                            'centroid': this.getSVGPolyCentroid(bbox),
-                            'pointer-events': 'none'
-                        })
-                        .style('stroke-width', this._polygonStrokeWidth / this.zoom.scale());
-        
+            .attr({
+                'class': 'roi-polygon',
+                'points': this.getSVGPolyPoints(this._roiCoords.slice(0)),
+                'bbox' : bbox,
+                'centroid': this.getSVGPolyCentroid(bbox),
+                'pointer-events': 'none'
+            })
+            .style('stroke-width', this._polygonStrokeWidth / this.zoom.scale());
+
         // Add vertices
         var vindex = 0;
         this._roiCoords.forEach( function (c) {
             view.wrapper.append('circle').attr(view.getVertexAttrs(vindex, c));
             vindex += 1;
         });
-        
+
         // Add grow/shrink and drag listeners for vertices
         this.addListenersForVertices();
-        
+
         // Refetch summary stats
         // TODO: this is suboptimal b/c triggers another request when it could reuse existing stats
-        delete view._currentSummaryStats; 
+        delete view._currentSummaryStats;
         d3.selectAll('.roi-stats').remove();
         view.fireEvent('fetchstats');
     },
-    
-    /**
-        Returns an array of pixel coordinates projected
-        to the specified new map projection. 
-        
-        @param  cs           {Array} e.g. [[0,4],[0,2],[3,2],[3,4]]
-        @param  oldproj      {d3.geo.*}       
-        @param  newproj      {d3.geo.*}
-        @return              {Array}
-    */
+
+    // Returns an array of pixel coordinates projected
+    // to the specified new map projection.
+    //
+    //     @param  cs           {Array} e.g. [[0,4],[0,2],[3,2],[3,4]]
+    //     @param  oldproj      {d3.geo.*}
+    //     @param  newproj      {d3.geo.*}
+    //     @return              {Array}
+
     reprojectRoiCoords: function (cs, oldproj, newproj) {
         // Conversts coordinates to lat/long using old projection and then
         // back to pixel coordinates useing the new projection
         return Ext.Array.map(cs, function (c) {
-                return newproj(Ext.Array.map(oldproj.invert([c[0],c[1]]), function(l) {
-                        return l;
-                }));
+            return newproj(Ext.Array.map(oldproj.invert([c[0],c[1]]), function(l) {
+                    return l;
+            }));
         });
-        
+
     },
-    
-    /**
-        Updates drawing scale (size) of auxiliary map components 
-        (incl. ROI vertices/polygon, Nongridded markers) according
-        to the provided zoom scale.
-        
-        @param  scale           {}
-     */
+
+    // Updates drawing scale (size) of auxiliary map components
+    // (incl. ROI vertices/polygon, Nongridded markers) according
+    // to the provided zoom scale.
+    //
+    //     @param  scale    {}
+
     scaleAuxiliaryMapComponents: function (scale) {
         var sz = this._markerSize/scale;
-                
+
         // Scale stroke-width for nongridded data appropriately, whether it exists as...
         // ...an overlay OR...
         this.panes.overlay.selectAll('.cell')
@@ -1472,7 +1416,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                 'height' : sz,
                 'width' : sz
             });
-        
+
         // ...as a primary model instance...
         if (this._model && this._model.id.indexOf('Flux.model.Nongridded') > -1) {
             this.panes.datalayer.selectAll('.cell')
@@ -1484,26 +1428,26 @@ Ext.define('Flux.view.D3GeographicMap', {
                     'width' : sz
                 });
         }
-        
+
         // Scale the ROI vertices appropriately
         this.wrapper.selectAll('.roi-vertex').attr({
             'r': this._vertexRadius / scale,
             'stroke-width': this._vertexStrokeWidth / scale
         });
-        
+
         // Scale the ROI polygon appropriately
         this.wrapper.selectAll('.roi-polygon').style('stroke-width', this._polygonStrokeWidth / scale);
-        
+
         // Update the scaling for the mouseover/mouseout listeners on ROI polygon vertices
         this.updateListenersForVertices();
     },
-    
-    /**
-        Draws or redraws the basemap given the URL of a new TopoJSON file.
-        @param  basemapUrl      {String}
-        @param  drawBoundaries  {Boolean}
-        @return                 {Flux.view.D3GeographicMap}
-     */
+
+    // Draws or redraws the basemap given the URL of a new TopoJSON file.
+    //
+    //     @param  basemapUrl      {String}
+    //     @param  drawBoundaries  {Boolean}
+    //     @return                 {Flux.view.D3GeographicMap}
+
     setBasemap: function (basemapUrl, boundaries) {
         var view = this;
         var clearBasemap = Ext.Function.bind(function () {
@@ -1578,27 +1522,27 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
-    /**
-        Changes the marker size for overlays.
-        @param  size    {Integer}
-     */
+    // Changes the marker size for overlays.
+    //
+    //     @param  size    {Integer}
+
     setMarkerSize: function (size) {
         this._markerSize = size;
         return this;
     },
 
-    /**
-        Given a new projection, the drawing path is updated.
-        @param  proj    {String}
-        @param  width   {Number}
-        @param  height  {Number}
-        @return         {Flux.view.D3GeographicMap}
-     */
+    // Given a new projection, the drawing path is updated.
+    //
+    //     @param  proj    {String}
+    //     @param  width   {Number}
+    //     @param  height  {Number}
+    //     @return         {Flux.view.D3GeographicMap}
+
     setProjection: function (proj, width, height) {
         var projOld = this._proj;
         width = width || this.svg.attr('width');
         height = height || this.svg.attr('height');
-        
+
         this._projId = proj;
         this._proj = d3.geo[proj]()
             .scale(width * 0.15)
@@ -1609,11 +1553,11 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         this.path = d3.geo.path()
             .projection(this._proj);
-            
+
         // Update the data in every currently drawn path
         this.svg.selectAll('path')
             .attr('d', this.path);
-        
+
         // If a drawn polygon existed reproject those coordinates
         if (this._roiCoords && projOld) {
             this.fireEvent('removeRoi');
@@ -1623,12 +1567,12 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
-    /**
-        Sets the grid geometry; retains a reference to the Flux.model.RasterGrid
-        instance.
-        @param  grid    {Flux.model.RasterGrid}
-        @return         {Flux.view.D3GeographicMap}
-     */
+    // Sets the grid geometry; retains a reference to the Flux.model.RasterGrid
+    // instance.
+    //
+    //     @param  grid    {Flux.model.RasterGrid}
+    //     @return         {Flux.view.D3GeographicMap}
+
     setRasterGrid: function (grid) {
         this._grid = grid;
         this.svg.selectAll('.cell').remove();
@@ -1636,27 +1580,27 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
-    /**
-        Sets the color scale used by the map.
-        @param  scale   {d3.scale.*}
-        @return         {Flux.fview.D3GeographicMap}
-     */
+    // Sets the color scale used by the map.
+    //
+    //     @param  scale   {d3.scale.*}
+    //     @return         {Flux.fview.D3GeographicMap}
+
     setColorScale: function (scale, opts) {
         this._colorScale = scale;
         var suppress = false;
         if (opts) {
             suppress = opts.suppressUpdate;
         }
-	
+
         if (this.panes.datalayer) {
-	    if (!suppress) {
-		this.update(this.panes.datalayer.selectAll('.cell'));
-                
+    	    if (!suppress) {
+                this.update(this.panes.datalayer.selectAll('.cell'));
+
                 if (this.panes.overlay.selectAll('.cell').length > 0) { // better way of determining if overlay???
                     this.update(this.panes.overlay.selectAll('.cell'), true);
                 }
-	    }
-	    
+    	    }
+
             this.updateLegend();
         }
 
@@ -1665,14 +1609,14 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
-    /**
-        Sets the zoom level by a specified factor; also accepts a specified
-        duration of time for the transition to the new zoom level.
-        @param  factor      {Number}
-        @param  translation {Array}
-        @param  duration    {Number}
-        @return             {Flux.view.D3GeographicMap}
-     */
+    // Sets the zoom level by a specified factor; also accepts a specified
+    // duration of time for the transition to the new zoom level.
+    //
+    //     @param  factor      {Number}
+    //     @param  translation {Array}
+    //     @param  duration    {Number}
+    //     @return             {Flux.view.D3GeographicMap}
+
     setZoom: function (factor, translation, duration) {
         var scale = this.zoom.scale();
         var extent = this.zoom.scaleExtent();
@@ -1688,7 +1632,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         if (extent[0] <= newScale && newScale <= extent[1]) {
             this.zoom.scale(newScale)
                 .translate([
-                    c[0] + (t[0] - c[0]) / scale * newScale, 
+                    c[0] + (t[0] - c[0]) / scale * newScale,
                     c[1] + (t[1] - c[1]) / scale * newScale
                 ])
                 .event((this._transitions) ? this.wrapper.transition().duration(duration) : this.wrapper);
@@ -1696,7 +1640,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         } else {
             this.zoom.scale(1)
                 .translate([
-                    c[0] + (t[0] - c[0]) / scale, 
+                    c[0] + (t[0] - c[0]) / scale,
                     c[1] + (t[1] - c[1]) / scale
                 ])
                 .event((this._transitions) ? this.wrapper.transition().duration(duration) : this.wrapper);
@@ -1705,7 +1649,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         return this;
     },
-    
+
     setZoomInit: function (factor, translation) {
         var scale = this.zoom.scale();
         var extent = this.zoom.scaleExtent();
@@ -1719,7 +1663,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         ];
 
         var translate = [
-                    c[0] + (t[0] - c[0]) / scale * newScale, 
+                    c[0] + (t[0] - c[0]) / scale * newScale,
                     c[1] + (t[1] - c[1]) / scale * newScale
                     ];
         this.wrapper.attr('transform', 'translate(' + translate + ')scale(' + newScale + ')');
@@ -1728,15 +1672,14 @@ Ext.define('Flux.view.D3GeographicMap', {
         this.zoom.scale(newScale);
         this.zoom.center([width/2, height/2]);
         this.zoom.translate([translate[0] + this._transOffset_x, translate[1] + this._transOffset_y]);
-        
+
         this._mostRecentZoomScale = newScale;
 
         return this;
     },
 
-    /**
-        Set the zoom level to that of the currently loaded ROI polygon.
-     */
+    // Set the zoom level to that of the currently loaded ROI polygon.
+
     setZoomToRoiCenter: function() {
         var x, y;
         var centroid = d3.selectAll('.roi-polygon').attr('centroid').split(',').map(Number);
@@ -1751,44 +1694,42 @@ Ext.define('Flux.view.D3GeographicMap', {
         this.wrapper.transition()
             .duration(750)
             .attr('transform', 'translate(' + width/2 + ',' + height/2 + ')scale(' + scale + ')translate(' + -x + ',' + -y + ')');
-        
+
         // Let the zoomer know that we've changed zoom/location
         this.zoom.scale(scale);
         this.zoom.center([width/2, height/2]);
         this.zoom.translate([-x*scale+width/2, -y*scale+height/2]);
-        
+
         // Scale ROI vertices/polygon and Nongridded markers to new scale
         this.scaleAuxiliaryMapComponents(scale);
 
     },
-    
-    /**
-        When an ROI is loaded, make necessary UI changes to toolbar
-     */
+
+    // When an ROI is loaded, make necessary UI changes to toolbar
     setTbarForDrawnROI: function() {
         var tbar = this.down('toolbar[cls=map-tbar]');
         var meta = this.getMetadata();
-        
+
         // Hide the "Add ROI" menu
         tbar.down('button[itemId="btn-add-roi"]').hide();
-        
+
         // Show the "ROI Tools" menu
         tbar.down('button[itemId="btn-roi-tools"]').show();
-        
+
         // Conditionally display the fetch-roi-time-series button
         var cmp = tbar.down('button[itemId="btn-fetch-roi-time-series"]');
-        
+
         if (meta && meta.get('gridded')) {
             cmp.show();
         }
-        cmp.setDisabled(!Ext.ComponentQuery.query('checkbox[name="showLinePlot"]')[0].checked);   
+        cmp.setDisabled(!Ext.ComponentQuery.query('checkbox[name="showLinePlot"]')[0].checked);
     },
-    
-    /**
-        Toggles the display of the legend on/off.
-        @param  state   {Boolean}
-        @return         {Flux.view.D3GeographicMap}
-     */
+
+    // Toggles the display of the legend on/off.
+    //
+    //     @param  state   {Boolean}
+    //     @return         {Flux.view.D3GeographicMap}
+
     toggleLegend: function (state) {
         if (state) {
             this.panes.legend.attr('class', 'pane legend');
@@ -1799,12 +1740,12 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
-    /**
-        Toggles on/off the display of the legend's measurement units.
-        @param  state   {Boolean}
-        @param  update  {Boolean}
-        @return         {Flux.view.D3GeographicMap}
-     */
+    // Toggles on/off the display of the legend's measurement units.
+    //
+    //     @param  state   {Boolean}
+    //     @param  update  {Boolean}
+    //     @return         {Flux.view.D3GeographicMap}
+
     toggleLegendUnits: function (state, update) {
         update = (update === true); // Default to false
         this._showLegendUnits = state;
@@ -1816,12 +1757,12 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
-    /**
-        Toggles on/off the HTML encoding of the legend's units; necessary to
-        encode the characters before serializing to a PNG.
-        @param  encode  {Boolean}
-        @return         {Flux.view.D3GeographicMap}
-     */
+    // Toggles on/off the HTML encoding of the legend's units; necessary to
+    // encode the characters before serializing to a PNG.
+    //
+    //     @param  encode  {Boolean}
+    //     @return         {Flux.view.D3GeographicMap}
+
     toggleLegendUnitsEncoding: function (encode) {
         this.panes.legend.selectAll('.units')
             .text(Ext.Function.bind(function (d) {
@@ -1837,13 +1778,13 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         return this;
     },
-    
-    /**
-        Draws again the visualization features of the map by updating their
-        SVG attributes. Accepts optional D3 selection which it will style.
-        @param  selection   {d3.selection}
-        @return             {Flux.view.D3GeographicMap}
-     */
+
+    // Draws again the visualization features of the map by updating their
+    // SVG attributes. Accepts optional D3 selection which it will style.
+    //
+    //     @param  selection   {d3.selection}
+    //     @return             {Flux.view.D3GeographicMap}
+
     update: function (selection, showAsOverlay) {
         var pane = this.panes.datalayer;
 
@@ -1867,7 +1808,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 
             return this;
         }
-        
+
         // If no selection was provided, update location attributes
         if (showAsOverlay) {
             pane = this.panes.overlay;
@@ -1878,23 +1819,23 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
-    /**
-        Updates the on-map info text in the heads-up-display; only used when
-        enableDisplay is set to true.
-        @param  data    {Array}
-        @return         {Flux.view.D3GeographicMap}
-     */
+    // Updates the on-map info text in the heads-up-display; only used when
+    // enableDisplay is set to true.
+    //
+    //     @param  data    {Array}
+    //     @return         {Flux.view.D3GeographicMap}
+
     updateDisplay: function (data) {
         var scale = 0.039 * this.svg.attr('height');
 
-//         if (!this._model) {
-//             return this;
-//         }
-        
+        // if (!this._model) {
+        //     return this;
+        // }
+
         if (Ext.isEmpty(data)) {
             data = this.panes.hud.selectAll('.info').data();
         }
-        
+
         // Font-size is partially dependent on length of
         // text to display (to avoid cutting off particularly
         // long text, e.g. aggregate views showing [t1] >>> [t2])
@@ -1921,11 +1862,11 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
-    /**
-        Updates the legend based on the current color scale; can be called with
-        or without an Array of breakpoints (bins) for the scale.
-        @return         {Flux.view.D3GeographicMap}
-     */
+    // Updates the legend based on the current color scale; can be called with
+    // or without an Array of breakpoints (bins) for the scale.
+    //
+    //     @return         {Flux.view.D3GeographicMap}
+
     updateLegend: function () {
         var bins, h, ordinal, unitsLabel;
         var p = this.getMetadata().get('precision');
@@ -1943,7 +1884,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         }
 
         // Subtract the header width from the legend's y-offset so that it
-        //  is displaced relative to the bottom of the Panel's header, not the 
+        //  is displaced relative to the bottom of the Panel's header, not the
         //  top of the Panel's header
         var yOffset = this.svg.attr('height') - this.getHeader().getHeight();
 
@@ -2023,16 +1964,18 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
-    /** TODO This function is called 3 times when global settings are: Mean-Current-Anomalies
-        Updates the color scale configuration of a specific view, as provided.
-        Creates a new color scale based on changes in the scale configuration
-        (measure of central tendency, number of standard deviations, or a switch
-        between sequential and diverging palette types).
-        @param  opts    {Object}    Properties are palette configs e.g. sigmas, tendency, paletteType
-        //TODO Could add a "_lastOptions" property to this view that stores
-        //  the opts argument and makes it optional? That ways the view could
-        //  call this method on its own
-     */
+    // TODO This function is called 3 times when global settings are: Mean-Current-Anomalies
+    // Updates the color scale configuration of a specific view, as provided.
+    // Creates a new color scale based on changes in the scale configuration
+    // (measure of central tendency, number of standard deviations, or a switch
+    // between sequential and diverging palette types).
+    //
+    //     @param  opts    {Object}    Properties are palette configs e.g. sigmas, tendency, paletteType
+    //
+    // TODO Could add a "_lastOptions" property to this view that stores
+    // the opts argument and makes it optional? That ways the view could
+    // call this method on its own
+
     updateColorScale: function (opts) {
         var palette, scale;
         var metadata;
@@ -2043,17 +1986,17 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         metadata = this.getMetadata();
 
-	// Resets tendency to custom value if selected
-	opts.tendency = this._tendency;
-	
+    	// Resets tendency to custom value if selected
+    	opts.tendency = this._tendency;
+
         // Get the color palette
         palette = Ext.StoreManager.get('palettes').getById(opts.palette);
 
-	// Get offset values to use if anmomalies are selected
-	var offset = 0;
-	if (this._showAnomalies) {
-	    offset = this.getTendencyOffset();
-	}
+    	// Get offset values to use if anmomalies are selected
+    	var offset = 0;
+    	if (this._showAnomalies) {
+    	    offset = this.getTendencyOffset();
+    	}
 
         if (opts.threshold) {
             scale = metadata.getThresholdScale(opts.thresholdValues,
@@ -2068,5 +2011,3 @@ Ext.define('Flux.view.D3GeographicMap', {
     }
 
 });
-
-

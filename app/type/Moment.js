@@ -1,3 +1,5 @@
+// Defines a custom ExtJS Type for moment.js instances.
+
 Ext.define('Flux.type.Moment', {
     requires: ['Ext.data.Types']
 }, function () {

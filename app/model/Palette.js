@@ -1,3 +1,5 @@
+// Data model for color palettes (under the Symbology tab).
+
 Ext.define('Flux.model.Palette', {
     extend: 'Ext.data.Model',
 
@@ -5,8 +7,7 @@ Ext.define('Flux.model.Palette', {
 
     fields: [
         'name',
-        'type',
-        {
+        'type', {
             name: 'segments',
             type: 'int'
         }, {

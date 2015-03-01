@@ -1,3 +1,5 @@
+// Data model for non-gridded data (e.g., bias-corrected retrievals).
+
 Ext.define('Flux.model.Nongridded', {
     extend: 'Flux.model.AbstractFeature',
 
@@ -9,11 +11,11 @@ Ext.define('Flux.model.Nongridded', {
         type: 'auto'
     }],
 
-    /**
-        Summarizes the values of a given Array.
-        @param  data    {Array}
-        @return         {Object}
-     */
+    // Summarizes the values of a given Array.
+    //
+    //     @param  data    {Array}
+    //     @return         {Object}
+
     summarize: function () {
         var data = Ext.Array.pluck(
             Ext.Array.pluck(this.data.features_raw, 'properties'), 'value');

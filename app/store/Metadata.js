@@ -1,3 +1,5 @@
+// The store where all Metadata instances are stored.
+
 Ext.define('Flux.store.Metadata', {
     extend: 'Ext.data.Store',
     requires: [

@@ -1,3 +1,5 @@
+// A custom Slider field that has one or two Number fields associated with it. The Number fields represent the start and stop values on a two-thumb slider; or, if only one thumb is present, the left-hand Number field represents the value of that thumb on the slider.
+
 Ext.define('Flux.field.EnumeratedSlider', {
     extend: 'Ext.form.FieldContainer',
     alias: 'widget.enumslider',
@@ -10,10 +12,8 @@ Ext.define('Flux.field.EnumeratedSlider', {
         'Ext.slider.Single'
     ],
 
-    /**
-        Flag to indicate that the slider has multiple thumbs; currently only
-        supports two thumbs (left and right).
-     */
+    // Flag to indicate that the slider has multiple thumbs; currently only
+    // supports two thumbs (left and right).
     isMulti: false,
 
     items: [],
@@ -25,11 +25,12 @@ Ext.define('Flux.field.EnumeratedSlider', {
 
     stateEvents: ['enable', 'disable', 'dragend', 'boundschange'],
 
-    /**
-        Configures the component instance with values and isMulti properties.
-     */
+    // Configures the component instance with values and isMulti properties.
     initComponent: function () {
-        var values = this.values; // Get either "value" or "values" property
+
+        // Get either "value" or "values" property
+        var values = this.values;
+
         if (values === undefined) {
             values = this.value;
         }
@@ -46,7 +47,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
         beforerender: function () {
             var numberCfg, sliderCfg, values;
 
-            // Add initial Number field ////////////////////////////////////////
+            // Add initial Number field
             numberCfg = Ext.clone(this.numberDefaults);
             Ext.merge(numberCfg, {
                 itemId: 'lower-bound',
@@ -58,12 +59,14 @@ Ext.define('Flux.field.EnumeratedSlider', {
 
             this.add(numberCfg);
 
-            values = this.values; // Get either "value" or "values" property
+            // Get either "value" or "values" property
+            values = this.values;
+
             if (values === undefined) {
                 values = this.value;
             }
 
-            // Configure slider field //////////////////////////////////////////
+            // Configure slider field
             sliderCfg = Ext.clone(this.sliderDefaults);
             Ext.merge(sliderCfg, {
                 value: values,
@@ -83,7 +86,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
                 // Set the initial value of the left (lower) bound
                 this.items.getAt(0).setValue(values[0]);
 
-                // Add second Number field /////////////////////////////////////
+                // Add second Number field
                 numberCfg = Ext.clone(this.numberDefaults);
                 Ext.merge(numberCfg, {
                     xtype: 'numberfield',
@@ -99,7 +102,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
                 this.items.getAt(0).setValue(values);
             }
 
-            // Insert slider field /////////////////////////////////////////////
+            // Insert slider field
             this.insert(1, sliderCfg);
         },
 
@@ -109,9 +112,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
         }
     },
 
-    /**
-        Default configuration for each Ext.form.field.Number that is generated.
-     */
+    // Default configuration for each Ext.form.field.Number that is generated.
     numberDefaults: {
         xtype: 'numberfield',
         hideTrigger: true,
@@ -129,9 +130,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
         }
     },
 
-    /**
-        Default configuration for each Ext.slider.* that is generated.
-     */
+    // Default configuration for each Ext.slider.* that is generated.
     sliderDefaults: {
         xtype: 'slider',
         itemId: 'slider',
@@ -150,7 +149,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
                 if (this.up('fieldcontainer').isMulti) {
                     this.up('fieldcontainer').queryById('upper-bound').setValue(v[1]);
 
-                } 
+                }
 
                 this.ownerCt.fireEventArgs('boundschange', [this, v]);
 
@@ -158,10 +157,10 @@ Ext.define('Flux.field.EnumeratedSlider', {
         }
     },
 
-    /**
-        Restores the component's state.
-        @param  state   {Object}
-     */
+    // Restores the component's state.
+    //
+    //     @param  state   {Object}
+
     applyState: function (state) {
         this.setDisabled(state.disabled);
         this.values = state.value;
@@ -170,26 +169,26 @@ Ext.define('Flux.field.EnumeratedSlider', {
         });
     },
 
-    /**
-        Returns the upper and lower bounds on the Slider and NumberFields.
-        @return {Array}
-     */
+    // Returns the upper and lower bounds on the Slider and NumberFields.
+    //
+    //     @return {Array}
+
     getBounds: function () {
         return this._bounds;
     },
 
-    /**
-        Returns the value of the component's name property.
-        @return {String}
-     */
+    // Returns the value of the component's name property.
+    //
+    //     @return {String}
+
     getName: function () {
         return this.name;
     },
 
-    /**
-        Returns an Object representing the component's current state.
-        @return {Object}
-     */
+    // Returns an Object representing the component's current state.
+    //
+    //     @return {Object}
+
     getState: function () {
         return {
             disabled: this.isDisabled(),
@@ -197,18 +196,18 @@ Ext.define('Flux.field.EnumeratedSlider', {
         };
     },
 
-    /**
-        Returns an Array of the lower and upper bounds.
-        @return {Array}
-     */
+    // Returns an Array of the lower and upper bounds.
+    //
+    //     @return {Array}
+
     getValue: function () {
         return this.getValues();
     },
 
-    /**
-        Returns an Array of the lower and upper bounds.
-        @return {Array}
-     */
+    // Returns an Array of the lower and upper bounds.
+    //
+    //     @return {Array}
+
     getValues: function () {
         var arr = [];
         Ext.each(this.query('numberfield'), function (cmp) {
@@ -218,11 +217,11 @@ Ext.define('Flux.field.EnumeratedSlider', {
         return arr;
     },
 
-    /**
-        Sets the values of the Number fields and Slider and also adjusts the
-        minValue and maxValue properties accordingly.
-        @param  values  {Array}
-     */
+    // Sets the values of the Number fields and Slider and also adjusts the
+    // minValue and maxValue properties accordingly.
+    //
+    //     @param  values  {Array}
+
     setValues: function (values) {
         var slider = this.down('multislider');
 
@@ -254,11 +253,11 @@ Ext.define('Flux.field.EnumeratedSlider', {
         this.fireEvent('boundschange', this, values);
     },
 
-    /**
-        Sets the min/max bounds (minValue and maxValue) of the field without
-        changing the field's current value(s).
-        @param  bounds  {Array}
-     */
+    // Sets the min/max bounds (minValue and maxValue) of the field without
+    // changing the field's current value(s).
+    //
+    //     @param  bounds  {Array}
+
     setBounds: function (bounds) {
         var slider = this.down('multislider');
 
@@ -291,9 +290,7 @@ Ext.define('Flux.field.EnumeratedSlider', {
         this._bounds = bounds;
     },
 
-    /**
-        Toggles between a MultiSlider and a (single-thumb) Slider.
-     */
+    // Toggles between a MultiSlider and a (single-thumb) Slider.
     toggleMulti: function (multiState, values) {
         var config;
 

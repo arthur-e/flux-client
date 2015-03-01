@@ -1,3 +1,5 @@
+// The Store where Scenario instances are stored.
+
 Ext.define('Flux.store.Scenarios', {
     extend: 'Ext.data.Store',
     requires: [

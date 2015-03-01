@@ -1,3 +1,5 @@
+// A ComboBox that remembers its state.
+
 Ext.define('Flux.field.StatefulComboBox', {
     extend: 'Ext.form.field.ComboBox',
     alias: 'widget.recombo',

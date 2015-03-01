@@ -1,3 +1,5 @@
+// A menu CheckItem that remembers its state.
+
 Ext.define('Flux.field.StatefulCheckItem', {
     extend: 'Ext.menu.CheckItem',
     alias: 'widget.recheckitem',

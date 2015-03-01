@@ -1,3 +1,5 @@
+// A FieldSet that remembers its state.
+
 Ext.define('Flux.field.StatefulFieldSet', {
     extend: 'Ext.form.FieldSet',
     alias: 'widget.refieldset',

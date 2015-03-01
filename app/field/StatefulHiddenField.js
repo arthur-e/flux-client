@@ -1,3 +1,5 @@
+// A HiddenField that remembers its state.
+
 Ext.define('Flux.field.StatefulHiddenField', {
     extend: 'Ext.form.field.Hidden',
     alias: 'widget.rehidden',

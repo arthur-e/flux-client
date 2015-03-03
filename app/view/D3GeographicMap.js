@@ -5,7 +5,8 @@ Ext.define('Flux.view.D3GeographicMap', {
         'Ext.Function',
         'Ext.tip.QuickTip',
         'Ext.toolbar.Toolbar',
-        'Flux.store.Rasters'
+        'Flux.store.Rasters',
+        'Flux.view.SavePopup',
     ],
     /**
         An internal reference to the legend selection.
@@ -79,12 +80,15 @@ Ext.define('Flux.view.D3GeographicMap', {
         The moment.js time display format to use.
      */
     timeFormat: 'YYYY MM-DD HH:ss',
+    
+    popup: undefined,
 
     /**
         Initializes the component.
      */
     initComponent: function () {
         this.addEvents('mouseover', 'mouseout');
+        this.popup = Ext.create('Flux.view.SavePopup', {view: this});
 
         /**
             The scale used for coloring map elements.
@@ -252,8 +256,8 @@ Ext.define('Flux.view.D3GeographicMap', {
                      }, {
                         itemId: 'btn-save-image',
                         iconCls: 'icon-disk',
-                        tooltip: 'Save Image'
-                    }, 
+                        tooltip: 'Save Image/Data'
+                    },
                     ]
                 }), 0);
             }

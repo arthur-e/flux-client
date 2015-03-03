@@ -134,9 +134,8 @@ Ext.define('Flux.controller.UserInteraction', {
                 click: this.onFetchRoiTimeSeriesClick
             },
             'd3geomap #btn-save-image': {
-                click: this.onSaveImage
+                click: this.onSaveDialogue
             },
-            
             'field[name=source]': {
                 change: this.onSourceChange
             },
@@ -166,6 +165,9 @@ Ext.define('Flux.controller.UserInteraction', {
             'roioverlayform' : {
                 submit: this.onSubmitRoiOverlay,
                 loadRoi: this.onLoadMostRecentRoi
+            },
+            'SavePopup #btn-save-file': {
+                click: this.onSaveFile
             },
             
             'sourcesgridpanel': {
@@ -2150,13 +2152,75 @@ Ext.define('Flux.controller.UserInteraction', {
         linePlot.addSeriesRoi(series);
 
     },
+    
+    /**
+     * Opens a dialogue to save image/data
+     */
+    onSaveDialogue: function (btn) {
+        var view = btn.up('d3geomap');
+        
+        console.log(view);
+        var tempstate = view.popup.down('#output').down().state
+        
+        var showGriddedChk = this.getSourcePanel().down('checkbox[name=showGridded]');
+        var showGridded = showGriddedChk.checked || false;
+        var showNongriddedChk = this.getNongriddedPanel().down('checkbox[name=showNongridded]');
+        var showNongridded = showNongriddedChk.checked || false;
+
+        view.popup.show();
+        
+        if(showGridded) {
+            view.popup.down('#output').down('#data').show();
+        }
+        else {
+            view.popup.down('#output').down('#data').hide();
+        }
+        
+        if(showNongridded) {
+            view.popup.down('#output').down('#overlay').show();
+        }
+        else {
+            view.popup.down('#output').down('#overlay').hide();
+        }
+        
+        //restore correct value and file format list (reverts to cached value and file format list is blank otherwise)
+        view.popup.down('#output').down('#'+tempstate).onBoxClick({});
+    },
+    
+    onSaveFile: function(btn) {
+        var savedlg = btn.up('SavePopup');
+        var view = savedlg.view;
+        
+        var outputType = savedlg.down('#output').down('reradiogroup').state;
+        var fileType = savedlg.down('#filetype').getLayout().getActiveItem().state;
+        
+        //console.log(outputType);
+        //console.log(fileType);
+        
+        if (outputType == "image") {
+            if (fileType == "png") {
+                this.SaveImage(view);
+            }
+        }
+        else if (outputType == "data") {
+            if (fileType == "ascii") {
+                this.SaveASCII(view);
+            }
+        }
+        else if (outputType == "overlay") {
+            if (fileType == "csv") {
+                this.SaveCSV(view);
+            }
+        }
+        
+        
+    },
 
     /**
         Saves an image out as an SVG file.
-        @param  btn {Ext.button.Button}
+        @param  view {D3GeographicMap}
      */
-    onSaveImage: function (btn) {
-        var view = btn.up('d3geomap');
+    SaveImage: function (view) {
         var html, node, win, svgsrc;
         var w = Number(view.svg.attr('width'));
         var h = Number(view.svg.attr('height'));
@@ -2263,6 +2327,108 @@ Ext.define('Flux.controller.UserInteraction', {
         // Eliminate the Window instance after the file is saved
         // so that Window never actually shows
         }).show().close();
+
+    },
+    
+    /**
+        Saves data as an ascii file.
+        @param  view {D3GeographicMap}
+     */
+    SaveASCII: function (view) {
+        
+        if(view._model) {
+            var index = view._model.internalId;
+            var data = view.store.data.map[index].data.features;
+            var coords = view._grid.data.coordinates;
+            var meta = view.getMetadata().data;
+            var xdelta = meta.grid.x;
+            var ydelta = meta.grid.y;
+            
+            var height = Math.abs(meta.bbox[1]-meta.bbox[3])+1;
+            var width = Math.abs(meta.bbox[0]-meta.bbox[2])+1;
+            
+            var outData = new Array(height*width);
+            var x,y,lat,lon;
+            
+            for(var i=0; i<coords.length; i++) {
+                x = coords[i][0] - meta.bbox[0];
+                y = meta.bbox[3] - coords[i][1];
+                
+                outData[y*width+x] = data[i];
+            }
+            
+            var outString = "ncols " + width + "\n";
+            outString += "nrows " + height + "\n";
+            outString += "xllcenter " + meta.bbox[0] + "\n";
+            outString += "yllcenter " + meta.bbox[1] + "\n";
+            outString += "cellsize " + xdelta + " " + ydelta + "\n";
+            outString += "nodata_value -9999"
+            
+            for (var i = 0; i<height*width; i++) {
+                
+                if(i%width == 0) {
+                    outString += "\n";
+                }
+                
+                if(outData[i]) {
+                    outString += outData[i] + " ";
+                }
+                else {
+                    outString += "-9999 ";
+                }
+            }
+            
+            var filename = index.substring(7) + ".ascii";
+            filename = filename.replace("&time=","_");
+            filename = filename.replace(/%3A/gi,"");
+            var pom = document.createElement('a');
+            pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(outString));
+            pom.setAttribute('download', filename);
+            pom.click();
+            
+        }
+    },
+    
+    /**
+        Saves data as an ascii file.
+        @param  view {D3GeographicMap}
+     */
+    SaveCSV: function (view) {
+        var showGriddedChk = this.getSourcePanel().down('checkbox[name=showGridded]');
+        var showGridded = showGriddedChk.checked || false;
+        var showNongriddedChk = this.getNongriddedPanel().down('checkbox[name=showNongridded]');
+        var showNongridded = showNongriddedChk.checked || false;
+        
+        var data, index;
+        
+        if (showGridded && showNongridded) {
+            data = view._modelOverlay.data.features;
+            index = view._modelOverlay.internalId;
+        }
+        else if (showNongridded) {
+            data = view._model.data.features;
+            index = view._model.internalId;
+        }
+        else {
+            return;
+        }
+        
+        var outString = "X,Y,Time,Value,Error\n";
+        
+        for(var i=0; i<data.length; i++) {
+            outString += data[i].coordinates[0] + "," + data[i].coordinates[1] + ",";
+            outString += data[i].timestamp + ",";
+            outString += data[i].properties.value + "," + data[i].properties.error + "\n";
+        }
+        
+        var filename = index.substring(7) + ".csv";
+        filename = filename.replace("&start=","_");
+        filename = filename.replace("&end=","_");
+        filename = filename.replace(/%3A/gi,"");
+        var pom = document.createElement('a');
+        pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(outString));
+        pom.setAttribute('download', filename);
+        pom.click();
 
     },
 

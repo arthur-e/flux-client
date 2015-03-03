@@ -32,6 +32,7 @@ Ext.define('Flux.Application', {
         'RoiOverlayForm',
         'RoiOverlayFormGeoJSON',
         'RoiOverlayFormWKT',
+        'SavePopup',
         'SidePanel',
         'SourcePanel',
         'SourcesGridPanel',

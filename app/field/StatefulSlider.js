@@ -1,3 +1,5 @@
+// A Single slider that remembers its state.
+
 Ext.define('Flux.field.StatefulSlider', {
     extend: 'Ext.slider.Single',
     alias: 'widget.reslider',

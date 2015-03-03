@@ -1,3 +1,5 @@
+// A RadioGroup that remembers its state.
+
 Ext.define('Flux.field.StatefulRadioGroup', {
     extend: 'Ext.form.RadioGroup',
     alias: 'widget.reradiogroup',
@@ -16,8 +18,8 @@ Ext.define('Flux.field.StatefulRadioGroup', {
         });
 
         // applyState() is called before rendering or before the component is
-        //  laid out, which means ComponentQuery operations (up() and down())
-        //  aren't available; the propagateChange() function provides the same
+        //  laid out, which means ComponentQuery operations (`up()` and `down()`)
+        //  aren't available; the `propagateChange()` function provides the same
         //  downstream logic while handling these exceptions
         if (typeof this.propagateChange === 'function') {
             this.propagateChange(state.value);

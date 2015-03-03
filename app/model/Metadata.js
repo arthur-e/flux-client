@@ -1,3 +1,5 @@
+// This model represents Metadata associated with a certain dataset (a scenario). The unique `_id` is the scenario name. Otherwise, the fields of this model correspond to the Metadata model documented in the Python API.
+
 Ext.define('Flux.model.Metadata', {
     extend: 'Ext.data.Model',
 
@@ -47,14 +49,13 @@ Ext.define('Flux.model.Metadata', {
         type: 'auto'
     }],
 
-    /**
-        Calculates the true grid cell centroids by adding half the grid spacing;
-        this was subtracted to obtain the upper-left corner of the grid cell, so
-        this calculation basically restores the grid cell centroid from the SVG
-        <rect> element's upper-corner.
-     */
+    // Calculates the true grid cell centroids by adding half the grid spacing;
+    // this was subtracted to obtain the upper-left corner of the grid cell, so
+    // this calculation basically restores the grid cell centroid from the SVG
+    // <rect> element's upper-corner.
+
     calcHalfOffsetCoordinates: function (g) {
-        g[0] = (g[0] < 0) ? (g[0] + (Number(this.get('grid').x) * 0.5)) : 
+        g[0] = (g[0] < 0) ? (g[0] + (Number(this.get('grid').x) * 0.5)) :
             (g[0] - (Number(this.get('grid').x) * 0.5));
         g[1] = (g[1] < 0) ? (g[1] + (Number(this.get('grid').y) * 0.5)) :
             (g[1] - (Number(this.get('grid').y) * 0.5))
@@ -64,10 +65,10 @@ Ext.define('Flux.model.Metadata', {
         });
     },
 
-    /**
-        Constructs an Array of all of the dates for which the data are available.
-        @return {Array}
-     */
+    // Constructs an Array of all of the dates for which the data are available.
+    //
+    //     @return {Array}
+
     getAllDates: function () {
         var dates;
         var datesArray = [];
@@ -76,7 +77,7 @@ Ext.define('Flux.model.Metadata', {
         if (!Ext.isEmpty(this._dates)) {
             return this._dates;
         }
-        
+
         if (Ext.isEmpty(bkpts)) {
             return this.get('dates');
         }
@@ -93,7 +94,7 @@ Ext.define('Flux.model.Metadata', {
             while (dates[i + 1] && d.isBefore(dates[i + 1])) {
                 d.add(step, 's'); // Add the specified number of seconds
                 datesArray.push(d.clone());
-            }                
+            }
         });
 
         this._dates = datesArray;
@@ -101,12 +102,12 @@ Ext.define('Flux.model.Metadata', {
         return datesArray;
     },
 
-    /**
-        Find the "nearest" date in the dates Array to the given date; date could
-        be before or after the given date.
-        @param  date    {moment|Date}
-        @return         {moment}
-     */
+    // Find the "nearest" date in the dates Array to the given date; date could
+    // be before or after the given date.
+    //
+    //     @param  date    {moment|Date}
+    //     @return         {moment}
+
     getNearestDate: function (date) {
         var ds = this.getAllDates();
         var ms = Ext.Array.map(ds, function (d) {
@@ -116,12 +117,12 @@ Ext.define('Flux.model.Metadata', {
         return ds[ms.indexOf(Ext.Array.min(ms))];
     },
 
-    /**
-        Returns an Array of Regular Expressions that describe dates that are
-        outside the range of the data described by this Metadata instance.
-        @param  fmt {String}    A moment.js format string
-        @return     {Array}
-     */
+    // Returns an Array of Regular Expressions that describe dates that are
+    // outside the range of the data described by this Metadata instance.
+    //
+    //     @param  fmt {String}    A moment.js format string
+    //     @return     {Array}
+
     getDisabledDates: function (fmt) {
         fmt = fmt || 'YYYY-MM-DD';
 
@@ -132,54 +133,55 @@ Ext.define('Flux.model.Metadata', {
         return ["^(?!" + dates.join("|") + ").*$"];
     },
 
-    /** TODO: add offset
-        Returns a new quantile scale (d3.scale.quantile instance) that fits the
-        data according to the summary statistics and any specified configuration
-        options.
-        @param  config  {Object}
-        @return {d3.scale.quantile}
-     */
+    // Returns a new quantile scale (d3.scale.quantile instance) that fits the
+    // data according to the summary statistics and any specified configuration
+    // options.
+    //
+    //     @param  config  {Object}
+    //     @return {d3.scale.quantile}
+
     getQuantileScale: function (config, offset) {
         var sigmas = config.sigmas || 2;
         var domain = config.domain; // Default to defined bounds
         var stats = this.getSummaryStats();
         var tendency = config.tendency;
-        
-//         // Reset the offset to zero if Current Data Frame is being used
-// 	if (config.statsFrom === 'data') {
-//             offset = 0;
-//         }
-        
-	if (typeof tendency === 'undefined') {
-	    tendency = 'mean';
-	}
-	
-	// if mean/median is the selected central tendency, get from stats
-	if (['mean','median'].indexOf(tendency) > -1) {
-	    var central_tendency = stats[tendency];
-	} else { // otherwise set to the user-provided value
-	    var central_tendency = tendency;
-	}
+
+        // Reset the offset to zero if Current Data Frame is being used
+        // if (config.statsFrom === 'data') {
+        //     offset = 0;
+        // }
+
+    	if (typeof tendency === 'undefined') {
+    	    tendency = 'mean';
+    	}
+
+    	// If mean/median is the selected central tendency, get from stats
+    	if (['mean','median'].indexOf(tendency) > -1) {
+    	    var central_tendency = stats[tendency];
+    	} else { // otherwise set to the user-provided value
+    	    var central_tendency = tendency;
+    	}
 
         if (config.autoscale) { // If no defined bounds...
-	    domain = [
-		(central_tendency - offset - (sigmas * stats.std)), // Lower bound
-		(central_tendency - offset + (sigmas * stats.std))  // Upper bound
-	    ]
+    	    domain = [
+        		(central_tendency - offset - (sigmas * stats.std)), // Lower bound
+        		(central_tendency - offset + (sigmas * stats.std))  // Upper bound
+	       ]
         }
-        
-	// Diverging scales are symmetric about the measure of central tendency
-	// For anomalies, diverging scales are symmetric about 0 (what offset is for);
+
+    	// Diverging scales are symmetric about the measure of central tendency
+    	// For anomalies, diverging scales are symmetric about 0 (what offset is for);
         if (config.paletteType === 'diverging') {
-	    domain.splice(1, 0, central_tendency - offset);
+	       domain.splice(1, 0, central_tendency - offset);
         }
 
         return d3.scale.quantile().domain(domain);
-
     },
 
-    /**TODO
-     */
+    // A convenience function for returning the summary stats for a given data
+    // series--a non-trivial operation as the series might be named `values` or
+    // or `value` or something else entirely.
+
     getSummaryStats: function (p) {
         var stats;
 
@@ -192,11 +194,10 @@ Ext.define('Flux.model.Metadata', {
         return stats;
     },
 
-    /**
-        Returns the Array of time steps or spans, depending on which is used;
-        enforces the policy of preferring steps over spans (checks for steps first).
-        @return {Array}
-     */
+    // Returns the Array of time steps or spans, depending on which is used;
+    // enforces the policy of preferring steps over spans (checks for steps first).
+    //     @return {Array}
+
     getTimeOffsets: function () {
         if (!Ext.isEmpty(this.get('steps'))) {
             return this.get('steps');
@@ -208,8 +209,8 @@ Ext.define('Flux.model.Metadata', {
         return; // Or return undefined
     },
 
-    /**TODO
-     */
+    // Returns an Array of times (as `moment` instances) for which data in this scenario are available.
+
     getTimes: function (forDate) {
         var i, mins;
         var step = Ext.Array.min(this.getTimeOffsets() || []);
@@ -247,15 +248,15 @@ Ext.define('Flux.model.Metadata', {
         return times;
     },
 
-    /**
-        Creates a threshold scale; a hack that acts like a d3.scale.* object.
-        The result is a function that returns the specified color value for
-        input numeric values that fall within the integer bounds of the given
-        breakpoint(s).
-        @param  bkpts   {Array}     The breakpoint(s) for the binary mask
-        @param  colors  {String}    The color to use for the binary mask
-        @return         {Function}
-     */
+    // Creates a threshold scale; a hack that acts like a d3.scale.* object.
+    // The result is a function that returns the specified color value for
+    // input numeric values that fall within the integer bounds of the given
+    // breakpoint(s).
+    //
+    //     @param  bkpts   {Array}     The breakpoint(s) for the binary mask
+    //     @param  colors  {String}    The color to use for the binary mask
+    //     @return         {Function}
+
     getThresholdScale: function (bkpts, color, offset) {
         var scale;
 
@@ -309,7 +310,3 @@ Ext.define('Flux.model.Metadata', {
     }
 
 });
-
-
-
-

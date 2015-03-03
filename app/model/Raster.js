@@ -1,3 +1,5 @@
+// Data model for gridded (raster) datasets.
+
 Ext.define('Flux.model.Raster', {
     extend: 'Flux.model.AbstractFeature',
 
@@ -21,11 +23,11 @@ Ext.define('Flux.model.Raster', {
         type: 'auto'
     }],
 
-    /**
-        Summarizes the values of a given Array.
-        @param  data    {Array}
-        @return         {Object}
-     */
+    // Summarizes the values of a given Array.
+    //
+    //     @param  data    {Array}
+    //     @return         {Object}
+
     summarize: function () {
         var data = this.get('features_raw');
         var s = this.Stats(data);

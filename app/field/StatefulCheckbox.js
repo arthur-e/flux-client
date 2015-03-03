@@ -1,3 +1,5 @@
+// A Checkbox that remembers its state.
+
 Ext.define('Flux.field.StatefulCheckbox', {
     extend: 'Ext.form.field.Checkbox',
     alias: 'widget.recheckbox',
@@ -16,7 +18,7 @@ Ext.define('Flux.field.StatefulCheckbox', {
     applyState: function (state) {
         if (state) {
             this.setDisabled(state.disabled);
-            this.setValue(state.value);     
+            this.setValue(state.value);
         }
     }
 });

@@ -1,3 +1,5 @@
+// Data model for a raster's grid--the coordinate index that describes the gridded layout for a gridded dataset. The unique `_id` matches that of the `Metadata`; it is the scenario name.
+
 Ext.define('Flux.model.RasterGrid', {
     extend: 'Ext.data.Model',
     idProperty: '_id',
@@ -12,11 +14,11 @@ Ext.define('Flux.model.RasterGrid', {
         type: 'auto'
     }],
 
-    /**
-        Returns the Array index of the provided latitude-longitude coordinates.
-        @param  coords  {Array}
-        @return         {Number}
-     */
+    // Returns the Array index of the provided latitude-longitude coordinates.
+    //
+    //     @param  coords  {Array}
+    //     @return         {Number}
+
     getCoordIndex: function (coords) {
         var i = -1;
         var r;

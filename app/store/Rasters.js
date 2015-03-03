@@ -1,3 +1,5 @@
+// The Store where all Raster instances are stored.
+
 Ext.define('Flux.store.Rasters', {
     extend: 'Flux.store.AbstractStore',
     autoLoad: false,

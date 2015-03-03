@@ -2,6 +2,12 @@ Ext.define('Flux.controller.UserInteraction', {
     extend: 'Ext.app.Controller',
 
     refs: [{
+        ref: 'aoGeoJSON',
+        selector: 'ao_geojson'
+    }, {
+        ref: 'aoWKT',
+        selector: 'ao_wkt'
+    }, {
         ref: 'contentPanel',
         selector: '#content'
     }, {
@@ -31,13 +37,9 @@ Ext.define('Flux.controller.UserInteraction', {
     }, {
         ref: 'symbology',
         selector: 'symbology'
-    
     }, {
-        ref: 'aoGeoJSON',
-        selector: 'ao_geojson'
-    }, {
-        ref: 'aoWKT',
-        selector: 'ao_wkt'
+        ref: 'topToolbar',
+        selector: 'viewport toolbar'
     }],
 
     requires: [
@@ -111,6 +113,7 @@ Ext.define('Flux.controller.UserInteraction', {
             'd3geomap': {
                 plotclick: this.onPlotClick,
                 fetchstats: this.fetchRoiSummaryStats,
+                mapzoom: this.syncZoom,
                 removeTimeSeries: this.removeRoiTimeSeries,
                 removeRoi: this.removeRoi,
                 toggleOutline: this.onMarkerOutlineToggle
@@ -207,6 +210,7 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     addMap: function (title) {
         var anchor, newView;
+        var zoomFactor, zoomTranslate;
         var basemap = this.getMapSettings().down('combo[name=basemap]').getValue();
         var container = this.getContentPanel();
         var query = Ext.ComponentQuery.query('d3geomap');
@@ -238,13 +242,14 @@ Ext.define('Flux.controller.UserInteraction', {
 
         Ext.each(query, function (view) {
             view.anchor = anchor;
-
+            
             // Add a listener to re-initialize the D3GeographicMap instance
             //  after it has received its layout from the parent container
             view.on('afterlayout', function () {
                 this.init(this.getWidth(), this.getHeight())
                     .setBasemap(basemap)
-                    .redraw(true);
+                    .redraw();
+                    
             }, view, {
                 single: true // Remove this listener
             });
@@ -261,7 +266,8 @@ Ext.define('Flux.controller.UserInteraction', {
             anchor: anchor,
             enableDisplay: true,
             timeFormat: 'YYYY-MM-DD [at] HH:ss',
-            closable: true
+            closable: true,
+            _syncZoom: true
         });
 
         // j works here because we want the new item to be positioned below
@@ -284,7 +290,85 @@ Ext.define('Flux.controller.UserInteraction', {
             }
 
         }
+        
+        ////////////////////////////////////////
+        // Sync zoom level/position
+        // 
+        // Initial zoom level/position is set using the
+        // zoomFactor/zoomTrans_x/zoomTrans_y variables;
+        //
+        // Afterwards, zoom behavior is sync'ed using the
+        // _transOffset_y variable.
+        var query = Ext.ComponentQuery.query('d3geomap');
+        var counter = 0;
+        Ext.each(query, function (view) {
+            counter += 1;
+            
+            // Default values
+            zoomFactor = 1;
+            zoomTrans_x = 0;
+            zoomTrans_y = 0;
+            
+            // Translations for the 1st map added
+            if (counter === 1) {
+                if (n > 0) { // 2x1 map layout
+                    zoomFactor = 0.5;
+                    zoomTrans_x = -0.5;
+                }
+                if (n > 1) { // 2x2 map layout
+                    zoomTrans_y = -0.5;
+                }
+                if (n > 3) { // 3x2 map layout
+                    zoomFactor = 0.3333;
+                    zoomTrans_x = -1;
+                }
+                if (n > 5) { // 3x3 map layout
+                    zoomTrans_y = -1;
+                }
+            }
+            // Translations for the 2nd map added
+            if (counter === 2) {
+                if (n > 0) { // 2x1 map layout
+                    view._transOffset_y = view.getHeight() * 0.25;
+                }
+                if (n > 1) { // 2x2 map layout
+                    zoomTrans_y = -0.5;
+                    view._transOffset_y = view.getHeight() * 0.50;
+                }
+                if (n > 3) { // 3x2 map layout
+                    zoomTrans_x = -0.25;
+                    zoomFactor = 0.66667;
+                }
+                if (n > 5) { // 3x3 map layout
+                    zoomTrans_y = -1;
+                    view._transOffset_y = view.getHeight() * 0.75;
+                }
+            }
+            // Translations for the 3rd/4th maps added
+            if (counter === 3 || counter === 4) {
+                if (n > 3) { // 3x2 map layout
+                    zoomFactor = 0.66667;
+                    zoomTrans_x = -0.25;
+                }
+                if (n > 5) { // 3x3 map layout
+                    zoomTrans_y = -0.25;
+                }
+                
+            }
+            // Translations for the 5th/6th maps added
+            if (counter === 5 || counter === 6) {
+                view._transOffset_y = view.getHeight() * 0.166667;
+                if (n > 5) { // 3x3 map layout
+                    zoomTrans_y = -0.25;
+                    view._transOffset_y = view.getHeight() * 0.25; 
+                }
+            }
 
+            // Finally, set initial zoom for the map based on the factors above
+            view.setZoomInit(zoomFactor, [zoomTrans_x*view.getWidth(), zoomTrans_y*view.getHeight()]);
+            
+        });
+        
         return newView;
     },
 
@@ -555,7 +639,7 @@ Ext.define('Flux.controller.UserInteraction', {
         @param  view    {Flux.view.D3GeographicMap}
         @param  params  {Object}
      */
-    fetchRaster: function (view, params) {
+    fetchRaster: function (view, params, callback) {
         var raster, source, opts;
         
 //         if (view.mostRecentRasterParams != params) {
@@ -602,6 +686,10 @@ Ext.define('Flux.controller.UserInteraction', {
 	
                 this.bindLayer(view, rast);
                 this.onMapLoad(rast);
+                
+                if (callback) {
+                    callback();
+                }
             },
             failure: function (response) {
                 Ext.Msg.alert('Request Error', response.responseText);
@@ -976,19 +1064,19 @@ Ext.define('Flux.controller.UserInteraction', {
             }
 
             // Draw our Gridded layer
-            view.draw(feat, true, false);
+            view.draw(feat, false);
             
             // And draw the Nongridded layer as an overlay if indicated
             if (this.showAsOverlay()) {
-                view.draw(ngFeat, true, true);
+                view.draw(ngFeat, true);
             }
         
         } else if (this.showAsOverlay()) {
             // If we're binding a Nongridded layer as an overlay
-            view.draw(ngFeat, true, true);
+            view.draw(ngFeat, true);
         } else {
             // If we're binding a Nongridded layer as primary
-            view.draw(ngFeat, true, false);
+            view.draw(ngFeat, false);
         }
 
         if (opts.statsFrom === 'data') {
@@ -1072,6 +1160,10 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     lessThanDaily: function (view, metadata) {
         var ltDaily = false;
+        
+        if (!metadata) {
+            return;
+        }
         
         steps = metadata.getTimeOffsets();
         if (!Ext.isEmpty(steps)) {
@@ -1245,8 +1337,8 @@ Ext.define('Flux.controller.UserInteraction', {
             // Make UI changes
             map.setTbarForDrawnROI();
             
-            // Draw the polygon 
-            map.redrawPolygon();   
+            // Draw the ROI 
+            map.redrawRoi();   
              
             // Zoom to ROI
             map.setZoomToRoiCenter();            
@@ -1408,12 +1500,11 @@ Ext.define('Flux.controller.UserInteraction', {
         var d, dates, steps, view;
         var editor = field.up('roweditor');
         var values = field.up('panel').getForm().getValues();
-        values.date = values.date || date;
-
+        
         if (!value) {
             return; // Ignore undefined, null values
         }
-
+        
         if (editor) {
             view = editor.editingPlugin.getCmp().getView().getSelectionModel()
                 .getSelection()[0].get('view');
@@ -1421,15 +1512,17 @@ Ext.define('Flux.controller.UserInteraction', {
         } else {
             view = this.getMap();
         }
-
+        
         // If nongridded, reroute request as appropriate
         // (important in Coordinated View, which automatically
         //  sends source combo change events here)
         if (!view.getMetadata().get('gridded')) {
             this.onNongriddedDateSelection(field);
             return;
-        }
-      
+        }        
+
+        values.date = values.date || date;
+
         if (Ext.isEmpty(values.source) || Ext.isEmpty(values.date)) {
             return;
         }
@@ -1485,6 +1578,9 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // Enable the FieldSets in this form
         var settings = this.getGlobalSettings();
+        
+        // Hide the Animation "Reset" button
+        this.getTopToolbar().down('button[itemId=reset-btn]').hide();
         
         if (settings.statsFrom === 'data') {
             Ext.each(this.getSourcePanel().query('fieldset'), function (fs) {
@@ -1648,11 +1744,12 @@ Ext.define('Flux.controller.UserInteraction', {
         var menu_btn = btn.up('button');
 	var tbar = menu.up('toolbar');
 
+        // Adjust UI
 	menu.hide();
         menu_btn.hide();
 	tbar.down('button[itemId="btn-cancel-drawing"]').show();
 
-	// this toggles header text
+	// Toggles header text
 	view.panes.hud.selectAll('.info').style('font-size',(0.03 * view.svg.attr('width')).toString() + 'px')
 	view.updateDisplay([{
                 id: 'tooltip',
@@ -1913,7 +2010,7 @@ Ext.define('Flux.controller.UserInteraction', {
         var map = this.getMap();
         var showAsOverlay = this.showAsOverlay();
         Ext.each(Ext.ComponentQuery.query('d3geomap'), function (v) {
-            v.setMarkerSize(size).redraw(view.zoom, showAsOverlay);
+            v.setMarkerSize(size).redraw(showAsOverlay);
         });
     },
     /**
@@ -1936,7 +2033,7 @@ Ext.define('Flux.controller.UserInteraction', {
         // the overlay (if valid)
         if (this._suppressBind) {
             if (this.showAsOverlay()) {
-                view.draw(view._modelOverlay, true, true);
+                view.draw(view._modelOverlay, true);
             }
             this._suppressBind = false;
             return;
@@ -1950,7 +2047,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
             // if showNongridded is also checked...
             if (this.showAsOverlay()) {
-                view.draw(view._modelOverlay, true, true);
+                view.draw(view._modelOverlay, true);
             }
         // if showGridded is NOT checked...
         } else {
@@ -2007,7 +2104,7 @@ Ext.define('Flux.controller.UserInteraction', {
             this.setAsPrimaryGridded();
             
             // Finally, draw the overlay on top
-            view.draw(view._modelOverlay, true, true);
+            view.draw(view._modelOverlay, true);
         
         // if showNongridded is checked but showGridded is not
         } else if (checked) {
@@ -2479,6 +2576,9 @@ Ext.define('Flux.controller.UserInteraction', {
         var showGridded = showGriddedChk.checked || false;
         var showNongriddedChk = this.getNongriddedPanel().down('checkbox[name=showNongridded]');
         
+        // Hide the Animation "Reset" button
+        this.getTopToolbar().down('button[itemId=reset-btn]').hide();
+
         // Reset showGridded
         this._suppressBind = true;
         
@@ -2806,6 +2906,8 @@ Ext.define('Flux.controller.UserInteraction', {
                 container = this.getContentPanel();
                 w = (Ext.getBody().getWidth() > 1000) ? 250 : '20%';
                 this.getSymbology().up('sidepanel').expand(false);
+                // See note below
+                this.getMapSettings().down('recombo[name=projection]').setReadOnly(false);
 
                 items = [{
                     xtype: 'd3geomap',
@@ -2833,6 +2935,11 @@ Ext.define('Flux.controller.UserInteraction', {
             case 'coordinated-view':
                 w = 350;
                 this.getSymbology().up('sidepanel').collapse();
+                
+                // Disable ability to change Map projection (must set read-only instead of
+                // simply disabling we still need to read/use the value, which can't be done
+                // if enabled)
+                this.getMapSettings().down('recombo[name=projection]').setReadOnly(true);
                 this.getSourcesGrid().getStore().removeAll();
                 break;
         }
@@ -2962,36 +3069,43 @@ Ext.define('Flux.controller.UserInteraction', {
 
      */
     setAsPrimaryGridded: function () {
-            var triggerField, triggerValue;
-            var view = this.getMap();
-            var source = this.getSourcePanel().down('field[name=source]').getValue();
-            var date_field = this.getSourcePanel().down('field[name=date]');
-            var date = date_field.getValue();
-            var time_field = this.getSourcePanel().down('field[name=time]');
-            var time = time_field.getValue();
-            var storeMeta = this.getStore('metadata').getById(source);
-            var storeGrid = this.getStore('rastergrids').getById(source);
-            var tbar = view.down('toolbar[cls=map-tbar]');
-            var showLinePlot = this.getSourcePanel().down('recheckbox[name=showLinePlot]');
+        var triggerField, triggerValue;
+        var view = this.getMap();
+        var source = this.getSourcePanel().down('field[name=source]').getValue();
+        var date_field = this.getSourcePanel().down('field[name=date]');
+        var date = date_field.getValue();
+        var time_field = this.getSourcePanel().down('field[name=time]');
+        var time = time_field.getValue();
+        var storeMeta = this.getStore('metadata').getById(source);
+        var storeGrid = this.getStore('rastergrids').getById(source);
+        var tbar = view.down('toolbar[cls=map-tbar]');
+        var showLinePlot = this.getSourcePanel().down('recheckbox[name=showLinePlot]');
+        
+        tbar.down('button[itemId=btn-fetch-roi-time-series]').setDisabled(!showLinePlot);
+        
+        if (this.lessThanDaily(view, storeMeta)) {
+            if (Ext.isEmpty(time)) {
+                return;
+            } 
+            triggerField = time_field;
+            triggerValue = time;    
+        }
+        
+        // If all the necessary values are filled out and the stores exist...
+        if (!Ext.isEmpty(source) && !Ext.isEmpty(date) && storeMeta && storeGrid) { 
+            // Do the things that are done under onSourceChange and then onDateTimeSelection
+            // that normally serve to load/draw the gridded data
+            this.bindMetadata(view, storeMeta);
+            this.bindRasterGrid(view, storeGrid);
+            this.onDateTimeSelection(triggerField || date_field, triggerValue || date);
             
-            tbar.down('button[itemId=btn-fetch-roi-time-series]').setDisabled(!showLinePlot);
-            
-            if (this.lessThanDaily(view, storeMeta)) {
-                if (Ext.isEmpty(time)) {
-                    return;
-                } 
-                triggerField = time_field;
-                triggerValue = time;    
-            }
-            
-            // If all the necessary values are filled out and the stores exist...
-            if (!Ext.isEmpty(source) && !Ext.isEmpty(date) && storeMeta && storeGrid) { 
-                // Do the things that are done under onSourceChange and then onDateTimeSelection
-                // that normally serve to load/draw the gridded data
-                this.bindMetadata(view, storeMeta);
-                this.bindRasterGrid(view, storeGrid);
-                this.onDateTimeSelection(triggerField || date_field, triggerValue || date);
-            }
+            // Enable animation controls
+            Ext.each(this.getTopToolbar().query('button[cls=anim-btn]'), function (btn) {
+                btn.enable();
+            });
+        }
+        
+        
         
     },
     
@@ -3004,9 +3118,15 @@ Ext.define('Flux.controller.UserInteraction', {
         var view = this.getMap();
         var panel = this.getNongriddedPanel();
         var values = panel.getForm().getValues();
-        
         var tbar = view.down('toolbar[cls=map-tbar]');
+        
+        // Disable Fetch ROI time series button
         tbar.down('button[itemId=btn-fetch-roi-time-series]').setDisabled(true);
+        
+        // Disable Animation controls
+        Ext.each(this.getTopToolbar().query('button[cls=anim-btn]'), function (btn) {
+            btn.disable();
+        });
         
         // Quit if any of the required Nongridded fields are empty
         if (Ext.isEmpty(values.start) ||
@@ -3020,6 +3140,20 @@ Ext.define('Flux.controller.UserInteraction', {
         
         this.bindMetadata(view, this.getStore('metadata').getById(source));
         this.onNongriddedDateSelection(end_field);
+    },
+    
+    syncZoom: function(currentMap, event, mostRecentZoomScale) {
+        var query = Ext.ComponentQuery.query('d3geomap');
+        var factor = event.scale / mostRecentZoomScale; 
+        
+        Ext.each(query, function (view) {
+            if (view != currentMap) {
+                event.scale = factor * view.zoom.scale();
+                view.zoomFunc(event, true);
+            }
+            
+        });
+        
     },
     
     /**
@@ -3084,7 +3218,7 @@ Ext.define('Flux.controller.UserInteraction', {
         map.on('afterlayout', function () {
             this.init(this.getWidth(), this.getHeight())
                 .setBasemap(basemap)
-                .redraw(true);
+                .redraw();
         }, map, {
             single: true // Remove this listener
         });

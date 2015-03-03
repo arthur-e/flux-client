@@ -1,3 +1,5 @@
+// A NumberField that remembers its state.
+
 Ext.define('Flux.field.StatefulNumberField', {
     extend: 'Ext.form.field.Number',
     alias: 'widget.renumberfield',

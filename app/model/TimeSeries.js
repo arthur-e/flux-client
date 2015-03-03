@@ -1,3 +1,5 @@
+// This model describes a Time Series like the line plot at the bottom of Single Map visualizations.
+
 Ext.define('Flux.model.TimeSeries', {
     extend: 'Ext.data.Model',
 
@@ -11,8 +13,8 @@ Ext.define('Flux.model.TimeSeries', {
         type: 'auto'
     }],
 
-    /**TODO
-     */
+    // Calculates the time stamps corresponding to each data point in the time series.
+
     getInterpolation: function (steps, stepSize) {
         var parser = d3.time.format.utc('%Y-%m-%dT%H:%M:%S.%LZ').parse;
         var end = moment.utc(this.get('properties').end);
@@ -25,7 +27,7 @@ Ext.define('Flux.model.TimeSeries', {
             'daily': 'day',
             'monthly': 'month'
         })[this.get('properties').interval];
-        
+
         while (t.isBefore(end)) {
             t.add(steps, stepSize);
             times.push(parser(t.toISOString()));

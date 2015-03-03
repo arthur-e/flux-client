@@ -2256,7 +2256,6 @@ Ext.define('Flux.controller.UserInteraction', {
     onSaveDialogue: function (btn) {
         var view = btn.up('d3geomap');
         
-        console.log(view);
         var tempstate = view.popup.down('#output').down().state
         
         var showGriddedChk = this.getSourcePanel().down('checkbox[name=showGridded]');
@@ -2290,9 +2289,6 @@ Ext.define('Flux.controller.UserInteraction', {
         
         var outputType = savedlg.down('#output').down('reradiogroup').state;
         var fileType = savedlg.down('#filetype').getLayout().getActiveItem().state;
-        
-        //console.log(outputType);
-        //console.log(fileType);
         
         if (outputType == "image") {
             if (fileType == "png") {

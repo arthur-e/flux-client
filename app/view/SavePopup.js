@@ -27,7 +27,6 @@ Ext.define('Flux.view.SavePopup', {
         }];
         this.callParent();
         
-        console.log(this.down('#output').down().state);
         this.down('#output').down().state = 'image';
     },
     
@@ -72,13 +71,7 @@ Ext.define('Flux.view.SavePopup', {
                         return;
                     }
                     
-                    //console.log(this.getValue());
-                    //console.log('here');
-                    console.log(sel);
-                    //console.log(this);
-                    //console.log(this.up('form'));
                     this.state = sel.saveType;
-                    //console.log(this.up('form').down("#filetype").getLayout());
                     this.up('form').down("#filetype").getLayout().setActiveItem(sel.saveType);
                 }
             }]

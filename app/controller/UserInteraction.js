@@ -2299,6 +2299,9 @@ Ext.define('Flux.controller.UserInteraction', {
             if (fileType == "ascii") {
                 this.SaveASCII(view);
             }
+            else if (fileType == "geotiff") {
+                this.SaveGTiff(view);
+            }
         }
         else if (outputType == "overlay") {
             if (fileType == "csv") {
@@ -2479,6 +2482,78 @@ Ext.define('Flux.controller.UserInteraction', {
             pom.setAttribute('download', filename);
             pom.click();
             
+        }
+    },
+    
+    /**
+        Saves data as a GeoTiff file.
+        @param  view {D3GeographicMap}
+     */
+    SaveGTiff: function(view) {
+        
+        if(view._model) {
+            var index = view._model.internalId;
+            var data = view.store.data.map[index].data.features;
+            var coords = view._grid.data.coordinates;
+            var meta = view.getMetadata().data;
+            var xdelta = meta.grid.x;
+            var ydelta = meta.grid.y;
+            
+            var height = Math.abs(meta.bbox[1]-meta.bbox[3])+1;
+            var width = Math.abs(meta.bbox[0]-meta.bbox[2])+1;
+            
+            var outData = new Array(height*width);
+              
+            //fill in nodata values
+            for(var i=0; i<outData.length; i++) {
+                
+                outData[i] = [-9999];
+            }
+            
+            var x,y,lat,lon;
+            
+            //fill in actual data
+            for(var i=0; i<coords.length; i++) {
+                x = coords[i][0] - meta.bbox[0];
+                y = meta.bbox[3] - coords[i][1];
+                
+                outData[y*width+x] = [data[i]];
+            }
+            
+            var tiff = new ClienTiff.TiffWriter();
+            tiff.AddRaster(height,width,32,1,Float32Array,outData,{RowsPerStrip: 16});
+            var raster = tiff.GetRaster(0);
+            raster.SetTag(339, "short", 3); //SampleFormat: IEEEFP
+            raster.SetTag(42113, "ascii", "-9999"); //GDAL_NODATA
+            
+            //Add information for GeoTIFF
+            var geocode = new ClienTiff.GeoKeyDirectory();
+            geocode.SetKey(1024, "short", 2); //Model Type: Geographic
+            geocode.SetKey(1025, "short", 1); //RasterType: pixel-is-area
+            geocode.SetKey(2048, "short", 4326); //GeographicType: EPSG 4326
+            geocode.Define2DTransform(raster, [meta.bbox[0]-xdelta/2, xdelta, 0, meta.bbox[3] + ydelta/2, 0, -ydelta]);
+            geocode.WriteMetadata(raster);
+            
+            var saveData = (function () {
+                var a = document.createElement("a");
+                document.body.appendChild(a);
+                a.style = "display: none";
+                return function (data, fileName) {
+                        blob = new Blob([data], {type: "octet/stream"}),
+                        url = window.URL.createObjectURL(blob);
+                    a.href = url;
+                    a.download = fileName;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                };
+            }());
+
+            var bdata = tiff.GetBinary();
+            
+            var filename = index.substring(7) + ".tif";
+            filename = filename.replace("&time=","_");
+            filename = filename.replace(/%3A/gi,"");
+            saveData(bdata,filename);
         }
     },
     

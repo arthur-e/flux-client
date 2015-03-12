@@ -114,10 +114,19 @@ Ext.define('Flux.view.SavePopup', {
                     inputValue: 'ascii',
                     id: 'ascii',
                     checked: true
+                }, {
+                    boxLabel: 'GeoTiff',
+                    name: 'imageFileType',
+                    inputValue: 'geotiff',
+                    id: 'geotiff',
                 }],
             
                 propagateChange: function (sel) {
-                    //console.log(sel);
+                    if (this.up('form') === undefined) {
+                        return;
+                    }
+                    
+                    this.state = sel.imageFileType;
                 }
             }, 
             {
@@ -136,7 +145,7 @@ Ext.define('Flux.view.SavePopup', {
                 }],
 
                 propagateChange: function (sel) {
-                    //console.log(sel);
+                    //console.log(sel)
                 }
             }]
         }, {

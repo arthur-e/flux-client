@@ -184,6 +184,9 @@ Ext.define('Flux.view.SourcePanel', {
                 render: function () {
                     this.bindStore(Ext.StoreManager.get('scenarios'));
                 },
+                expand: function () {
+                    this.store.filter('gridded', true);
+                },
                 dirtychange: function () {
                     this.up('form').down('field[name=date2]').enable();
                 }

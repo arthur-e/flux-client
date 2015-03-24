@@ -212,7 +212,7 @@ Ext.define('Flux.controller.Animation', {
                 steps = 0;
                 
                 var date = Ext.ComponentQuery.query('datefield[name=date]')[0].rawValue;
-                var time = Ext.ComponentQuery.query('combo[name=time]')[0].value;
+                var time = Ext.ComponentQuery.query('combo[name=time]')[0].value || '00:00';
         
                 ts = moment.utc(Ext.String.format('{0}T{1}:00.000Z', date, time));
                 

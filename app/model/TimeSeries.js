@@ -14,7 +14,7 @@ Ext.define('Flux.model.TimeSeries', {
     }],
 
     // Calculates the time stamps corresponding to each data point in the time series.
-
+    // This assumes a uniform distribution of data i.e. steps never vary. This is not always the case
     getInterpolation: function (steps, stepSize) {
         var parser = d3.time.format.utc('%Y-%m-%dT%H:%M:%S.%LZ').parse;
         var end = moment.utc(this.get('properties').end);
@@ -29,8 +29,8 @@ Ext.define('Flux.model.TimeSeries', {
         })[this.get('properties').interval];
 
         while (t.isBefore(end)) {
-            t.add(steps, stepSize);
             times.push(parser(t.toISOString()));
+            t.add(steps, stepSize);
         }
 
         return d3.zip(times, this.get('series'));

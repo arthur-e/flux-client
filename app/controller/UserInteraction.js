@@ -2078,13 +2078,6 @@ Ext.define('Flux.controller.UserInteraction', {
             this._suppressBind = false;
             return;
         }
-
-//         // Quit if any of the required Nongridded fields are empty
-//         if (Ext.isEmpty(values.start) ||
-//             Ext.isEmpty(values.end) ||
-//             Ext.isEmpty(values.source_nongridded)) {
-//             return;
-//         }
         
         // Remove currently drawn elements on the map
         view.clear();
@@ -2109,15 +2102,6 @@ Ext.define('Flux.controller.UserInteraction', {
         // if showNongridded is checked but showGridded is not
         } else if (checked) {
             this.setAsPrimaryNonGridded();
-            
-//             // Bind what is currently used as the Overlay metadata/data 
-//             // to the primary data layer
-//             this.bindMetadata(view, view.getMetadataOverlay());
-//             this.bindLayer(view, view._modelOverlay);
-//             
-//             // Clear the overlay data
-//             delete view._metadataOverlay;
-//             delete view._modelOverlay;
             
         // if showNongridded is NOT checked bu showGridded IS
         } else if (showGridded) {

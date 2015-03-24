@@ -363,6 +363,9 @@ Ext.define('Flux.view.D3LinePlot', {
             this.addListeners(sel);
         }
 
+        // Redraw annotation
+        this.updateAnnotation(this._moments);
+        
         this.isDrawn = true;
 
         return this;
@@ -405,7 +408,7 @@ Ext.define('Flux.view.D3LinePlot', {
             .tickSize(0, 0, 0)
             .tickPadding(10);
 
-        // This one's for the grid lines
+        // Gridlines //////////////////////////////////////////////////////////
 	this.axis.x0 = d3.svg.axis()
 	    .scale(this.scales.x)
 	    .orient('top')
@@ -533,7 +536,7 @@ Ext.define('Flux.view.D3LinePlot', {
                                this._currentTimeSeriesLegendEntry);
             }
         }
-        
+
         return this;
     },
 
@@ -556,6 +559,8 @@ Ext.define('Flux.view.D3LinePlot', {
         @return         {Flux.view.D3LinePlot}
      */
     updateAnnotation: function (moments) {
+        this._moments = moments;
+        
         var attr = {
             'x': Ext.Function.bind(function (d) {
                 return this.scales.x(d) + 1;
@@ -564,7 +569,8 @@ Ext.define('Flux.view.D3LinePlot', {
             'width': 1,
             'height': this._plotHeight,
             'class': 'slice',
-            'fill-opacity': 1
+            'fill-opacity': 0.8,
+            'fill': 'green',
         };
         var data = Ext.Array.map(moments, function (m) {
             return d3.time.format.utc('%Y-%m-%dT%H:%M:%S.%LZ')

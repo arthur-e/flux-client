@@ -1309,6 +1309,21 @@ Ext.define('Flux.view.D3GeographicMap', {
             .scale(this._legend.yScale)
             .orient('right');
 
+        // Add background to legend
+        this.panes.legend.selectAll('.backdrop')
+            .data([0])
+            .enter()
+            .append('rect')
+            .attr({
+                'fill': '#fff',
+                'fill-opacity': 0.0,
+                'class': 'backdrop',
+                'x': 0,
+                'y': 0,
+                'width': 0,
+                'height': 0
+            });
+            
         // Add the empty legend units text element
         this.panes.legend.selectAll('.units')
             .data([''])
@@ -1872,9 +1887,10 @@ Ext.define('Flux.view.D3GeographicMap', {
     //     @return         {Flux.view.D3GeographicMap}
 
     updateLegend: function () {
-        var bins, h, ordinal, unitsLabel;
+        var bins, h, ordinal, unitsLabel, boxHeight;
         var p = this.getMetadata().get('precision');
         var s = 0.025 * this.svg.attr('width'); // Length on a side of the legend's bins
+        var x0 = 4; // Number of pixels by which to buffer legend entries from left edge of map
         var colors = this._colorScale.range();
         var units = this.getMetadata().get('units');
 
@@ -1890,7 +1906,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         // Subtract the header width from the legend's y-offset so that it
         //  is displaced relative to the bottom of the Panel's header, not the
         //  top of the Panel's header
-        var yOffset = this.svg.attr('height') - this.getHeader().getHeight();
+        var yOffset = this.svg.attr('height') - this.getHeader().getHeight() - 3;
 
         if (this._colorScale.domain().length === 0) {
             return this;
@@ -1909,10 +1925,22 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         // Calculate intended height of the legend
         h = s * bins.length;
-
+        
+        // Update scale 
         this._legend.yScale
             .domain([0, bins.length])
             .range([h, 0]);
+            
+        // Update backdrop based on height
+        boxHeight = h + s + 34
+        this.panes.legend.selectAll('.backdrop')
+            .attr({
+                'fill-opacity': 0.5,
+                'x': 0,
+                'y': yOffset - boxHeight + 4,
+                'width': s + 50,
+                'height': boxHeight
+            });
 
         this._legend.yAxis
             .tickFormat(function (x) {
@@ -1927,7 +1955,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             .enter()
             .append('rect')
             .attr({
-                'x': 0,
+                'x': x0,
                 'y': function (d, i) {
                     if (ordinal) {
                         return yOffset - ((i + 2) * s);
@@ -1961,7 +1989,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         this.panes.legend.selectAll('.axis').remove();
         this.panes.legend.append('g').attr({
             'class': 'ramp y axis',
-            'transform': 'translate(' + s.toString() + ',' +
+            'transform': 'translate(' + (s + x0).toString() + ',' +
                 (yOffset - this._legend.yScale(bins.length) - h - s).toString() + ')'
         }).call(this._legend.yAxis);
 

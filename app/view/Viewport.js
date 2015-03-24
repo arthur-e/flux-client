@@ -237,7 +237,7 @@ Ext.define('Flux.view.Viewport', {
                 itemId: 'reset-btn',
                 text: 'Reset',
                 tooltip: 'Return to the dataset specified in the selection menu',
-                //style: 'background: #ffcc00;',
+                style: 'background: #ffcc00;',
                 disabled: true,
                 hidden: true
             }]

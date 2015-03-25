@@ -136,8 +136,17 @@ Ext.define('Flux.controller.UserInteraction', {
             'd3geomap #btn-fetch-roi-time-series': {
                 click: this.onFetchRoiTimeSeriesClick
             },
-            'd3geomap #btn-save-image': {
-                click: this.onSaveDialogue
+            'd3geomap #btn-save-png': {
+                click: this.onSave
+            },
+            'd3geomap #btn-save-ascii': {
+                click: this.onSave
+            },
+            'd3geomap #btn-save-geotiff': {
+                click: this.onSave
+            },
+            'd3geomap #btn-save-csv': {
+                click: this.onSave
             },
             'field[name=source]': {
                 change: this.onSourceChange
@@ -168,9 +177,6 @@ Ext.define('Flux.controller.UserInteraction', {
             'roioverlayform' : {
                 submit: this.onSubmitRoiOverlay,
                 loadRoi: this.onLoadMostRecentRoi
-            },
-            'SavePopup #btn-save-file': {
-                click: this.onSaveFile
             },
             
             'sourcesgridpanel': {
@@ -2036,9 +2042,13 @@ Ext.define('Flux.controller.UserInteraction', {
     onShowGriddedToggle: function (cb, checked) {
         var view = this.getMap();
         var cbNongridded = this.getNongriddedPanel().down('checkbox[name=showNongridded]');
+        var tbar = view.down('toolbar[cls=map-tbar]');
+        
+        tbar.down('button[itemId=btn-save-ascii]').setDisabled(!checked);
+        tbar.down('button[itemId=btn-save-geotiff]').setDisabled(!checked);
         
         if (checked) {
-            cbNongridded.setBoxLabel('Show*');    
+            cbNongridded.setBoxLabel('Show*'); 
         } else {
             cbNongridded.setBoxLabel('Show');    
         }
@@ -2086,6 +2096,9 @@ Ext.define('Flux.controller.UserInteraction', {
         var view = this.getMap();
         var showGridded = this.getSourcePanel().down('checkbox[name=showGridded]').checked;
         var currentModelIsNongridded = view._model && view._model.id.indexOf('Flux.model.Nongridded') > -1;
+        var tbar = view.down('toolbar[cls=map-tbar]');
+        
+        tbar.down('button[itemId=btn-save-csv]').setDisabled(!checked);
         
         if (this._suppressBind) {
             this._suppressBind = false;
@@ -2248,67 +2261,29 @@ Ext.define('Flux.controller.UserInteraction', {
     },
     
     /**
-     * Opens a dialogue to save image/data
+     * Handles selection of any of the output formats
+     * selected in the Save dialogue
      */
-    onSaveDialogue: function (btn) {
+    onSave: function (btn) {
         var view = btn.up('d3geomap');
-        
-        var tempstate = view.popup.down('#output').down().state
-        
-        var showGriddedChk = this.getSourcePanel().down('checkbox[name=showGridded]');
-        var showGridded = showGriddedChk.checked || false;
-        var showNongriddedChk = this.getNongriddedPanel().down('checkbox[name=showNongridded]');
-        var showNongridded = showNongriddedChk.checked || false;
 
-        view.popup.show();
-        
-        if(showGridded) {
-            view.popup.down('#output').down('#data').show();
-        }
-        else {
-            view.popup.down('#output').down('#data').hide();
+        if (btn.itemId.indexOf('png') > -1) {
+            this.SaveImage(view);
         }
         
-        if(showNongridded) {
-            view.popup.down('#output').down('#overlay').show();
-        }
-        else {
-            view.popup.down('#output').down('#overlay').hide();
+        if (btn.itemId.indexOf('ascii') > -1) {
+            this.SaveASCII(view);
         }
         
-        //restore correct value and file format list (reverts to cached value and file format list is blank otherwise)
-        view.popup.down('#output').down('#'+tempstate).onBoxClick({});
+        if (btn.itemId.indexOf('geotiff') > -1) {
+            this.SaveGTiff(view);
+        }
+        
+        if (btn.itemId.indexOf('csv') > -1) {
+            this.SaveCSV(view); 
+        }
     },
-    
-    onSaveFile: function(btn) {
-        var savedlg = btn.up('SavePopup');
-        var view = savedlg.view;
         
-        var outputType = savedlg.down('#output').down('reradiogroup').state;
-        var fileType = savedlg.down('#filetype').getLayout().getActiveItem().state;
-        
-        if (outputType == "image") {
-            if (fileType == "png") {
-                this.SaveImage(view);
-            }
-        }
-        else if (outputType == "data") {
-            if (fileType == "ascii") {
-                this.SaveASCII(view);
-            }
-            else if (fileType == "geotiff") {
-                this.SaveGTiff(view);
-            }
-        }
-        else if (outputType == "overlay") {
-            if (fileType == "csv") {
-                this.SaveCSV(view);
-            }
-        }
-        
-        
-    },
-
     /**
         Saves an image out as an SVG file.
         @param  view {D3GeographicMap}

@@ -223,7 +223,58 @@ Ext.define('Flux.view.D3GeographicMap', {
                     }, {
                         itemId: 'btn-save-image',
                         iconCls: 'icon-disk',
-                        tooltip: 'Save Image/Data'
+                        arrowCls: 'icon-add-roi',
+                        menuAlign: 'l-r?',
+                        tooltip: 'Save Image/Data',
+                        menu: {
+                            xtype: 'menu',
+                            cls: 'add-roi-menu',
+                            bodyCls: 'add-roi-menu-body',
+                            plain: true,
+                            columns: 1,
+                            padding: 4,
+                            margin: 0,
+                            shadow: false,
+                            defaults: {
+                                xtype: 'button',
+                                scale: 'small',
+                                textAlign: 'left',
+                                height: 20,
+                                cls: 'add-roi-menu-item'
+                            },
+                            items: [{
+                                xtype: 'label',
+                                text: 'Save as...',
+                                cls: 'add-roi-menu-title'
+                            }, {
+                                itemId: 'btn-save-png',
+                                text: 'PNG',
+                                tooltip: 'Export an image of the current view',
+                            }, {
+                                itemId: 'btn-save-ascii',
+                                text: 'ESRI ASCII',
+                                tooltip: 'Gridded data only',
+                                disabled: true
+                            }, {
+                                itemId: 'btn-save-geotiff',
+                                text: 'GeoTiff',
+                                tooltip: 'Gridded data only',
+                                disabled: true
+                            }, {
+                                itemId: 'btn-save-csv',
+                                text: 'CSV',
+                                tooltip: 'Non-gridded data only',
+                                disabled: true
+                            }]
+                        },
+                        listeners: {
+                            mouseover: function() {
+                                this.showMenu();
+                            },
+                            menushow: function() {
+                                this.mouseLeaveMonitor = this.menu.el.monitorMouseLeave(0, this.hideMenu, this);
+                            },
+                        }
                     },
                 ]
             }), 0);

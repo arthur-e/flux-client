@@ -1877,7 +1877,21 @@ Ext.define('Flux.controller.UserInteraction', {
         }
         
         // Update lineplot
-        if (this.getLinePlot() && props) {
+        if (this.getLinePlot()) {
+            this.updateLinePlot();
+        } else {
+            this.getSourcePanel().down('recheckbox[name=showLinePlot]').setValue(false);
+        }
+    },
+
+    updateLinePlot: function () {
+        var feat = this.getMap()._model;
+        var props = feat.get('properties');
+        var moments = [
+            feat.get('timestamp')
+        ];
+        
+        if (props) {
             if (props.start && props.end) {
                 moments = [
                     moment.utc(props.start),
@@ -1886,11 +1900,10 @@ Ext.define('Flux.controller.UserInteraction', {
             }
 
             this.getLinePlot().updateAnnotation(moments);
-        } else {
-            this.getSourcePanel().down('recheckbox[name=showLinePlot]').setValue(false);
         }
+        
     },
-
+    
     /**
         Handles toggle of whether or not Nongridded overlay data 
         should include an outline (to better set it apart from
@@ -3226,6 +3239,7 @@ Ext.define('Flux.controller.UserInteraction', {
         var series;
 
         var cmp = map.down('toolbar').down('button[itemId="btn-fetch-roi-time-series"]');
+        
         // Toggle visibility of the ROI fetch time series button
         if (map.getMetadata().get('gridded')) {
             cmp.setDisabled(!checked);
@@ -3259,6 +3273,7 @@ Ext.define('Flux.controller.UserInteraction', {
 		} else {
 		    this.bindMetadata(this.getLinePlot(), map.getMetadata());
 		}
+		this.updateLinePlot();
             }
 
         } else {

@@ -1315,7 +1315,7 @@ Ext.define('Flux.view.D3GeographicMap', {
             .enter()
             .append('rect')
             .attr({
-                'fill': '#fff',
+                'fill': '#aaaaaa',
                 'fill-opacity': 0.0,
                 'class': 'backdrop',
                 'x': 0,
@@ -1935,7 +1935,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         boxHeight = h + s + 34
         this.panes.legend.selectAll('.backdrop')
             .attr({
-                'fill-opacity': 0.5,
+                'fill-opacity': 0.6,
                 'x': 0,
                 'y': yOffset - boxHeight + 4,
                 'width': s + 50,

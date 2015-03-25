@@ -59,7 +59,6 @@ Ext.define('Flux.view.D3GeographicMap', {
     // Initializes the component.
     initComponent: function () {
         this.addEvents('mouseover', 'mouseout');
-        this.popup = Ext.create('Flux.view.SavePopup', {view: this});
 
         // The scale used for coloring map elements.
         this._colorScale = d3.scale.quantile();

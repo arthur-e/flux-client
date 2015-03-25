@@ -2550,7 +2550,7 @@ Ext.define('Flux.controller.UserInteraction', {
             
             var outData = new Array(height*width);
               
-            //fill in nodata values
+            // Fill in nodata values
             for(var i=0; i<outData.length; i++) {
                 
                 outData[i] = [-9999];
@@ -2558,7 +2558,7 @@ Ext.define('Flux.controller.UserInteraction', {
             
             var x,y,lat,lon;
             
-            //fill in actual data
+            // Fill in actual data
             for(var i=0; i<coords.length; i++) {
                 x = coords[i][0] - meta.bbox[0];
                 y = meta.bbox[3] - coords[i][1];

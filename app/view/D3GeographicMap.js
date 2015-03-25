@@ -1398,6 +1398,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         }
 
         if (this._modelOverlay && showOverlay) {
+            console.log('overlay derpy derpy');
             this.draw(this._modelOverlay, showOverlay);
         }
 
@@ -1474,26 +1475,31 @@ Ext.define('Flux.view.D3GeographicMap', {
     //     @param  scale    {}
 
     scaleAuxiliaryMapComponents: function (scale) {
+        var sel;
+        var proj = this.getProjection();
         var sz = this._markerSize/scale;
-
-        // Scale stroke-width for nongridded data appropriately, whether it exists as...
-        // ...an overlay OR...
-        this.panes.overlay.selectAll('.cell')
-            .style({
-                'stroke-width': this._overlayStrokeWidth / scale
-            })
-            .attr({
-                'height' : sz,
-                'width' : sz
-            });
-
-        // ...as a primary model instance...
+        var overlay_sel = this.panes.overlay.selectAll('.cell');
+        
+        // Scale stroke-width and position for nongridded data appropriately, whether it exists...
+        // ...as a primary model instance OR...
         if (this._model && this._model.id.indexOf('Flux.model.Nongridded') > -1) {
-            this.panes.datalayer.selectAll('.cell')
-                .style({
+            sel = this.panes.datalayer.selectAll('.cell');
+        // ...as an overlay...
+        } else if (overlay_sel.length > 0) {
+            sel = overlay_sel;
+        }
+        if (sel) {
+            sel.style({
                     'stroke-width': this._overlayStrokeWidth / scale
                 })
                 .attr({
+                    'x': function (d) {
+                        return proj(d.coordinates)[0] - (0.5 * sz);
+                    },
+
+                    'y': function (d) {
+                        return proj(d.coordinates)[1] - (0.5 * sz);
+                    },
                     'height' : sz,
                     'width' : sz
                 });

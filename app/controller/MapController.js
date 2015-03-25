@@ -275,7 +275,7 @@ Ext.define('Flux.controller.MapController', {
             var showOverlay = this.getController('UserInteraction').showAsOverlay();
             view.init(width, height)
                 .setBasemap(this.getMapSettings().down('combo[name=basemap]').getValue())
-                .redraw(true, showOverlay)
+                .redraw(showOverlay)
                 .updateDisplay();
         }
     },

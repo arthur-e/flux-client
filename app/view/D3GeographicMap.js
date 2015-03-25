@@ -6,7 +6,6 @@ Ext.define('Flux.view.D3GeographicMap', {
         'Ext.tip.QuickTip',
         'Ext.toolbar.Toolbar',
         'Flux.store.Rasters',
-        'Flux.view.SavePopup',
     ],
 
     // An internal reference to the legend selection.
@@ -813,9 +812,9 @@ Ext.define('Flux.view.D3GeographicMap', {
             var fs = '16px';
             var val = view._currentSummaryStats.properties['all' + s];
 
-            if (view._showAnomalies && display_attrs[s]['offset']) {
-                val = val - offset;
-            }
+//             if (view._showAnomalies && display_attrs[s]['offset']) {
+//                 val = val - offset;
+//             }
 
             // Set some fancy D3 transition animation for when number change
             view.panes.roistats.selectAll('.' + s)
@@ -1398,7 +1397,6 @@ Ext.define('Flux.view.D3GeographicMap', {
         }
 
         if (this._modelOverlay && showOverlay) {
-            console.log('overlay derpy derpy');
             this.draw(this._modelOverlay, showOverlay);
         }
 

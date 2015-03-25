@@ -787,48 +787,96 @@ Ext.define('Flux.controller.UserInteraction', {
         var polygon = view.wrapper.selectAll('polygon');
         var proj = view.getProjection();
         var meta = view.getMetadata();
-
-        if ((meta && !view._currentSummaryStats) ||
-            (meta && (start != end))) {
-            var params, interval;
-            
-            if (meta.get('gridded')) {
-                start = start || view.mostRecentRasterParams.time || meta.get('dates')[0].toISOString();
-                end = end || view.mostRecentRasterParams.time || meta.get('dates')[0].toISOString();
-                interval = this.getInterval(meta);
-            } else {
-                start = start || view.mostRecentNongriddedParams.start;
-                end = end || view.mostRecentNongriddedParams.end;
-                interval = undefined;
-            }
-            
-            onSuccess = onSuccess || view.displaySummaryStats;
         
-            var wkt = this.convertRoiCoordsToWKT(view._roiCoords.slice(0), '+');
+        // client-side spatial query???
+        var reader = new jsts.io.WKTReader();
+        var geometryFactory = new jsts.geom.GeometryFactory()
+        var rTree = new jsts.index.strtree.STRtree();
 
-            params = {
-                start: start,
-                end: end,//meta.get('dates')[meta.get('dates').length - 1].toISOString(),
-                interval:  interval,
-                //TODO aggregate: this.getGlobalSettings().tendency,
-                // aggregate: 'mean',
-                geom: wkt
-            };
-            
-            Ext.Ajax.request({
-                method: 'GET',
-                url: Ext.String.format('/flux/api/scenarios/{0}/roi.json', meta.getId()),
-                params: params,
-                callback: function () {},
-                failure: function (response) {
-                    Ext.Msg.alert('Request Error', response.responseText);
-                },
-                success: function (response) {
-                    onSuccess(Ext.JSON.decode(response.responseText), view, this);
-                },
-                scope: this
-            });
+        // Create JSTS polygon version of roiCoords
+        var coordinates = [];
+        view._roiCoords.slice(0).forEach(function (c) {
+            coordinates.push(new jsts.geom.Coordinate(c[0], c[1]));
+        });
+        coordinates.push(coordinates[0]);
+        var shell = geometryFactory.createLinearRing(coordinates);
+        var searchPolygon = geometryFactory.createPolygon(shell);
+        
+        // Add JSTS geom definition to each cell and insert into rTree
+        var sel = view.panes.datalayer.selectAll('.cell')
+        var width = sel[0][0].width.baseVal.value;
+        var height = sel[0][0].height.baseVal.value;
+        sel.each(function(d) {
+            var x = this.x.baseVal.value;
+            var y = this.y.baseVal.value;
+            var coord = new jsts.geom.Coordinate(x + width/2, y + height/2);
+            this.centroid = geometryFactory.createPoint(coord);
+            rTree.insert(this.centroid.computeEnvelopeInternal(), this);
+        })
+        
+        // Run client-side query...;
+        var vals = [];
+        rTree.query(searchPolygon.getEnvelopeInternal()).forEach(function(d) {
+            if (d.centroid.intersects(searchPolygon)) {
+                vals.push(d.__data__);
+            }
+        })
+        
+        // At the moment, this json format mimics the response you'd get from roi.json...
+        var summary = {
+            'properties' : {
+                'allMean' : this.getAverage(vals),
+                'allMax' : Math.max.apply(null, vals),
+                'allMin' : Math.min.apply(null, vals),
+                'allSTD' : this.getStandardDeviation(vals),
+                'allN'   : vals.length
+            }
         }
+        view.displaySummaryStats(summary, view);
+        
+        
+//         // server-side spatial query
+//         if ((meta && !view._currentSummaryStats) ||
+//             (meta && (start != end))) {
+//             var params, interval;
+//             
+//             if (meta.get('gridded')) {
+//                 start = start || view.mostRecentRasterParams.time || meta.get('dates')[0].toISOString();
+//                 end = end || view.mostRecentRasterParams.time || meta.get('dates')[0].toISOString();
+//                 interval = this.getInterval(meta);
+//             } else {
+//                 start = start || view.mostRecentNongriddedParams.start;
+//                 end = end || view.mostRecentNongriddedParams.end;
+//                 interval = undefined;
+//             }
+//             
+//             onSuccess = onSuccess || view.displaySummaryStats;
+//         
+//             var wkt = this.convertRoiCoordsToWKT(view._roiCoords.slice(0), '+');
+// 
+//             params = {
+//                 start: start,
+//                 end: end,//meta.get('dates')[meta.get('dates').length - 1].toISOString(),
+//                 interval:  interval,
+//                 //TODO aggregate: this.getGlobalSettings().tendency,
+//                 // aggregate: 'mean',
+//                 geom: wkt
+//             };
+//             
+//             Ext.Ajax.request({
+//                 method: 'GET',
+//                 url: Ext.String.format('/flux/api/scenarios/{0}/roi.json', meta.getId()),
+//                 params: params,
+//                 callback: function () {},
+//                 failure: function (response) {
+//                     Ext.Msg.alert('Request Error', response.responseText);
+//                 },
+//                 success: function (response) {
+//                     onSuccess(Ext.JSON.decode(response.responseText), view, this);
+//                 },
+//                 scope: this
+//             });
+//         }
         
     },
     
@@ -885,6 +933,18 @@ Ext.define('Flux.controller.UserInteraction', {
         });
     },
 
+    // `getAverage()` calculates the mean from an array of numbers
+    //
+    //      @param  data    {Array}       e.g. [3,4,-9]
+    //      @return         {Number}
+    
+    getAverage: function (data) {
+        var sum = data.reduce(function (sum, value) {
+            return sum + value;
+        }, 0);
+        return sum / data.length;
+    },
+    
     /**
         Builds title map title property (for displaying in HUD)
         from two grids used in differenced views.
@@ -951,7 +1011,19 @@ Ext.define('Flux.controller.UserInteraction', {
 	}
         return opts;
     },
+    
+    // `getStandardDeviation()` calculates the standard deviation from an
+    // `Array` of numbers
+    getStandardDeviation: function (values) {
+        var avg = this.getAverage(values);
 
+        var squareDiffs = values.map(function (value){
+            return Math.pow((value - avg), 2);
+        });
+
+        return Math.sqrt(this.getAverage(squareDiffs));
+    },
+    
     /**
         Alerts the user that the date/time requested is invalid.
         @param  moment  {moment}
@@ -2046,6 +2118,8 @@ Ext.define('Flux.controller.UserInteraction', {
         
         tbar.down('button[itemId=btn-save-ascii]').setDisabled(!checked);
         tbar.down('button[itemId=btn-save-geotiff]').setDisabled(!checked);
+        
+        this.toggleAggregateParams(!checked);
         
         if (checked) {
             cbNongridded.setBoxLabel('Show*'); 

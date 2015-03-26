@@ -776,19 +776,15 @@ Ext.define('Flux.controller.UserInteraction', {
     },
     
     /**
-        Submits request to server to retrieve ROI summary stats
-        
-        @param start    
-        @param end
-        @param onSuccess        {Function} callback function if request is successful
+        Performs client-side spatial query of currently viewed
+        primary datalayer according to drawn ROI
+
     */
-    fetchRoiSummaryStats: function (start, end, onSuccess) {
+    fetchRoiSummaryStats: function () {
         var view = this.getMap();
         var polygon = view.wrapper.selectAll('polygon');
         var proj = view.getProjection();
         var meta = view.getMetadata();
-        
-        // client-side spatial query???
         var reader = new jsts.io.WKTReader();
         var geometryFactory = new jsts.geom.GeometryFactory()
 
@@ -801,10 +797,11 @@ Ext.define('Flux.controller.UserInteraction', {
         var shell = geometryFactory.createLinearRing(coordinates);
         var searchPolygon = geometryFactory.createPolygon(shell);
         
-        // Add JSTS geom definition to each cell and insert into rTree
+        // Make the primary datalayer spatially queryable
         var sel = view.panes.datalayer.selectAll('.cell')
 
         if (sel.length > 0 && meta) {
+            // If the JSTS rTree doesn't exist yet, create it
             if (!view._rTree) {
                 view._rTree = new jsts.index.strtree.STRtree();
                 var width = sel[0][0].width.baseVal.value;
@@ -818,7 +815,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 })
             }
             
-            // Run client-side query...;
+            // Collect the list of values whose cells intersect w/ the ROI
             var vals = [];
             view._rTree.query(searchPolygon.getEnvelopeInternal()).forEach(function(d) {
                 if (d.centroid.intersects(searchPolygon)) {
@@ -843,6 +840,61 @@ Ext.define('Flux.controller.UserInteraction', {
             view.displaySummaryStats(summary, view);
         }
         
+    },
+    
+    /**
+        Submits request to server to retrieve ROI time series
+        
+        @param start    
+        @param end
+        @param onSuccess        {Function} callback function if request is successful
+    */
+    fetchRoiTimeSeries: function (start, end, onSuccess) {
+        var view = this.getMap();
+        var polygon = view.wrapper.selectAll('polygon');
+        var proj = view.getProjection();
+        var meta = view.getMetadata();
+        
+        if (meta && (start != end)) {
+            var params, interval;
+            
+            if (meta.get('gridded')) {
+                start = start || view.mostRecentRasterParams.time || meta.get('dates')[0].toISOString();
+                end = end || view.mostRecentRasterParams.time || meta.get('dates')[0].toISOString();
+                interval = this.getInterval(meta);
+            } else {
+                start = start || view.mostRecentNongriddedParams.start;
+                end = end || view.mostRecentNongriddedParams.end;
+                interval = undefined;
+            }
+            
+            onSuccess = onSuccess || view.displaySummaryStats;
+        
+            var wkt = this.convertRoiCoordsToWKT(view._roiCoords.slice(0), '+');
+
+            params = {
+                start: start,
+                end: end,//meta.get('dates')[meta.get('dates').length - 1].toISOString(),
+                interval:  interval,
+                //TODO aggregate: this.getGlobalSettings().tendency,
+                // aggregate: 'mean',
+                geom: wkt
+            };
+            
+            Ext.Ajax.request({
+                method: 'GET',
+                url: Ext.String.format('/flux/api/scenarios/{0}/roi.json', meta.getId()),
+                params: params,
+                callback: function () {},
+                failure: function (response) {
+                    Ext.Msg.alert('Request Error', response.responseText);
+                },
+                success: function (response) {
+                    onSuccess(Ext.JSON.decode(response.responseText), view, this);
+                },
+                scope: this
+            });
+        }
     },
     
     /**
@@ -2234,7 +2286,8 @@ Ext.define('Flux.controller.UserInteraction', {
                 
                 linePlot._currentTimeSeries = series;
                 linePlot._currentTimeSeriesLegendEntry = Ext.String.format(
-                        '{0} {1} of {1} at {2}, {3}',
+                        //'{0} {1} of {1} at {2}, {3}',
+                        '{0} {1} at {2}, {3}',
                         params.interval,
                         params.aggregate,
                         geom[0].trim('00'), geom[1].trim('00'));
@@ -2258,7 +2311,7 @@ Ext.define('Flux.controller.UserInteraction', {
         // Temporarily mask out the line plot...
         this.getLinePlot().getEl().mask('Loading...');
 
-        this.fetchRoiSummaryStats(dates[0].toISOString(),
+        this.fetchRoiTimeSeries(dates[0].toISOString(),
                                   dates[dates.length - 1].toISOString(),
                                   this.onFetchRoiTimeSeriesSuccess);
         

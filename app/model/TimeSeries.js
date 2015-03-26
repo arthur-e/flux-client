@@ -24,6 +24,7 @@ Ext.define('Flux.model.TimeSeries', {
         steps = steps || 1;
         stepSize = stepSize || ({ // Convert e.g. 'hourly' to 'hour'
             'hourly': 'hour',
+            'weekly': 'week',
             'daily': 'day',
             'monthly': 'month'
         })[this.get('properties').interval];

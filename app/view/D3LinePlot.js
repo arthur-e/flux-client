@@ -311,8 +311,10 @@ Ext.define('Flux.view.D3LinePlot', {
         this.getEl().unmask();
 
         this.panes.title.selectAll('.legend-title')
-            .text(Ext.String.format('{0}all-time {1} {2} of {2}',
-                (Ext.isEmpty(meta.get('title'))) ? '' : (meta.get('title') + ': '),
+            .text(Ext.String.format(
+                //'{0}all-time {1} {2} of {2}',
+                '{0}: {1} {2}',
+                (Ext.isEmpty(meta.get('title'))) ? '' : (meta.get('title')),
                 model.get('properties').interval || '',
                 model.get('properties').aggregate) || '')
             .attr({
@@ -560,6 +562,10 @@ Ext.define('Flux.view.D3LinePlot', {
      */
     updateAnnotation: function (moments) {
         this._moments = moments;
+        
+        if (!moments) {
+            return;
+        }
         
         var attr = {
             'x': Ext.Function.bind(function (d) {

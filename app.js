@@ -9,6 +9,10 @@
 //@require node_modules/topojson/topojson.min.js
 //@require node_modules/moment/moment.min.js
 //@require node_modules/queue-async/queue.min.js
+//@require node_modules/jsts/lib/javascript.util.min.js
+//@require node_modules/jsts/lib/jsts.min.js
+//@require ClienTiff.js
+
 
 Ext.Loader.require('Ext.data.Types', function () {
     Ext.Loader.require('Flux.type.Moment');

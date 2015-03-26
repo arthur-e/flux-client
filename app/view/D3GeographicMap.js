@@ -848,6 +848,7 @@ Ext.define('Flux.view.D3GeographicMap', {
     draw: function (data, showAsOverlay) {
         var bbox, lat, lng, meta, c1, c2, pane, rectClass, sel;
         var proj = this.getProjection();
+        delete this._rTree;
         // var gridded = data.id.indexOf('Flux.model.Raster') == -1;
 
         if (!data) {

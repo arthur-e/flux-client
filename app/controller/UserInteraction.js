@@ -791,7 +791,6 @@ Ext.define('Flux.controller.UserInteraction', {
         // client-side spatial query???
         var reader = new jsts.io.WKTReader();
         var geometryFactory = new jsts.geom.GeometryFactory()
-        var rTree = new jsts.index.strtree.STRtree();
 
         // Create JSTS polygon version of roiCoords
         var coordinates = [];
@@ -804,79 +803,45 @@ Ext.define('Flux.controller.UserInteraction', {
         
         // Add JSTS geom definition to each cell and insert into rTree
         var sel = view.panes.datalayer.selectAll('.cell')
-        var width = sel[0][0].width.baseVal.value;
-        var height = sel[0][0].height.baseVal.value;
-        sel.each(function(d) {
-            var x = this.x.baseVal.value;
-            var y = this.y.baseVal.value;
-            var coord = new jsts.geom.Coordinate(x + width/2, y + height/2);
-            this.centroid = geometryFactory.createPoint(coord);
-            rTree.insert(this.centroid.computeEnvelopeInternal(), this);
-        })
-        
-        // Run client-side query...;
-        var vals = [];
-        rTree.query(searchPolygon.getEnvelopeInternal()).forEach(function(d) {
-            if (d.centroid.intersects(searchPolygon)) {
-                vals.push(d.__data__);
+
+        if (sel.length > 0 && meta) {
+            if (!view._rTree) {
+                view._rTree = new jsts.index.strtree.STRtree();
+                var width = sel[0][0].width.baseVal.value;
+                var height = sel[0][0].height.baseVal.value;
+                sel.each(function(d) {
+                    var x = this.x.baseVal.value;
+                    var y = this.y.baseVal.value;
+                    var coord = new jsts.geom.Coordinate(x + width/2, y + height/2);
+                    this.centroid = geometryFactory.createPoint(coord);
+                    view._rTree.insert(this.centroid.computeEnvelopeInternal(), this);
+                })
             }
-        })
-        
-        // At the moment, this json format mimics the response you'd get from roi.json...
-        var summary = {
-            'properties' : {
-                'allMean' : this.getAverage(vals),
-                'allMax' : Math.max.apply(null, vals),
-                'allMin' : Math.min.apply(null, vals),
-                'allSTD' : this.getStandardDeviation(vals),
-                'allN'   : vals.length
+            
+            // Run client-side query...;
+            var vals = [];
+            view._rTree.query(searchPolygon.getEnvelopeInternal()).forEach(function(d) {
+                if (d.centroid.intersects(searchPolygon)) {
+                    if (meta.get('gridded')) {
+                        vals.push(d.__data__);
+                    } else {
+                        vals.push(d.__data__.properties.value);
+                    }
+                }
+            })
+            
+            // This json format mimics the response you'd get from roi.json...
+            var summary = {
+                'properties' : {
+                    'allMean' : this.getAverage(vals),
+                    'allMax' : Math.max.apply(null, vals),
+                    'allMin' : Math.min.apply(null, vals),
+                    'allSTD' : this.getStandardDeviation(vals),
+                    'allN'   : vals.length
+                }
             }
+            view.displaySummaryStats(summary, view);
         }
-        view.displaySummaryStats(summary, view);
-        
-        
-//         // server-side spatial query
-//         if ((meta && !view._currentSummaryStats) ||
-//             (meta && (start != end))) {
-//             var params, interval;
-//             
-//             if (meta.get('gridded')) {
-//                 start = start || view.mostRecentRasterParams.time || meta.get('dates')[0].toISOString();
-//                 end = end || view.mostRecentRasterParams.time || meta.get('dates')[0].toISOString();
-//                 interval = this.getInterval(meta);
-//             } else {
-//                 start = start || view.mostRecentNongriddedParams.start;
-//                 end = end || view.mostRecentNongriddedParams.end;
-//                 interval = undefined;
-//             }
-//             
-//             onSuccess = onSuccess || view.displaySummaryStats;
-//         
-//             var wkt = this.convertRoiCoordsToWKT(view._roiCoords.slice(0), '+');
-// 
-//             params = {
-//                 start: start,
-//                 end: end,//meta.get('dates')[meta.get('dates').length - 1].toISOString(),
-//                 interval:  interval,
-//                 //TODO aggregate: this.getGlobalSettings().tendency,
-//                 // aggregate: 'mean',
-//                 geom: wkt
-//             };
-//             
-//             Ext.Ajax.request({
-//                 method: 'GET',
-//                 url: Ext.String.format('/flux/api/scenarios/{0}/roi.json', meta.getId()),
-//                 params: params,
-//                 callback: function () {},
-//                 failure: function (response) {
-//                     Ext.Msg.alert('Request Error', response.responseText);
-//                 },
-//                 success: function (response) {
-//                     onSuccess(Ext.JSON.decode(response.responseText), view, this);
-//                 },
-//                 scope: this
-//             });
-//         }
         
     },
     

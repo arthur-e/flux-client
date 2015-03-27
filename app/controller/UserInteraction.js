@@ -698,6 +698,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 }
             },
             failure: function (response) {
+                this.getTopToolbar().down('#animate-btn').toggle(false);
                 Ext.Msg.alert('Request Error', response.responseText);
             },
             scope: this
@@ -725,6 +726,7 @@ Ext.define('Flux.controller.UserInteraction', {
                     var grid;
 
                     if (!success) {
+                        this.getTopToolbar().down('#animate-btn').toggle(false);
                         callback(response.responseText);
                     }
 

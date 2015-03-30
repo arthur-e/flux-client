@@ -91,7 +91,7 @@ Ext.define('Flux.view.NongriddedPanel', {
         name: 'uncheck-info',
         cls: 'info-label',
         html: '*When both <b>non-gridded</b> and <b>gridded</b> datasets are showing, <b>gridded</b> attributes are used for map settings and calculations.' ,
-        hidden: false,
+        hidden: false
     }]
 });
 

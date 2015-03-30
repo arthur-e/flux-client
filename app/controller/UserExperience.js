@@ -466,7 +466,7 @@ Ext.define('Flux.controller.UserExperience', {
                                                 timestamp: rast.get('timestamp'),
                                                 properties: {
                                                     title: ui.getDifferencedMapTitle(rast, rast2, view.timeFormat),
-                                                    timestamp_diff: rast2.get('timestamp'),
+                                                    timestamp_diff: rast2.get('timestamp')
                                                 }
                                             });
 

@@ -576,7 +576,7 @@ Ext.define('Flux.view.D3LinePlot', {
             'height': this._plotHeight,
             'class': 'slice',
             'fill-opacity': 0.8,
-            'fill': 'green',
+            'fill': 'green'
         };
         var data = Ext.Array.map(moments, function (m) {
             return d3.time.format.utc('%Y-%m-%dT%H:%M:%S.%LZ')

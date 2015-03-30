@@ -2,7 +2,7 @@ Ext.define('Flux.view.RoiOverlayForm', {
     extend: 'Flux.view.FormPanel',
     alias: 'widget.roioverlayform',
     requires: [
-        'Ext.layout.container.Column',
+        'Ext.layout.container.Column'
     ],
     floating: true,
     modal: true,
@@ -24,7 +24,7 @@ Ext.define('Flux.view.RoiOverlayForm', {
                 xtype: 'radiogroup',
                 layout: {
                     type: 'vbox',
-                    align: 'stretch',
+                    align: 'stretch'
                 },
                 items: [{
                     xtype: 'radiofield',
@@ -88,7 +88,7 @@ Ext.define('Flux.view.RoiOverlayForm', {
                 layout: {
                     type: 'vbox',
                     align: 'right',
-                    padding: 2,
+                    padding: 2
                 },
                 dock: 'bottom',
                 ui: 'footer',
@@ -104,7 +104,7 @@ Ext.define('Flux.view.RoiOverlayForm', {
                         // The 'submit' event is handled in UserInteraction.js
                         view.fireEvent('submit', this);
                     }  
-                }],
+                }]
             }));
             
         })

@@ -178,7 +178,7 @@ Ext.define('Flux.view.Viewport', {
                         xtype: 'recheckbox',
                         name: 'markerOutline',
                         stateId: 'markerOutline',
-                        boxLabel: 'Show marker outline',
+                        boxLabel: 'Show marker outline'
                     }, {                      
                         xtype: 'menuseparator'
                     }, {

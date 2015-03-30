@@ -182,7 +182,7 @@ var ClienTiff = {
             YResolution: [72,1],
             ResolutionUnit: 2,
             Tiled: false,
-            PlanarConfiguration: 1,
+            PlanarConfiguration: 1
         }
         
         //combine defaults with user specified options
@@ -746,7 +746,7 @@ var ClienTiff = {
                 }
                 
                 return dbuffer;
-            },
+            }
         };
     },
 
@@ -838,7 +838,7 @@ var ClienTiff = {
             */
             GetType: function () {
                 return keyEntry[1];
-            },
+            }
         };
     },
 
@@ -954,7 +954,7 @@ var ClienTiff = {
                 raster.SetTag(34735,"short",sarray);
                 raster.SetTag(34736,"double",darray);
                 raster.SetTag(34737,"ascii",tarray);
-            },
+            }
         };
     }
 };

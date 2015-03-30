@@ -5,7 +5,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         'Ext.Function',
         'Ext.tip.QuickTip',
         'Ext.toolbar.Toolbar',
-        'Flux.store.Rasters',
+        'Flux.store.Rasters'
     ],
 
     // An internal reference to the legend selection.
@@ -162,7 +162,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                                 tooltip: 'Check "Show line plot" to enable'
                             }, {
                                 itemId: 'btn-remove-roi',
-                                text: 'Remove',
+                                text: 'Remove'
                             }]
                         },
                         listeners: {
@@ -171,7 +171,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                             },
                             menushow: function() {
                                 this.mouseLeaveMonitor = this.menu.el.monitorMouseLeave(0, this.hideMenu, this);
-                            },
+                            }
                         }
                     }, {
                         itemId: 'btn-add-roi',
@@ -201,13 +201,13 @@ Ext.define('Flux.view.D3GeographicMap', {
                                 cls: 'add-roi-menu-title'
                             }, {
                                 itemId: 'btn-add-roi-draw',
-                                text: 'Draw',
+                                text: 'Draw'
                             }, {
                                 itemId: 'btn-add-roi-wkt',
-                                text: 'From WKT',
+                                text: 'From WKT'
                             }, {
                                 itemId: 'btn-add-roi-geojson',
-                                text: 'From GeoJSON',
+                                text: 'From GeoJSON'
                             }]
                         },
                         listeners: {
@@ -216,7 +216,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                             },
                             menushow: function() {
                                 this.mouseLeaveMonitor = this.menu.el.monitorMouseLeave(0, this.hideMenu, this);
-                            },
+                            }
                         }
                     }, {
                         itemId: 'btn-save-image',
@@ -247,7 +247,7 @@ Ext.define('Flux.view.D3GeographicMap', {
                             }, {
                                 itemId: 'btn-save-png',
                                 text: 'PNG',
-                                tooltip: 'Export an image of the current view',
+                                tooltip: 'Export an image of the current view'
                             }, {
                                 itemId: 'btn-save-ascii',
                                 text: 'ESRI ASCII',
@@ -271,9 +271,9 @@ Ext.define('Flux.view.D3GeographicMap', {
                             },
                             menushow: function() {
                                 this.mouseLeaveMonitor = this.menu.el.monitorMouseLeave(0, this.hideMenu, this);
-                            },
+                            }
                         }
-                    },
+                    }
                 ]
             }), 0);
             }

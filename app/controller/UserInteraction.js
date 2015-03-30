@@ -1335,7 +1335,7 @@ Ext.define('Flux.controller.UserInteraction', {
         if (!form) {
             this.getContentPanel().add({
                 xtype: 'ao_geojson',
-                title: 'Add ROI from GeoJSON',
+                title: 'Add ROI from GeoJSON'
             });
             
             form = this.getAoGeoJSON();
@@ -1368,7 +1368,7 @@ Ext.define('Flux.controller.UserInteraction', {
         if (!form) {
             this.getContentPanel().add({
                 xtype: 'ao_wkt',
-                title: 'Add ROI from WKT',
+                title: 'Add ROI from WKT'
             });
             
             form = this.getAoWKT();
@@ -1463,7 +1463,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 },
                 success: function (response) {
                     view.onReceiveRoiOverlay(btn, response.responseText);
-                },
+                }
             });
             
         } else {
@@ -1761,9 +1761,9 @@ Ext.define('Flux.controller.UserInteraction', {
 
                 this.fetchRasters(view, 
                                   [{
-                                    time: view.getMoment().toISOString(),
+                                    time: view.getMoment().toISOString()
                                    }, {
-                                    time: this._diffTime.toISOString(),
+                                    time: this._diffTime.toISOString()
                                    }], 
                                    Ext.Function.bind(this.onDifferenceReceive, this)
                                   );
@@ -3305,12 +3305,13 @@ Ext.define('Flux.controller.UserInteraction', {
         var linePlot = this.getLinePlot();
         var map = this.getMap();
         var container = map.ownerCt;
+        var meta = map.getMetadata();
         var series;
-
+        
         var cmp = map.down('toolbar').down('button[itemId="btn-fetch-roi-time-series"]');
         
         // Toggle visibility of the ROI fetch time series button
-        if (map.getMetadata().get('gridded')) {
+        if (!meta || meta.get('gridded')) {
             cmp.setDisabled(!checked);
         } else {
             cmp.setDisabled(true);

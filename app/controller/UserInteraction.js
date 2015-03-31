@@ -2161,11 +2161,11 @@ Ext.define('Flux.controller.UserInteraction', {
         if (checked) {
             this.setAsPrimaryGridded();
 
-            // if showNongridded is also checked...
+            // If showNongridded is also checked...
             if (this.showAsOverlay()) {
                 view.draw(view._modelOverlay, true);
             }
-        // if showGridded is NOT checked...
+        // If showGridded is NOT checked...
         } else {
             view.clear();
             
@@ -2198,10 +2198,10 @@ Ext.define('Flux.controller.UserInteraction', {
             return;
         }
         
-        // Remove currently drawn elements on the map
-        view.clear();
+//         // Remove currently drawn elements on the map
+//         view.clear();
         
-        // if both showGridded and showNongridded are checked...
+        // If both showGridded and showNongridded are checked...
         if (this.showAsOverlay()) { 
             // Move the currently loaded metadata and model data to the
             // corresponding overlay stores
@@ -2213,19 +2213,32 @@ Ext.define('Flux.controller.UserInteraction', {
                 view._modelOverlay = view._model;
             }
             
-            this.setAsPrimaryGridded();
-            
+            // Only set gridded to primary if it's not already there
+            if (currentModelIsNongridded) {
+                view.clear();
+                this.setAsPrimaryGridded();
+            }
+                
             // Finally, draw the overlay on top
             view.draw(view._modelOverlay, true);
+            //view.panes.overlay.selectAll('.cell').attr('fill-opacity', 1);   
         
-        // if showNongridded is checked but showGridded is not
+        // If showNongridded is checked but showGridded is not
         } else if (checked) {
             this.setAsPrimaryNonGridded();
             
-        // if showNongridded is NOT checked bu showGridded IS
+        // If showNongridded is NOT checked but showGridded IS
         } else if (showGridded) {
-            this.setAsPrimaryGridded();
-        } 
+            if (currentModelIsNongridded) {
+                view.clear();
+                this.setAsPrimaryGridded();
+            } else {
+                // Set opacity of nongridded to 0%
+                view.panes.overlay.selectAll('.cell').remove();//.attr('fill-opacity', 0);   
+            }
+        } else {
+            view.clear();
+        }
         
         // Refetch summary stats
         if (view._roiCoords) {

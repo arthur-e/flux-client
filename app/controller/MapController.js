@@ -273,10 +273,12 @@ Ext.define('Flux.controller.MapController', {
 
             // Update the projections ComboBox; rescale each projection contained
             var showOverlay = this.getController('UserInteraction').showAsOverlay();
-            view.init(width, height)
-                .setBasemap(this.getMapSettings().down('combo[name=basemap]').getValue())
-                .redraw(showOverlay)
-                .updateDisplay();
+            var basemap = view.init(width, height)
+                .setBasemap(this.getMapSettings().down('combo[name=basemap]').getValue());
+
+            view.redraw(showOverlay);
+            view.updateDisplay();
+
         }
     },
 

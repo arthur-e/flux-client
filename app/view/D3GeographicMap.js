@@ -1902,9 +1902,9 @@ Ext.define('Flux.view.D3GeographicMap', {
     updateDisplay: function (data) {
         var scale = 0.039 * this.svg.attr('height');
 
-        // if (!this._model) {
-        //     return this;
-        // }
+        if (!this._model) {
+            return this;
+        }
 
         if (Ext.isEmpty(data)) {
             data = this.panes.hud.selectAll('.info').data();
@@ -1920,6 +1920,7 @@ Ext.define('Flux.view.D3GeographicMap', {
 
         this.panes.hud.selectAll('.backdrop')
             .attr('fill-opacity', (Ext.isEmpty(data)) ? 0.0 : 0.6);
+
         this.panes.hud.selectAll('.info')
             .data(data)
             .text(function (d) { return d.text; })

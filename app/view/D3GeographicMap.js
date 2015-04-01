@@ -52,7 +52,7 @@ Ext.define('Flux.view.D3GeographicMap', {
     isDrawn: false,
 
     // The moment.js time display format to use.
-    timeFormat: 'YYYY MM-DD HH:ss',
+    timeFormat: 'YYYY MM-DD HH:mm',
     
     popup: undefined,
 

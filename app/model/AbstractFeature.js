@@ -18,14 +18,15 @@ Ext.define('Flux.model.AbstractFeature', {
     //      @return     {String}
 
     getTimestampDisplay: function (fmt) {
-        var d0, d1, ts;
+        var d0, d1, ts, end;
         var p = this.get('properties');
 
         // Infer timestamp range from the properties, which will exist for aggregation views but rarely otherwise
         if (p) {
             if (p.start && p.end) {
                 d0 = moment.utc(p.start).format(fmt);
-                d1 = moment.utc(p.end).format(fmt);
+                end = moment.utc(p.end);
+                d1 = end.format(fmt);
             }
 
             // Some views may have the title explicitly defined
@@ -39,7 +40,8 @@ Ext.define('Flux.model.AbstractFeature', {
         } else if (this.id.indexOf('Nongridded') > -1) {
             ts = Ext.Array.pluck(this.get('features'), 'timestamp');
             d0 = moment.utc(Ext.Array.min(ts)).format(fmt);
-            d1 = moment.utc(Ext.Array.max(ts)).format(fmt);
+            end = moment.utc(Ext.Array.max(ts)).add(1, 'day');
+            d1 = end.format(fmt);
         }
 
         // Template for a timestamp range display
@@ -50,7 +52,7 @@ Ext.define('Flux.model.AbstractFeature', {
     	    return t.format(fmt);
 
     	} else {
-    	    return Ext.String.format('{0} >>> {1}', d0, d1);
+    	    return Ext.String.format('{0} >>> {1}', d0, end.subtract(1, 'minute').format(fmt));
     	}
     },
 

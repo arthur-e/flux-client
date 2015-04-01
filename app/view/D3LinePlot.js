@@ -183,25 +183,21 @@ Ext.define('Flux.view.D3LinePlot', {
         
         seriesStats['series'] = seriesStats['seriesMean'];
         var series = Ext.create('Flux.model.TimeSeries',seriesStats);   
-        var data = series.getInterpolation();
-        
-//         seriesStats['series'] = seriesStats['seriesMax'];
-//         var seriesMax = Ext.create('Flux.model.TimeSeries',seriesStats);   
-//         var dataMax = seriesMax.getInterpolation();
-        
+        var data = series.getInterpolationFromDatetime();
+
         // Get STD upper
         seriesStats['series'] = seriesStats['seriesMean'].map( function (x, i) {
             return seriesStats['seriesSTD'][i] + x;
         });
         var seriesSTD_u = Ext.create('Flux.model.TimeSeries',seriesStats);   
-        var dataSTD_u = seriesSTD_u.getInterpolation();
+        var dataSTD_u = seriesSTD_u.getInterpolationFromDatetime();
         
         // Get STD lower
         seriesStats['series'] = seriesStats['seriesMean'].map( function (x, i) {
             return x - seriesStats['seriesSTD'][i];
         });
         var seriesSTD_d = Ext.create('Flux.model.TimeSeries',seriesStats);   
-        var dataSTD_d = seriesSTD_d.getInterpolation();
+        var dataSTD_d = seriesSTD_d.getInterpolationFromDatetime();
         
         
         var offset = 0;

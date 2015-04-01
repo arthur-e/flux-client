@@ -11,7 +11,11 @@ Ext.define('Flux.model.TimeSeries', {
     }, {
         name: 'properties',
         type: 'auto'
-    }],
+    }, {
+        name: 'seriesT',
+        type: 'auto'
+    }
+    ],
 
     // Calculates the time stamps corresponding to each data point in the time series.
     // This assumes a uniform distribution of data i.e. steps never vary. This is not always the case
@@ -35,6 +39,20 @@ Ext.define('Flux.model.TimeSeries', {
         }
 
         return d3.zip(times, this.get('series'));
+    },
+    
+    // Extracts time stamps from a time series optionally included in the model
+    getInterpolationFromDatetime: function () {
+        var parser = d3.time.format.utc('%Y-%m-%dT%H:%M:%S.%LZ').parse;
+        var times = [];
+        
+        Ext.each(this.get('seriesT'), function(t) {
+            var tmp = moment.utc(t).clone();
+            times.push(parser(tmp.toISOString()));
+            
+        });
+        return d3.zip(times, this.get('series'));
+        
     }
 
 });

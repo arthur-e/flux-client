@@ -829,7 +829,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 }
             })
             
-            // This json format mimics the response you'd get from roi.json...
+            // This json format mimics the response you'd get from t.json 'geom' query...
             var summary = {
                 'properties' : {
                     'allMean' : this.getAverage(vals),
@@ -872,6 +872,7 @@ Ext.define('Flux.controller.UserInteraction', {
             
             onSuccess = onSuccess || view.displaySummaryStats;
         
+            interval = 'weekly';
             var wkt = this.convertRoiCoordsToWKT(view._roiCoords.slice(0), '+');
 
             params = {
@@ -885,7 +886,7 @@ Ext.define('Flux.controller.UserInteraction', {
             
             Ext.Ajax.request({
                 method: 'GET',
-                url: Ext.String.format('/flux/api/scenarios/{0}/roi.json', meta.getId()),
+                url: Ext.String.format('/flux/api/scenarios/{0}/t.json', meta.getId()),
                 params: params,
                 callback: function () {},
                 failure: function (response) {

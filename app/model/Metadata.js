@@ -266,7 +266,7 @@ Ext.define('Flux.model.Metadata', {
 
         if (bkpts.length === 1) {
             scale = function (d) {
-                if (d >= Math.floor(bkpts[0]) && d < (Math.floor(bkpts[0]) + 1)) {
+                if (d >= Math.floor(bkpts[0])) {// && d < (Math.floor(bkpts[0]) + 1)) {
                     return color;
                 }
 

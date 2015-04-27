@@ -277,6 +277,12 @@ Ext.define('Flux.view.Symbology', {
             stateful: true,
             stateId: 'threshold',
             listeners: {
+                afterrender: function () {
+                    this.up('fieldset').down('#threshold-values')
+                        .on('afterrender', function () {
+                                this.toggleMulti(true);
+                        })
+                },
                 change: function (cb, checked) {
                     if (this.up('fieldset')) {
                         // Enable all the fields in this fieldset when checked
@@ -288,50 +294,23 @@ Ext.define('Flux.view.Symbology', {
                 }
             }
         }, {
-            xtype: 'recheckbox',
-            name: 'thresholdRange',
-            disabled: true,
-            itemId: 'threshold-range',
-            stateful: true,
-            stateId: 'thresholdRange',
-            boxLabel: 'Show values within range',
-            listeners: {
-                afterrender: function () {
-                    var checked = this.getValue();
-                    this.up('fieldset').down('#threshold-values').on('afterrender', function () {
-                        if (checked) {
-                            this.toggleMulti(true);
-                        } else {
-                            this.toggleMulti(false);
-                        }
-                    });
-                },
-                change: function (cb, checked) {
-                    var slider;
-
-                    if (this.up('fieldset')) {
-                        slider = this.up('fieldset').down('#threshold-values');
-
-                        if (checked) {
-                            slider.toggleMulti(true);
-                        } else {
-                            slider.toggleMulti(false);
-                        }
-                    }
-                }
-            }
-        }, {
-            xtype: 'enumslider',
-            name: 'thresholdValues',
-            itemId: 'threshold-values',
-            stateful: true,
-            stateId: 'thresholdValues',
-            forceIntegers: true,
-            disabled: true,
-            width: '90%',
-            values: -1,
-            minValue: -1,
-            maxValue: 1
+            xtype: 'fieldcontainer',
+            layout: 'hbox',
+            fieldLabel: 'Show values within range',
+            items: [
+            {
+                xtype: 'enumslider',
+                name: 'thresholdValues',
+                itemId: 'threshold-values',
+                stateful: true,
+                stateId: 'thresholdValues',
+                forceIntegers: true,
+                disabled: true,
+                width: '90%',
+                values: -1,
+                minValue: -1,
+                maxValue: 1
+            }]
         }]
 
     }]

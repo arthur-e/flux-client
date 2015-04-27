@@ -7,6 +7,9 @@ Ext.define('Flux.controller.LinePlotController', {
     refs: [{
         ref: 'map',
         selector: 'd3geomap'
+    }, {
+        ref: 'topToolbar',
+        selector: 'viewport toolbar'
     }],
 
     init: function () {
@@ -65,6 +68,10 @@ Ext.define('Flux.controller.LinePlotController', {
         this.getController('UserInteraction').fetchRaster(this.getMap(), {
             time: d.toISOString()
         });
+        
+        // Show the "Reset" button
+        this.getTopToolbar().down('button[itemId=reset-btn]').show();
+        
     },
 
     /**

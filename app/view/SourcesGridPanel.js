@@ -99,6 +99,7 @@ Ext.define('Flux.view.SourcesGridPanel', {
             listConfig: {
                 width: 200
             },
+            editable: false,
             displayField: '_id',
             valueField: '_id',
             queryMode: 'local',

@@ -24,6 +24,7 @@ Ext.define('Flux.view.NongriddedPanel', {
         displayField: '_id',
         valueField: '_id',
         queryMode: 'local',
+        editable: false,
         tpl: Ext.create('Ext.XTemplate', [
             '<tpl for=".">',
                 '<div class="x-boundlist-item">',

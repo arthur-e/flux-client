@@ -180,6 +180,7 @@ Ext.define('Flux.view.Symbology', {
         name: 'palette',
         itemId: 'palette',
         stateful: true,
+        editable: false,
         stateId: 'palette',
         fieldLabel: 'Select palette',
         anchor: '100%',

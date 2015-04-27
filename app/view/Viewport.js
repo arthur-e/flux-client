@@ -49,12 +49,12 @@ Ext.define('Flux.view.Viewport', {
                         itemId: 'coordinated-view',
                         iconCls: 'icon-coord-view ui-app-icon',
                         idx: 1
-                    }, {
-                        text: 'Multiplot',
-                        disabled: true,
-                        itemId: 'multiplot',
-                        iconCls: 'icon-multiplot ui-app-icon',
-                        idx: 2
+//                     }, {
+//                         text: 'Multiplot',
+//                         disabled: true,
+//                         itemId: 'multiplot',
+//                         iconCls: 'icon-multiplot ui-app-icon',
+//                         idx: 2
                     }]
                 }
             }, {

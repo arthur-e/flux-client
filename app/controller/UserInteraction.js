@@ -3321,8 +3321,11 @@ Ext.define('Flux.controller.UserInteraction', {
         var container = map.ownerCt;
         var meta = map.getMetadata();
         var series;
+        var tbar = map.down('toolbar');
         
-        var cmp = map.down('toolbar').down('button[itemId="btn-fetch-roi-time-series"]');
+        if (tbar) {
+            var cmp = tbar.down('button[itemId="btn-fetch-roi-time-series"]');
+        }
         
         // Toggle visibility of the ROI fetch time series button
         if (!meta || meta.get('gridded')) {

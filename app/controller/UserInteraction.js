@@ -2636,7 +2636,8 @@ Ext.define('Flux.controller.UserInteraction', {
     },
     
     /**
-        Saves data as an ascii file.
+        Saves non-gridded data as a CSV file.
+        
         @param  view {D3GeographicMap}
      */
     SaveCSV: function (view) {
@@ -2658,19 +2659,26 @@ Ext.define('Flux.controller.UserInteraction', {
         else {
             return;
         }
+
+        var props = Object.keys(data[0].properties);
         
-        var outString = "X,Y,Time,Value,Error\n";
+        var outString = "x,y,timestamp," + props.toString() + "\n";
         
         for(var i=0; i<data.length; i++) {
             outString += data[i].coordinates[0] + "," + data[i].coordinates[1] + ",";
             outString += data[i].timestamp + ",";
-            outString += data[i].properties.value + "," + data[i].properties.error + "\n";
+            Ext.each(props, function(prop) {
+                outString += data[i].properties[prop] + ",";
+            });
+            outString = outString.replace(/,+$/, "") +  "\n";
         }
         
         var filename = index.substring(7) + ".csv";
+        
         filename = filename.replace("&start=","_");
         filename = filename.replace("&end=","_");
         filename = filename.replace(/%3A/gi,"");
+        
         var pom = document.createElement('a');
         pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(outString));
         pom.setAttribute('download', filename);

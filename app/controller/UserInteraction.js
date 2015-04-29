@@ -84,7 +84,6 @@ Ext.define('Flux.controller.UserInteraction', {
 
         ////////////////////////////////////////////////////////////////////////
         // Event Listeners /////////////////////////////////////////////////////
-
         this.control({
 
             '#content': {
@@ -101,10 +100,6 @@ Ext.define('Flux.controller.UserInteraction', {
 	    },
             '#settings-menu slider[name=markerSize]': {
                 change: this.onNongriddedMarkerChange
-            },
-
-            '#single-map': {
-                tabchange: this.onSingleMapTabChange
             },
 
             '#visual-menu': {
@@ -2048,12 +2043,13 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     onMetadataAdded: function (store, recs) {
         var metadata = recs[0];
-
+        var viz = this.getSourceCarousel().getLayout().activeItem.getItemId();
+        
         if (!metadata) {
             return;
         } 
-         
-        if (metadata.get('gridded') && !this._dontResetSteps) {
+        
+        if (metadata.get('gridded') && !this._dontResetSteps && viz == 'single-map') {
             this.getController('Animation').enableAnimation(metadata);
         }
         this._dontResetSteps = false;
@@ -2136,9 +2132,11 @@ Ext.define('Flux.controller.UserInteraction', {
         var cbNongridded = this.getNongriddedPanel().down('checkbox[name=showNongridded]');
         var tbar = view.down('toolbar[cls=map-tbar]');
         
-        tbar.down('button[itemId=btn-save-ascii]').setDisabled(!checked);
-        tbar.down('button[itemId=btn-save-geotiff]').setDisabled(!checked);
-        
+        if (tbar) {
+            tbar.down('button[itemId=btn-save-ascii]').setDisabled(!checked);
+            tbar.down('button[itemId=btn-save-geotiff]').setDisabled(!checked);
+        }
+            
         this.toggleAggregateParams(!checked);
         
         if (checked) {
@@ -2681,39 +2679,6 @@ Ext.define('Flux.controller.UserInteraction', {
     },
 
     /**
-        Resets the form and clears the map when the Single Map active tab is
-        changed.
-        @param  panel   {Ext.panel.TabPanel}
-     */
-    onSingleMapTabChange: function (panel) {
-        //panel.getActiveTab().getForm().reset();
-
-//         if (panel.getActiveTab.title !== 'gridded-map') {
-//             // Disable line plot
-//             //panel.down('field[name=showLinePlot]').setValue(false);
-// 
-//             var source = panel.down('field[name=source]').getValue();
-//             var date = panel.down('field[name=date]').getValue();
-//             var time = panel.down('field[name=time]').getValue();
-//             var chk = panel.down('recheckbox[name=overlay]');
-//             //var time = time_field.getValue();
-//             
-//             // If gridded data is not loaded, set overlay to unchecked/disabled
-//             if (Ext.isEmpty(source) || Ext.isEmpty(date) || Ext.isEmpty(time)) {
-//                 chk.setValue(false);
-//                 chk.setDisabled(true);
-//             } else {
-//                 chk.setDisabled(false);
-//             }
-//             
-//             
-//         }
-
-//         // Clear any currently drawn features
-//         this.getMap().clear();
-    },
-
-    /**
         Handles a change in the data "source" from a ComboBox configured for
         selecting from among sources (e.g. scenarios, model runs, etc.).
         @param  field   {Ext.form.field.ComboBox}
@@ -2845,60 +2810,6 @@ Ext.define('Flux.controller.UserInteraction', {
 
     },
     
-//    /**
-//         Handles a change in the data "source" from a ComboBox configured for
-//         selecting from among sources (e.g. scenarios, model runs, etc.).
-//         @param  field   {Ext.form.field.ComboBox}
-//         @param  source  {String}
-//         @param  last    {String}
-//      */
-//     onSourceChangeNongridded: function (field, source, last) {
-//         var metadata, operation, grid, view;
-//         var container = field.up('panel');
-//         var showGridded = this.getSourcePanel().down('checkbox[name=showGridded]').checked;
-//         
-//         if (Ext.isEmpty(source) || source === last) {
-//             return;
-//         }
-// 
-//        view = this.getMap();
-// 
-//         // Callback ////////////////////////////////////////////////////////////
-//         operation = Ext.Function.bind(function (metadata) {
-//             if (showGridded) {
-//                 this.bindMetadataOverlay(view, metadata)
-//             } else {
-//                 this.bindMetadata(view, metadata);
-//             }
-//             this.propagateMetadata(container, metadata);
-//         }, this);
-// 
-//         // Metadata ////////////////////////////////////////////////////////////
-//         metadata = this.getStore('metadata').getById(source);
-//         
-//         if (metadata) {
-//             operation(metadata);
-// 
-//         } else {
-//             Ext.Ajax.request({
-//                 method: 'GET',
-//                 url: '/flux/api/scenarios.json',
-//                 params: {
-//                     scenario: source
-//                 },
-//                 callback: function (o, s, response) {
-//                     var meta = Ext.create('Flux.model.Metadata',
-//                         Ext.JSON.decode(response.responseText));
-// 
-//                     this.getStore('metadata').add(meta);
-// 
-//                     operation(meta, field);
-//                 },
-// 
-//                 scope: this
-//             });
-//         }
-//     },
     /**
         Handles a change in the data "source" from a ComboBox configured for
         selecting from among sources (e.g. scenarios, model runs, etc.)
@@ -3078,7 +2989,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 }
 
                 container.add(items);
-
+                
                 this.getSourcePanel().getForm().reset();
                 break;
 
@@ -3086,6 +2997,12 @@ Ext.define('Flux.controller.UserInteraction', {
             case 'coordinated-view':
                 w = 350;
                 this.getSymbology().up('sidepanel').collapse();
+                
+                // Disable animation controls
+                Ext.each(this.getTopToolbar().query('button[cls=anim-btn]'),
+                         function (btn) {
+                            btn.disable();
+                         });
                 
                 // Disable ability to change Map projection (must set read-only instead of
                 // simply disabling we still need to read/use the value, which can't be done

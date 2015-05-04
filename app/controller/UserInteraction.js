@@ -2190,8 +2190,10 @@ Ext.define('Flux.controller.UserInteraction', {
         var currentModelIsNongridded = view._model && view._model.id.indexOf('Flux.model.Nongridded') > -1;
         var tbar = view.down('toolbar[cls=map-tbar]');
         
-        tbar.down('button[itemId=btn-save-csv]').setDisabled(!checked);
-        
+        if (tbar) {
+            tbar.down('button[itemId=btn-save-csv]').setDisabled(!checked);
+        }
+            
         if (this._suppressBind) {
             this._suppressBind = false;
             return;
@@ -3250,19 +3252,18 @@ Ext.define('Flux.controller.UserInteraction', {
         
         if (tbar) {
             var cmp = tbar.down('button[itemId="btn-fetch-roi-time-series"]');
-        }
         
-        // Toggle visibility of the ROI fetch time series button
-        if (!meta || meta.get('gridded')) {
-            cmp.setDisabled(!checked);
-        } else {
-            cmp.setDisabled(true);
-        }
+            // Toggle visibility of the ROI fetch time series button
+            if (!meta || meta.get('gridded')) {
+                cmp.setDisabled(!checked);
+            } else {
+                cmp.setDisabled(true);
+            }
 
-        if (map._roiCoords) {
-            cmp.setVisible(checked);
+            if (map._roiCoords) {
+                cmp.setVisible(checked);
+            }
         }
-        
         
         if (checked) {
             // Resize the anchor(s) and add a D3LinePlot instance

@@ -1,5 +1,5 @@
-BUILD_DIR=/home/arthur/Source/
-USERNAME=kaendsle
+USERNAME=$USER
+BUILD_DIR=/home/$USERNAME/Source/
 
 echo "Installing Ruby..."
 sudo apt-get install ruby ruby1.9.1
@@ -24,12 +24,12 @@ export SENCHA_SDK_TOOLS_2_0_0_BETA3="/opt/SenchaSDKTools-2.0.0-beta3"
 
 echo "Installing Sencha Cmd..."
 cd $BUILD_DIR
-wget http://cdn.sencha.com/cmd/4.0.2.67/SenchaCmd-4.0.2.67-linux-x64.run.zip
-unzip SenchaCmd-4.0.2.67-linux-x64.run.zip
-sudo chmod +x SenchaCmd-4.0.2.67-linux-x64.run
+wget http://cdn.sencha.com/cmd/4.0.5.87/SenchaCmd-4.0.5.87-linux-x64.run.zip
+unzip SenchaCmd-4.0.5.87-linux-x64.run.zip
+sudo chmod +x SenchaCmd-4.0.5.87-linux-x64.run
 # This shouldn't have to be run as root; if it does, you'll need to chown and chgrp the bin/ folder created in your home directory
-./SenchaCmd-4.0.2.67-linux-x64.run
+./SenchaCmd-4.0.5.87-linux-x64.run
 # Graphical installer again...
 # After the Sencha Cmd installer is finished...
-export PATH=/home/$USERNAME/bin/Sencha/Cmd/4.0.2.67:$PATH
-export SENCHA_CMD_4_0_2="/home/kaendsle/bin/Sencha/Cmd/4.0.2.67"
+export PATH=/home/$USERNAME/bin/Sencha/Cmd/4.0.5.87:$PATH
+export SENCHA_CMD_4_0_5="/home/$USERNAME/bin/Sencha/Cmd/4.0.5.87"

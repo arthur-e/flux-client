@@ -1,7 +1,8 @@
+USERNAME=$USER
 export PATH=/opt/SenchaSDKTools-2.0.0-beta3:$PATH
 export SENCHA_SDK_TOOLS_2_0_0_BETA3="/opt/SenchaSDKTools-2.0.0-beta3"
-export PATH=/home/mgbillmi/bin/Sencha/Cmd/4.0.5.87:$PATH
-export SENCHA_CMD_4_0_5="/home/mgbillmi/bin/Sencha/Cmd/4.0.5.87"
+export PATH=/home/$USERNAME/bin/Sencha/Cmd/4.0.5.87:$PATH
+export SENCHA_CMD_4_0_5="/home/$USERNAME/bin/Sencha/Cmd/4.0.5.87"
 
 sencha config -prop app.theme=ext-theme-neptune then app build
 

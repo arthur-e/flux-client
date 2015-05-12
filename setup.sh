@@ -2,6 +2,8 @@ USERNAME=$USER
 BUILD_DIR=/home/$USERNAME/Source/
 EXT_DIR=/var/www/static/extjs
 
+sudo chmod +x ./build.sh
+
 echo "Installing Ruby..."
 sudo apt-get install ruby ruby1.9.1
 

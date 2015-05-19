@@ -4,6 +4,7 @@
   "private": true,
   "preferGlobal": false,
   "devDependencies": {
+    "jsts": "latest",
     "d3": "latest",
     "topojson": "1.1.3",
     "moment": "latest",

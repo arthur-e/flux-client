@@ -1,39 +1,54 @@
 Carbon Data Explorer (Web Client)
+=================================
+
+Overview
 ---------------------------------
 
-############
-# Overview #
-############
-
-The Carbon Data Explorer or `flux-client` is a JavaScript web application.
+The `flux-client` (Carbon Data Explorer web client) is a JavaScript web application.
 The application was written using the ExtJS and D3.js frameworks.
 When built, it is portable to any web server and can be run on any modern web
 browser (though [Google Chrome](https://www.google.com/chrome/browser/) is recommended).
 
-#####################
-## Supported Clients
+### Supported Clients
 
 While the Carbon Data Explorer was designed to be cross-platform compatible,
 certain technological restrictions prevent it from being run in older browsers,
 particularly those browsers that do not support SVG or CSS3 transitions.
 
-| Client            | Supported version(s)       | Latest version (as of 2014-02-11) |
-| ----------------- | -------------------------- | --------------------------------- |
-| Google Chrome     | Version 31.0 or higher     | Version 32.0                      |
-| Internet Explorer | Version 9 or higher (IE9+) | Version 11 (IE11)                 |
-| Mozilla Firefox   | Version 26.0 or higher     | Version 27.0                      |
-| Opera             | Version 19.0 or higher     | Version 19.0                      |
-| Apple Safari      | Version 5.1 or higher      | Version 7.0                       |
 
-###################
-# Getting Started #
-###################
+| Client            | Supported version(s)       |
+| ----------------- | :------------------------- |
+| Google Chrome     | Version 31.0 or higher     |
+| Internet Explorer | Version 9 or higher (IE9+) |
+| Mozilla Firefox   | Version 26.0 or higher     |
+| Opera             | Version 19.0 or higher     |
+| Apple Safari      | Version 5.1 or higher      |
 
-The rest of this document is written for developers who need to download the
-ExtJS and JavaScript dependencies to build the application.
 
-######################
-## Build Dependencies
+### Download
+
+You can either [download a pre-built version from here](INSERT LINK HERE) or
+build from  source using the instructions below under **Getting Started**.
+Once downloaded (or built), see **Deployment** section below for further
+instructions.
+
+### User manuals
+
+Once the client is installed/deployed, consult these resources for usage information:
+
+* [Web client manual](INSERT LINK HERE)
+* [Web client demo video](INSERT LINK HERE)
+
+
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+
+Getting Started 
+---------------------------------
+
+This section is written for developers who need to download the ExtJS and
+JavaScript dependencies to build the application.
+
+### Build Dependencies
 
 The following are required for building the software:
 
@@ -41,12 +56,12 @@ The following are required for building the software:
 * [Sencha Cmd](http://www.sencha.com/products/sencha-cmd/download/)
 * [ExtJS 4.2.1](http://www.sencha.com/products/extjs/download/ext-js-4.2.1/2281)
 
-Finally, you will need Node.js and the Node Package Manager (NPM) to install
-the remaining JavaScript dependencies.
+Finally, you will need [Node.js](https://nodejs.org/) and the [Node Package Manager (NPM)](https://www.npmjs.com/)
+to install the remaining JavaScript dependencies.
 
-### Installing the Sencha SDK
+#### Installing the Sencha SDK
 
-#### On GNU/Linux
+On GNU/Linux:
 
     $ sudo chmod g+x SenchaSDKTools-2.0.0-beta3-linux-x64.run
     $ sudo ./SenchaSDKTools-2.0.0-beta3-linux-x64.run
@@ -57,9 +72,9 @@ After the Sencha SDK Tools installer is finished...
     $ export PATH=/opt/SenchaSDKTools-2.0.0-beta3:$PATH
     $ export SENCHA_SDK_TOOLS_2_0_0_BETA3="/opt/SenchaSDKTools-2.0.0-beta3"
      
-### Installing Sencha Cmd
+#### Installing Sencha Cmd
 
-#### On GNU/Linux
+On GNU/Linux:
 
     $ sudo chmod g+x SenchaCmd-3.1.2.342-linux-x64.run
 
@@ -68,15 +83,17 @@ This shouldn't have to be run as root; if it does, you'll need to chown and chgr
     $ ./SenchaCmd-3.1.2.342-linux-x64.run
 
 A graphical installer again...
+
 After the Sencha Cmd installer is finished...
 
     $ export PATH=~/bin/Sencha/Cmd/3.1.2.342:$PATH
     $ export SENCHA_CMD_3_0_0="~/bin/Sencha/Cmd/3.1.2.342"
 
-### Installing Remaining Dependencies with Node.js and NPM
+#### Installing Remaining Dependencies with Node.js and NPM
 
-If you need to instal Node.js and NPM, refer to the `flux-server` documentation, `README.md`.
+If you need to install Node.js and NPM, refer to the `flux-server` documentation, `README.md`.
 Installing the remaining dependencies is easy.
+
 Navigate to the `flux-client` directory, where `package.json` is found, and execute:
 
     $ npm install
@@ -84,8 +101,11 @@ Navigate to the `flux-client` directory, where `package.json` is found, and exec
 The installation process should automatically download a copy of ExtJS 4.2.1 and
 put its contents into a subfolder `ext/`.
 
-##############
-## Deployment
+
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+
+Deployment
+---------------------------------
 
 When built, `flux-client` can be deployed by simpling placing it in a web-accessible directory.
 
@@ -99,6 +119,7 @@ When built, `flux-client` can be deployed by simpling placing it in a web-access
 
 The `flux-client` can then be accessed at `http://localhost/flux-client/` or `127.0.0.1/flux-client/`.
 
+
 ### Apache Server Configuration
 
 If the `flux-server` is hosted on a different machine, you will need to set up
@@ -111,44 +132,49 @@ a proxy for the `/flux/` address; here is an example proxy with Apache.
         Allow from all
     </Location>
 
-#################
-## Documentation
 
-Documentation can be generated with docco. To install docco:
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+    
+Code Documentation
+---------------------------------
 
-    sudo npm install docco -g
+Code documentation can be generated with [docco](https://www.npmjs.com/package/docco). To install *docco*:
+
+    $ sudo npm install docco -g
 
 To generate the documentation:
 
-    docco -l classic app/*.js app/controller/*.js app/field/*.js app/model/*.js app/store/*.js app/type/*.js app/view/*.js
+    $ docco -l classic app/*.js app/controller/*.js app/field/*.js app/model/*.js app/store/*.js app/type/*.js app/view/*.js
 
-#######################
-# Repository Contents #
-#######################
 
-######################
-## ExtJS Architecture
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 
-### Flux/app
+Repository Contents
+---------------------------------
+TDK: Is this section necessary?
+
+### ExtJS Architecture
+
+#### Flux/app
 
 This folder contains the JavaScript files for the application.
 
-### Flux/resources
+#### Flux/resources
 
 This folder contains static resources (typically an `"images"` folder as well).
 
-### Flux/overrides
+#### Flux/overrides <-!!! DOES NOT EXIST
 
 This folder contains override classes. All overrides in this folder will be 
 automatically included in application builds if the target class of the override
 is loaded.
 
-### Flux/sass/etc
+#### Flux/sass/etc <-!!! DOES NOT EXIST
 
 This folder contains misc. support code for sass builds (global functions, 
 mixins, etc.)
 
-### Flux/sass/src
+#### Flux/sass/src <-!!! DOES NOT EXIST
 
 This folder contains sass files defining css rules corresponding to classes
 included in the application's javascript code build.  By default, files in this 
@@ -156,7 +182,7 @@ folder are mapped to the application's root namespace, 'Flux'. The
 namespace to which files in this directory are matched is controlled by the
 app.sass.namespace property in Flux/.sencha/app/sencha.cfg. 
 
-### Flux/sass/var
+#### Flux/sass/var <-!!! DOES NOT EXIST
 
 This folder contains sass files defining sass variables corresponding to classes
 included in the application's javascript code build.  By default, files in this 

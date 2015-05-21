@@ -1,11 +1,11 @@
-Carbon Data Explorer (Web Client)
+Carbon Data Explorer Web Client
 =================================
 
 Overview
 ---------------------------------
 
-The `flux-client` (Carbon Data Explorer web client) is a JavaScript web application.
-The application was written using the ExtJS and D3.js frameworks.
+The Carbon Data Explorer Web Client ("flux-client") is a JavaScript web application.
+The application was written using the `ExtJS` and `D3.js` frameworks.
 When built, it is portable to any web server and can be run on any modern web
 browser (though [Google Chrome](https://www.google.com/chrome/browser/) is recommended).
 
@@ -32,12 +32,12 @@ build from  source using the instructions below under **Getting Started**.
 Once downloaded (or built), see **Deployment** section below for further
 instructions.
 
-### User manuals
+### User guides
 
 Once the client is installed/deployed, consult these resources for usage information:
 
-* [Web client manual](INSERT LINK HERE)
-* [Web client demo video](INSERT LINK HERE)
+* [User's Guide](https://docs.google.com/document/d/17qttP61aVsBPAS6tj6H0_VVkgTV2XQ6WuAb_PMyVoaM/edit?usp=sharing)
+* [Demo video](INSERT LINK HERE)
 
 
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
@@ -78,7 +78,7 @@ On GNU/Linux:
 
     $ sudo chmod g+x SenchaCmd-3.1.2.342-linux-x64.run
 
-This shouldn't have to be run as root; if it does, you'll need to chown and chgrp the bin/ folder created in your home directory:
+This shouldn't have to be run as root; if it does, you'll need to `chown` and `chgrp` the `bin/` folder created in your home directory:
 
     $ ./SenchaCmd-3.1.2.342-linux-x64.run
 
@@ -109,11 +109,11 @@ Deployment
 
 When built, `flux-client` can be deployed by simpling placing it in a web-accessible directory.
 
-**On GNU/Linux systems running Apache,** place the build directory into:
+On **GNU/Linux systems running Apache**, place the build directory into:
 
     /var/www/
 
-**On Mac OS X systems running Apache,** place the build directory into:
+On **Mac OS X systems running Apache**, place the build directory into:
 
     /Libary/WebServer/Documents/
 
@@ -138,7 +138,7 @@ a proxy for the `/flux/` address; here is an example proxy with Apache.
 Code Documentation
 ---------------------------------
 
-Code documentation can be generated with [docco](https://www.npmjs.com/package/docco). To install *docco*:
+Code documentation can be generated with [docco](https://www.npmjs.com/package/docco). To install `docco`:
 
     $ sudo npm install docco -g
 
@@ -146,46 +146,3 @@ To generate the documentation:
 
     $ docco -l classic app/*.js app/controller/*.js app/field/*.js app/model/*.js app/store/*.js app/type/*.js app/view/*.js
 
-
-* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-
-Repository Contents
----------------------------------
-TDK: Is this section necessary?
-
-### ExtJS Architecture
-
-#### Flux/app
-
-This folder contains the JavaScript files for the application.
-
-#### Flux/resources
-
-This folder contains static resources (typically an `"images"` folder as well).
-
-#### Flux/overrides <-!!! DOES NOT EXIST
-
-This folder contains override classes. All overrides in this folder will be 
-automatically included in application builds if the target class of the override
-is loaded.
-
-#### Flux/sass/etc <-!!! DOES NOT EXIST
-
-This folder contains misc. support code for sass builds (global functions, 
-mixins, etc.)
-
-#### Flux/sass/src <-!!! DOES NOT EXIST
-
-This folder contains sass files defining css rules corresponding to classes
-included in the application's javascript code build.  By default, files in this 
-folder are mapped to the application's root namespace, 'Flux'. The
-namespace to which files in this directory are matched is controlled by the
-app.sass.namespace property in Flux/.sencha/app/sencha.cfg. 
-
-#### Flux/sass/var <-!!! DOES NOT EXIST
-
-This folder contains sass files defining sass variables corresponding to classes
-included in the application's javascript code build.  By default, files in this 
-folder are mapped to the application's root namespace, 'Flux'. The
-namespace to which files in this directory are matched is controlled by the
-app.sass.namespace property in Flux/.sencha/app/sencha.cfg. 

@@ -34,6 +34,9 @@ Ext.define('Flux.view.D3GeographicMap', {
     _syncZoom: false,
     _transOffset_x: 0,
     _transOffset_y: 0,
+    _initZoomFactor: 1,
+    _originalHeight: null,
+    _originalWidth: null,
 
     // The radius and stroke-width size for ROI polygon vertices
     _vertexRadius: 5,
@@ -387,7 +390,7 @@ Ext.define('Flux.view.D3GeographicMap', {
         return this;
     },
 
-    // Add event listeners related to drawing polygons
+    // Add event listeners related to drawing roi polygons
     //
     //     @param  sel  {d3.selection}
     //     @param	tbar {Ext.Toolbar}
@@ -849,13 +852,10 @@ Ext.define('Flux.view.D3GeographicMap', {
         var bbox, lat, lng, meta, c1, c2, pane, rectClass, sel;
         var proj = this.getProjection();
         delete this._rTree;
-        // var gridded = data.id.indexOf('Flux.model.Raster') == -1;
 
         if (!data) {
             return this;
         }
-
-        // this.fireEventArgs('beforedraw', [this, data]);
 
         // If not using population statistics, calculate the new summary stats
         //  for the incoming data
@@ -942,12 +942,10 @@ Ext.define('Flux.view.D3GeographicMap', {
 
             c2 = proj([lng, lat]);
 
-            if (!this._syncZoom) {
-                this.setZoom(this.getZoomScaleFromBbox(bbox), [
-                    (c1[0] - c2[0]),
-                    (c1[1] - c2[1])
-                ]);
-            }
+            this.setZoom(this.getZoomScaleFromBbox(bbox), [
+                (c1[0] - c2[0]) + this._transOffset_x,
+                (c1[1] - c2[1]) + this._transOffset_y
+            ]);
 
         }
 
@@ -1690,8 +1688,8 @@ Ext.define('Flux.view.D3GeographicMap', {
     //     @param  translation {Array}
     //     @param  duration    {Number}
     //     @return             {Flux.view.D3GeographicMap}
-
     setZoom: function (factor, translation, duration) {
+        
         var scale = this.zoom.scale();
         var extent = this.zoom.scaleExtent();
         var newScale = scale * factor;
@@ -1701,32 +1699,33 @@ Ext.define('Flux.view.D3GeographicMap', {
             this.filler.attr('height') * 0.5
         ];
 
-        duration = duration || 500; // Duration in milliseconds
-
+        duration = 500;//duration || 500; // Duration in milliseconds
+           
         if (extent[0] <= newScale && newScale <= extent[1]) {
             this.zoom.scale(newScale)
                 .translate([
-                    c[0] + (t[0] - c[0]) / scale * newScale,
-                    c[1] + (t[1] - c[1]) / scale * newScale
+                    (c[0] + (t[0] - c[0]) * factor),
+                    (c[1] + (t[1] - c[1]) * factor)
                 ])
                 .event((this._transitions) ? this.wrapper.transition().duration(duration) : this.wrapper);
 
         } else {
             this.zoom.scale(1)
                 .translate([
-                    c[0] + (t[0] - c[0]) / scale,
-                    c[1] + (t[1] - c[1]) / scale
+                    (c[0] + (t[0] - c[0]) / scale),
+                    (c[1] + (t[1] - c[1]) / scale)
                 ])
                 .event((this._transitions) ? this.wrapper.transition().duration(duration) : this.wrapper);
-
         }
-
+        
         return this;
     },
 
+    // Sets the initial zoom level for working with multiple map frames
+    // in Coordinate View
+    
     setZoomInit: function (factor, translation) {
-        var scale = this.zoom.scale();
-        var extent = this.zoom.scaleExtent();
+        var scale = 1;//this.zoom.scale();
         var newScale = scale * factor;
         var width = this.filler.attr('width');
         var height = this.filler.attr('height');
@@ -1737,15 +1736,17 @@ Ext.define('Flux.view.D3GeographicMap', {
         ];
 
         var translate = [
-                    c[0] + (t[0] - c[0]) / scale * newScale,
-                    c[1] + (t[1] - c[1]) / scale * newScale
+                    c[0] + (t[0] - c[0]) * factor,
+                    c[1] + (t[1] - c[1]) * factor
                     ];
+                    
         this.wrapper.attr('transform', 'translate(' + translate + ')scale(' + newScale + ')');
 
         // Let the zoomer know that we've changed zoom/location
         this.zoom.scale(newScale);
         this.zoom.center([width/2, height/2]);
-        this.zoom.translate([translate[0] + this._transOffset_x, translate[1] + this._transOffset_y]);
+        this.zoom.translate([translate[0] + this._transOffset_x,
+                             translate[1] + this._transOffset_y]);
 
         this._mostRecentZoomScale = newScale;
 

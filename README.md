@@ -1,11 +1,13 @@
 Carbon Data Explorer Web Client
 =================================
 
+Check out our [demo video](https://vimeo.com/129796671) to see the Carbon Data Explorer in action.
+
 Overview
 ---------------------------------
 
 The Carbon Data Explorer Web Client ("flux-client") is a JavaScript web application.
-The application was written using the `ExtJS` and `D3.js` frameworks.
+The application was written using the ExtJS and D3.js frameworks.
 When built, it is portable to any web server and can be run on any modern web
 browser (though [Google Chrome](https://www.google.com/chrome/browser/) is recommended).
 
@@ -32,12 +34,12 @@ build from  source using the instructions below under **Getting Started**.
 Once downloaded (or built), see **Deployment** section below for further
 instructions.
 
-### User guides
+### User Guides
 
 Once the client is installed/deployed, consult these resources for usage information:
 
 * [User's Guide](https://docs.google.com/document/d/17qttP61aVsBPAS6tj6H0_VVkgTV2XQ6WuAb_PMyVoaM/edit?usp=sharing)
-* [Demo video](https://vimeo.com/129796671)
+* [Demo Video](https://vimeo.com/129796671)
 
 
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 

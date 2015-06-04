@@ -37,7 +37,7 @@ instructions.
 Once the client is installed/deployed, consult these resources for usage information:
 
 * [User's Guide](https://docs.google.com/document/d/17qttP61aVsBPAS6tj6H0_VVkgTV2XQ6WuAb_PMyVoaM/edit?usp=sharing)
-* [Demo video](INSERT LINK HERE)
+* [Demo video](https://vimeo.com/129796671)
 
 
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 

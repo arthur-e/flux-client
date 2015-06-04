@@ -307,8 +307,7 @@ Ext.define('Flux.controller.UserInteraction', {
        _transOffset_y variable.
     */
     setInitialZoom: function () {
-
-        
+        console.log('here');
         var width, height;
         var container = this.getContentPanel();
         var n = container.items.length - 1;
@@ -1605,7 +1604,9 @@ Ext.define('Flux.controller.UserInteraction', {
         var query = Ext.ComponentQuery.query('d3geomap');
 
         this.alignContent(query);
-        this.setInitialZoom();
+        if (query.length > 1) {
+            this.setInitialZoom();
+        }
     },
 
     /**

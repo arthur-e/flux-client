@@ -292,16 +292,29 @@ Ext.define('Flux.controller.UserInteraction', {
 
         }
         
-        ////////////////////////////////////////
-        // Sync zoom level/position
-        // 
-        // Initial zoom level/position is set using the
-        // zoomFactor/zoomTrans_x/zoomTrans_y variables;
-        //
-        // Afterwards, zoom behavior is sync'ed using the
-        // _transOffset_y variable.
+        this.setInitialZoom();
+        
+        return newView;
+    },
+    
+    /**
+       Sync zoom level/position among multiple maps in Coordinated View
+       
+       Initial zoom level/position is set using the
+       zoomFactor/zoomTrans_x/zoomTrans_y variables;
+      
+       Afterwards, zoom behavior is sync'ed using the
+       _transOffset_y variable.
+    */
+    setInitialZoom: function () {
+
+        
+        var width, height;
+        var container = this.getContentPanel();
+        var n = container.items.length - 1;
         var query = Ext.ComponentQuery.query('d3geomap');
         var counter = 0;
+        
         Ext.each(query, function (view) {
             counter += 1;
             
@@ -309,6 +322,9 @@ Ext.define('Flux.controller.UserInteraction', {
             zoomFactor = 1;
             zoomTrans_x = 0;
             zoomTrans_y = 0;
+            
+            height = view.getHeight();
+            width = view.getWidth();
             
             // Translations for the 1st map added
             if (counter === 1) {
@@ -329,12 +345,13 @@ Ext.define('Flux.controller.UserInteraction', {
             }
             // Translations for the 2nd map added
             if (counter === 2) {
+                console.log('2', view.getHeight(), view._transOffset_y);
                 if (n > 0) { // 2x1 map layout
-                    view._transOffset_y = view.getHeight() * 0.25;
+                    view._transOffset_y = height * 0.25;
                 }
                 if (n > 1) { // 2x2 map layout
                     zoomTrans_y = -0.5;
-                    view._transOffset_y = view.getHeight() * 0.50;
+                    view._transOffset_y = height * 0.50;
                 }
                 if (n > 3) { // 3x2 map layout
                     zoomTrans_x = -0.25;
@@ -342,7 +359,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 }
                 if (n > 5) { // 3x3 map layout
                     zoomTrans_y = -1;
-                    view._transOffset_y = view.getHeight() * 0.75;
+                    view._transOffset_y = height * 0.75;
                 }
             }
             // Translations for the 3rd/4th maps added
@@ -358,21 +375,28 @@ Ext.define('Flux.controller.UserInteraction', {
             }
             // Translations for the 5th/6th maps added
             if (counter === 5 || counter === 6) {
-                view._transOffset_y = view.getHeight() * 0.166667;
+                view._transOffset_y = height * 0.166667;
                 if (n > 5) { // 3x3 map layout
                     zoomTrans_y = -0.25;
-                    view._transOffset_y = view.getHeight() * 0.25; 
+                    view._transOffset_y = height * 0.25; 
                 }
             }
 
+            view._initZoomFactor = zoomFactor;
+            view._zoomTrans_x = zoomTrans_x;
+            view._zoomTrans_y = zoomTrans_y;
+
             // Finally, set initial zoom for the map based on the factors above
-            view.setZoomInit(zoomFactor, [zoomTrans_x*view.getWidth(), zoomTrans_y*view.getHeight()]);
+            view.setZoomInit(zoomFactor,
+                             [zoomTrans_x*width, 
+                              zoomTrans_y*height
+                             ]
+                            );
             
         });
         
-        return newView;
     },
-
+    
     /**
         Aligns existing D3Panel instances that are children of the #content
         panel.
@@ -1581,6 +1605,7 @@ Ext.define('Flux.controller.UserInteraction', {
         var query = Ext.ComponentQuery.query('d3geomap');
 
         this.alignContent(query);
+        this.setInitialZoom();
     },
 
     /**
@@ -3220,6 +3245,12 @@ Ext.define('Flux.controller.UserInteraction', {
         this.onNongriddedDateSelection(end_field);
     },
     
+    /**
+        Synchronizes zoom/pan for all maps; scales the current zoom scale
+        for each map according to the factor by which the reference zoom scale
+        changed relative to it's previous scale.
+     */
+
     syncZoom: function(currentMap, event, mostRecentZoomScale) {
         var query = Ext.ComponentQuery.query('d3geomap');
         var factor = event.scale / mostRecentZoomScale; 

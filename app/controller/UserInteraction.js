@@ -890,7 +890,7 @@ Ext.define('Flux.controller.UserInteraction', {
             
             onSuccess = onSuccess || view.displaySummaryStats;
         
-            interval = 'weekly';
+            interval = 'daily';
             var wkt = this.convertRoiCoordsToWKT(view._roiCoords.slice(0), '+');
 
             params = {

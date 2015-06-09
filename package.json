@@ -17,6 +17,6 @@
   },
   "scripts": {
     "preinstall": "wget http://cdn.sencha.com/ext/gpl/ext-4.2.1-gpl.zip;unzip ext-4.2.1-gpl.zip;mv ext-4.2.1.883 ext",
-    "postinstall": "node_modules/uglify-js/bin/uglifyjs node_modules/topojson/topojson.js -o node_modules/topojson/topojson.min.js;node_modules/uglify-js/bin/uglifyjs node_modules/moment/moment.js -o node_modules/moment/moment.min.js;node_modules/uglify-js/bin/uglifyjs node_modules/jsts/lib/javascript.util.js -o node_modules/jsts/lib/javascript.util.min.js;node_modules/uglify-js/bin/uglifyjs node_modules/jsts/lib/jsts.js -o node_modules/jsts/lib/jsts.min.js"
+    "postinstall": "node_modules/uglify-js/bin/uglifyjs node_modules/topojson/topojson.js -o node_modules/topojson/topojson.min.js;node_modules/uglify-js/bin/uglifyjs node_modules/moment/moment.js -o node_modules/moment/moment.min.js;node_modules/uglify-js/bin/uglifyjs node_modules/jsts/lib/javascript.util.js -o node_modules/jsts/lib/javascript.util.min.js;node_modules/uglify-js/bin/uglifyjs node_modules/jsts/lib/jsts.js -o node_modules/jsts/lib/jsts.min.js;git update-index --assume-unchanged bootstrap.css"
   }
 }

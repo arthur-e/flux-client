@@ -5,5 +5,5 @@
  * to the most recently built CSS file for the application to allow index.html
  * in the development directory to load properly (i.e., "dev mode").
  */
-@import 'build/production/Flux/resources/Flux-all.css';
+@import 'ext/packages/ext-theme-neptune/build/resources/ext-theme-neptune-all.css';
 

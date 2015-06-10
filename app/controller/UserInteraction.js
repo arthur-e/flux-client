@@ -2804,7 +2804,7 @@ Ext.define('Flux.controller.UserInteraction', {
                 this.getSourceCarousel().getLayout().activeItem.getItemId() === 'coordinated-view') {
                 // In Single Map view, bind as primary if Gridded OR if showGridded is FALSE
                 // In Coordinated View, bind as primary no matter what
-                
+
                 this.bindMetadata(view, metadata);
                 this.propagateMetadata(field, metadata);
                 
@@ -3099,6 +3099,11 @@ Ext.define('Flux.controller.UserInteraction', {
         var fmt = 'YYYY-MM-DD';
         var calendars = field.up().up().query('datefield');
         var clocks = field.up().up().query('combo[valueField=time]');
+        
+        if (field.up('roweditor')) { // if Coordinated View
+            calendars = field.up().query('datefield');
+            clocks = field.up().query('combo[valueField=time]');
+        }
 //         var calendars = [];
 //         Ext.each(['date','start','end'], function (n) {
 //             var cal = field.next('datefield[name=' + n + ']');

@@ -20,6 +20,9 @@ Ext.define('Flux.controller.UserInteraction', {
         ref: 'mapSettings',
         selector: 'mapsettings'
     }, {
+        ref: 'metadataTable',
+        selector: 'metadatatable'
+    }, {
         ref: 'nongriddedPanel',
         selector: 'nongriddedpanel'
     }, {
@@ -177,6 +180,9 @@ Ext.define('Flux.controller.UserInteraction', {
             'sourcesgridpanel': {
                 beforeedit: this.onSourceGridEntry
             },
+            'sourcepanel #btn-info': {
+                click: this.showMetadata
+            },
             'sourcepanel checkbox[name=showGridded]': {
                 change: this.onShowGriddedToggle
             },
@@ -307,7 +313,6 @@ Ext.define('Flux.controller.UserInteraction', {
        _transOffset_y variable.
     */
     setInitialZoom: function () {
-        console.log('here');
         var width, height;
         var container = this.getContentPanel();
         var n = container.items.length - 1;
@@ -344,7 +349,6 @@ Ext.define('Flux.controller.UserInteraction', {
             }
             // Translations for the 2nd map added
             if (counter === 2) {
-                console.log('2', view.getHeight(), view._transOffset_y);
                 if (n > 0) { // 2x1 map layout
                     view._transOffset_y = height * 0.25;
                 }
@@ -1208,6 +1212,7 @@ Ext.define('Flux.controller.UserInteraction', {
     /**
         Binds a Flux.model.Metadata instance to the provided view, a
         Flux.view.D3GeographicMap instance.
+        
         @param  view        {Flux.view.D3Panel}
         @param  metaadata   {Flux.model.Metadata}
      */
@@ -1232,7 +1237,7 @@ Ext.define('Flux.controller.UserInteraction', {
         }
 
         // Only when using population statistics will the color scale be ready
-        //  before data have been bound to the view
+        // before data have been bound to the view
         if (opts.statsFrom === 'population') {
             view.updateColorScale(this.getSymbology().getForm().getValues());
         }
@@ -2762,10 +2767,13 @@ Ext.define('Flux.controller.UserInteraction', {
 
         // Callback ////////////////////////////////////////////////////////////
         operation = Ext.Function.bind(function (metadata) {
+            // Enable the source info button
+            field.up().down('button').enable();
+            
             if (metadata.get('gridded') || !showGridded ||
                 this.getSourceCarousel().getLayout().activeItem.getItemId() === 'coordinated-view') {
                 // In Single Map view, bind as primary if Gridded OR if showGridded is FALSE
-                // In Cooridinated View, bind as primary no matter what
+                // In Coordinated View, bind as primary no matter what
                 
                 this.bindMetadata(view, metadata);
                 this.propagateMetadata(field, metadata);
@@ -3075,6 +3083,7 @@ Ext.define('Flux.controller.UserInteraction', {
         var dates = metadata.getDisabledDates(fmt);
         var step = Ext.Array.min(metadata.getTimeOffsets() || []);
         var params = window.location.href.split('?');
+        
         params = Ext.Object.fromQueryString(params.pop());
         
         // Create date picker calendar
@@ -3246,6 +3255,56 @@ Ext.define('Flux.controller.UserInteraction', {
         this.onNongriddedDateSelection(end_field);
     },
     
+    /**
+        Shows a table of metadata for the currently selected dataset
+
+     */
+    showMetadata: function (btn) {
+        var form = this.getMetadataTable();
+        var map = this.getMap();
+        var meta = map.getMetadata();
+        
+        if (!form) {
+            this.getContentPanel().add({
+                xtype: 'metadatatable',
+                title: Ext.String.format('{0}', 
+                                         btn.next().value)
+            });
+            
+            form = this.getMetadataTable();
+           
+        }
+        
+        var src = {
+            'ID' : meta.data._ud,
+            'Title' : meta.data.title,
+            'Start date/time' : meta.data.dates[0],
+            'End date/time' : meta.data.dates[1],
+            'Time step' : Ext.String.format('{0} hours',meta.data.steps[0]/3600),
+            'Time span' : meta.data.span,
+            'Units' : meta.data.units.values,
+            'Precision' : meta.data.precision,
+            'Gridded' : meta.data.gridded,
+            'Grid scale (x)' : Ext.String.format('{0} {1}',
+                                                 meta.data.grid.x,
+                                                 meta.data.grid.units
+                                          ),
+            'Grid scale (y)' : Ext.String.format('{0} {1}',
+                                                 meta.data.grid.y,
+                                                 meta.data.grid.units
+                                          ),
+            'Statistics: mean' : meta.data.stats.values.mean,
+            'Statistics: median' : meta.data.stats.values.median,
+            'Statistics: minimum' : meta.data.stats.values.min,
+            'Statistics: maximum' : meta.data.stats.values.max,
+            'Statistics: stdev' : meta.data.stats.values.std
+        }
+        
+        form.setSource(src);
+           
+        form.show();
+        
+    },
     /**
         Synchronizes zoom/pan for all maps; scales the current zoom scale
         for each map according to the factor by which the reference zoom scale

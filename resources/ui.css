@@ -27,6 +27,7 @@
 .x-btn-default-toolbar-small,
 .x-btn-default-toolbar-medium,
 .x-btn-default-toolbar-large { border-color: #d0d0d0 !important; }
+
 .map-tbar .x-btn-default-toolbar-small,
 .map-tbar .x-btn-default-toolbar-medium,
 .map-tbar .x-btn-default-toolbar-large { border-color: #888 !important;}
@@ -37,8 +38,16 @@
 .x-btn-default-large .x-btn-inner {
     font-size: 12px !important;
     padding: 0 3px !important;
-    
 }
+
+/* for the info button that appears next to the source selector */
+.x-btn-default-small-icon,
+.info-button .x-btn-default-small {
+    border: 0px !important;
+    background-image: none !important;
+    background-color: transparent !important;
+}
+
 /* Forms **********************************************************************/
 .x-form-trigger-input-cell { background-color: #fff !important; }
 .x-fieldset-header-text,
@@ -152,6 +161,19 @@
     background-image: url(draw-time-series.png);
     background-size: 25px;
 }*/
+
+.icon-info {
+    background-image: url(info-32.ico);
+    background-size: 15px;
+    background-position: 1px 1px;
+}
+
+.icon-info-hover {
+    background-image: url(info-32-darker.ico);
+    background-size: 15px;
+    background-position: 1px 1px;
+}
+
 .icon-link {
     background-image: url(link.png);
     background-size: 25px;

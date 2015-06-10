@@ -31,35 +31,55 @@ Ext.define('Flux.view.SourcePanel', {
         disabled: true,
         boxLabel: 'Show'
     }, {
-        xtype: 'combo',
-        name: 'source',
-        anchor: '100%',
-        //fieldLabel: 'Select dataset (e.g. model run) and date/time',
+        xtype: 'fieldcontainer',
+        layout: 'hbox',
         fieldLabel: 'Select dataset and date/time',
-        emptyText: 'Select...',
-        editable: false,
-        style: {maxWidth: '200px'},
-        displayField: '_id',
-        valueField: '_id',
-        queryMode: 'local',
-        tpl: Ext.create('Ext.XTemplate', [
-            '<tpl for=".">',
-                '<div class="x-boundlist-item">',
-                    '{title} ({_id})',
-                '</div>',
-            '</tpl>'
-        ].join('')),
-        listeners: {
-            collapse: function () {
-                this.store.clearFilter(true);
-            },
-            expand: function () {
-                this.store.filter('gridded', true);
-            },
-            render: function () {
-                this.bindStore(Ext.StoreManager.get('scenarios'));
+        items: [{
+            xtype: 'button',
+            itemId: 'btn-info',
+            tooltip: 'View metadata of the selected source',
+            iconCls: 'icon-info',
+            cls: 'info-button',
+            disabled: true,
+            margin: '0 4 0 0',
+            listeners: {
+                mouseover: function () {
+                    this.setIconCls('icon-info-hover');
+                },
+                mouseout: function () {
+                    this.setIconCls('icon-info');
+                }   
             }
-        }
+        }, {
+            xtype: 'combo',
+            name: 'source',
+            flex: 1,
+            anchor: '100%',
+            emptyText: 'Select...',
+            editable: false,
+            style: {maxWidth: '200px'},
+            displayField: '_id',
+            valueField: '_id',
+            queryMode: 'local',
+            tpl: Ext.create('Ext.XTemplate', [
+                '<tpl for=".">',
+                    '<div class="x-boundlist-item">',
+                        '{title} ({_id})',
+                    '</div>',
+                '</tpl>'
+            ].join('')),
+            listeners: {
+                collapse: function () {
+                    this.store.clearFilter(true);
+                },
+                expand: function () {
+                    this.store.filter('gridded', true);
+                },
+                render: function () {
+                    this.bindStore(Ext.StoreManager.get('scenarios'));
+                }
+            }
+        }]
 
     }, {
         xtype: 'datefield',

@@ -28,6 +28,7 @@ Ext.define('Flux.Application', {
         'D3LinePlot',
         'FormPanel',
         'MapSettings',
+        'MetadataTable',
         'NongriddedPanel',
         'RoiOverlayForm',
         'RoiOverlayFormGeoJSON',

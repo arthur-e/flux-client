@@ -161,7 +161,9 @@ Ext.define('Flux.controller.UserInteraction', {
                 change: this.onDateTimeSelection,
                 expand: this.uncheckAggregates
             },
-            
+            'nongriddedpanel #btn-info-nongridded': {
+                click: this.showMetadata
+            },
             'nongriddedpanel datefield': {
                 afterselect: this.onNongriddedDateSelection
             },
@@ -2761,15 +2763,43 @@ Ext.define('Flux.controller.UserInteraction', {
             view = editor.editingPlugin.getCmp().getView().getSelectionModel()
                 .getSelection()[0].get('view');
 
-        } else {
+        } else { // If Single Map View
             view = this.getMap();
+
+            // If either Gridded or Non-gridded data source has been selected
+            // in the inactive tab panel BUT the required date/time fields have
+            // NOT, reset that data source combo. If not, metadata will not reset.
+            
+            var storeMeta = this.getStore('metadata').getById(source);
+            var dt1 = this.getNongriddedPanel().down('field[name=start]').getValue();
+            var dt2 = this.getNongriddedPanel().down('field[name=end]').getValue(); 
+            var inactiveTab = this.getNongriddedPanel();
+            var inactiveSrc = inactiveTab.down('field[name=source_nongridded]');
+            
+            var badNews = !Ext.isEmpty(inactiveSrc.getValue()) && 
+                            (Ext.isEmpty(dt1) || Ext.isEmpty(dt2))
+            
+            if (field.name.indexOf('nongridded') > -1) {
+                inactiveTab = this.getSourcePanel();
+                inactiveSrc = inactiveTab.down('field[name=source]');
+                
+                dt1 = this.getSourcePanel().down('field[name=date]').getValue();
+                dt2 = this.getSourcePanel().down('field[name=time]').getValue();
+                
+                badNews = (!Ext.isEmpty(inactiveSrc.getValue()) && // if source is selected BUT
+                           (Ext.isEmpty(dt1) && Ext.isEmpty(dt2)) || // either both date and time are empty OR
+                           (Ext.isEmpty(dt2) && !this.lessThanDaily(view, storeMeta)) // time is empty and it's NOT a subdaily time step...
+                          )
+            }
+
+            if (badNews) {
+                inactiveSrc.clearValue();
+                inactiveSrc.up().down('button').disable();
+            }
         }
 
         // Callback ////////////////////////////////////////////////////////////
         operation = Ext.Function.bind(function (metadata) {
-            // Enable the source info button
-            field.up().down('button').enable();
-            
             if (metadata.get('gridded') || !showGridded ||
                 this.getSourceCarousel().getLayout().activeItem.getItemId() === 'coordinated-view') {
                 // In Single Map view, bind as primary if Gridded OR if showGridded is FALSE
@@ -3067,8 +3097,8 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     propagateMetadata: function (field, metadata) {
         var fmt = 'YYYY-MM-DD';
-        var calendars = field.up().query('datefield');
-        var clocks = field.up().query('combo[valueField=time]');
+        var calendars = field.up().up().query('datefield');
+        var clocks = field.up().up().query('combo[valueField=time]');
 //         var calendars = [];
 //         Ext.each(['date','start','end'], function (n) {
 //             var cal = field.next('datefield[name=' + n + ']');
@@ -3260,10 +3290,30 @@ Ext.define('Flux.controller.UserInteraction', {
 
      */
     showMetadata: function (btn) {
+        var gridx, gridy;
         var form = this.getMetadataTable();
         var map = this.getMap();
         var meta = map.getMetadata();
+        var stats = meta.data.stats.values;
         
+        // Here we're assuming that if the current primary metadata represents
+        // a gridded dataset, the metadata for the nongridded dataset must be
+        // stored in the overlay metadata
+        if (btn.itemId.indexOf('nongridded') > -1) {
+            if (meta.data.gridded) {
+                meta = map.getMetadataOverlay();
+            }
+            stats = meta.data.stats.value;
+        } else {
+            
+            gridx = Ext.String.format('{0} {1}',
+                                      meta.data.grid.x,
+                                      meta.data.grid.units)
+            gridy = Ext.String.format('{0} {1}',
+                                      meta.data.grid.y,
+                                      meta.data.grid.units)
+        }
+
         if (!form) {
             this.getContentPanel().add({
                 xtype: 'metadatatable',
@@ -3272,32 +3322,34 @@ Ext.define('Flux.controller.UserInteraction', {
             });
             
             form = this.getMetadataTable();
-           
         }
         
+        // Label the time steps appropriately
+        if (meta.data.steps) {
+            var step = Ext.String.format('{0} hour(s)',(meta.data.steps[0]/3600).toFixed(1))
+            
+            if (meta.data.steps[0] >= 86400) {
+                step = Ext.String.format('{0} day(s)',(meta.data.steps[0]/86400).toFixed(1))
+            }
+        }
+
         var src = {
             'ID' : meta.data._ud,
             'Title' : meta.data.title,
-            'Start date/time' : meta.data.dates[0],
-            'End date/time' : meta.data.dates[1],
-            'Time step' : Ext.String.format('{0} hours',meta.data.steps[0]/3600),
-            'Time span' : meta.data.span,
+            'Start date/time' : meta.data.dates[0]._i,
+            'End date/time' : meta.data.dates[meta.data.dates.length-1]._i,
+            'Time step' : step,
+            'Time slices' : meta.getAllDates().length,
             'Units' : meta.data.units.values,
             'Precision' : meta.data.precision,
             'Gridded' : meta.data.gridded,
-            'Grid scale (x)' : Ext.String.format('{0} {1}',
-                                                 meta.data.grid.x,
-                                                 meta.data.grid.units
-                                          ),
-            'Grid scale (y)' : Ext.String.format('{0} {1}',
-                                                 meta.data.grid.y,
-                                                 meta.data.grid.units
-                                          ),
-            'Statistics: mean' : meta.data.stats.values.mean,
-            'Statistics: median' : meta.data.stats.values.median,
-            'Statistics: minimum' : meta.data.stats.values.min,
-            'Statistics: maximum' : meta.data.stats.values.max,
-            'Statistics: stdev' : meta.data.stats.values.std
+            'Grid scale (x)' : gridx,
+            'Grid scale (y)' : gridy,
+            'Stats: mean' : stats.mean,
+            'Stats: median' : stats.median,
+            'Stats: minimum' : stats.min,
+            'Stats: maximum' : stats.max,
+            'Stats: stdev' : stats.std
         }
         
         form.setSource(src);

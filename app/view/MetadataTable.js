@@ -10,5 +10,14 @@ Ext.define('Flux.view.MetadataTable', {
     resizable: true,
     styleHtmlContent: true,
     layout: 'fit',
-    sortableColumns: false
+    editable: false,
+    sortableColumns: false,
+    listeners: {
+        'beforeedit': { // this makes the cells uneditable
+            fn: function () {
+                return false;
+            }
+        }
+    }
+            
 })

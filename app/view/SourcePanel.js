@@ -77,6 +77,14 @@ Ext.define('Flux.view.SourcePanel', {
                 },
                 render: function () {
                     this.bindStore(Ext.StoreManager.get('scenarios'));
+                },
+                select: function () {
+                    // Enable the source info button
+                    if (this.getValue() != 'Select...') {
+                        this.up().down('button').enable();
+                    } else {
+                        this.up().down('button').disable();
+                    }
                 }
             }
         }]

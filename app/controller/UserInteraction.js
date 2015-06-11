@@ -88,7 +88,10 @@ Ext.define('Flux.controller.UserInteraction', {
         ////////////////////////////////////////////////////////////////////////
         // Event Listeners /////////////////////////////////////////////////////
         this.control({
-
+            '#about-btn': {
+                click: this.launchInfoWindow
+            },
+            
             '#content': {
                 remove: this.onContentRemove,
                 resize: this.onContentResize
@@ -161,6 +164,9 @@ Ext.define('Flux.controller.UserInteraction', {
                 change: this.onDateTimeSelection,
                 expand: this.uncheckAggregates
             },
+            'infowindow toolbar checkbox': {
+                change: this.toggleWindowDisplay
+            },
             'nongriddedpanel #btn-info-nongridded': {
                 click: this.showMetadata
             },
@@ -206,6 +212,7 @@ Ext.define('Flux.controller.UserInteraction', {
                     change: this.toggleLinePlotDisplay
                 }
             });
+            this.launchInfoWindow();
         }, this));
         
     },
@@ -1273,6 +1280,52 @@ Ext.define('Flux.controller.UserInteraction', {
 	return args;
     },
     
+    /**
+        Displays the Information window.
+        @param  c   {Object}    Some kind of Object associated with the launch event
+        @return w   {Flux.view.InfoWindow}
+     */
+    launchInfoWindow: function (c) {
+        var store, w;
+
+        w = Ext.getCmp('info-window') || Ext.create('Flux.view.InfoWindow', {
+            title: 'Carbon Data Explorer',
+            id: 'info-window',
+            width: 500,
+            height: 372,
+            layout: 'fit'
+        }).hide();
+
+        if (Ext.supports.LocalStorage && c == null) {
+            console.log('hey');
+            // Check a certain user preference
+            store = Ext.StoreManager.get('UserPreferences') || Ext.create('Flux.store.UserPreferences');
+
+            store.load({
+                callback: function () {
+                    var prefs = this.getMergedAttributes();
+
+                    // Toggle the checkbox along with the user preference
+                    if (Ext.Array.contains(Ext.Object.getKeys(prefs), 'neverShowInfoWindow')) { // User indicated a preference
+                        if (prefs.neverShowInfoWindow) { // User indicated should never show
+                            return; // Don't show the Info Window
+                        }
+                    }
+
+                    w.show();
+                }
+            });
+
+        } else {
+            console.log("lets show this mutha");
+            w.show();
+            w.show().down('tabpanel').setActiveTab(1);
+
+        }
+
+        return w;
+    },
+
     /**
         Returns boolean indicating whether the time step in
         the provided view's Metadata is less than daily.
@@ -3454,6 +3507,40 @@ Ext.define('Flux.controller.UserInteraction', {
             single: true // Remove this listener
         });
         container.doLayout();
+    },
+    
+    /**
+        Toggles the persistent display of certain windows, based on the user's
+        preference stored in LocalStorage.
+        @param  c       {Ext.form.field.CheckBox}   The checkbox where a user's preference is indicated
+        @param  checked {Boolean}                   Whether that checkbox is checked or unchecked
+     */
+    toggleWindowDisplay: function (c, checked) {
+        var r, store;
+
+        if (!Ext.supports.LocalStorage) {
+            return;
+        }
+
+        if (checked) {
+            c.up('window').hide();
+        }
+
+        store = Ext.StoreManager.get('UserPreferences');
+        r = store.query('property', c.toggleHiddenProperty).first();
+
+        if (r === undefined) {
+            store.add({
+                property: c.toggleHiddenProperty,
+                value: checked
+            });
+
+        } else {
+            r.set('value', checked);
+
+        }
+
+        store.sync();
     },
 
     /**

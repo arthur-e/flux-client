@@ -170,10 +170,14 @@
 
 .icon-info-hover {
     background-image: url(info-32-darker.ico);
-    background-size: 15px;
-    background-position: 1px 1px;
+    background-size: 18px;
 }
 
+.icon-about {
+    background-image: url(info-32.ico);
+    background-size: 16px;
+    background-position: 0px 14px;
+}
 .icon-link {
     background-image: url(link.png);
     background-size: 25px;
@@ -193,3 +197,8 @@
 
 /* Labels *******************************************************************/
 .info-label { font-size: 10px !important;color: #555 !important;}
+
+div .attribution {
+    color: #888;
+    font-size: xx-small;
+}

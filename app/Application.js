@@ -26,6 +26,7 @@ Ext.define('Flux.Application', {
         'D3Panel',
         'D3GeographicMap',
         'D3LinePlot',
+        'InfoWindow',
         'FormPanel',
         'MapSettings',
         'MetadataTable',
@@ -56,6 +57,7 @@ Ext.define('Flux.Application', {
         'Metadata',
         'Palettes',
         'Scenarios',
-        'TimeSeries'
+        'TimeSeries',
+        'UserPreferences'
     ]
 });

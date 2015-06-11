@@ -240,7 +240,17 @@ Ext.define('Flux.view.Viewport', {
                 style: 'background: #ffcc00;',
                 disabled: true,
                 hidden: true
-            }]
+            }, {
+                xtype: 'tbfill'
+                
+            }, {
+                xtype: 'button',
+                itemId: 'about-btn',
+                iconCls: 'icon-about',
+                text: 'About'
+            }
+                
+            ]
         },
 
         ////////////////////////////////////////////////////////////////////////

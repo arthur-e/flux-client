@@ -215,6 +215,7 @@ Ext.define('Flux.controller.UserInteraction', {
             this.launchInfoWindow();
         }, this));
         
+//         this.launchInfoWindow();
     },
 
     /**
@@ -1287,7 +1288,7 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     launchInfoWindow: function (c) {
         var store, w;
-
+       
         w = Ext.getCmp('info-window') || Ext.create('Flux.view.InfoWindow', {
             title: 'Carbon Data Explorer',
             id: 'info-window',
@@ -1296,21 +1297,17 @@ Ext.define('Flux.controller.UserInteraction', {
             layout: 'fit'
         }).hide();
 
-        if (Ext.supports.LocalStorage && c == null) {
+        if (Ext.supports.LocalStorage && typeof c == "undefined") {
             // Check a certain user preference
             store = Ext.StoreManager.get('UserPreferences') || Ext.create('Flux.store.UserPreferences');
 
             store.load({
                 callback: function () {
-                    var prefs = this.getMergedAttributes();
+                    var neverShow = this.data.items[0].data;
 
-                    // Toggle the checkbox along with the user preference
-                    if (Ext.Array.contains(Ext.Object.getKeys(prefs), 'neverShowInfoWindow')) { // User indicated a preference
-                        if (prefs.neverShowInfoWindow) { // User indicated should never show
-                            return; // Don't show the Info Window
-                        }
+                    if (neverShow.property == 'neverShowInfoWindow' && neverShow.value) {
+                        return; // Don't show the Info Window
                     }
-
                     w.show();
                 }
             });
@@ -3526,7 +3523,7 @@ Ext.define('Flux.controller.UserInteraction', {
 
         store = Ext.StoreManager.get('UserPreferences');
         r = store.query('property', c.toggleHiddenProperty).first();
-
+        
         if (r === undefined) {
             store.add({
                 property: c.toggleHiddenProperty,
@@ -3535,7 +3532,6 @@ Ext.define('Flux.controller.UserInteraction', {
 
         } else {
             r.set('value', checked);
-
         }
 
         store.sync();

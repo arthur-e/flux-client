@@ -65,17 +65,6 @@ Ext.define('Flux.view.InfoWindow', {
                 ]);
             }
 
-//             toolbar.add([
-//                 '->', {
-//                     xtype: 'button',
-//                     text: 'View Weekly HABs Snapshot',
-//                     iconCls: 'icon-asterisk',
-//                     handler: function () {
-//                         window.open('http://mtrihabsmapping.org');
-//                     }
-//                 }
-//             ]);
-
         },
 
         show: function () {
@@ -85,7 +74,10 @@ Ext.define('Flux.view.InfoWindow', {
 
             if (c !== undefined) {
                 this.down('toolbar checkbox').setValue(function () {
-                    var r = Ext.StoreManager.get('UserPreferences').query('property', c.toggleHiddenProperty).first();
+                    var r = Ext.StoreManager.get(
+                                'UserPreferences').query('property',
+                                                         c.toggleHiddenProperty
+                                                        ).first();
                     return (r === undefined) ? false : r.get('value');
                 }());
             }

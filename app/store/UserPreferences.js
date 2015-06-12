@@ -1,8 +1,9 @@
 Ext.define('Flux.store.UserPreferences', {
     extend: 'Ext.data.Store',
     model: 'Flux.model.UserPreference',
-    autoLoad: false,
+    autoLoad: true,
 
+    // Having trouble getting this function to work- does not sync w/ dynamically set changes to values...
     getMergedAttributes: function () {
         var prefs = {};
 

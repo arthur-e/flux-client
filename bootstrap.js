@@ -806,6 +806,7 @@ Ext.ClassManager.addNameAlternateMappings({
   "Flux.model.RasterGrid": [],
   "Flux.model.Scenario": [],
   "Flux.model.TimeSeries": [],
+  "Flux.model.UserPreference": [],
   "Flux.store.AbstractStore": [],
   "Flux.store.Metadata": [],
   "Flux.store.Palettes": [],
@@ -813,11 +814,13 @@ Ext.ClassManager.addNameAlternateMappings({
   "Flux.store.Rasters": [],
   "Flux.store.Scenarios": [],
   "Flux.store.TimeSeries": [],
+  "Flux.store.UserPreferences": [],
   "Flux.type.Moment": [],
   "Flux.view.D3GeographicMap": [],
   "Flux.view.D3LinePlot": [],
   "Flux.view.D3Panel": [],
   "Flux.view.FormPanel": [],
+  "Flux.view.InfoWindow": [],
   "Flux.view.MapSettings": [],
   "Flux.view.NongriddedPanel": [],
   "Flux.view.RoiOverlayForm": [],
@@ -1764,6 +1767,7 @@ Ext.ClassManager.addNameAliasMappings({
   "Flux.model.RasterGrid": [],
   "Flux.model.Scenario": [],
   "Flux.model.TimeSeries": [],
+  "Flux.model.UserPreference": [],
   "Flux.store.AbstractStore": [],
   "Flux.store.Metadata": [],
   "Flux.store.Palettes": [],
@@ -1771,6 +1775,7 @@ Ext.ClassManager.addNameAliasMappings({
   "Flux.store.Rasters": [],
   "Flux.store.Scenarios": [],
   "Flux.store.TimeSeries": [],
+  "Flux.store.UserPreferences": [],
   "Flux.type.Moment": [],
   "Flux.view.D3GeographicMap": [
     "widget.d3geomap"
@@ -1784,6 +1789,9 @@ Ext.ClassManager.addNameAliasMappings({
   "Flux.view.FormPanel": [
     "widget.formpanel"
   ],
+  "Flux.view.InfoWindow": [
+    "widget.infowindow"
+   ],
   "Flux.view.MapSettings": [
     "widget.mapsettings"
   ],

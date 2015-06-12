@@ -56,14 +56,13 @@ Ext.define('Flux.view.InfoWindow', {
             }).pop();
 
             if (Ext.supports.LocalStorage) {
-                toolbar.add([
-                    ' ', {
+                toolbar.add([{
                         xtype: 'checkbox',
                         boxLabel: '<span style="font-size: 11px;color: #555;">' + "Don't show this at start-up" + '</span>',
                         toggleHiddenProperty: 'neverShowInfoWindow'
                     }
                 ]);
-            }
+           }
 
         },
 

@@ -170,13 +170,13 @@
 
 .icon-info-hover {
     background-image: url(info-32-darker.ico);
-    background-size: 18px;
+    background-size: 15px;
 }
 
 .icon-about {
     background-image: url(info-32.ico);
-    background-size: 16px;
-    background-position: 0px 14px;
+    background-size: 18px;
+    background-position: 0px 0px;
 }
 .icon-link {
     background-image: url(link.png);

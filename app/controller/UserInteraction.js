@@ -1288,7 +1288,7 @@ Ext.define('Flux.controller.UserInteraction', {
      */
     launchInfoWindow: function (c) {
         var store, w;
-       
+
         w = Ext.getCmp('info-window') || Ext.create('Flux.view.InfoWindow', {
             title: 'Carbon Data Explorer',
             id: 'info-window',
@@ -1303,10 +1303,12 @@ Ext.define('Flux.controller.UserInteraction', {
 
             store.load({
                 callback: function () {
-                    var neverShow = this.data.items[0].data;
+                    if (this.data.items[0]) {
+                        var neverShow = this.data.items[0].data;
 
-                    if (neverShow.property == 'neverShowInfoWindow' && neverShow.value) {
-                        return; // Don't show the Info Window
+                        if (neverShow.property == 'neverShowInfoWindow' && neverShow.value) {
+                            return; // Don't show the Info Window
+                        }
                     }
                     w.show();
                 }

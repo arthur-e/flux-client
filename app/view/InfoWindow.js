@@ -59,7 +59,7 @@ Ext.define('Flux.view.InfoWindow', {
                 toolbar.add([
                     ' ', {
                         xtype: 'checkbox',
-                        boxLabel: "Don't show this at start-up",
+                        boxLabel: '<span style="font-size: 11px;color: #555;">' + "Don't show this at start-up" + '</span>',
                         toggleHiddenProperty: 'neverShowInfoWindow'
                     }
                 ]);

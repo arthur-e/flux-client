@@ -1297,7 +1297,6 @@ Ext.define('Flux.controller.UserInteraction', {
         }).hide();
 
         if (Ext.supports.LocalStorage && c == null) {
-            console.log('hey');
             // Check a certain user preference
             store = Ext.StoreManager.get('UserPreferences') || Ext.create('Flux.store.UserPreferences');
 
@@ -1317,9 +1316,8 @@ Ext.define('Flux.controller.UserInteraction', {
             });
 
         } else {
-            console.log("lets show this mutha");
             w.show();
-            w.show().down('tabpanel').setActiveTab(1);
+            w.show().down('tabpanel').setActiveTab(0);
 
         }
 

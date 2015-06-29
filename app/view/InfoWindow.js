@@ -39,7 +39,7 @@ Ext.define('Flux.view.InfoWindow', {
                     '<td><a href="http://www.nasa.gov"><img src="/flux-client/resources/NASA_logo.png" width=88 /></a></td>',
                     '<td><a href="http://nsf.gov"><img src="/flux-client/resources/NSF_logo.jpg" width=88 /></a></td>',
                     '</tr></table>',
-                    '<div class="attribution">Developed by MTRI in partnership with the Carnegie Institution for Science under NASA ROSES Grant #NNH09ZDA001N</div>'
+                    '<div class="attribution">Developed by MTRI in partnership with the Carnegie Institution for Science under NASA ROSES Grant #NNX12AB90G</div>'
                       ].join('\n')
             }, {
                 title: 'Contact Info',
